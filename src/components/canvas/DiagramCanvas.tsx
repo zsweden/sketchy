@@ -273,7 +273,7 @@ export default function DiagramCanvas() {
       onEdgeContextMenu={onEdgeContextMenu}
       onPaneClick={onPaneClickHandler}
       fitView
-      fitViewOptions={{ padding: 0.15, maxZoom: 1.5 }}
+      fitViewOptions={fitViewOpts}
       deleteKeyCode={['Backspace', 'Delete']}
       multiSelectionKeyCode="Shift"
       selectionOnDrag={!isPanMode}
@@ -287,7 +287,7 @@ export default function DiagramCanvas() {
       {diagram.settings.showGrid && (
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
       )}
-      <Controls />
+      <Controls fitViewOptions={fitViewOpts} />
       <MiniMap
         pannable
         zoomable
