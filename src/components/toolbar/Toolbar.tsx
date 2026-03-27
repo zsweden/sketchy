@@ -1,8 +1,6 @@
 import {
   FilePlus,
   LayoutDashboard,
-  Download,
-  Upload,
   Undo2,
   Redo2,
   PanelRightClose,
@@ -12,8 +10,7 @@ import { useCallback, useRef } from 'react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { autoLayout } from '../../core/layout/dagre-layout';
-import { exportDiagram } from '../../core/persistence/json-io';
-import { importDiagram } from '../../core/persistence/json-io';
+import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import FrameworkSelector from './FrameworkSelector';
 
 export default function Toolbar() {
@@ -53,11 +50,15 @@ export default function Toolbar() {
     }
   }, [diagram, commitToHistory, moveNodesStore]);
 
-  const handleExport = useCallback(() => {
-    exportDiagram(diagram);
-  }, [diagram]);
+  const handleSave = useCallback(async () => {
+    try {
+      await saveSkyFile(diagram);
+    } catch {
+      addToast('Failed to save the project. Try again.', 'error');
+    }
+  }, [diagram, addToast]);
 
-  const handleImport = useCallback(() => {
+  const handleLoad = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
 
@@ -66,25 +67,28 @@ export default function Toolbar() {
       const file = e.target.files?.[0];
       if (!file) return;
       try {
-        const result = await importDiagram(file);
+        const result = await loadSkyFile(file);
         loadDiagram(result.diagram);
         for (const warning of result.warnings) {
           addToast(warning, 'warning');
         }
         if (result.warnings.length === 0) {
-          addToast('Diagram imported successfully', 'info');
+          addToast('Project loaded', 'info');
         }
       } catch (err) {
         addToast(
-          err instanceof Error ? err.message : 'Failed to import diagram',
+          err instanceof Error ? err.message : 'Failed to load project. Try again.',
           'error',
         );
       }
-      // Reset file input
       e.target.value = '';
     },
     [loadDiagram, addToast],
   );
+
+  const handlePrint = useCallback(() => {
+    addToast('Print is coming soon', 'info');
+  }, [addToast]);
 
   return (
     <header className="app-header">
@@ -139,25 +143,30 @@ export default function Toolbar() {
         <div className="toolbar-divider" />
 
         <button
-          className="btn btn-secondary btn-icon"
-          onClick={handleExport}
-          title="Export JSON"
-          aria-label="Export JSON"
+          className="btn btn-secondary"
+          onClick={handleLoad}
+          title="Load project"
         >
-          <Download size={16} />
+          Load
         </button>
         <button
-          className="btn btn-secondary btn-icon"
-          onClick={handleImport}
-          title="Import JSON"
-          aria-label="Import JSON"
+          className="btn btn-secondary"
+          onClick={handleSave}
+          title="Save project"
         >
-          <Upload size={16} />
+          Save
+        </button>
+        <button
+          className="btn btn-primary"
+          onClick={handlePrint}
+          title="Print project"
+        >
+          Print
         </button>
         <input
           ref={fileInputRef}
           type="file"
-          accept=".json"
+          accept=".sky,.json"
           style={{ display: 'none' }}
           onChange={handleFileChange}
         />
