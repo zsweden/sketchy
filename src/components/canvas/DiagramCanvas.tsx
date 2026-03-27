@@ -20,6 +20,7 @@ import '@xyflow/react/dist/style.css';
 import EntityNode from './EntityNode';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
+import { computeNodeDegrees, getDerivedIndicators } from '../../core/graph/derived';
 
 const nodeTypes = { entity: EntityNode };
 
@@ -47,6 +48,8 @@ export default function DiagramCanvas() {
   const closeContextMenu = useUIStore((s) => s.closeContextMenu);
   const addToast = useUIStore((s) => s.addToast);
   const interactionMode = useUIStore((s) => s.interactionMode);
+
+  const framework = useDiagramStore((s) => s.framework);
 
   const isPanMode = interactionMode === 'pan';
 
@@ -253,7 +256,15 @@ export default function DiagramCanvas() {
         zoomable
         nodeColor={(node) => {
           const data = node.data as { tags?: string[] };
-          if (data?.tags?.includes('ude')) return '#E57373';
+          // User-applied tags take priority
+          const tagColor = data?.tags
+            ?.map((t) => framework.nodeTags.find((nt) => nt.id === t))
+            .find(Boolean)?.color;
+          if (tagColor) return tagColor;
+          // Then derived indicators (root-cause = blue, intermediate = grey)
+          const degreesMap = computeNodeDegrees(diagram.edges);
+          const derived = getDerivedIndicators(node.id, degreesMap, framework.derivedIndicators);
+          if (derived.length > 0) return derived[0].color;
           return '#D4D0C6';
         }}
       />
