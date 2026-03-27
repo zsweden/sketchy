@@ -31,13 +31,12 @@ const defaultEdgeOptions = {
 };
 
 export default function DiagramCanvas() {
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, fitView } = useReactFlow();
 
   const diagram = useDiagramStore((s) => s.diagram);
   const addNode = useDiagramStore((s) => s.addNode);
   const addEdgeStore = useDiagramStore((s) => s.addEdge);
   const moveNodes = useDiagramStore((s) => s.moveNodes);
-  const pinNode = useDiagramStore((s) => s.pinNode);
   const commitToHistory = useDiagramStore((s) => s.commitToHistory);
   const deleteNodes = useDiagramStore((s) => s.deleteNodes);
   const deleteEdges = useDiagramStore((s) => s.deleteEdges);
@@ -106,6 +105,19 @@ export default function DiagramCanvas() {
     });
   }, [rfEdges]);
 
+  // Fit view when diagram changes (load, import, new, tab switch)
+  const diagramId = diagram.id;
+  const prevDiagramId = useRef(diagramId);
+  useEffect(() => {
+    if (diagramId !== prevDiagramId.current) {
+      prevDiagramId.current = diagramId;
+      // Small delay to let React Flow render the new nodes first
+      requestAnimationFrame(() => {
+        fitView({ padding: 0.2, duration: 300 });
+      });
+    }
+  }, [diagramId, fitView]);
+
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
       // Apply all changes to local state (selection, dimensions, etc.)
@@ -154,10 +166,9 @@ export default function DiagramCanvas() {
       if (isDragging.current) {
         isDragging.current = false;
         commitToHistory();
-        pinNode(node.id, true);
       }
     },
-    [commitToHistory, pinNode],
+    [commitToHistory],
   );
 
   const onConnect = useCallback(
