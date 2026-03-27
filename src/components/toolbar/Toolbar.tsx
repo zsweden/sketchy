@@ -5,6 +5,8 @@ import {
   Redo2,
   PanelRightClose,
   PanelRightOpen,
+  MousePointer2,
+  Hand,
 } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 import { useDiagramStore } from '../../store/diagram-store';
@@ -26,6 +28,8 @@ export default function Toolbar() {
   const addToast = useUIStore((s) => s.addToast);
   const sidePanelOpen = useUIStore((s) => s.sidePanelOpen);
   const toggleSidePanel = useUIStore((s) => s.toggleSidePanel);
+  const interactionMode = useUIStore((s) => s.interactionMode);
+  const setInteractionMode = useUIStore((s) => s.setInteractionMode);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -106,6 +110,25 @@ export default function Toolbar() {
           aria-label="New diagram"
         >
           <FilePlus size={16} />
+        </button>
+
+        <div className="toolbar-divider" />
+
+        <button
+          className={`btn btn-secondary btn-icon ${interactionMode === 'select' ? 'btn-toggle-active' : ''}`}
+          onClick={() => setInteractionMode('select')}
+          title="Select tool (V)"
+          aria-label="Select tool"
+        >
+          <MousePointer2 size={16} />
+        </button>
+        <button
+          className={`btn btn-secondary btn-icon ${interactionMode === 'pan' ? 'btn-toggle-active' : ''}`}
+          onClick={() => setInteractionMode('pan')}
+          title="Pan tool (H)"
+          aria-label="Pan tool"
+        >
+          <Hand size={16} />
         </button>
 
         <div className="toolbar-divider" />

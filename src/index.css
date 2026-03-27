@@ -597,3 +597,22 @@ body {
 .react-flow__controls-button:hover {
   background: var(--secondary) !important;
 }
+
+/* Pan mode */
+.pan-mode .react-flow__pane {
+  cursor: grab;
+}
+
+.pan-mode .react-flow__pane:active {
+  cursor: grabbing;
+}
+
+.pan-mode .react-flow__handle {
+  pointer-events: none !important;
+}
+
+/* Toolbar active toggle */
+.btn-toggle-active {
+  background: var(--accent) !important;
+  color: white !important;
+}

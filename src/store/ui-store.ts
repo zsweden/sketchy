@@ -6,11 +6,14 @@ export interface Toast {
   type: 'info' | 'warning' | 'error';
 }
 
+export type InteractionMode = 'select' | 'pan';
+
 interface UIState {
   selectedNodeIds: string[];
   contextMenu: { x: number; y: number; nodeId?: string } | null;
   toasts: Toast[];
   sidePanelOpen: boolean;
+  interactionMode: InteractionMode;
 
   setSelectedNodes: (ids: string[]) => void;
   openContextMenu: (x: number, y: number, nodeId?: string) => void;
@@ -18,6 +21,7 @@ interface UIState {
   addToast: (message: string, type?: 'info' | 'warning' | 'error') => void;
   dismissToast: (id: string) => void;
   toggleSidePanel: () => void;
+  setInteractionMode: (mode: InteractionMode) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -25,6 +29,7 @@ export const useUIStore = create<UIState>((set) => ({
   contextMenu: null,
   toasts: [],
   sidePanelOpen: true,
+  interactionMode: 'select',
 
   setSelectedNodes: (ids) => set({ selectedNodeIds: ids }),
 
@@ -52,4 +57,6 @@ export const useUIStore = create<UIState>((set) => ({
 
   toggleSidePanel: () =>
     set((s) => ({ sidePanelOpen: !s.sidePanelOpen })),
+
+  setInteractionMode: (mode) => set({ interactionMode: mode }),
 }));

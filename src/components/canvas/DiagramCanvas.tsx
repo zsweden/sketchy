@@ -42,6 +42,9 @@ export default function DiagramCanvas() {
   const openContextMenu = useUIStore((s) => s.openContextMenu);
   const closeContextMenu = useUIStore((s) => s.closeContextMenu);
   const addToast = useUIStore((s) => s.addToast);
+  const interactionMode = useUIStore((s) => s.interactionMode);
+
+  const isPanMode = interactionMode === 'pan';
 
   const isDragging = useRef(false);
   const lastPaneClickTime = useRef(0);
@@ -191,10 +194,13 @@ export default function DiagramCanvas() {
       fitView
       deleteKeyCode={['Backspace', 'Delete']}
       multiSelectionKeyCode="Shift"
-      selectionOnDrag
-      panOnDrag={[1, 2]}
-      selectionMode={0}
+      selectionOnDrag={!isPanMode}
+      panOnDrag={isPanMode ? [0, 1, 2] : [1, 2]}
+      nodesDraggable={!isPanMode}
+      nodesConnectable={!isPanMode}
+      elementsSelectable={!isPanMode}
       proOptions={{ hideAttribution: true }}
+      className={isPanMode ? 'pan-mode' : ''}
     >
       {diagram.settings.showGrid && (
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
