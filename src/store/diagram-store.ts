@@ -22,6 +22,7 @@ interface DiagramState {
   updateNodeText: (id: string, label: string) => void;
   updateNodeTags: (id: string, tags: string[]) => void;
   updateNodeJunction: (id: string, type: 'and' | 'or') => void;
+  updateNodeColor: (id: string, color: string | undefined) => void;
   moveNodes: (changes: { id: string; position: { x: number; y: number } }[]) => void;
   pinNode: (id: string, pinned: boolean) => void;
   deleteNodes: (ids: string[]) => void;
@@ -124,6 +125,22 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
         ...s.diagram,
         nodes: s.diagram.nodes.map((n) =>
           n.id === id ? { ...n, data: { ...n.data, junctionType: type } } : n,
+        ),
+      },
+      canUndo: true,
+      canRedo: false,
+    }));
+  },
+
+  updateNodeColor: (id, color) => {
+    const state = get();
+    history.push(snapshot(state));
+
+    set((s) => ({
+      diagram: {
+        ...s.diagram,
+        nodes: s.diagram.nodes.map((n) =>
+          n.id === id ? { ...n, data: { ...n.data, color } } : n,
         ),
       },
       canUndo: true,

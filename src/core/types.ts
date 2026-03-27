@@ -24,6 +24,7 @@ export interface DiagramNode {
     label: string;
     tags: string[];
     junctionType: 'and' | 'or';
+    color?: string;
   };
 }
 

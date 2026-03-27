@@ -4,6 +4,18 @@ import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { computeNodeDegrees } from '../../core/graph/derived';
 
+const NODE_COLORS = [
+  { id: 'none', label: 'Default', value: undefined },
+  { id: 'red', label: 'Red', value: '#FECACA' },
+  { id: 'orange', label: 'Orange', value: '#FED7AA' },
+  { id: 'amber', label: 'Amber', value: '#FDE68A' },
+  { id: 'green', label: 'Green', value: '#BBF7D0' },
+  { id: 'teal', label: 'Teal', value: '#99F6E4' },
+  { id: 'blue', label: 'Blue', value: '#BFDBFE' },
+  { id: 'purple', label: 'Purple', value: '#DDD6FE' },
+  { id: 'pink', label: 'Pink', value: '#FBCFE8' },
+];
+
 export default function ContextMenu() {
   const contextMenu = useUIStore((s) => s.contextMenu);
   const closeContextMenu = useUIStore((s) => s.closeContextMenu);
@@ -15,6 +27,7 @@ export default function ContextMenu() {
   const deleteEdges = useDiagramStore((s) => s.deleteEdges);
   const updateNodeTags = useDiagramStore((s) => s.updateNodeTags);
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
+  const updateNodeColor = useDiagramStore((s) => s.updateNodeColor);
 
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -85,6 +98,25 @@ export default function ContextMenu() {
               </button>
             );
           })}
+
+          {/* Color palette */}
+          <div className="context-menu-separator" />
+          <div className="context-menu-label">Color</div>
+          <div className="context-menu-colors">
+            {NODE_COLORS.map((c) => (
+              <button
+                key={c.id}
+                className="color-swatch"
+                data-active={node.data.color === c.value || (!node.data.color && !c.value)}
+                style={{ backgroundColor: c.value ?? 'var(--surface)' }}
+                title={c.label}
+                onClick={() => {
+                  updateNodeColor(node.id, c.value);
+                  closeContextMenu();
+                }}
+              />
+            ))}
+          </div>
 
           {/* Junction toggle */}
           {framework.supportsJunctions && degrees && degrees.indegree >= 2 && (

@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { Pin } from 'lucide-react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { computeNodeDegrees, getDerivedIndicators } from '../../core/graph/derived';
 
@@ -7,6 +8,7 @@ interface EntityNodeData {
   label: string;
   tags: string[];
   junctionType: 'and' | 'or';
+  color?: string;
   [key: string]: unknown;
 }
 
@@ -17,10 +19,14 @@ function EntityNode({ id, data, selected }: NodeProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const updateNodeText = useDiagramStore((s) => s.updateNodeText);
+  const pinNode = useDiagramStore((s) => s.pinNode);
   const commitToHistory = useDiagramStore((s) => s.commitToHistory);
   const edges = useDiagramStore((s) => s.diagram.edges);
+  const nodes = useDiagramStore((s) => s.diagram.nodes);
   const framework = useDiagramStore((s) => s.framework);
   const direction = useDiagramStore((s) => s.diagram.settings.layoutDirection);
+
+  const pinned = nodes.find((n) => n.id === id)?.pinned ?? false;
 
   const degreesMap = computeNodeDegrees(edges);
   const derived = getDerivedIndicators(id, degreesMap, framework.derivedIndicators);
@@ -40,6 +46,15 @@ function EntityNode({ id, data, selected }: NodeProps) {
   const handleDoubleClick = useCallback(() => {
     setEditing(true);
   }, []);
+
+  const handlePinToggle = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      commitToHistory();
+      pinNode(id, !pinned);
+    },
+    [id, pinned, pinNode, commitToHistory],
+  );
 
   const handleBlur = useCallback(() => {
     setEditing(false);
@@ -77,6 +92,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
     <div
       className={`entity-node ${selected ? 'selected' : ''}`}
       onDoubleClick={handleDoubleClick}
+      style={nodeData.color ? { backgroundColor: nodeData.color } : undefined}
     >
       {accentColor && (
         <div
@@ -84,6 +100,14 @@ function EntityNode({ id, data, selected }: NodeProps) {
           style={{ backgroundColor: accentColor }}
         />
       )}
+
+      <button
+        className={`entity-node-pin nodrag ${pinned ? 'pinned' : ''}`}
+        onClick={handlePinToggle}
+        title={pinned ? 'Unpin node' : 'Pin node'}
+      >
+        <Pin size={9} />
+      </button>
 
       <Handle
         type="target"
