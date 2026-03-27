@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -82,15 +82,26 @@ export default function DiagramCanvas() {
   const [localNodes, setLocalNodes] = useState<Node[]>(rfNodes);
   const [localEdges, setLocalEdges] = useState<Edge[]>(rfEdges);
 
-  // Sync store -> local when diagram changes
-  if (rfNodes !== localNodes && rfNodes.length !== localNodes.length ||
-    rfNodes.some((n, i) => localNodes[i]?.id !== n.id)) {
-    setLocalNodes(rfNodes);
-  }
-  if (rfEdges !== localEdges && rfEdges.length !== localEdges.length ||
-    rfEdges.some((e, i) => localEdges[i]?.id !== e.id)) {
-    setLocalEdges(rfEdges);
-  }
+  // Sync store -> local when diagram data changes, preserving selection state
+  useEffect(() => {
+    setLocalNodes((prev) => {
+      const selectionMap = new Map(prev.map((n) => [n.id, n.selected]));
+      return rfNodes.map((n) => ({
+        ...n,
+        selected: selectionMap.get(n.id) ?? false,
+      }));
+    });
+  }, [rfNodes]);
+
+  useEffect(() => {
+    setLocalEdges((prev) => {
+      const selectionMap = new Map(prev.map((e) => [e.id, e.selected]));
+      return rfEdges.map((e) => ({
+        ...e,
+        selected: selectionMap.get(e.id) ?? false,
+      }));
+    });
+  }, [rfEdges]);
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
