@@ -1,0 +1,49 @@
+export const SCHEMA_VERSION = 1;
+
+export interface Diagram {
+  schemaVersion: number;
+  id: string;
+  name: string;
+  frameworkId: string;
+  settings: DiagramSettings;
+  nodes: DiagramNode[];
+  edges: DiagramEdge[];
+}
+
+export interface DiagramSettings {
+  layoutDirection: 'TB' | 'BT';
+  showGrid: boolean;
+}
+
+export interface DiagramNode {
+  id: string;
+  type: 'entity';
+  position: { x: number; y: number };
+  pinned: boolean;
+  data: {
+    label: string;
+    tags: string[];
+    junctionType: 'and' | 'or';
+  };
+}
+
+export interface DiagramEdge {
+  id: string;
+  source: string;
+  target: string;
+}
+
+export function createEmptyDiagram(frameworkId: string, id?: string): Diagram {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    id: id ?? crypto.randomUUID(),
+    name: 'Untitled Diagram',
+    frameworkId,
+    settings: {
+      layoutDirection: 'TB',
+      showGrid: true,
+    },
+    nodes: [],
+    edges: [],
+  };
+}
