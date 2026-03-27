@@ -180,7 +180,7 @@ export default function Toolbar() {
           Save
         </button>
         <button
-          className="btn btn-primary"
+          className="btn btn-secondary"
           onClick={handlePrint}
           title="Print project"
         >
