@@ -10,13 +10,15 @@ export type InteractionMode = 'select' | 'pan';
 
 interface UIState {
   selectedNodeIds: string[];
-  contextMenu: { x: number; y: number; nodeId?: string } | null;
+  selectedEdgeIds: string[];
+  contextMenu: { x: number; y: number; nodeId?: string; edgeId?: string } | null;
   toasts: Toast[];
   sidePanelOpen: boolean;
   interactionMode: InteractionMode;
 
   setSelectedNodes: (ids: string[]) => void;
-  openContextMenu: (x: number, y: number, nodeId?: string) => void;
+  setSelectedEdges: (ids: string[]) => void;
+  openContextMenu: (x: number, y: number, nodeId?: string, edgeId?: string) => void;
   closeContextMenu: () => void;
   addToast: (message: string, type?: 'info' | 'warning' | 'error') => void;
   dismissToast: (id: string) => void;
@@ -26,6 +28,7 @@ interface UIState {
 
 export const useUIStore = create<UIState>((set) => ({
   selectedNodeIds: [],
+  selectedEdgeIds: [],
   contextMenu: null,
   toasts: [],
   sidePanelOpen: true,
@@ -33,8 +36,10 @@ export const useUIStore = create<UIState>((set) => ({
 
   setSelectedNodes: (ids) => set({ selectedNodeIds: ids }),
 
-  openContextMenu: (x, y, nodeId) =>
-    set({ contextMenu: { x, y, nodeId } }),
+  setSelectedEdges: (ids) => set({ selectedEdgeIds: ids }),
+
+  openContextMenu: (x, y, nodeId, edgeId) =>
+    set({ contextMenu: { x, y, nodeId, edgeId } }),
 
   closeContextMenu: () => set({ contextMenu: null }),
 

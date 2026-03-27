@@ -570,6 +570,15 @@ body {
   stroke-width: 2 !important;
 }
 
+.react-flow__edge-interaction {
+  stroke-width: 20 !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--accent) !important;
+  stroke-width: 2.5 !important;
+}
+
 .react-flow__minimap {
   border-radius: 0.75rem !important;
   overflow: hidden !important;

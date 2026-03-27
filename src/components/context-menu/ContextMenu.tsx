@@ -12,6 +12,7 @@ export default function ContextMenu() {
   const diagram = useDiagramStore((s) => s.diagram);
   const addNode = useDiagramStore((s) => s.addNode);
   const deleteNodes = useDiagramStore((s) => s.deleteNodes);
+  const deleteEdges = useDiagramStore((s) => s.deleteEdges);
   const updateNodeTags = useDiagramStore((s) => s.updateNodeTags);
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
 
@@ -41,6 +42,10 @@ export default function ContextMenu() {
 
   const node = contextMenu.nodeId
     ? diagram.nodes.find((n) => n.id === contextMenu.nodeId)
+    : null;
+
+  const edge = contextMenu.edgeId
+    ? diagram.edges.find((e) => e.id === contextMenu.edgeId)
     : null;
 
   const degreesMap = node ? computeNodeDegrees(diagram.edges) : null;
@@ -112,12 +117,21 @@ export default function ContextMenu() {
             Delete
           </button>
         </>
+      ) : edge ? (
+        <button
+          className="context-menu-item context-menu-item--danger"
+          onClick={() => {
+            deleteEdges([edge.id]);
+            closeContextMenu();
+          }}
+        >
+          <Trash2 size={14} />
+          Delete connection
+        </button>
       ) : (
         <button
           className="context-menu-item"
           onClick={() => {
-            // We'd need to convert screen coords to flow coords;
-            // for simplicity, add at center
             addNode({ x: 0, y: 0 });
             closeContextMenu();
           }}

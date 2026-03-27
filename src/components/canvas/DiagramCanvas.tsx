@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -9,9 +9,12 @@ import {
   type Connection,
   type NodeChange,
   type EdgeChange,
+  type Edge,
   type OnSelectionChangeParams,
   type Node,
   MarkerType,
+  applyNodeChanges,
+  applyEdgeChanges,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import EntityNode from './EntityNode';
@@ -31,7 +34,7 @@ export default function DiagramCanvas() {
 
   const diagram = useDiagramStore((s) => s.diagram);
   const addNode = useDiagramStore((s) => s.addNode);
-  const addEdge = useDiagramStore((s) => s.addEdge);
+  const addEdgeStore = useDiagramStore((s) => s.addEdge);
   const moveNodes = useDiagramStore((s) => s.moveNodes);
   const pinNode = useDiagramStore((s) => s.pinNode);
   const commitToHistory = useDiagramStore((s) => s.commitToHistory);
@@ -39,6 +42,7 @@ export default function DiagramCanvas() {
   const deleteEdges = useDiagramStore((s) => s.deleteEdges);
 
   const setSelectedNodes = useUIStore((s) => s.setSelectedNodes);
+  const setSelectedEdges = useUIStore((s) => s.setSelectedEdges);
   const openContextMenu = useUIStore((s) => s.openContextMenu);
   const closeContextMenu = useUIStore((s) => s.closeContextMenu);
   const addToast = useUIStore((s) => s.addToast);
@@ -49,21 +53,20 @@ export default function DiagramCanvas() {
   const isDragging = useRef(false);
   const lastPaneClickTime = useRef(0);
 
-  // Map diagram nodes to React Flow nodes
-  const rfNodes = useMemo(
+  // Build React Flow nodes from diagram, letting RF manage selection
+  const rfNodes: Node[] = useMemo(
     () =>
       diagram.nodes.map((n) => ({
         id: n.id,
         type: n.type,
         position: n.position,
         data: n.data,
-        selected: false,
       })),
     [diagram.nodes],
   );
 
-  // Map diagram edges to React Flow edges
-  const rfEdges = useMemo(
+  // Build React Flow edges from diagram
+  const rfEdges: Edge[] = useMemo(
     () =>
       diagram.edges.map((e) => ({
         id: e.id,
@@ -75,14 +78,30 @@ export default function DiagramCanvas() {
     [diagram.edges],
   );
 
+  // Local state for React Flow selection/interaction
+  const [localNodes, setLocalNodes] = useState<Node[]>(rfNodes);
+  const [localEdges, setLocalEdges] = useState<Edge[]>(rfEdges);
+
+  // Sync store -> local when diagram changes
+  if (rfNodes !== localNodes && rfNodes.length !== localNodes.length ||
+    rfNodes.some((n, i) => localNodes[i]?.id !== n.id)) {
+    setLocalNodes(rfNodes);
+  }
+  if (rfEdges !== localEdges && rfEdges.length !== localEdges.length ||
+    rfEdges.some((e, i) => localEdges[i]?.id !== e.id)) {
+    setLocalEdges(rfEdges);
+  }
+
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      // Handle position changes for drag
+      // Apply all changes to local state (selection, dimensions, etc.)
+      setLocalNodes((nds) => applyNodeChanges(changes, nds));
+
+      // Also sync position changes to our store
       const posChanges = changes.filter(
-        (c): c is NodeChange & { type: 'position'; position: { x: number; y: number }; dragging: boolean } =>
+        (c): c is NodeChange & { type: 'position'; position: { x: number; y: number } } =>
           c.type === 'position' && 'position' in c && c.position != null,
       );
-
       if (posChanges.length > 0) {
         isDragging.current = true;
         moveNodes(
@@ -93,7 +112,7 @@ export default function DiagramCanvas() {
         );
       }
 
-      // Handle remove changes
+      // Handle removes via our store (for undo/redo)
       const removeChanges = changes.filter((c) => c.type === 'remove');
       if (removeChanges.length > 0) {
         deleteNodes(removeChanges.map((c) => c.id));
@@ -104,6 +123,10 @@ export default function DiagramCanvas() {
 
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
+      // Apply all changes to local state (selection, etc.)
+      setLocalEdges((eds) => applyEdgeChanges(changes, eds));
+
+      // Handle removes via our store (for undo/redo)
       const removeChanges = changes.filter((c) => c.type === 'remove');
       if (removeChanges.length > 0) {
         deleteEdges(removeChanges.map((c) => c.id));
@@ -126,21 +149,19 @@ export default function DiagramCanvas() {
   const onConnect = useCallback(
     (connection: Connection) => {
       if (!connection.source || !connection.target) return;
-      const result = addEdge(connection.source, connection.target);
+      const result = addEdgeStore(connection.source, connection.target);
       if (!result.success && result.reason) {
         addToast(result.reason, 'warning');
       }
     },
-    [addEdge, addToast],
+    [addEdgeStore, addToast],
   );
 
-  // React Flow doesn't have onPaneDoubleClick, so detect it via onPaneClick timing
   const onPaneClickHandler = useCallback(
     (event: React.MouseEvent) => {
       closeContextMenu();
       const now = Date.now();
       if (now - lastPaneClickTime.current < 300) {
-        // Double click detected
         const position = screenToFlowPosition({
           x: event.clientX,
           y: event.clientY,
@@ -155,10 +176,11 @@ export default function DiagramCanvas() {
   );
 
   const onSelectionChange = useCallback(
-    ({ nodes }: OnSelectionChangeParams) => {
+    ({ nodes, edges }: OnSelectionChangeParams) => {
       setSelectedNodes(nodes.map((n) => n.id));
+      setSelectedEdges(edges.map((e) => e.id));
     },
-    [setSelectedNodes],
+    [setSelectedNodes, setSelectedEdges],
   );
 
   const onPaneContextMenu = useCallback(
@@ -177,10 +199,18 @@ export default function DiagramCanvas() {
     [openContextMenu],
   );
 
+  const onEdgeContextMenu = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      event.preventDefault();
+      openContextMenu(event.clientX, event.clientY, undefined, edge.id);
+    },
+    [openContextMenu],
+  );
+
   return (
     <ReactFlow
-      nodes={rfNodes}
-      edges={rfEdges}
+      nodes={localNodes}
+      edges={localEdges}
       nodeTypes={nodeTypes}
       defaultEdgeOptions={defaultEdgeOptions}
       onNodesChange={onNodesChange}
@@ -190,6 +220,7 @@ export default function DiagramCanvas() {
       onSelectionChange={onSelectionChange}
       onPaneContextMenu={onPaneContextMenu}
       onNodeContextMenu={onNodeContextMenu}
+      onEdgeContextMenu={onEdgeContextMenu}
       onPaneClick={onPaneClickHandler}
       fitView
       deleteKeyCode={['Backspace', 'Delete']}
