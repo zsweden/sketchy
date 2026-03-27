@@ -9,6 +9,7 @@ import {
   Hand,
 } from 'lucide-react';
 import { useCallback, useRef } from 'react';
+import { useReactFlow } from '@xyflow/react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { autoLayout } from '../../core/layout/dagre-layout';
@@ -16,6 +17,7 @@ import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import FrameworkSelector from './FrameworkSelector';
 
 export default function Toolbar() {
+  const { fitView } = useReactFlow();
   const diagram = useDiagramStore((s) => s.diagram);
   const canUndo = useDiagramStore((s) => s.canUndo);
   const canRedo = useDiagramStore((s) => s.canRedo);
@@ -51,8 +53,11 @@ export default function Toolbar() {
     if (updates.length > 0) {
       commitToHistory();
       moveNodesStore(updates);
+      requestAnimationFrame(() => {
+        fitView({ padding: 0.2, duration: 300 });
+      });
     }
-  }, [diagram, commitToHistory, moveNodesStore]);
+  }, [diagram, commitToHistory, moveNodesStore, fitView]);
 
   const handleSave = useCallback(async () => {
     try {
