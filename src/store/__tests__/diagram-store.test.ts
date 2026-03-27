@@ -143,6 +143,58 @@ describe('diagram store', () => {
     });
   });
 
+  describe('data changes produce new node references', () => {
+    // Regression: node data changes (text, tags) must produce new object
+    // references in diagram.nodes so that React detects the change.
+    // Previously the canvas sync only checked node count/IDs, so data
+    // edits were invisible until a full refresh.
+
+    it('updateNodeText produces a new nodes array reference', () => {
+      const id = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const nodesBefore = useDiagramStore.getState().diagram.nodes;
+
+      useDiagramStore.getState().updateNodeText(id, 'changed');
+      const nodesAfter = useDiagramStore.getState().diagram.nodes;
+
+      expect(nodesAfter).not.toBe(nodesBefore);
+      expect(nodesAfter.find((n) => n.id === id)?.data.label).toBe('changed');
+    });
+
+    it('updateNodeTags produces a new nodes array reference', () => {
+      const id = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const nodesBefore = useDiagramStore.getState().diagram.nodes;
+
+      useDiagramStore.getState().updateNodeTags(id, ['ude']);
+      const nodesAfter = useDiagramStore.getState().diagram.nodes;
+
+      expect(nodesAfter).not.toBe(nodesBefore);
+      expect(nodesAfter.find((n) => n.id === id)?.data.tags).toEqual(['ude']);
+    });
+
+    it('updateNodeJunction produces a new nodes array reference', () => {
+      const id = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const nodesBefore = useDiagramStore.getState().diagram.nodes;
+
+      useDiagramStore.getState().updateNodeJunction(id, 'or');
+      const nodesAfter = useDiagramStore.getState().diagram.nodes;
+
+      expect(nodesAfter).not.toBe(nodesBefore);
+      expect(nodesAfter.find((n) => n.id === id)?.data.junctionType).toBe('or');
+    });
+
+    it('produces new node object reference, not mutation', () => {
+      const id = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const nodeBefore = useDiagramStore.getState().diagram.nodes.find((n) => n.id === id);
+
+      useDiagramStore.getState().updateNodeTags(id, ['ude']);
+      const nodeAfter = useDiagramStore.getState().diagram.nodes.find((n) => n.id === id);
+
+      expect(nodeAfter).not.toBe(nodeBefore);
+      expect(nodeBefore?.data.tags).toEqual([]); // original unchanged
+      expect(nodeAfter?.data.tags).toEqual(['ude']);
+    });
+  });
+
   describe('settings', () => {
     it('updates layout direction', () => {
       useDiagramStore.getState().updateSettings({ layoutDirection: 'BT' });
