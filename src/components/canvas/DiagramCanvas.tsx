@@ -111,10 +111,12 @@ export default function DiagramCanvas() {
   useEffect(() => {
     if (diagramId !== prevDiagramId.current) {
       prevDiagramId.current = diagramId;
-      // Small delay to let React Flow render the new nodes first
-      requestAnimationFrame(() => {
-        fitView({ padding: 0.2, duration: 300 });
-      });
+      // Wait for React Flow to render and measure nodes before fitting.
+      // A single rAF is too early; nodes need multiple frames to be laid out.
+      const timer = setTimeout(() => {
+        fitView({ padding: 0.15, duration: 300, maxZoom: 1.5 });
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [diagramId, fitView]);
 
@@ -248,6 +250,7 @@ export default function DiagramCanvas() {
       onEdgeContextMenu={onEdgeContextMenu}
       onPaneClick={onPaneClickHandler}
       fitView
+      fitViewOptions={{ padding: 0.15, maxZoom: 1.5 }}
       deleteKeyCode={['Backspace', 'Delete']}
       multiSelectionKeyCode="Shift"
       selectionOnDrag={!isPanMode}
