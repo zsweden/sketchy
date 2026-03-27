@@ -15,6 +15,7 @@ interface UIState {
   toasts: Toast[];
   sidePanelOpen: boolean;
   interactionMode: InteractionMode;
+  fitViewTrigger: number;
 
   setSelectedNodes: (ids: string[]) => void;
   setSelectedEdges: (ids: string[]) => void;
@@ -24,6 +25,7 @@ interface UIState {
   dismissToast: (id: string) => void;
   toggleSidePanel: () => void;
   setInteractionMode: (mode: InteractionMode) => void;
+  requestFitView: () => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -33,6 +35,7 @@ export const useUIStore = create<UIState>((set) => ({
   toasts: [],
   sidePanelOpen: true,
   interactionMode: 'select',
+  fitViewTrigger: 0,
 
   setSelectedNodes: (ids) => set({ selectedNodeIds: ids }),
 
@@ -64,4 +67,6 @@ export const useUIStore = create<UIState>((set) => ({
     set((s) => ({ sidePanelOpen: !s.sidePanelOpen })),
 
   setInteractionMode: (mode) => set({ interactionMode: mode }),
+
+  requestFitView: () => set((s) => ({ fitViewTrigger: s.fitViewTrigger + 1 })),
 }));

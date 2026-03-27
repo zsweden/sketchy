@@ -9,7 +9,6 @@ import {
   Hand,
 } from 'lucide-react';
 import { useCallback, useRef } from 'react';
-import { useReactFlow } from '@xyflow/react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { autoLayout } from '../../core/layout/dagre-layout';
@@ -17,7 +16,6 @@ import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import FrameworkSelector from './FrameworkSelector';
 
 export default function Toolbar() {
-  const { fitView } = useReactFlow();
   const diagram = useDiagramStore((s) => s.diagram);
   const canUndo = useDiagramStore((s) => s.canUndo);
   const canRedo = useDiagramStore((s) => s.canRedo);
@@ -30,6 +28,7 @@ export default function Toolbar() {
   const addToast = useUIStore((s) => s.addToast);
   const sidePanelOpen = useUIStore((s) => s.sidePanelOpen);
   const toggleSidePanel = useUIStore((s) => s.toggleSidePanel);
+  const requestFitView = useUIStore((s) => s.requestFitView);
   const interactionMode = useUIStore((s) => s.interactionMode);
   const setInteractionMode = useUIStore((s) => s.setInteractionMode);
 
@@ -43,7 +42,8 @@ export default function Toolbar() {
       return;
     }
     newDiagram();
-  }, [diagram.nodes.length, newDiagram]);
+    requestFitView();
+  }, [diagram.nodes.length, newDiagram, requestFitView]);
 
   const handleAutoLayout = useCallback(() => {
     const updates = autoLayout(diagram.nodes, diagram.edges, {
@@ -53,11 +53,9 @@ export default function Toolbar() {
     if (updates.length > 0) {
       commitToHistory();
       moveNodesStore(updates);
-      requestAnimationFrame(() => {
-        fitView({ padding: 0.2, duration: 300 });
-      });
+      requestFitView();
     }
-  }, [diagram, commitToHistory, moveNodesStore, fitView]);
+  }, [diagram, commitToHistory, moveNodesStore, requestFitView]);
 
   const handleSave = useCallback(async () => {
     try {
@@ -78,6 +76,7 @@ export default function Toolbar() {
       try {
         const result = await loadSkyFile(file);
         loadDiagram(result.diagram);
+        requestFitView();
         for (const warning of result.warnings) {
           addToast(warning, 'warning');
         }
@@ -92,7 +91,7 @@ export default function Toolbar() {
       }
       e.target.value = '';
     },
-    [loadDiagram, addToast],
+    [loadDiagram, addToast, requestFitView],
   );
 
   const handlePrint = useCallback(() => {

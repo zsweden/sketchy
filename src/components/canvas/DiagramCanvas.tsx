@@ -105,20 +105,15 @@ export default function DiagramCanvas() {
     });
   }, [rfEdges]);
 
-  // Fit view when diagram changes (load, import, new, tab switch)
-  const diagramId = diagram.id;
-  const prevDiagramId = useRef(diagramId);
+  // Fit view when requested (load, import, new, tab switch, auto-layout)
+  const fitViewTrigger = useUIStore((s) => s.fitViewTrigger);
   useEffect(() => {
-    if (diagramId !== prevDiagramId.current) {
-      prevDiagramId.current = diagramId;
-      // Wait for React Flow to render and measure nodes before fitting.
-      // A single rAF is too early; nodes need multiple frames to be laid out.
-      const timer = setTimeout(() => {
-        fitView({ padding: 0.15, duration: 300, maxZoom: 1.5 });
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [diagramId, fitView]);
+    if (fitViewTrigger === 0) return; // skip initial mount (handled by fitView prop)
+    const timer = setTimeout(() => {
+      fitView({ padding: 0.15, duration: 300, maxZoom: 1.5 });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [fitViewTrigger, fitView]);
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
