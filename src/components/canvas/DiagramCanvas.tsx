@@ -112,7 +112,24 @@ export default function DiagramCanvas() {
   useEffect(() => {
     if (fitViewTrigger === 0) return;
     pendingFitView.current = true;
-  }, [fitViewTrigger]);
+    // Fallback: for position-only changes (auto-layout), React Flow won't fire
+    // 'dimensions' changes, so the onNodesChange handler won't catch it.
+    // Wait two animation frames (render + paint) then fit if still pending.
+    let frame1: number;
+    let frame2: number;
+    frame1 = requestAnimationFrame(() => {
+      frame2 = requestAnimationFrame(() => {
+        if (pendingFitView.current) {
+          pendingFitView.current = false;
+          fitView(fitViewOpts);
+        }
+      });
+    });
+    return () => {
+      cancelAnimationFrame(frame1);
+      cancelAnimationFrame(frame2);
+    };
+  }, [fitViewTrigger, fitView]);
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
