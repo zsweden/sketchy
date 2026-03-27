@@ -146,7 +146,7 @@ The engine enforces a valid DAG at all times:
 
 - **Direction**: Default from framework, overridable in settings. In BT mode, source handles move to the top and target handles to the bottom (flipped from TB).
 - **Auto-layout**: Button to arrange the tree using dagre. Also triggered automatically on framework switch.
-- **Manual override**: After auto-layout, nodes are freely draggable. Manually positioned nodes are marked as "pinned" — subsequent auto-layout repositions only unpinned nodes. A "re-layout all" option clears all pins.
+- **Manual override**: After auto-layout, nodes are freely draggable without being auto-pinned. Nodes are only treated as "pinned" when the user explicitly pins them, and subsequent auto-layout repositions only unpinned nodes. A "re-layout all" option clears all pins.
 - **Relayout triggers**: Auto-layout is NOT automatically re-run when text changes size or edges are added (this would fight manual positioning). The user explicitly triggers it.
 - **Setting**: Layout direction (TB or BT) stored in preferences
 
