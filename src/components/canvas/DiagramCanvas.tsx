@@ -107,13 +107,12 @@ export default function DiagramCanvas() {
 
   // Fit view when requested (load, import, new, tab switch, auto-layout)
   const fitViewTrigger = useUIStore((s) => s.fitViewTrigger);
+  const pendingFitView = useRef(false);
+  const fitViewOpts = { padding: 0.15, duration: 300, maxZoom: 1.5 };
   useEffect(() => {
-    if (fitViewTrigger === 0) return; // skip initial mount (handled by fitView prop)
-    const timer = setTimeout(() => {
-      fitView({ padding: 0.15, duration: 300, maxZoom: 1.5 });
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [fitViewTrigger, fitView]);
+    if (fitViewTrigger === 0) return;
+    pendingFitView.current = true;
+  }, [fitViewTrigger]);
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -140,8 +139,20 @@ export default function DiagramCanvas() {
       if (removeChanges.length > 0) {
         deleteNodes(removeChanges.map((c) => c.id));
       }
+
+      // Fit view after React Flow has measured/positioned nodes
+      if (pendingFitView.current) {
+        const hasDimensions = changes.some((c) => c.type === 'dimensions');
+        if (hasDimensions) {
+          pendingFitView.current = false;
+          // Use rAF to run after this render cycle completes
+          requestAnimationFrame(() => {
+            fitView(fitViewOpts);
+          });
+        }
+      }
     },
-    [moveNodes, deleteNodes],
+    [moveNodes, deleteNodes, fitView],
   );
 
   const onEdgesChange = useCallback(
