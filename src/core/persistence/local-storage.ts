@@ -5,7 +5,7 @@ const STORAGE_KEY = 'sketchy_diagram';
 
 export function saveDiagram(diagram: Diagram): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(diagram));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(diagram));
   } catch {
     // Storage full or unavailable — silently fail
   }
@@ -17,7 +17,7 @@ export interface LoadResult {
 }
 
 export function loadDiagram(): LoadResult {
-  const raw = localStorage.getItem(STORAGE_KEY);
+  const raw = sessionStorage.getItem(STORAGE_KEY);
   if (!raw) return { diagram: null };
 
   try {
@@ -43,7 +43,7 @@ export function loadDiagram(): LoadResult {
 }
 
 export function clearDiagram(): void {
-  localStorage.removeItem(STORAGE_KEY);
+  sessionStorage.removeItem(STORAGE_KEY);
 }
 
 function backupCorrupted(raw: string): void {
