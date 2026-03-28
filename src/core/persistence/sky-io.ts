@@ -4,9 +4,11 @@ import { getFramework } from '../../frameworks/registry';
 import { validateGraph } from '../graph/validation';
 import { migrate, validateDiagramShape } from './schema';
 import { isCausalJson, convertCausalJson } from './causal-json';
+import { buildSkyMeta, type SkyFileMeta } from './sky-meta';
 
 interface SkyFile {
   format: 'sky';
+  meta?: SkyFileMeta;
   version: number;
   createdAt: string;
   diagram: Diagram;
@@ -15,6 +17,7 @@ interface SkyFile {
 function buildSkyFile(diagram: Diagram): SkyFile {
   return {
     format: 'sky',
+    meta: buildSkyMeta(diagram),
     version: SCHEMA_VERSION,
     createdAt: new Date().toISOString(),
     diagram,

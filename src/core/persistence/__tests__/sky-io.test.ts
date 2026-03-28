@@ -153,6 +153,26 @@ describe('loadSkyFile', () => {
     );
   });
 
+  it('ignores meta field when loading', async () => {
+    const diagram = makeDiagram();
+    const skyFile = {
+      format: 'sky',
+      meta: {
+        app: 'Sketchy',
+        framework: { name: 'Current Reality Tree' },
+      },
+      version: SCHEMA_VERSION,
+      createdAt: new Date().toISOString(),
+      diagram,
+    };
+
+    const result = await loadSkyFile(makeFile(JSON.stringify(skyFile)));
+
+    expect(result.diagram.id).toBe('test-id');
+    expect(result.diagram.nodes).toHaveLength(2);
+    expect(result.warnings).toHaveLength(0);
+  });
+
   it('preserves tags and node data through save/load', async () => {
     const diagram = makeDiagram();
     const skyFile = {
