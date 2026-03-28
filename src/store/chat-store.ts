@@ -205,10 +205,25 @@ function applyModifications(mods: DiagramModification) {
   for (const edge of mods.addEdges) {
     const source = idMap.get(edge.source) ?? edge.source;
     const target = idMap.get(edge.target) ?? edge.target;
-    useDiagramStore.getState().addEdge(source, target);
+    const result = useDiagramStore.getState().addEdge(source, target);
+    if (result.success && edge.confidence && edge.confidence !== 'high') {
+      // Find the newly added edge and set its confidence
+      const diagram = useDiagramStore.getState().diagram;
+      const newEdge = diagram.edges.find((e) => e.source === source && e.target === target);
+      if (newEdge) {
+        useDiagramStore.getState().setEdgeConfidence(newEdge.id, edge.confidence);
+      }
+    }
   }
 
-  // 5. Remove edges
+  // 5. Update existing edges
+  for (const upd of mods.updateEdges) {
+    if (upd.confidence) {
+      useDiagramStore.getState().setEdgeConfidence(upd.id, upd.confidence);
+    }
+  }
+
+  // 6. Remove edges
   if (mods.removeEdgeIds.length > 0) {
     useDiagramStore.getState().deleteEdges(mods.removeEdgeIds);
   }

@@ -11,7 +11,8 @@ export interface DiagramModification {
   addNodes: { id: string; label: string; tags?: string[] }[];
   updateNodes: { id: string; label?: string; tags?: string[]; notes?: string }[];
   removeNodeIds: string[];
-  addEdges: { source: string; target: string }[];
+  addEdges: { source: string; target: string; confidence?: 'high' | 'medium' | 'low' }[];
+  updateEdges: { id: string; confidence?: 'high' | 'medium' | 'low' }[];
   removeEdgeIds: string[];
 }
 
@@ -77,9 +78,22 @@ const modifyDiagramTool = {
             properties: {
               source: { type: 'string', description: 'Source node ID (cause)' },
               target: { type: 'string', description: 'Target node ID (effect)' },
+              confidence: { type: 'string', enum: ['high', 'medium', 'low'], description: 'Confidence level (default: high)' },
             },
             required: ['source', 'target'],
           },
+        },
+        updateEdges: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', description: 'Existing edge ID to update' },
+              confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+            },
+            required: ['id'],
+          },
+          description: 'Update properties of existing edges',
         },
         removeEdgeIds: {
           type: 'array',
@@ -106,7 +120,10 @@ function buildSystemPrompt(diagram: Diagram, frameworkName: string): string {
     .join('\n');
 
   const edgesDesc = diagram.edges
-    .map((e) => `  - id="${e.id}", "${e.source}" → "${e.target}"`)
+    .map((e) => {
+      const conf = e.confidence && e.confidence !== 'high' ? `, confidence=${e.confidence}` : '';
+      return `  - id="${e.id}", "${e.source}" → "${e.target}"${conf}`;
+    })
     .join('\n');
 
   return `You are an AI assistant for Sketchy, a thinking-frameworks diagram editor.
@@ -130,6 +147,7 @@ Rules for modifications:
 - When adding nodes, use IDs like "new_1", "new_2", etc.
 - When referencing existing nodes, use their exact IDs.
 - Available tags: ude (Undesirable Effect).
+- Edges have a confidence level: high (default, solid), medium (dashed), or low (dotted).
 - Always explain your reasoning.`;
 }
 
@@ -244,6 +262,7 @@ export function streamChatMessage(
             updateNodes: args.updateNodes ?? [],
             removeNodeIds: args.removeNodeIds ?? [],
             addEdges: args.addEdges ?? [],
+            updateEdges: args.updateEdges ?? [],
             removeEdgeIds: args.removeEdgeIds ?? [],
           };
           callbacks.onDone({
