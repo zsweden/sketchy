@@ -14,14 +14,14 @@ function makeDiagram(): Diagram {
       id: 'n1',
       type: 'entity',
       position: { x: 0, y: 0 },
-      pinned: false,
+
       data: { label: 'Node 1', tags: ['ude'], junctionType: 'and' },
     },
     {
       id: 'n2',
       type: 'entity',
       position: { x: 0, y: 100 },
-      pinned: false,
+
       data: { label: 'Node 2', tags: [], junctionType: 'and' },
     },
   ];

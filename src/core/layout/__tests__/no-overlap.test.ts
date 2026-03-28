@@ -3,9 +3,9 @@ import { autoLayout, elkEngine } from '..';
 import type { DiagramNode, DiagramEdge } from '../../types';
 import { NODE_WIDTH, estimateHeight } from '../layout-engine';
 
-function n(id: string, x: number, y: number, pinned = false): DiagramNode {
+function n(id: string, x: number, y: number): DiagramNode {
   return {
-    id, type: 'entity', position: { x, y }, pinned,
+    id, type: 'entity', position: { x, y },
     data: { label: '', tags: [], junctionType: 'and' },
   };
 }
@@ -20,8 +20,8 @@ const fixtures: Record<string, { nodes: DiagramNode[]; edges: DiagramEdge[] }> =
   '4BoxLayout': {
     nodes: [
       n('3468', 370.09, -321.26),
-      n('c3d0', 644.69, -502.33, true),
-      n('3b81', 363.0, -500.82, true),
+      n('c3d0', 644.69, -502.33),
+      n('3b81', 363.0, -500.82),
       n('5ae9', 645.25, -319.73),
     ],
     edges: [
@@ -33,8 +33,8 @@ const fixtures: Record<string, { nodes: DiagramNode[]; edges: DiagramEdge[] }> =
   '4BoxLayoutv2 (cross-edge)': {
     nodes: [
       n('3468', 643.5, -368.9),
-      n('c3d0', 644.7, -502.3, true),
-      n('3b81', 363.0, -500.8, true),
+      n('c3d0', 644.7, -502.3),
+      n('3b81', 363.0, -500.8),
       n('5ae9', 363.7, -370.8),
     ],
     edges: [
@@ -47,8 +47,8 @@ const fixtures: Record<string, { nodes: DiagramNode[]; edges: DiagramEdge[] }> =
   '6BoxLayout': {
     nodes: [
       n('3468', 311.28, 126.14),
-      n('c3d0', 2.56, 1.28, true),
-      n('3b81', 280, 0, true),
+      n('c3d0', 2.56, 1.28),
+      n('3b81', 280, 0),
       n('5ae9', -4.72, 131.14),
       n('7f0d', 22.95, 228.22),
       n('b747', 288.52, 223.77),
@@ -64,8 +64,8 @@ const fixtures: Record<string, { nodes: DiagramNode[]; edges: DiagramEdge[] }> =
   '9BoxLayout': {
     nodes: [
       n('3468', 710.65, 133.57),
-      n('c3d0', 2.56, 1.28, true),
-      n('3b81', 280, 0, true),
+      n('c3d0', 2.56, 1.28),
+      n('3b81', 280, 0),
       n('5ae9', 287.13, 130.61),
       n('7f0d', 1.28, 256.64),
       n('b747', 421.28, 256.64),
@@ -85,8 +85,8 @@ const fixtures: Record<string, { nodes: DiagramNode[]; edges: DiagramEdge[] }> =
   '9BoxLayoutv2': {
     nodes: [
       n('3468', 136.28, 128.64),
-      n('c3d0', 51.12, -0.007, true),
-      n('3b81', 160.10, 354.05, true),
+      n('c3d0', 51.12, -0.007),
+      n('3b81', 160.10, 354.05),
       n('5ae9', 416.28, 128.64),
       n('7f0d', 136.28, 256.64),
       n('b747', 436.28, 256.64),
@@ -103,11 +103,11 @@ const fixtures: Record<string, { nodes: DiagramNode[]; edges: DiagramEdge[] }> =
     ],
   },
 
-  '4BoxLayoutv3 (offset pins)': {
+  '4BoxLayoutv3 (offset)': {
     nodes: [
       n('3468', 564.99, -366.24),
-      n('c3d0', 746.02, -418.33, true),
-      n('3b81', 382.33, -402.15, true),
+      n('c3d0', 746.02, -418.33),
+      n('3b81', 382.33, -402.15),
       n('5ae9', 530.51, -170.24),
     ],
     edges: [
@@ -185,28 +185,11 @@ function assertNoOverlap(
 
 describe('no-overlap on .sky fixtures', () => {
   for (const [name, fixture] of Object.entries(fixtures)) {
-    it(`${name} — respectPinned=true`, async () => {
+    it(`${name} — no overlap after layout`, async () => {
       const heights = computeNodeHeights(fixture.nodes, fixture.edges);
       const updates = await autoLayout(
         fixture.nodes, fixture.edges,
-        { direction: 'TB', respectPinned: true },
-        elkEngine,
-      );
-
-      const updateMap = new Map(updates.map((u) => [u.id, u.position]));
-      const allPositions = fixture.nodes.map((n) => ({
-        id: n.id,
-        ...(updateMap.get(n.id) ?? n.position),
-      }));
-
-      assertNoOverlap(allPositions, heights);
-    });
-
-    it(`${name} — respectPinned=false`, async () => {
-      const heights = computeNodeHeights(fixture.nodes, fixture.edges);
-      const updates = await autoLayout(
-        fixture.nodes, fixture.edges,
-        { direction: 'TB', respectPinned: false },
+        { direction: 'TB' },
         elkEngine,
       );
 

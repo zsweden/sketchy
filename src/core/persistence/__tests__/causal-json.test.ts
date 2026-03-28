@@ -53,7 +53,7 @@ describe('convertCausalJson', () => {
     expect(n1.type).toBe('entity');
     expect(n1.data.label).toBe('Root cause');
     expect(n1.data.tags).toEqual([]);
-    expect(n1.pinned).toBe(false);
+
   });
 
   it('maps isUDE to ude tag', () => {

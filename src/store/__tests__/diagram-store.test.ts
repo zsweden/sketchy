@@ -20,7 +20,7 @@ describe('diagram store', () => {
       expect(nodes[0].position).toEqual({ x: 100, y: 200 });
       expect(nodes[0].data.label).toBe('');
       expect(nodes[0].data.tags).toEqual([]);
-      expect(nodes[0].pinned).toBe(false);
+
     });
 
     it('enables undo after adding a node', () => {

@@ -24,7 +24,6 @@ interface DiagramState {
   updateNodeJunction: (id: string, type: 'and' | 'or') => void;
   updateNodeColor: (id: string, color: string | undefined) => void;
   moveNodes: (changes: { id: string; position: { x: number; y: number } }[]) => void;
-  pinNode: (id: string, pinned: boolean) => void;
   deleteNodes: (ids: string[]) => void;
 
   // Edge operations
@@ -69,7 +68,6 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       id,
       type: 'entity',
       position,
-      pinned: false,
       data: {
         label: '',
         tags: [],
@@ -156,17 +154,6 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
           const change = changes.find((c) => c.id === n.id);
           return change ? { ...n, position: change.position } : n;
         }),
-      },
-    }));
-  },
-
-  pinNode: (id, pinned) => {
-    set((s) => ({
-      diagram: {
-        ...s.diagram,
-        nodes: s.diagram.nodes.map((n) =>
-          n.id === id ? { ...n, pinned } : n,
-        ),
       },
     }));
   },

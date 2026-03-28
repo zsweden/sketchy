@@ -48,7 +48,6 @@ export function convertCausalJson(data: CausalJson): Diagram {
     id: n.id,
     type: 'entity' as const,
     position: { x: 0, y: 0 },
-    pinned: false,
     data: {
       label: n.label,
       tags: n.isUDE ? ['ude'] : [],

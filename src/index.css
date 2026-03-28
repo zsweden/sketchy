@@ -515,40 +515,6 @@ body {
   box-shadow: 0 4px 16px rgba(33, 33, 33, 0.1);
 }
 
-.entity-node-pin {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 14px;
-  height: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 3px;
-  background: transparent;
-  color: var(--text-soft);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s ease, color 0.2s ease, background 0.2s ease;
-  padding: 0;
-  z-index: 1;
-}
-
-.entity-node:hover .entity-node-pin,
-.entity-node-pin.pinned {
-  opacity: 1;
-}
-
-.entity-node-pin.pinned {
-  color: var(--accent);
-}
-
-.entity-node-pin:hover {
-  background: var(--secondary);
-  color: var(--accent);
-}
-
 .entity-node.selected {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px rgba(33, 33, 33, 0.12);

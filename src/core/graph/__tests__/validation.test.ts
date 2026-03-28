@@ -17,7 +17,6 @@ function node(id: string): DiagramNode {
     id,
     type: 'entity',
     position: { x: 0, y: 0 },
-    pinned: false,
     data: { label: id, tags: [], junctionType: 'and' },
   };
 }

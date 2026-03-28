@@ -48,7 +48,6 @@ export default function Toolbar() {
   const handleAutoLayout = useCallback(async () => {
     const updates = await autoLayout(diagram.nodes, diagram.edges, {
       direction: diagram.settings.layoutDirection,
-      respectPinned: true,
     }, elkEngine);
     if (updates.length > 0) {
       commitToHistory();
@@ -81,7 +80,6 @@ export default function Toolbar() {
           const loaded = useDiagramStore.getState().diagram;
           const updates = await autoLayout(loaded.nodes, loaded.edges, {
             direction: loaded.settings.layoutDirection,
-            respectPinned: true,
           }, elkEngine);
           if (updates.length > 0) {
             moveNodesStore(updates);

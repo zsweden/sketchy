@@ -19,7 +19,6 @@ export interface DiagramNode {
   id: string;
   type: 'entity';
   position: { x: number; y: number };
-  pinned: boolean;
   data: {
     label: string;
     tags: string[];
