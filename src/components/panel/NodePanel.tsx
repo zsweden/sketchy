@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { DiagramNode } from '../../core/types';
 import { useDiagramStore } from '../../store/diagram-store';
+import { useChatStore } from '../../store/chat-store';
 import { computeNodeDegrees, getDerivedIndicators } from '../../core/graph/derived';
 
 interface Props {
@@ -18,6 +19,12 @@ export default function NodePanel({ node }: Props) {
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
   const updateNodeNotes = useDiagramStore((s) => s.updateNodeNotes);
   const commitToHistory = useDiagramStore((s) => s.commitToHistory);
+  const removeAiModified = useChatStore((s) => s.removeAiModified);
+
+  // Clear the AI-modified green dot when the user views this node
+  useEffect(() => {
+    removeAiModified(node.id);
+  }, [node.id, removeAiModified]);
 
   const degreesMap = computeNodeDegrees(edges);
   const degrees = degreesMap.get(node.id) ?? { indegree: 0, outdegree: 0 };

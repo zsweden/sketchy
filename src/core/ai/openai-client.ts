@@ -15,87 +15,80 @@ export interface DiagramModification {
   removeEdgeIds: string[];
 }
 
-interface OpenAIFunctionCall {
-  name: string;
-  arguments: string;
+export interface StreamCallbacks {
+  onToken: (token: string) => void;
+  onDone: (result: { text: string; modifications?: DiagramModification }) => void;
+  onError: (error: Error) => void;
 }
 
-interface OpenAIMessage {
-  role: string;
-  content: string | null;
-  function_call?: OpenAIFunctionCall;
-}
+// --- Tool definition (modern tools API) ---
 
-interface OpenAIResponse {
-  choices: { message: OpenAIMessage }[];
-  error?: { message: string };
-}
-
-// --- Function definition for OpenAI ---
-
-const modifyDiagramFunction = {
-  name: 'modify_diagram',
-  description:
-    'Apply changes to the diagram: add, update, or remove nodes and edges. Use this when the user asks you to change the diagram.',
-  parameters: {
-    type: 'object',
-    properties: {
-      explanation: {
-        type: 'string',
-        description: 'Brief explanation of what changes are being made and why.',
-      },
-      addNodes: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            id: { type: 'string', description: 'Unique id for the new node (e.g. "new_1")' },
-            label: { type: 'string', description: 'Node text (under 15 words)' },
-            tags: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'Tag IDs to apply (e.g. ["ude"])',
+const modifyDiagramTool = {
+  type: 'function' as const,
+  function: {
+    name: 'modify_diagram',
+    description:
+      'Apply changes to the diagram: add, update, or remove nodes and edges. Use this when the user asks you to change the diagram.',
+    parameters: {
+      type: 'object',
+      properties: {
+        explanation: {
+          type: 'string',
+          description: 'Brief explanation of what changes are being made and why.',
+        },
+        addNodes: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', description: 'Unique id for the new node (e.g. "new_1")' },
+              label: { type: 'string', description: 'Node text (under 15 words)' },
+              tags: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Tag IDs to apply (e.g. ["ude"])',
+              },
             },
+            required: ['id', 'label'],
           },
-          required: ['id', 'label'],
+        },
+        updateNodes: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', description: 'Existing node ID to update' },
+              label: { type: 'string' },
+              tags: { type: 'array', items: { type: 'string' } },
+              notes: { type: 'string' },
+            },
+            required: ['id'],
+          },
+        },
+        removeNodeIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'IDs of nodes to remove',
+        },
+        addEdges: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              source: { type: 'string', description: 'Source node ID (cause)' },
+              target: { type: 'string', description: 'Target node ID (effect)' },
+            },
+            required: ['source', 'target'],
+          },
+        },
+        removeEdgeIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'IDs of edges to remove',
         },
       },
-      updateNodes: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            id: { type: 'string', description: 'Existing node ID to update' },
-            label: { type: 'string' },
-            tags: { type: 'array', items: { type: 'string' } },
-            notes: { type: 'string' },
-          },
-          required: ['id'],
-        },
-      },
-      removeNodeIds: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'IDs of nodes to remove',
-      },
-      addEdges: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            source: { type: 'string', description: 'Source node ID (cause)' },
-            target: { type: 'string', description: 'Target node ID (effect)' },
-          },
-          required: ['source', 'target'],
-        },
-      },
-      removeEdgeIds: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'IDs of edges to remove',
-      },
+      required: ['explanation'],
     },
-    required: ['explanation'],
   },
 };
 
@@ -129,7 +122,7 @@ ${edgesDesc || '  (none)'}
 
 You can either:
 1. Answer questions about the diagram — analyze the causal structure, identify issues, suggest improvements.
-2. Make changes by calling the modify_diagram function — add/update/remove nodes and edges.
+2. Make changes by calling the modify_diagram tool — add/update/remove nodes and edges.
 
 Rules for modifications:
 - Edge direction means "source causes target" — this is a DAG (no cycles).
@@ -140,66 +133,130 @@ Rules for modifications:
 - Always explain your reasoning.`;
 }
 
-// --- API call ---
+// --- Conversation pruning ---
 
-export async function sendChatMessage(
+const MAX_HISTORY_MESSAGES = 16; // ~8 exchanges (user + assistant pairs)
+
+function pruneHistory(messages: ChatMessage[]): ChatMessage[] {
+  if (messages.length <= MAX_HISTORY_MESSAGES) return messages;
+  return messages.slice(-MAX_HISTORY_MESSAGES);
+}
+
+// --- Streaming API call ---
+
+export function streamChatMessage(
   apiKey: string,
+  baseUrl: string,
+  model: string,
   diagram: Diagram,
   frameworkName: string,
   messages: ChatMessage[],
-): Promise<{ text: string; modifications?: DiagramModification }> {
+  callbacks: StreamCallbacks,
+): AbortController {
+  const controller = new AbortController();
   const systemPrompt = buildSystemPrompt(diagram, frameworkName);
 
   const apiMessages = [
     { role: 'system', content: systemPrompt },
-    ...messages.map((m) => ({ role: m.role, content: m.content })),
+    ...pruneHistory(messages).map((m) => ({ role: m.role, content: m.content })),
   ];
 
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+  const url = `${baseUrl.replace(/\/+$/, '')}/chat/completions`;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+
+  fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers,
     body: JSON.stringify({
-      model: 'gpt-4o',
+      model,
       messages: apiMessages,
-      functions: [modifyDiagramFunction],
-      function_call: 'auto',
-      temperature: 0.4,
+      tools: [modifyDiagramTool],
+      tool_choice: 'auto',
+      temperature: 0.2,
+      stream: true,
     }),
-  });
+    signal: controller.signal,
+  })
+    .then(async (res) => {
+      if (!res.ok) {
+        const errorBody = await res.text();
+        throw new Error(`API error (${res.status}): ${errorBody}`);
+      }
 
-  if (!res.ok) {
-    const errorBody = await res.text();
-    throw new Error(`OpenAI API error (${res.status}): ${errorBody}`);
-  }
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('No response body');
 
-  const data: OpenAIResponse = await res.json();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let contentText = '';
+      let toolCallName = '';
+      let toolCallArgs = '';
 
-  if (data.error) {
-    throw new Error(data.error.message);
-  }
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-  const choice = data.choices[0]?.message;
-  if (!choice) throw new Error('No response from OpenAI');
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
 
-  // Handle function call response
-  if (choice.function_call?.name === 'modify_diagram') {
-    const args = JSON.parse(choice.function_call.arguments);
-    const modifications: DiagramModification = {
-      addNodes: args.addNodes ?? [],
-      updateNodes: args.updateNodes ?? [],
-      removeNodeIds: args.removeNodeIds ?? [],
-      addEdges: args.addEdges ?? [],
-      removeEdgeIds: args.removeEdgeIds ?? [],
-    };
-    return {
-      text: args.explanation ?? 'Changes applied.',
-      modifications,
-    };
-  }
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith('data: ')) continue;
+          const data = trimmed.slice(6);
+          if (data === '[DONE]') continue;
 
-  // Plain text response
-  return { text: choice.content ?? '' };
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed.choices?.[0]?.delta;
+            if (!delta) continue;
+
+            // Content tokens (plain text response)
+            if (delta.content) {
+              contentText += delta.content;
+              callbacks.onToken(delta.content);
+            }
+
+            // Tool call chunks
+            if (delta.tool_calls?.[0]) {
+              const tc = delta.tool_calls[0];
+              if (tc.function?.name) toolCallName = tc.function.name;
+              if (tc.function?.arguments) toolCallArgs += tc.function.arguments;
+            }
+          } catch {
+            // Skip malformed SSE chunks
+          }
+        }
+      }
+
+      // Finalize
+      if (toolCallName === 'modify_diagram' && toolCallArgs) {
+        const args = JSON.parse(toolCallArgs);
+        const modifications: DiagramModification = {
+          addNodes: args.addNodes ?? [],
+          updateNodes: args.updateNodes ?? [],
+          removeNodeIds: args.removeNodeIds ?? [],
+          addEdges: args.addEdges ?? [],
+          removeEdgeIds: args.removeEdgeIds ?? [],
+        };
+        callbacks.onDone({
+          text: args.explanation ?? 'Changes applied.',
+          modifications,
+        });
+      } else {
+        callbacks.onDone({ text: contentText });
+      }
+    })
+    .catch((err) => {
+      if (err.name === 'AbortError') return;
+      callbacks.onError(err instanceof Error ? err : new Error(String(err)));
+    });
+
+  return controller;
 }

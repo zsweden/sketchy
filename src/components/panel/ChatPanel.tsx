@@ -1,22 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Send, Trash2, Loader2 } from 'lucide-react';
+import { Send, Square, Trash2 } from 'lucide-react';
 import { useChatStore } from '../../store/chat-store';
-import { useSettingsStore } from '../../store/settings-store';
 
 export default function ChatPanel() {
   const messages = useChatStore((s) => s.messages);
   const loading = useChatStore((s) => s.loading);
+  const streamingContent = useChatStore((s) => s.streamingContent);
   const sendMessage = useChatStore((s) => s.sendMessage);
+  const cancelStream = useChatStore((s) => s.cancelStream);
   const clearMessages = useChatStore((s) => s.clearMessages);
-  const apiKey = useSettingsStore((s) => s.openaiApiKey);
 
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
+  }, [messages, streamingContent]);
 
   const handleSend = useCallback(() => {
     const trimmed = input.trim();
@@ -54,11 +53,9 @@ export default function ChatPanel() {
       </div>
 
       <div className="chat-messages">
-        {messages.length === 0 && (
+        {messages.length === 0 && !loading && (
           <p className="chat-empty">
-            {apiKey
-              ? 'Ask questions about your diagram or request changes.'
-              : 'Set your OpenAI API key in settings to start.'}
+            Ask questions about your diagram or request changes.
           </p>
         )}
         {messages.map((msg) => (
@@ -69,9 +66,18 @@ export default function ChatPanel() {
             )}
           </div>
         ))}
-        {loading && (
+        {loading && streamingContent && (
           <div className="chat-bubble chat-bubble--assistant">
-            <Loader2 size={14} className="chat-spinner" />
+            <p className="chat-bubble-text">{streamingContent}</p>
+          </div>
+        )}
+        {loading && !streamingContent && (
+          <div className="chat-bubble chat-bubble--assistant">
+            <span className="chat-typing">
+              <span className="chat-typing-dot" />
+              <span className="chat-typing-dot" />
+              <span className="chat-typing-dot" />
+            </span>
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -79,7 +85,6 @@ export default function ChatPanel() {
 
       <div className="chat-input-row">
         <textarea
-          ref={inputRef}
           className="chat-input"
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -88,15 +93,26 @@ export default function ChatPanel() {
           rows={1}
           disabled={loading}
         />
-        <button
-          className="btn btn-secondary btn-icon-sm"
-          onClick={handleSend}
-          disabled={!input.trim() || loading}
-          title="Send"
-          aria-label="Send message"
-        >
-          <Send size={13} />
-        </button>
+        {loading ? (
+          <button
+            className="btn btn-secondary btn-icon-sm"
+            onClick={cancelStream}
+            title="Stop"
+            aria-label="Stop generating"
+          >
+            <Square size={11} />
+          </button>
+        ) : (
+          <button
+            className="btn btn-secondary btn-icon-sm"
+            onClick={handleSend}
+            disabled={!input.trim()}
+            title="Send"
+            aria-label="Send message"
+          >
+            <Send size={13} />
+          </button>
+        )}
       </div>
     </div>
   );

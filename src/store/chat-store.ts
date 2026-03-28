@@ -1,8 +1,10 @@
 import { create } from 'zustand';
 import type { ChatMessage, DiagramModification } from '../core/ai/openai-client';
-import { sendChatMessage } from '../core/ai/openai-client';
+import { streamChatMessage } from '../core/ai/openai-client';
 import { useSettingsStore } from './settings-store';
 import { useDiagramStore } from './diagram-store';
+import { useUIStore } from './ui-store';
+import { autoLayout, elkEngine } from '../core/layout';
 
 export interface DisplayMessage {
   id: string;
@@ -14,22 +16,27 @@ export interface DisplayMessage {
 interface ChatState {
   messages: DisplayMessage[];
   loading: boolean;
+  streamingContent: string;
   aiModifiedNodeIds: Set<string>;
 
-  sendMessage: (text: string) => Promise<void>;
+  sendMessage: (text: string) => void;
+  cancelStream: () => void;
   clearMessages: () => void;
   clearAiModified: () => void;
   removeAiModified: (nodeId: string) => void;
 }
 
+let activeController: AbortController | null = null;
+
 export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   loading: false,
+  streamingContent: '',
   aiModifiedNodeIds: new Set(),
 
-  sendMessage: async (text) => {
-    const apiKey = useSettingsStore.getState().openaiApiKey;
-    if (!apiKey) {
+  sendMessage: (text) => {
+    const { openaiApiKey, baseUrl, model } = useSettingsStore.getState();
+    if (!baseUrl || !model) {
       set((s) => ({
         messages: [
           ...s.messages,
@@ -37,7 +44,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           {
             id: crypto.randomUUID(),
             role: 'assistant',
-            content: 'Please set your OpenAI API key in settings (cog icon in the toolbar).',
+            content: 'Please configure your API endpoint and model in settings (cog icon in the toolbar).',
           },
         ],
       }));
@@ -50,46 +57,88 @@ export const useChatStore = create<ChatState>((set, get) => ({
       content: text,
     };
 
-    set((s) => ({ messages: [...s.messages, userMsg], loading: true }));
+    set((s) => ({
+      messages: [...s.messages, userMsg],
+      loading: true,
+      streamingContent: '',
+    }));
 
-    try {
-      const diagramStore = useDiagramStore.getState();
-      const { diagram, framework } = diagramStore;
+    const { diagram, framework } = useDiagramStore.getState();
 
-      // Build conversation history for context
-      const history: ChatMessage[] = get().messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      }));
+    // Build conversation history
+    const history: ChatMessage[] = get().messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
 
-      const result = await sendChatMessage(apiKey, diagram, framework.name, history);
+    activeController = streamChatMessage(
+      openaiApiKey,
+      baseUrl,
+      model,
+      diagram,
+      framework.name,
+      history,
+      {
+        onToken: (token) => {
+          set((s) => ({ streamingContent: s.streamingContent + token }));
+        },
 
-      const assistantMsg: DisplayMessage = {
+        onDone: (result) => {
+          activeController = null;
+          const assistantMsg: DisplayMessage = {
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content: result.text,
+            modifications: result.modifications,
+          };
+
+          set((s) => ({
+            messages: [...s.messages, assistantMsg],
+            loading: false,
+            streamingContent: '',
+          }));
+
+          if (result.modifications) {
+            applyModifications(result.modifications);
+          }
+        },
+
+        onError: (error) => {
+          activeController = null;
+          const errorMsg: DisplayMessage = {
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content: `Error: ${error.message}`,
+          };
+          set((s) => ({
+            messages: [...s.messages, errorMsg],
+            loading: false,
+            streamingContent: '',
+          }));
+        },
+      },
+    );
+  },
+
+  cancelStream: () => {
+    if (activeController) {
+      activeController.abort();
+      activeController = null;
+    }
+    const streaming = get().streamingContent;
+    if (streaming) {
+      const partialMsg: DisplayMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: result.text,
-        modifications: result.modifications,
-      };
-
-      set((s) => ({
-        messages: [...s.messages, assistantMsg],
-        loading: false,
-      }));
-
-      // Apply modifications if any
-      if (result.modifications) {
-        applyModifications(result.modifications);
-      }
-    } catch (err) {
-      const errorMsg: DisplayMessage = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: `Error: ${err instanceof Error ? err.message : 'Something went wrong.'}`,
+        content: streaming,
       };
       set((s) => ({
-        messages: [...s.messages, errorMsg],
+        messages: [...s.messages, partialMsg],
         loading: false,
+        streamingContent: '',
       }));
+    } else {
+      set({ loading: false, streamingContent: '' });
     }
   },
 
@@ -123,7 +172,6 @@ function applyModifications(mods: DiagramModification) {
     idMap.set(node.id, realId);
     modifiedIds.add(realId);
 
-    // Update the node's text and tags
     if (node.label) {
       useDiagramStore.getState().updateNodeText(realId, node.label);
     }
@@ -166,4 +214,15 @@ function applyModifications(mods: DiagramModification) {
   }
 
   useChatStore.setState({ aiModifiedNodeIds: modifiedIds });
+
+  // Auto-layout after AI changes
+  const updated = useDiagramStore.getState().diagram;
+  autoLayout(updated.nodes, updated.edges, {
+    direction: updated.settings.layoutDirection,
+  }, elkEngine).then((updates) => {
+    if (updates.length > 0) {
+      useDiagramStore.getState().moveNodes(updates);
+      useUIStore.getState().requestFitView();
+    }
+  });
 }
