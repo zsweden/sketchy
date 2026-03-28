@@ -1,6 +1,28 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Send, Square, Trash2 } from 'lucide-react';
+import { Send, Square, Trash2, Copy, Check } from 'lucide-react';
 import { useChatStore } from '../../store/chat-store';
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }, [text]);
+
+  return (
+    <button
+      className="chat-copy-btn"
+      onClick={handleCopy}
+      title="Copy response"
+      aria-label="Copy response"
+    >
+      {copied ? <Check size={12} /> : <Copy size={12} />}
+    </button>
+  );
+}
 
 export default function ChatPanel() {
   const messages = useChatStore((s) => s.messages);
@@ -64,6 +86,7 @@ export default function ChatPanel() {
             {msg.modifications && (
               <span className="chat-badge-modified">changes applied</span>
             )}
+            {msg.role === 'assistant' && <CopyButton text={msg.content} />}
           </div>
         ))}
         {loading && streamingContent && (

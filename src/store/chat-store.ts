@@ -155,79 +155,26 @@ export const useChatStore = create<ChatState>((set, get) => ({
 // --- Apply AI modifications to the diagram ---
 
 function applyModifications(mods: DiagramModification) {
-  const store = useDiagramStore.getState();
-  const chatStore = useChatStore.getState();
+  // Single batched store update — one render instead of many
+  const idMap = useDiagramStore.getState().batchApply({
+    addNodes: mods.addNodes,
+    updateNodes: mods.updateNodes,
+    removeNodeIds: mods.removeNodeIds,
+    addEdges: mods.addEdges,
+    updateEdges: mods.updateEdges,
+    removeEdgeIds: mods.removeEdgeIds,
+  });
 
-  // Commit current state to history so all AI changes can be undone as one batch
-  store.commitToHistory();
-
-  const modifiedIds = new Set(chatStore.aiModifiedNodeIds);
-
-  // Map from AI-generated IDs (e.g. "new_1") to real UUIDs
-  const idMap = new Map<string, string>();
-
-  // 1. Add new nodes
+  // Track AI-modified node IDs (resolved to real UUIDs)
+  const prev = useChatStore.getState().aiModifiedNodeIds;
+  const modifiedIds = new Set(prev);
   for (const node of mods.addNodes) {
-    const realId = store.addNode({ x: 0, y: 0 });
-    idMap.set(node.id, realId);
-    modifiedIds.add(realId);
-
-    if (node.label) {
-      useDiagramStore.getState().updateNodeText(realId, node.label);
-    }
-    if (node.tags?.length) {
-      useDiagramStore.getState().updateNodeTags(realId, node.tags);
-    }
+    const realId = idMap.get(node.id);
+    if (realId) modifiedIds.add(realId);
   }
-
-  // 2. Update existing nodes
   for (const upd of mods.updateNodes) {
-    const realId = idMap.get(upd.id) ?? upd.id;
-    modifiedIds.add(realId);
-    if (upd.label !== undefined) {
-      useDiagramStore.getState().updateNodeText(realId, upd.label);
-    }
-    if (upd.tags !== undefined) {
-      useDiagramStore.getState().updateNodeTags(realId, upd.tags);
-    }
-    if (upd.notes !== undefined) {
-      useDiagramStore.getState().updateNodeNotes(realId, upd.notes);
-    }
+    modifiedIds.add(idMap.get(upd.id) ?? upd.id);
   }
-
-  // 3. Remove nodes
-  if (mods.removeNodeIds.length > 0) {
-    const realIds = mods.removeNodeIds.map((id) => idMap.get(id) ?? id);
-    useDiagramStore.getState().deleteNodes(realIds);
-  }
-
-  // 4. Add edges (resolving AI IDs to real UUIDs)
-  for (const edge of mods.addEdges) {
-    const source = idMap.get(edge.source) ?? edge.source;
-    const target = idMap.get(edge.target) ?? edge.target;
-    const result = useDiagramStore.getState().addEdge(source, target);
-    if (result.success && edge.confidence && edge.confidence !== 'high') {
-      // Find the newly added edge and set its confidence
-      const diagram = useDiagramStore.getState().diagram;
-      const newEdge = diagram.edges.find((e) => e.source === source && e.target === target);
-      if (newEdge) {
-        useDiagramStore.getState().setEdgeConfidence(newEdge.id, edge.confidence);
-      }
-    }
-  }
-
-  // 5. Update existing edges
-  for (const upd of mods.updateEdges) {
-    if (upd.confidence) {
-      useDiagramStore.getState().setEdgeConfidence(upd.id, upd.confidence);
-    }
-  }
-
-  // 6. Remove edges
-  if (mods.removeEdgeIds.length > 0) {
-    useDiagramStore.getState().deleteEdges(mods.removeEdgeIds);
-  }
-
   useChatStore.setState({ aiModifiedNodeIds: modifiedIds });
 
   // Auto-layout after AI changes

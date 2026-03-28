@@ -216,6 +216,34 @@ export function streamChatMessage(
       let toolCallName = '';
       let toolCallArgs = '';
 
+      function processLine(line: string) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data:')) return;
+        const data = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed.slice(5);
+        if (data === '[DONE]') return;
+
+        try {
+          const parsed = JSON.parse(data);
+          const delta = parsed.choices?.[0]?.delta;
+          if (!delta) return;
+
+          // Content tokens (plain text response)
+          if (delta.content) {
+            contentText += delta.content;
+            callbacks.onToken(delta.content);
+          }
+
+          // Tool call chunks
+          if (delta.tool_calls?.[0]) {
+            const tc = delta.tool_calls[0];
+            if (tc.function?.name) toolCallName = tc.function.name;
+            if (tc.function?.arguments) toolCallArgs += tc.function.arguments;
+          }
+        } catch {
+          // Skip malformed SSE chunks
+        }
+      }
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -225,32 +253,13 @@ export function streamChatMessage(
         buffer = lines.pop() ?? '';
 
         for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || !trimmed.startsWith('data:')) continue;
-          const data = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed.slice(5);
-          if (data === '[DONE]') continue;
-
-          try {
-            const parsed = JSON.parse(data);
-            const delta = parsed.choices?.[0]?.delta;
-            if (!delta) continue;
-
-            // Content tokens (plain text response)
-            if (delta.content) {
-              contentText += delta.content;
-              callbacks.onToken(delta.content);
-            }
-
-            // Tool call chunks
-            if (delta.tool_calls?.[0]) {
-              const tc = delta.tool_calls[0];
-              if (tc.function?.name) toolCallName = tc.function.name;
-              if (tc.function?.arguments) toolCallArgs += tc.function.arguments;
-            }
-          } catch {
-            // Skip malformed SSE chunks
-          }
+          processLine(line);
         }
+      }
+
+      // Process any remaining data left in the buffer
+      if (buffer.trim()) {
+        processLine(buffer);
       }
 
       // Finalize

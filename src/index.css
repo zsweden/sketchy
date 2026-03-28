@@ -524,6 +524,30 @@ body {
   background: var(--secondary);
   color: var(--text);
   border-bottom-left-radius: 0.25rem;
+  position: relative;
+}
+
+.chat-copy-btn {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  background: none;
+  border: none;
+  color: var(--text-soft);
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.chat-bubble--assistant:hover .chat-copy-btn {
+  opacity: 0.6;
+}
+
+.chat-copy-btn:hover {
+  opacity: 1 !important;
+  background: var(--border);
 }
 
 .chat-bubble-text {
