@@ -23,6 +23,7 @@ export interface DiagramNode {
     label: string;
     tags: string[];
     junctionType: 'and' | 'or';
+    notes?: string;
     color?: string;
   };
 }

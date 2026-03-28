@@ -5,6 +5,7 @@ interface CausalNode {
   id: string;
   label: string;
   isUDE?: boolean;
+  notes?: string;
 }
 
 interface CausalEdge {
@@ -52,6 +53,7 @@ export function convertCausalJson(data: CausalJson): Diagram {
       label: n.label,
       tags: n.isUDE ? ['ude'] : [],
       junctionType: andTargets.has(n.id) ? ('and' as const) : ('or' as const),
+      ...(n.notes ? { notes: n.notes } : {}),
     },
   }));
 

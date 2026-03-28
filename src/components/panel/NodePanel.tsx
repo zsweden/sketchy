@@ -9,12 +9,14 @@ interface Props {
 
 export default function NodePanel({ node }: Props) {
   const [text, setText] = useState(node.data.label);
+  const [notes, setNotes] = useState(node.data.notes ?? '');
 
   const framework = useDiagramStore((s) => s.framework);
   const edges = useDiagramStore((s) => s.diagram.edges);
   const updateNodeText = useDiagramStore((s) => s.updateNodeText);
   const updateNodeTags = useDiagramStore((s) => s.updateNodeTags);
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
+  const updateNodeNotes = useDiagramStore((s) => s.updateNodeNotes);
   const commitToHistory = useDiagramStore((s) => s.commitToHistory);
 
   const degreesMap = computeNodeDegrees(edges);
@@ -24,6 +26,18 @@ export default function NodePanel({ node }: Props) {
   useEffect(() => {
     setText(node.data.label);
   }, [node.data.label]);
+
+  useEffect(() => {
+    setNotes(node.data.notes ?? '');
+  }, [node.data.notes]);
+
+  const handleNotesBlur = useCallback(() => {
+    const current = node.data.notes ?? '';
+    if (notes !== current) {
+      commitToHistory();
+      updateNodeNotes(node.id, notes);
+    }
+  }, [notes, node.data.notes, node.id, updateNodeNotes, commitToHistory]);
 
   const handleTextBlur = useCallback(() => {
     if (text !== node.data.label) {
@@ -66,6 +80,20 @@ export default function NodePanel({ node }: Props) {
           onKeyDown={handleTextKeyDown}
           rows={3}
           placeholder="Enter text..."
+        />
+      </div>
+
+      {/* Notes */}
+      <div className="section-stack" style={{ gap: '0.375rem' }}>
+        <p className="section-label">Notes</p>
+        <textarea
+          className="input-text"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          onBlur={handleNotesBlur}
+          rows={4}
+          placeholder="Add notes..."
+          style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}
         />
       </div>
 

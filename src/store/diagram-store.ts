@@ -23,6 +23,7 @@ interface DiagramState {
   updateNodeTags: (id: string, tags: string[]) => void;
   updateNodeJunction: (id: string, type: 'and' | 'or') => void;
   updateNodeColor: (id: string, color: string | undefined) => void;
+  updateNodeNotes: (id: string, notes: string) => void;
   moveNodes: (changes: { id: string; position: { x: number; y: number } }[]) => void;
   deleteNodes: (ids: string[]) => void;
 
@@ -143,6 +144,17 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       },
       canUndo: true,
       canRedo: false,
+    }));
+  },
+
+  updateNodeNotes: (id, notes) => {
+    set((s) => ({
+      diagram: {
+        ...s.diagram,
+        nodes: s.diagram.nodes.map((n) =>
+          n.id === id ? { ...n, data: { ...n.data, notes: notes || undefined } } : n,
+        ),
+      },
     }));
   },
 
