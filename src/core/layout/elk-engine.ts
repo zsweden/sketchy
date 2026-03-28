@@ -1,4 +1,4 @@
-import ELK from 'elkjs';
+import ELK from 'elkjs/lib/elk.bundled.js';
 import type { LayoutEngine } from './layout-engine';
 import { RANK_SEP, NODE_SEP } from './layout-engine';
 
