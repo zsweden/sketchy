@@ -77,6 +77,7 @@ export default function DiagramCanvas() {
         target: e.target,
         sourceHandle: 'source',
         targetHandle: 'target',
+        pathOptions: { borderRadius: 100 },
       })),
     [diagram.edges],
   );
