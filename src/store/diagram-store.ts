@@ -141,9 +141,11 @@ function batchAddEdges(
   nodes: DiagramNode[],
   edges: DiagramEdge[],
 ): { nodes: DiagramNode[]; edges: DiagramEdge[] } {
+  const nodeIds = new Set(nodes.map((n) => n.id));
   for (const e of mutations.addEdges ?? []) {
     const source = idMap.get(e.source) ?? e.source;
     const target = idMap.get(e.target) ?? e.target;
+    if (!nodeIds.has(source) || !nodeIds.has(target)) continue;
     const result = validateEdge(edges, source, target);
     if (result.valid) {
       edges.push({
