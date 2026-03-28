@@ -11,7 +11,7 @@ import {
 import { useCallback, useRef } from 'react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
-import { autoLayout } from '../../core/layout/dagre-layout';
+import { autoLayout, elkEngine } from '../../core/layout';
 import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import FrameworkSelector from './FrameworkSelector';
 
@@ -45,11 +45,11 @@ export default function Toolbar() {
     requestFitView();
   }, [diagram.nodes.length, newDiagram, requestFitView]);
 
-  const handleAutoLayout = useCallback(() => {
-    const updates = autoLayout(diagram.nodes, diagram.edges, {
+  const handleAutoLayout = useCallback(async () => {
+    const updates = await autoLayout(diagram.nodes, diagram.edges, {
       direction: diagram.settings.layoutDirection,
       respectPinned: true,
-    });
+    }, elkEngine);
     if (updates.length > 0) {
       commitToHistory();
       moveNodesStore(updates);

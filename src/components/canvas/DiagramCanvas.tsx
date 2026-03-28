@@ -27,7 +27,7 @@ const nodeTypes = { entity: EntityNode };
 
 const defaultEdgeOptions = {
   type: 'smoothstep',
-  markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16 },
+  markerEnd: { type: MarkerType.ArrowClosed, width: 20, height: 20 },
   style: { strokeWidth: 2 },
 };
 

@@ -73,7 +73,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       data: {
         label: '',
         tags: [],
-        junctionType: 'and',
+        junctionType: 'or',
       },
     };
 
@@ -213,7 +213,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       let nodes = s.diagram.nodes;
       if (targetIncomingCount === 2) {
         nodes = nodes.map((n) =>
-          n.id === target ? { ...n, data: { ...n.data, junctionType: 'and' as const } } : n,
+          n.id === target ? { ...n, data: { ...n.data, junctionType: 'or' as const } } : n,
         );
       }
       return {

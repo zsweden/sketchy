@@ -49,7 +49,7 @@ npx tsc --noEmit     # Type check
 - `src/core/graph/validation.ts` — DAG enforcement (no cycles, self-loops, duplicate edges)
 - `src/core/graph/derived.ts` — Compute node indicators from graph topology (root cause = indegree 0, etc.)
 - `src/core/history/undo-redo.ts` — Generic undo/redo with snapshot stack, exportStacks/importStacks for tabs
-- `src/core/layout/dagre-layout.ts` — Auto-layout with pinned node support
+- `src/core/layout/` — Auto-layout with pluggable engines (ELK default, dagre available). `LayoutEngine` type in `layout-engine.ts`, orchestrator in `auto-layout.ts`
 - `src/core/persistence/` — localStorage (multi-tab), .sky file save/load, JSON import/export, schema migrations
 
 ### Stores (Zustand)

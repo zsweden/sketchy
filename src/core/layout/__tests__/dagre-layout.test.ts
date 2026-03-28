@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { autoLayout } from '../dagre-layout';
+import { autoLayout, elkEngine } from '..';
 import type { DiagramEdge, DiagramNode } from '../../types';
 
 function node(id: string, pinned = false): DiagramNode {
@@ -17,39 +17,39 @@ function edge(source: string, target: string): DiagramEdge {
 }
 
 describe('autoLayout', () => {
-  it('positions chain top-to-bottom', () => {
+  it('positions chain top-to-bottom', async () => {
     const nodes = [node('a'), node('b'), node('c')];
     const edges = [edge('a', 'b'), edge('b', 'c')];
-    const updates = autoLayout(nodes, edges, {
+    const updates = await autoLayout(nodes, edges, {
       direction: 'TB',
       respectPinned: false,
-    });
+    }, elkEngine);
 
     const posMap = Object.fromEntries(updates.map((u) => [u.id, u.position]));
     expect(posMap['a'].y).toBeLessThan(posMap['b'].y);
     expect(posMap['b'].y).toBeLessThan(posMap['c'].y);
   });
 
-  it('positions chain bottom-to-top', () => {
+  it('positions chain bottom-to-top', async () => {
     const nodes = [node('a'), node('b'), node('c')];
     const edges = [edge('a', 'b'), edge('b', 'c')];
-    const updates = autoLayout(nodes, edges, {
+    const updates = await autoLayout(nodes, edges, {
       direction: 'BT',
       respectPinned: false,
-    });
+    }, elkEngine);
 
     const posMap = Object.fromEntries(updates.map((u) => [u.id, u.position]));
     expect(posMap['a'].y).toBeGreaterThan(posMap['b'].y);
     expect(posMap['b'].y).toBeGreaterThan(posMap['c'].y);
   });
 
-  it('skips pinned nodes when respectPinned is true', () => {
+  it('skips pinned nodes when respectPinned is true', async () => {
     const nodes = [node('a'), node('b', true), node('c')];
     const edges = [edge('a', 'b'), edge('b', 'c')];
-    const updates = autoLayout(nodes, edges, {
+    const updates = await autoLayout(nodes, edges, {
       direction: 'TB',
       respectPinned: true,
-    });
+    }, elkEngine);
 
     const ids = updates.map((u) => u.id);
     expect(ids).toContain('a');
@@ -57,25 +57,25 @@ describe('autoLayout', () => {
     expect(ids).toContain('c');
   });
 
-  it('includes pinned nodes when respectPinned is false', () => {
+  it('includes pinned nodes when respectPinned is false', async () => {
     const nodes = [node('a'), node('b', true), node('c')];
     const edges = [edge('a', 'b'), edge('b', 'c')];
-    const updates = autoLayout(nodes, edges, {
+    const updates = await autoLayout(nodes, edges, {
       direction: 'TB',
       respectPinned: false,
-    });
+    }, elkEngine);
 
     const ids = updates.map((u) => u.id);
     expect(ids).toContain('b');
   });
 
-  it('handles diamond shape without overlap', () => {
+  it('handles diamond shape without overlap', async () => {
     const nodes = [node('a'), node('b'), node('c'), node('d')];
     const edges = [edge('a', 'b'), edge('a', 'c'), edge('b', 'd'), edge('c', 'd')];
-    const updates = autoLayout(nodes, edges, {
+    const updates = await autoLayout(nodes, edges, {
       direction: 'TB',
       respectPinned: false,
-    });
+    }, elkEngine);
 
     const posMap = Object.fromEntries(updates.map((u) => [u.id, u.position]));
     // b and c should be at the same rank (similar y) but different x

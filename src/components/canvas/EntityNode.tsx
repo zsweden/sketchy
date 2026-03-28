@@ -19,6 +19,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const updateNodeText = useDiagramStore((s) => s.updateNodeText);
+  const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
   const pinNode = useDiagramStore((s) => s.pinNode);
   const commitToHistory = useDiagramStore((s) => s.commitToHistory);
   const edges = useDiagramStore((s) => s.diagram.edges);
@@ -54,6 +55,15 @@ function EntityNode({ id, data, selected }: NodeProps) {
       pinNode(id, !pinned);
     },
     [id, pinned, pinNode, commitToHistory],
+  );
+
+  const handleJunctionToggle = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      commitToHistory();
+      updateNodeJunction(id, nodeData.junctionType === 'and' ? 'or' : 'and');
+    },
+    [id, nodeData.junctionType, updateNodeJunction, commitToHistory],
   );
 
   const handleBlur = useCallback(() => {
@@ -113,36 +123,14 @@ function EntityNode({ id, data, selected }: NodeProps) {
         type="target"
         position={isTopToBottom ? Position.Top : Position.Bottom}
         id="target"
-      />
-
-      {/* Junction indicator */}
-      {framework.supportsJunctions && degrees.indegree >= 2 && (
-        <div
-          className="junction-indicator"
-          style={{
-            top: isTopToBottom ? -16 : undefined,
-            bottom: isTopToBottom ? undefined : -16,
-            left: '50%',
-            transform: 'translateX(-50%)',
-          }}
-        >
-          {nodeData.junctionType === 'and' ? (
-            <>
-              <div
-                className="junction-bar"
-                style={{
-                  width: '40px',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              />
-            </>
-          ) : (
-            <span style={{ fontSize: '0.55rem' }}>OR</span>
-          )}
-        </div>
-      )}
+        className={framework.supportsJunctions && degrees.indegree >= 2 ? 'junction-handle nodrag' : ''}
+        onClick={framework.supportsJunctions && degrees.indegree >= 2 ? handleJunctionToggle : undefined}
+        title={framework.supportsJunctions && degrees.indegree >= 2 ? `Junction: ${nodeData.junctionType.toUpperCase()} — click to toggle` : undefined}
+      >
+        {framework.supportsJunctions && degrees.indegree >= 2 && nodeData.junctionType === 'and' && (
+          <span className="junction-symbol">&</span>
+        )}
+      </Handle>
 
       <div className="entity-node-body">
         {editing ? (
