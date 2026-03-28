@@ -437,13 +437,30 @@ body {
 
 /* Side panel */
 .side-panel {
-  width: 320px;
-  min-width: 320px;
   height: 100%;
   background: var(--surface);
   border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  position: relative;
+  min-width: 240px;
+  max-width: 600px;
+}
+
+.side-panel-resize {
+  position: absolute;
+  left: -3px;
+  top: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+}
+
+.side-panel-resize:hover,
+.side-panel-resize.dragging {
+  background: var(--accent);
+  opacity: 0.15;
 }
 
 .side-panel-top {
@@ -727,11 +744,28 @@ body {
   background: var(--accent) !important;
 }
 
+/* Base edge styling */
 .react-flow__edge-path {
   stroke: var(--text-soft) !important;
   stroke-width: 2 !important;
+}
+
+/* High confidence: solid line */
+.edge-confidence-high .react-flow__edge-path {
+  stroke-dasharray: none;
+}
+
+/* Medium confidence: dashed with flow animation */
+.edge-confidence-medium .react-flow__edge-path {
   stroke-dasharray: 8 4;
   animation: edge-flow 0.6s linear infinite;
+}
+
+/* Low confidence: dotted, reduced opacity */
+.edge-confidence-low .react-flow__edge-path {
+  stroke-dasharray: 3 4;
+  opacity: 0.5;
+  animation: edge-flow 0.8s linear infinite;
 }
 
 @keyframes edge-flow {
@@ -864,6 +898,37 @@ body {
   color: var(--text-soft);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+/* Confidence line preview in context menu */
+.confidence-line-preview {
+  display: inline-block;
+  width: 1.25rem;
+  height: 2px;
+  background: var(--text);
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+.confidence-line-preview[data-level="medium"] {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--text) 0px,
+    var(--text) 5px,
+    transparent 5px,
+    transparent 8px
+  );
+}
+
+.confidence-line-preview[data-level="low"] {
+  opacity: 0.5;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--text) 0px,
+    var(--text) 2px,
+    transparent 2px,
+    transparent 5px
+  );
 }
 
 /* AI modified dot */

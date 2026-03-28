@@ -78,6 +78,7 @@ export default function DiagramCanvas() {
         sourceHandle: 'source',
         targetHandle: 'target',
         pathOptions: { borderRadius: 100 },
+        className: `edge-confidence-${e.confidence ?? 'high'}`,
       })),
     [diagram.edges],
   );

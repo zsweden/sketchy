@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export interface Diagram {
   schemaVersion: number;
@@ -28,10 +28,13 @@ export interface DiagramNode {
   };
 }
 
+export type EdgeConfidence = 'high' | 'medium' | 'low';
+
 export interface DiagramEdge {
   id: string;
   source: string;
   target: string;
+  confidence?: EdgeConfidence;
 }
 
 export function createEmptyDiagram(frameworkId: string, id?: string): Diagram {

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Diagram, DiagramEdge, DiagramNode, DiagramSettings } from '../core/types';
+import type { Diagram, DiagramEdge, DiagramNode, DiagramSettings, EdgeConfidence } from '../core/types';
 import { createEmptyDiagram } from '../core/types';
 import type { Framework } from '../core/framework-types';
 import { getFramework } from '../frameworks/registry';
@@ -30,6 +30,7 @@ interface DiagramState {
   // Edge operations
   addEdge: (source: string, target: string) => { success: boolean; reason?: string };
   deleteEdges: (ids: string[]) => void;
+  setEdgeConfidence: (id: string, confidence: EdgeConfidence) => void;
 
   // Diagram operations
   setFramework: (frameworkId: string) => void;
@@ -238,6 +239,22 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       diagram: {
         ...s.diagram,
         edges: s.diagram.edges.filter((e) => !idSet.has(e.id)),
+      },
+      canUndo: true,
+      canRedo: false,
+    }));
+  },
+
+  setEdgeConfidence: (id, confidence) => {
+    const state = get();
+    history.push(snapshot(state));
+
+    set((s) => ({
+      diagram: {
+        ...s.diagram,
+        edges: s.diagram.edges.map((e) =>
+          e.id === id ? { ...e, confidence } : e,
+        ),
       },
       canUndo: true,
       canRedo: false,

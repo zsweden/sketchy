@@ -1,4 +1,4 @@
-import type { Diagram, DiagramNode, DiagramEdge } from '../types';
+import type { Diagram, DiagramNode, DiagramEdge, EdgeConfidence } from '../types';
 import { SCHEMA_VERSION } from '../types';
 
 // --- Unified .sky format types ---
@@ -16,6 +16,7 @@ interface SkyNode {
 interface SkyEdge {
   source: string;
   target: string;
+  confidence?: EdgeConfidence;
 }
 
 interface SkyJunction {
@@ -81,6 +82,7 @@ export function convertSkyJson(data: SkyJson): { diagram: Diagram; needsLayout: 
     id: `e${i + 1}`,
     source: e.source,
     target: e.target,
+    ...(e.confidence ? { confidence: e.confidence } : {}),
   }));
 
   const diagram: Diagram = {
@@ -134,6 +136,7 @@ export function diagramToSkyJson(diagram: Diagram): SkyJson {
   const edges: SkyEdge[] = diagram.edges.map((e) => ({
     source: e.source,
     target: e.target,
+    ...(e.confidence && e.confidence !== 'high' ? { confidence: e.confidence } : {}),
   }));
 
   const junctions: SkyJunction[] = [];

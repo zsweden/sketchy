@@ -28,6 +28,7 @@ export default function ContextMenu() {
   const updateNodeTags = useDiagramStore((s) => s.updateNodeTags);
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
   const updateNodeColor = useDiagramStore((s) => s.updateNodeColor);
+  const setEdgeConfidence = useDiagramStore((s) => s.setEdgeConfidence);
 
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -150,16 +151,40 @@ export default function ContextMenu() {
           </button>
         </>
       ) : edge ? (
-        <button
-          className="context-menu-item context-menu-item--danger"
-          onClick={() => {
-            deleteEdges([edge.id]);
-            closeContextMenu();
-          }}
-        >
-          <Trash2 size={14} />
-          Delete connection
-        </button>
+        <>
+          <div className="context-menu-label">Confidence</div>
+          {(['high', 'medium', 'low'] as const).map((level) => {
+            const current = edge.confidence ?? 'high';
+            return (
+              <button
+                key={level}
+                className="context-menu-item"
+                onClick={() => {
+                  setEdgeConfidence(edge.id, level);
+                  closeContextMenu();
+                }}
+              >
+                <span
+                  className="confidence-line-preview"
+                  data-level={level}
+                />
+                {level.charAt(0).toUpperCase() + level.slice(1)}
+                {current === level && <Check size={14} style={{ marginLeft: 'auto' }} />}
+              </button>
+            );
+          })}
+          <div className="context-menu-separator" />
+          <button
+            className="context-menu-item context-menu-item--danger"
+            onClick={() => {
+              deleteEdges([edge.id]);
+              closeContextMenu();
+            }}
+          >
+            <Trash2 size={14} />
+            Delete connection
+          </button>
+        </>
       ) : (
         <button
           className="context-menu-item"

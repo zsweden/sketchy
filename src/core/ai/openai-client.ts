@@ -208,8 +208,8 @@ export function streamChatMessage(
 
         for (const line of lines) {
           const trimmed = line.trim();
-          if (!trimmed || !trimmed.startsWith('data: ')) continue;
-          const data = trimmed.slice(6);
+          if (!trimmed || !trimmed.startsWith('data:')) continue;
+          const data = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed.slice(5);
           if (data === '[DONE]') continue;
 
           try {
@@ -237,18 +237,23 @@ export function streamChatMessage(
 
       // Finalize
       if (toolCallName === 'modify_diagram' && toolCallArgs) {
-        const args = JSON.parse(toolCallArgs);
-        const modifications: DiagramModification = {
-          addNodes: args.addNodes ?? [],
-          updateNodes: args.updateNodes ?? [],
-          removeNodeIds: args.removeNodeIds ?? [],
-          addEdges: args.addEdges ?? [],
-          removeEdgeIds: args.removeEdgeIds ?? [],
-        };
-        callbacks.onDone({
-          text: args.explanation ?? 'Changes applied.',
-          modifications,
-        });
+        try {
+          const args = JSON.parse(toolCallArgs);
+          const modifications: DiagramModification = {
+            addNodes: args.addNodes ?? [],
+            updateNodes: args.updateNodes ?? [],
+            removeNodeIds: args.removeNodeIds ?? [],
+            addEdges: args.addEdges ?? [],
+            removeEdgeIds: args.removeEdgeIds ?? [],
+          };
+          callbacks.onDone({
+            text: args.explanation ?? 'Changes applied.',
+            modifications,
+          });
+        } catch {
+          // Tool call arguments were malformed — treat as plain text response
+          callbacks.onDone({ text: contentText || 'The AI suggested changes but they could not be parsed. Please try again.' });
+        }
       } else {
         callbacks.onDone({ text: contentText });
       }
