@@ -1,36 +1,49 @@
 import type { Diagram, DiagramNode, DiagramEdge } from '../types';
 import { SCHEMA_VERSION } from '../types';
 
-interface CausalNode {
+// --- Unified .sky format types ---
+
+interface SkyNode {
   id: string;
   label: string;
   isUDE?: boolean;
   notes?: string;
+  color?: string;
+  x?: number;
+  y?: number;
 }
 
-interface CausalEdge {
+interface SkyEdge {
   source: string;
   target: string;
 }
 
-interface CausalJunction {
+interface SkyJunction {
   target: string;
   type: 'and';
   sources: string[];
 }
 
-interface CausalJson {
-  nodes: CausalNode[];
-  edges: CausalEdge[];
-  junctions?: CausalJunction[];
+export interface SkyJson {
+  name?: string;
+  framework?: string;
+  direction?: 'TB' | 'BT';
+  showGrid?: boolean;
+  version?: number;
+  createdAt?: string;
+  nodes: SkyNode[];
+  edges: SkyEdge[];
+  junctions?: SkyJunction[];
 }
 
-export function isCausalJson(data: unknown): data is CausalJson {
+// --- Detection ---
+
+export function isSkyJson(data: unknown): data is SkyJson {
   if (typeof data !== 'object' || data === null) return false;
   const d = data as Record<string, unknown>;
 
-  // Reject full diagram format
-  if ('schemaVersion' in d) return false;
+  // Reject old .sky wrapper format and raw diagram format
+  if ('format' in d || 'schemaVersion' in d) return false;
 
   if (!Array.isArray(d.nodes) || !Array.isArray(d.edges)) return false;
 
@@ -40,20 +53,27 @@ export function isCausalJson(data: unknown): data is CausalJson {
   return typeof first.label === 'string';
 }
 
-export function convertCausalJson(data: CausalJson): Diagram {
+// --- Convert from SkyJson → internal Diagram ---
+
+export function convertSkyJson(data: SkyJson): { diagram: Diagram; needsLayout: boolean } {
   const andTargets = new Set(
     (data.junctions ?? []).map((j) => j.target),
+  );
+
+  const allHavePositions = data.nodes.every(
+    (n) => typeof n.x === 'number' && typeof n.y === 'number',
   );
 
   const nodes: DiagramNode[] = data.nodes.map((n) => ({
     id: n.id,
     type: 'entity' as const,
-    position: { x: 0, y: 0 },
+    position: { x: n.x ?? 0, y: n.y ?? 0 },
     data: {
       label: n.label,
       tags: n.isUDE ? ['ude'] : [],
       junctionType: andTargets.has(n.id) ? ('and' as const) : ('or' as const),
       ...(n.notes ? { notes: n.notes } : {}),
+      ...(n.color ? { color: n.color } : {}),
     },
   }));
 
@@ -63,16 +83,73 @@ export function convertCausalJson(data: CausalJson): Diagram {
     target: e.target,
   }));
 
-  return {
-    schemaVersion: SCHEMA_VERSION,
+  const diagram: Diagram = {
+    schemaVersion: data.version ?? SCHEMA_VERSION,
     id: crypto.randomUUID(),
-    name: 'Imported Diagram',
-    frameworkId: 'crt',
+    name: data.name ?? 'Untitled Diagram',
+    frameworkId: data.framework ?? 'crt',
     settings: {
-      layoutDirection: 'BT',
-      showGrid: true,
+      layoutDirection: data.direction ?? 'BT',
+      showGrid: data.showGrid ?? true,
     },
     nodes,
     edges,
+  };
+
+  return { diagram, needsLayout: !allHavePositions };
+}
+
+// --- Convert from internal Diagram → SkyJson for saving ---
+
+export function diagramToSkyJson(diagram: Diagram): SkyJson {
+  const andNodeIds = new Set<string>();
+  const junctionSources = new Map<string, string[]>();
+
+  // Build junction info from nodes with junctionType 'and' and 2+ incoming edges
+  const incomingMap = new Map<string, string[]>();
+  for (const e of diagram.edges) {
+    const arr = incomingMap.get(e.target) ?? [];
+    arr.push(e.source);
+    incomingMap.set(e.target, arr);
+  }
+
+  for (const node of diagram.nodes) {
+    const incoming = incomingMap.get(node.id) ?? [];
+    if (node.data.junctionType === 'and' && incoming.length >= 2) {
+      andNodeIds.add(node.id);
+      junctionSources.set(node.id, incoming);
+    }
+  }
+
+  const nodes: SkyNode[] = diagram.nodes.map((n) => ({
+    id: n.id,
+    label: n.data.label,
+    ...(n.data.tags.includes('ude') ? { isUDE: true } : {}),
+    ...(n.data.notes ? { notes: n.data.notes } : {}),
+    ...(n.data.color ? { color: n.data.color } : {}),
+    x: n.position.x,
+    y: n.position.y,
+  }));
+
+  const edges: SkyEdge[] = diagram.edges.map((e) => ({
+    source: e.source,
+    target: e.target,
+  }));
+
+  const junctions: SkyJunction[] = [];
+  for (const [target, sources] of junctionSources) {
+    junctions.push({ target, type: 'and', sources });
+  }
+
+  return {
+    name: diagram.name,
+    framework: diagram.frameworkId,
+    direction: diagram.settings.layoutDirection,
+    showGrid: diagram.settings.showGrid,
+    version: diagram.schemaVersion,
+    createdAt: new Date().toISOString(),
+    nodes,
+    edges,
+    ...(junctions.length > 0 ? { junctions } : {}),
   };
 }

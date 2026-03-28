@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { isCausalJson, convertCausalJson } from '../causal-json';
+import { isSkyJson, convertSkyJson, diagramToSkyJson } from '../causal-json';
+import { createEmptyDiagram } from '../../types';
 
 const minimal = {
   nodes: [
@@ -9,28 +10,28 @@ const minimal = {
   edges: [{ source: 'n1', target: 'n2' }],
 };
 
-describe('isCausalJson', () => {
-  it('detects valid causal JSON', () => {
-    expect(isCausalJson(minimal)).toBe(true);
+describe('isSkyJson', () => {
+  it('detects valid sky JSON', () => {
+    expect(isSkyJson(minimal)).toBe(true);
   });
 
   it('rejects null / non-objects', () => {
-    expect(isCausalJson(null)).toBe(false);
-    expect(isCausalJson('string')).toBe(false);
-    expect(isCausalJson(42)).toBe(false);
+    expect(isSkyJson(null)).toBe(false);
+    expect(isSkyJson('string')).toBe(false);
+    expect(isSkyJson(42)).toBe(false);
   });
 
   it('rejects objects without nodes array', () => {
-    expect(isCausalJson({ edges: [] })).toBe(false);
+    expect(isSkyJson({ edges: [] })).toBe(false);
   });
 
   it('rejects objects without edges array', () => {
-    expect(isCausalJson({ nodes: [{ id: 'n1', label: 'A' }] })).toBe(false);
+    expect(isSkyJson({ nodes: [{ id: 'n1', label: 'A' }] })).toBe(false);
   });
 
   it('rejects nodes missing label (looks like a regular diagram)', () => {
     expect(
-      isCausalJson({
+      isSkyJson({
         nodes: [{ id: 'n1', data: { label: 'A' } }],
         edges: [],
       }),
@@ -39,33 +40,34 @@ describe('isCausalJson', () => {
 
   it('rejects data that has schemaVersion (full diagram format)', () => {
     expect(
-      isCausalJson({ ...minimal, schemaVersion: 1, id: 'x', frameworkId: 'crt' }),
+      isSkyJson({ ...minimal, schemaVersion: 1, id: 'x', frameworkId: 'crt' }),
     ).toBe(false);
+  });
+
+  it('accepts format with optional top-level fields', () => {
+    expect(isSkyJson({ ...minimal, name: 'My Diagram', direction: 'TB' })).toBe(true);
   });
 });
 
-describe('convertCausalJson', () => {
+describe('convertSkyJson', () => {
   it('converts nodes with correct structure', () => {
-    const diagram = convertCausalJson(minimal);
+    const { diagram } = convertSkyJson(minimal);
 
     expect(diagram.nodes).toHaveLength(2);
     const n1 = diagram.nodes.find((n) => n.id === 'n1')!;
     expect(n1.type).toBe('entity');
     expect(n1.data.label).toBe('Root cause');
     expect(n1.data.tags).toEqual([]);
-
   });
 
   it('maps isUDE to ude tag', () => {
-    const diagram = convertCausalJson(minimal);
-
+    const { diagram } = convertSkyJson(minimal);
     const n2 = diagram.nodes.find((n) => n.id === 'n2')!;
     expect(n2.data.tags).toEqual(['ude']);
   });
 
   it('generates edge IDs', () => {
-    const diagram = convertCausalJson(minimal);
-
+    const { diagram } = convertSkyJson(minimal);
     expect(diagram.edges).toHaveLength(1);
     expect(diagram.edges[0].source).toBe('n1');
     expect(diagram.edges[0].target).toBe('n2');
@@ -73,19 +75,25 @@ describe('convertCausalJson', () => {
   });
 
   it('defaults to CRT framework', () => {
-    const diagram = convertCausalJson(minimal);
+    const { diagram } = convertSkyJson(minimal);
     expect(diagram.frameworkId).toBe('crt');
   });
 
-  it('sets schemaVersion and generates id', () => {
-    const diagram = convertCausalJson(minimal);
-    expect(diagram.schemaVersion).toBe(1);
-    expect(diagram.id).toBeTruthy();
+  it('uses optional top-level fields', () => {
+    const { diagram } = convertSkyJson({
+      ...minimal,
+      name: 'My Tree',
+      framework: 'crt',
+      direction: 'TB',
+      showGrid: false,
+    });
+    expect(diagram.name).toBe('My Tree');
+    expect(diagram.settings.layoutDirection).toBe('TB');
+    expect(diagram.settings.showGrid).toBe(false);
   });
 
   it('defaults junctionType to or', () => {
-    const diagram = convertCausalJson(minimal);
-
+    const { diagram } = convertSkyJson(minimal);
     for (const node of diagram.nodes) {
       expect(node.data.junctionType).toBe('or');
     }
@@ -102,57 +110,98 @@ describe('convertCausalJson', () => {
         { source: 'n1', target: 'n3' },
         { source: 'n2', target: 'n3' },
       ],
-      junctions: [{ target: 'n3', type: 'and', sources: ['n1', 'n2'] }],
+      junctions: [{ target: 'n3', type: 'and' as const, sources: ['n1', 'n2'] }],
     };
 
-    const diagram = convertCausalJson(data);
+    const { diagram } = convertSkyJson(data);
     const n3 = diagram.nodes.find((n) => n.id === 'n3')!;
     expect(n3.data.junctionType).toBe('and');
   });
 
-  it('handles missing junctions array gracefully', () => {
-    const data = {
-      nodes: [{ id: 'n1', label: 'A' }],
-      edges: [],
-    };
-
-    const diagram = convertCausalJson(data);
-    expect(diagram.nodes[0].data.junctionType).toBe('or');
+  it('needs layout when no positions', () => {
+    const { needsLayout } = convertSkyJson(minimal);
+    expect(needsLayout).toBe(true);
   });
 
-  it('converts the full scenario1 format', () => {
-    const scenario = {
+  it('skips layout when all nodes have positions', () => {
+    const { needsLayout } = convertSkyJson({
       nodes: [
-        { id: 'n1', label: 'Monolithic legacy architecture' },
-        { id: 'n2', label: 'High technical debt' },
-        { id: 'n5', label: 'Slow release cycles', isUDE: true },
-        { id: 'n6', label: 'Tests tied to implementation details' },
-        { id: 'n7', label: 'Underpowered CI infrastructure' },
-        { id: 'n8', label: 'Unreliable test suite' },
+        { id: 'n1', label: 'A', x: 0, y: 0 },
+        { id: 'n2', label: 'B', x: 100, y: 100 },
       ],
-      edges: [
-        { source: 'n1', target: 'n2' },
-        { source: 'n6', target: 'n8' },
-        { source: 'n7', target: 'n8' },
+      edges: [{ source: 'n1', target: 'n2' }],
+    });
+    expect(needsLayout).toBe(false);
+  });
+
+  it('needs layout when some nodes missing positions', () => {
+    const { needsLayout } = convertSkyJson({
+      nodes: [
+        { id: 'n1', label: 'A', x: 0, y: 0 },
+        { id: 'n2', label: 'B' },
       ],
-      junctions: [
-        { target: 'n8', type: 'and', sources: ['n6', 'n7'] },
-      ],
-    };
+      edges: [{ source: 'n1', target: 'n2' }],
+    });
+    expect(needsLayout).toBe(true);
+  });
 
-    const diagram = convertCausalJson(scenario);
+  it('preserves notes', () => {
+    const { diagram } = convertSkyJson({
+      nodes: [{ id: 'n1', label: 'A', notes: 'some note' }],
+      edges: [],
+    });
+    expect(diagram.nodes[0].data.notes).toBe('some note');
+  });
+});
 
-    expect(diagram.nodes).toHaveLength(6);
-    expect(diagram.edges).toHaveLength(3);
+describe('diagramToSkyJson', () => {
+  it('round-trips a diagram', () => {
+    const diagram = createEmptyDiagram('crt');
+    diagram.nodes = [
+      { id: 'n1', type: 'entity', position: { x: 10, y: 20 }, data: { label: 'Root', tags: ['ude'], junctionType: 'or', notes: 'a note' } },
+      { id: 'n2', type: 'entity', position: { x: 30, y: 40 }, data: { label: 'Effect', tags: [], junctionType: 'or' } },
+    ];
+    diagram.edges = [{ id: 'e1', source: 'n1', target: 'n2' }];
 
-    const n5 = diagram.nodes.find((n) => n.id === 'n5')!;
-    expect(n5.data.tags).toEqual(['ude']);
+    const skyJson = diagramToSkyJson(diagram);
 
-    const n8 = diagram.nodes.find((n) => n.id === 'n8')!;
-    expect(n8.data.junctionType).toBe('and');
+    expect(skyJson.nodes).toHaveLength(2);
+    expect(skyJson.nodes[0].label).toBe('Root');
+    expect(skyJson.nodes[0].isUDE).toBe(true);
+    expect(skyJson.nodes[0].x).toBe(10);
+    expect(skyJson.nodes[0].y).toBe(20);
+    expect(skyJson.nodes[0].notes).toBe('a note');
+    expect(skyJson.edges).toHaveLength(1);
+    expect(skyJson.edges[0].source).toBe('n1');
+  });
 
-    const n1 = diagram.nodes.find((n) => n.id === 'n1')!;
-    expect(n1.data.tags).toEqual([]);
-    expect(n1.data.junctionType).toBe('or');
+  it('includes junctions for AND nodes with 2+ incoming', () => {
+    const diagram = createEmptyDiagram('crt');
+    diagram.nodes = [
+      { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'A', tags: [], junctionType: 'or' } },
+      { id: 'n2', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'B', tags: [], junctionType: 'or' } },
+      { id: 'n3', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'C', tags: [], junctionType: 'and' } },
+    ];
+    diagram.edges = [
+      { id: 'e1', source: 'n1', target: 'n3' },
+      { id: 'e2', source: 'n2', target: 'n3' },
+    ];
+
+    const skyJson = diagramToSkyJson(diagram);
+    expect(skyJson.junctions).toHaveLength(1);
+    expect(skyJson.junctions![0].target).toBe('n3');
+    expect(skyJson.junctions![0].sources).toContain('n1');
+    expect(skyJson.junctions![0].sources).toContain('n2');
+  });
+
+  it('omits junctions when none exist', () => {
+    const diagram = createEmptyDiagram('crt');
+    diagram.nodes = [
+      { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'A', tags: [], junctionType: 'or' } },
+    ];
+    diagram.edges = [];
+
+    const skyJson = diagramToSkyJson(diagram);
+    expect(skyJson.junctions).toBeUndefined();
   });
 });

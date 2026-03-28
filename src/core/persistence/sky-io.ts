@@ -1,28 +1,8 @@
 import type { Diagram } from '../types';
-import { SCHEMA_VERSION } from '../types';
 import { getFramework } from '../../frameworks/registry';
 import { validateGraph } from '../graph/validation';
 import { migrate, validateDiagramShape } from './schema';
-import { isCausalJson, convertCausalJson } from './causal-json';
-import { buildSkyMeta, type SkyFileMeta } from './sky-meta';
-
-interface SkyFile {
-  format: 'sky';
-  meta?: SkyFileMeta;
-  version: number;
-  createdAt: string;
-  diagram: Diagram;
-}
-
-function buildSkyFile(diagram: Diagram): SkyFile {
-  return {
-    format: 'sky',
-    meta: buildSkyMeta(diagram),
-    version: SCHEMA_VERSION,
-    createdAt: new Date().toISOString(),
-    diagram,
-  };
-}
+import { isSkyJson, convertSkyJson, diagramToSkyJson } from './causal-json';
 
 function defaultFilename(diagram: Diagram): string {
   const name = diagram.name?.trim() || 'diagram';
@@ -46,8 +26,8 @@ interface FileSystemFileHandle {
 }
 
 export async function saveSkyFile(diagram: Diagram): Promise<void> {
-  const skyFile = buildSkyFile(diagram);
-  const json = JSON.stringify(skyFile, null, 2);
+  const skyJson = diagramToSkyJson(diagram);
+  const json = JSON.stringify(skyJson, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
 
   // Try modern File System Access API first
@@ -105,8 +85,14 @@ export async function loadSkyFile(file: File): Promise<LoadResult> {
   let diagram: Diagram;
   let needsLayout = false;
 
-  // Check if it's a .sky wrapper format
-  if (
+  // New unified format (flat JSON with nodes[].label)
+  if (isSkyJson(parsed)) {
+    const result = convertSkyJson(parsed);
+    diagram = result.diagram;
+    needsLayout = result.needsLayout;
+  }
+  // Legacy .sky wrapper format (has format: 'sky')
+  else if (
     typeof parsed === 'object' &&
     parsed !== null &&
     (parsed as Record<string, unknown>).format === 'sky'
@@ -118,12 +104,7 @@ export async function loadSkyFile(file: File): Promise<LoadResult> {
     }
     diagram = migrate(inner as Record<string, unknown>);
   }
-  // Accept causal JSON format (AI-generated CRT output)
-  else if (isCausalJson(parsed)) {
-    diagram = convertCausalJson(parsed);
-    needsLayout = true;
-  }
-  // Also accept raw diagram JSON (backwards compat with .json exports)
+  // Legacy raw diagram JSON (has schemaVersion)
   else if (validateDiagramShape(parsed)) {
     diagram = migrate(parsed as Record<string, unknown>);
   } else {
