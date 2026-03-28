@@ -69,7 +69,7 @@ describe('diagram store', () => {
       expect(result.reason).toContain('cycle');
     });
 
-    it('defaults junction to AND when second edge arrives', () => {
+    it('defaults junction to OR when second edge arrives', () => {
       const id1 = useDiagramStore.getState().addNode({ x: 0, y: 0 });
       const id2 = useDiagramStore.getState().addNode({ x: 100, y: 0 });
       const id3 = useDiagramStore.getState().addNode({ x: 50, y: 100 });
@@ -78,7 +78,7 @@ describe('diagram store', () => {
       useDiagramStore.getState().addEdge(id2, id3);
 
       const node3 = useDiagramStore.getState().diagram.nodes.find((n) => n.id === id3);
-      expect(node3?.data.junctionType).toBe('and');
+      expect(node3?.data.junctionType).toBe('or');
     });
   });
 

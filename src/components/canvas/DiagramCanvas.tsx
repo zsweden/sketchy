@@ -20,6 +20,7 @@ import '@xyflow/react/dist/style.css';
 import EntityNode from './EntityNode';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
+import { FIT_VIEW_OPTIONS } from '../../core/layout/fit-view-options';
 import { computeNodeDegrees, getDerivedIndicators } from '../../core/graph/derived';
 
 const nodeTypes = { entity: EntityNode };
@@ -108,7 +109,6 @@ export default function DiagramCanvas() {
   // Fit view when requested (load, import, new, tab switch, auto-layout)
   const fitViewTrigger = useUIStore((s) => s.fitViewTrigger);
   const pendingFitView = useRef(false);
-  const fitViewOpts = { padding: 0.15, duration: 300, maxZoom: 1.5 };
   useEffect(() => {
     if (fitViewTrigger === 0) return;
     pendingFitView.current = true;
@@ -121,7 +121,7 @@ export default function DiagramCanvas() {
       frame2 = requestAnimationFrame(() => {
         if (pendingFitView.current) {
           pendingFitView.current = false;
-          fitView(fitViewOpts);
+          fitView(FIT_VIEW_OPTIONS);
         }
       });
     });
@@ -164,7 +164,7 @@ export default function DiagramCanvas() {
           pendingFitView.current = false;
           // Use rAF to run after this render cycle completes
           requestAnimationFrame(() => {
-            fitView(fitViewOpts);
+            fitView(FIT_VIEW_OPTIONS);
           });
         }
       }
@@ -273,7 +273,7 @@ export default function DiagramCanvas() {
       onEdgeContextMenu={onEdgeContextMenu}
       onPaneClick={onPaneClickHandler}
       fitView
-      fitViewOptions={fitViewOpts}
+      fitViewOptions={FIT_VIEW_OPTIONS}
       deleteKeyCode={['Backspace', 'Delete']}
       multiSelectionKeyCode="Shift"
       selectionOnDrag={!isPanMode}
@@ -287,7 +287,7 @@ export default function DiagramCanvas() {
       {diagram.settings.showGrid && (
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
       )}
-      <Controls fitViewOptions={fitViewOpts} />
+      <Controls fitViewOptions={FIT_VIEW_OPTIONS} />
       <MiniMap
         pannable
         zoomable
