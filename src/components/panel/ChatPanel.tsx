@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Send, Square, Trash2, Copy, Check } from 'lucide-react';
+import { Send, Square, Trash2, Copy, Check, Paperclip, X } from 'lucide-react';
 import { useChatStore } from '../../store/chat-store';
 
 function CopyButton({ text }: { text: string }) {
@@ -33,7 +33,11 @@ export default function ChatPanel() {
   const clearMessages = useChatStore((s) => s.clearMessages);
 
   const [input, setInput] = useState('');
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [attachedFile, setAttachedFile] = useState<{ name: string; content: string } | null>(null);
+  const queryHistory = useRef<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -42,20 +46,62 @@ export default function ChatPanel() {
   const handleSend = useCallback(() => {
     const trimmed = input.trim();
     if (!trimmed || loading) return;
+    queryHistory.current.push(trimmed);
+    setHistoryIndex(-1);
     setInput('');
-    sendMessage(trimmed);
-  }, [input, loading, sendMessage]);
+
+    let message = trimmed;
+    if (attachedFile) {
+      message = `[Attached file: ${attachedFile.name}]\n\`\`\`\n${attachedFile.content}\n\`\`\`\n\n${trimmed}`;
+      setAttachedFile(null);
+    }
+
+    sendMessage(message);
+  }, [input, loading, sendMessage, attachedFile]);
+
+  const handleAttach = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    file.text().then((content) => {
+      setAttachedFile({ name: file.name, content });
+    });
+    // Reset so the same file can be re-selected
+    e.target.value = '';
+  }, []);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         handleSend();
+      } else if (e.key === 'ArrowUp') {
+        const history = queryHistory.current;
+        if (history.length === 0) return;
+        e.preventDefault();
+        const nextIndex = historyIndex === -1 ? history.length - 1 : Math.max(0, historyIndex - 1);
+        setHistoryIndex(nextIndex);
+        setInput(history[nextIndex]);
+      } else if (e.key === 'ArrowDown') {
+        const history = queryHistory.current;
+        if (historyIndex === -1) return;
+        e.preventDefault();
+        const nextIndex = historyIndex + 1;
+        if (nextIndex >= history.length) {
+          setHistoryIndex(-1);
+          setInput('');
+        } else {
+          setHistoryIndex(nextIndex);
+          setInput(history[nextIndex]);
+        }
       }
       // Prevent React Flow from intercepting keys
       e.stopPropagation();
     },
-    [handleSend],
+    [handleSend, historyIndex],
   );
 
   return (
@@ -106,36 +152,68 @@ export default function ChatPanel() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="chat-input-row">
-        <textarea
-          className="chat-input"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask about your diagram..."
-          rows={1}
-          disabled={loading}
-        />
-        {loading ? (
-          <button
-            className="btn btn-secondary btn-icon-sm"
-            onClick={cancelStream}
-            title="Stop"
-            aria-label="Stop generating"
-          >
-            <Square size={11} />
-          </button>
-        ) : (
-          <button
-            className="btn btn-secondary btn-icon-sm"
-            onClick={handleSend}
-            disabled={!input.trim()}
-            title="Send"
-            aria-label="Send message"
-          >
-            <Send size={13} />
-          </button>
+      <div className="chat-input-area">
+        {attachedFile && (
+          <div className="chat-file-chip">
+            <Paperclip size={11} />
+            <span className="chat-file-chip-name">{attachedFile.name}</span>
+            <button
+              className="chat-file-chip-remove"
+              onClick={() => setAttachedFile(null)}
+              aria-label="Remove attachment"
+            >
+              <X size={11} />
+            </button>
+          </div>
         )}
+        <div className="chat-input-row">
+          <input
+            ref={fileInputRef}
+            type="file"
+            onChange={handleFileChange}
+            accept=".txt,.json,.sky,.csv,.md,.ts,.tsx,.js,.jsx,.html,.css,.yml,.yaml,.xml,.log"
+            style={{ display: 'none' }}
+          />
+          {!loading && (
+            <button
+              className="btn btn-ghost btn-icon-sm"
+              onClick={handleAttach}
+              title="Attach file"
+              aria-label="Attach file"
+            >
+              <Paperclip size={13} />
+            </button>
+          )}
+          <textarea
+            className="chat-input"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask about your diagram..."
+            rows={1}
+            disabled={loading}
+          />
+          {loading ? (
+            <button
+              className="btn btn-secondary btn-icon-sm"
+              onClick={cancelStream}
+              title="Stop"
+              aria-label="Stop generating"
+            >
+              <Square size={11} />
+            </button>
+          ) : (
+            <button
+              className="btn btn-secondary btn-icon-sm"
+              onClick={handleSend}
+              disabled={!input.trim()}
+              title="Send"
+              aria-label="Send message"
+            >
+              <Send size={13} />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

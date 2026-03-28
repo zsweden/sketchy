@@ -19,8 +19,9 @@ export const elkEngine: LayoutEngine = async (nodes, edges, options) => {
       'elk.direction': DIRECTION_MAP[options.direction] ?? 'DOWN',
       'elk.spacing.nodeNode': String(NODE_SEP),
       'elk.layered.spacing.nodeNodeBetweenLayers': String(RANK_SEP),
+      'elk.separateConnectedComponents': 'true',
       'elk.spacing.componentComponent': String(RANK_SEP),
-      'elk.layered.compaction.connectedComponents': 'true',
+      'elk.aspectRatio': '2.5',
       ...(hasPositions && {
         'elk.layered.crossingMinimization.semiInteractive': 'true',
       }),

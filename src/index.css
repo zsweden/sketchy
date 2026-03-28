@@ -590,12 +590,49 @@ body {
   30% { opacity: 1; transform: translateY(-3px); }
 }
 
+.chat-input-area {
+  border-top: 1px solid var(--border);
+}
+
+.chat-file-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0.5rem 0.75rem 0;
+  padding: 0.2rem 0.5rem;
+  background: var(--secondary);
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  color: var(--text-soft);
+  width: fit-content;
+}
+
+.chat-file-chip-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-file-chip-remove {
+  background: none;
+  border: none;
+  color: var(--text-soft);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.chat-file-chip-remove:hover {
+  color: var(--text);
+}
+
 .chat-input-row {
   display: flex;
   align-items: flex-end;
   gap: 0.375rem;
   padding: 0.625rem 0.75rem;
-  border-top: 1px solid var(--border);
 }
 
 .chat-input {

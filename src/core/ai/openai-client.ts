@@ -196,7 +196,6 @@ export function streamChatMessage(
       messages: apiMessages,
       tools: [modifyDiagramTool],
       tool_choice: 'auto',
-      temperature: 0.2,
       stream: true,
     }),
     signal: controller.signal,
