@@ -608,7 +608,7 @@ body {
 }
 
 .junction-symbol {
-  font-size: 0.6rem;
+  font-size: 0.45rem;
   font-weight: 900;
   line-height: 1;
   color: var(--text);
