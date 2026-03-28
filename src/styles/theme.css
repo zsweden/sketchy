@@ -1,0 +1,53 @@
+:root {
+  color: #212121;
+  background: #F5F5EC;
+
+  --app-bg-top: #F5F5EC;
+  --app-bg-bottom: #EBE9E0;
+  --surface: rgba(255, 255, 255, 0.96);
+  --surface-muted: #F5F5EC;
+  --border: #E0DDD4;
+  --border-strong: #D4D0C6;
+  --text: #212121;
+  --text-muted: #6B6B6B;
+  --text-soft: #8A8A7A;
+  --accent: #212121;
+  --accent-hover: #3a3a3a;
+  --accent-shadow: rgba(33, 33, 33, 0.18);
+  --secondary: #E8E4DA;
+  --secondary-hover: #DDD8CC;
+  --shadow: 0 20px 45px rgba(33, 33, 33, 0.06);
+
+  --ude-color: #E57373;
+  --root-cause-color: #5C8DB5;
+  --intermediate-color: #9E9E9E;
+
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--app-bg-top) 0%, var(--app-bg-bottom) 100%);
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typography */
+.font-display {
+  font-family: 'Playfair Display', serif;
+}

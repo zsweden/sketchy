@@ -76,7 +76,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       baseUrl,
       model,
       diagram,
-      framework.name,
+      framework,
       history,
       {
         onToken: (token) => {
