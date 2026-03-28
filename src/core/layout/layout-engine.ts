@@ -35,9 +35,12 @@ export type LayoutEngine = (
   options: LayoutEngineOptions,
 ) => Promise<LayoutResult[]>;
 
-export function estimateHeight(label: string): number {
+const BADGE_ROW_HEIGHT = 20;
+
+export function estimateHeight(label: string, hasBadges = false): number {
   const charsPerLine = 30;
   const lineHeight = 24;
   const lines = Math.max(1, Math.ceil(label.length / charsPerLine));
-  return Math.max(MIN_NODE_HEIGHT, lines * lineHeight + 24);
+  const base = Math.max(MIN_NODE_HEIGHT, lines * lineHeight + 24);
+  return hasBadges ? base + BADGE_ROW_HEIGHT : base;
 }

@@ -101,6 +101,47 @@ describe('loadSkyFile', () => {
     expect(result.warnings[0]).toContain('Dropped');
   });
 
+  it('loads causal JSON format', async () => {
+    const causal = {
+      nodes: [
+        { id: 'n1', label: 'Root cause' },
+        { id: 'n2', label: 'Effect', isUDE: true },
+      ],
+      edges: [{ source: 'n1', target: 'n2' }],
+    };
+
+    const result = await loadSkyFile(makeFile(JSON.stringify(causal), 'test.json'));
+
+    expect(result.diagram.nodes).toHaveLength(2);
+    expect(result.diagram.edges).toHaveLength(1);
+    expect(result.diagram.frameworkId).toBe('crt');
+    expect(result.diagram.nodes.find((n) => n.id === 'n2')?.data.tags).toEqual([
+      'ude',
+    ]);
+    expect(result.warnings).toHaveLength(0);
+  });
+
+  it('loads causal JSON with junctions', async () => {
+    const causal = {
+      nodes: [
+        { id: 'n1', label: 'A' },
+        { id: 'n2', label: 'B' },
+        { id: 'n3', label: 'C' },
+      ],
+      edges: [
+        { source: 'n1', target: 'n3' },
+        { source: 'n2', target: 'n3' },
+      ],
+      junctions: [{ target: 'n3', type: 'and', sources: ['n1', 'n2'] }],
+    };
+
+    const result = await loadSkyFile(makeFile(JSON.stringify(causal), 'test.json'));
+
+    expect(result.diagram.nodes.find((n) => n.id === 'n3')?.data.junctionType).toBe(
+      'and',
+    );
+  });
+
   it('warns about unknown framework', async () => {
     const diagram = makeDiagram();
     diagram.frameworkId = 'unknown-framework';

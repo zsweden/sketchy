@@ -1,7 +1,7 @@
 import type { DiagramNode, DiagramEdge } from '../types';
 import type { LayoutDirection } from '../framework-types';
 import type { LayoutEngine } from './layout-engine';
-import { NODE_WIDTH, MIN_NODE_HEIGHT, estimateHeight } from './layout-engine';
+import { NODE_WIDTH, estimateHeight } from './layout-engine';
 
 export interface AutoLayoutOptions {
   direction: LayoutDirection;
@@ -19,12 +19,17 @@ export async function autoLayout(
   options: AutoLayoutOptions,
   engine: LayoutEngine,
 ): Promise<NodePositionUpdate[]> {
-  const inputs = nodes.map((n) => ({
-    id: n.id,
-    width: NODE_WIDTH,
-    height: estimateHeight(n.data.label),
-    position: n.position,
-  }));
+  const degrees = computeDegrees(nodes, edges);
+  const nodeHeights = new Map<string, number>();
+  const inputs = nodes.map((n) => {
+    const deg = degrees.get(n.id) ?? { indegree: 0, outdegree: 0 };
+    const hasBadges = n.data.tags.length > 0
+      || (deg.indegree === 0 && deg.outdegree > 0)   // source (e.g. Root Cause)
+      || (deg.indegree > 0 && deg.outdegree > 0);    // intermediate
+    const height = estimateHeight(n.data.label, hasBadges);
+    nodeHeights.set(n.id, height);
+    return { id: n.id, width: NODE_WIDTH, height, position: n.position };
+  });
   const edgeInputs = edges.map((e) => ({ source: e.source, target: e.target }));
 
   const results = await engine(inputs, edgeInputs, { direction: options.direction });
@@ -40,13 +45,14 @@ export async function autoLayout(
       .map((n) => ({ id: n.id, position: enginePositions.get(n.id)! }));
   }
 
-  return applyPinnedOffsets(nodes, enginePositions);
+  return applyPinnedOffsets(nodes, enginePositions, nodeHeights);
 }
 
 /** Compute a single global translation from pinned nodes, apply to unpinned, then resolve overlaps. */
 function applyPinnedOffsets(
   nodes: DiagramNode[],
   enginePositions: Map<string, { x: number; y: number }>,
+  nodeHeights: Map<string, number>,
 ): NodePositionUpdate[] {
   const pinnedNodes = nodes.filter((n) => n.pinned && enginePositions.has(n.id));
 
@@ -81,7 +87,7 @@ function applyPinnedOffsets(
     }
   }
 
-  resolveOverlapsWithPinned(updates, pinnedNodes);
+  resolveOverlapsWithPinned(updates, pinnedNodes, nodeHeights);
   return updates;
 }
 
@@ -89,20 +95,17 @@ function applyPinnedOffsets(
 function resolveOverlapsWithPinned(
   updates: NodePositionUpdate[],
   pinnedNodes: DiagramNode[],
+  nodeHeights: Map<string, number>,
 ): void {
-  const heights = new Map<string, number>();
-  for (const u of updates) heights.set(u.id, MIN_NODE_HEIGHT);
-  for (const p of pinnedNodes) heights.set(p.id, MIN_NODE_HEIGHT);
-
   const PADDING = 10;
   const MAX_PASSES = 5;
 
   for (let pass = 0; pass < MAX_PASSES; pass++) {
     let resolved = true;
     for (const update of updates) {
-      const uh = heights.get(update.id)!;
+      const uh = nodeHeights.get(update.id) ?? 48;
       for (const pinned of pinnedNodes) {
-        const ph = heights.get(pinned.id)!;
+        const ph = nodeHeights.get(pinned.id) ?? 48;
         const overlapX = getOverlap(
           update.position.x, NODE_WIDTH,
           pinned.position.x, NODE_WIDTH,
@@ -113,7 +116,6 @@ function resolveOverlapsWithPinned(
         );
         if (overlapX > 0 && overlapY > 0) {
           resolved = false;
-          // Push along the axis with less overlap (cheaper to resolve)
           if (overlapX < overlapY) {
             const dir = update.position.x >= pinned.position.x ? 1 : -1;
             update.position.x += dir * (overlapX + PADDING);
@@ -132,4 +134,21 @@ function getOverlap(aStart: number, aSize: number, bStart: number, bSize: number
   const aEnd = aStart + aSize;
   const bEnd = bStart + bSize;
   return Math.max(0, Math.min(aEnd, bEnd) - Math.max(aStart, bStart));
+}
+
+function computeDegrees(
+  nodes: DiagramNode[],
+  edges: DiagramEdge[],
+): Map<string, { indegree: number; outdegree: number }> {
+  const deg = new Map<string, { indegree: number; outdegree: number }>();
+  for (const n of nodes) {
+    deg.set(n.id, { indegree: 0, outdegree: 0 });
+  }
+  for (const e of edges) {
+    const s = deg.get(e.source);
+    if (s) s.outdegree++;
+    const t = deg.get(e.target);
+    if (t) t.indegree++;
+  }
+  return deg;
 }

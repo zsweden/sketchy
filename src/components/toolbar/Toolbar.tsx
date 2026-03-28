@@ -76,6 +76,18 @@ export default function Toolbar() {
       try {
         const result = await loadSkyFile(file);
         loadDiagram(result.diagram);
+
+        if (result.needsLayout) {
+          const loaded = useDiagramStore.getState().diagram;
+          const updates = await autoLayout(loaded.nodes, loaded.edges, {
+            direction: loaded.settings.layoutDirection,
+            respectPinned: true,
+          }, elkEngine);
+          if (updates.length > 0) {
+            moveNodesStore(updates);
+          }
+        }
+
         requestFitView();
         for (const warning of result.warnings) {
           addToast(warning, 'warning');
@@ -91,7 +103,7 @@ export default function Toolbar() {
       }
       e.target.value = '';
     },
-    [loadDiagram, addToast, requestFitView],
+    [loadDiagram, addToast, requestFitView, moveNodesStore],
   );
 
   const handlePrint = useCallback(() => {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { autoLayout, elkEngine } from '..';
 import type { DiagramNode, DiagramEdge } from '../../types';
-import { NODE_WIDTH, MIN_NODE_HEIGHT } from '../layout-engine';
+import { NODE_WIDTH, estimateHeight } from '../layout-engine';
 
 function n(id: string, x: number, y: number, pinned = false): DiagramNode {
   return {
@@ -138,18 +138,45 @@ const fixtures: Record<string, { nodes: DiagramNode[]; edges: DiagramEdge[] }> =
   },
 };
 
+/** Compute per-node height using the same logic as auto-layout (badge-aware). */
+function computeNodeHeights(
+  nodes: DiagramNode[],
+  edges: DiagramEdge[],
+): Map<string, number> {
+  const deg = new Map<string, { ind: number; out: number }>();
+  for (const n of nodes) deg.set(n.id, { ind: 0, out: 0 });
+  for (const e of edges) {
+    const s = deg.get(e.source); if (s) s.out++;
+    const t = deg.get(e.target); if (t) t.ind++;
+  }
+  const heights = new Map<string, number>();
+  for (const n of nodes) {
+    const d = deg.get(n.id) ?? { ind: 0, out: 0 };
+    const hasBadges = n.data.tags.length > 0
+      || (d.ind === 0 && d.out > 0)
+      || (d.ind > 0 && d.out > 0);
+    heights.set(n.id, estimateHeight(n.data.label, hasBadges));
+  }
+  return heights;
+}
+
 /** Check that no two nodes overlap (bounding boxes don't intersect). */
-function assertNoOverlap(allPositions: { id: string; x: number; y: number }[]) {
+function assertNoOverlap(
+  allPositions: { id: string; x: number; y: number }[],
+  heights: Map<string, number>,
+) {
   for (let i = 0; i < allPositions.length; i++) {
     for (let j = i + 1; j < allPositions.length; j++) {
       const a = allPositions[i];
       const b = allPositions[j];
+      const ah = heights.get(a.id) ?? 48;
+      const bh = heights.get(b.id) ?? 48;
       const hOverlap = a.x < b.x + NODE_WIDTH && b.x < a.x + NODE_WIDTH;
-      const vOverlap = a.y < b.y + MIN_NODE_HEIGHT && b.y < a.y + MIN_NODE_HEIGHT;
+      const vOverlap = a.y < b.y + bh && b.y < a.y + ah;
       if (hOverlap && vOverlap) {
         throw new Error(
-          `Overlap: ${a.id} (${a.x.toFixed(1)}, ${a.y.toFixed(1)}) and ` +
-          `${b.id} (${b.x.toFixed(1)}, ${b.y.toFixed(1)})`,
+          `Overlap: ${a.id} (${a.x.toFixed(1)}, ${a.y.toFixed(1)}, h=${ah}) and ` +
+          `${b.id} (${b.x.toFixed(1)}, ${b.y.toFixed(1)}, h=${bh})`,
         );
       }
     }
@@ -159,6 +186,7 @@ function assertNoOverlap(allPositions: { id: string; x: number; y: number }[]) {
 describe('no-overlap on .sky fixtures', () => {
   for (const [name, fixture] of Object.entries(fixtures)) {
     it(`${name} — respectPinned=true`, async () => {
+      const heights = computeNodeHeights(fixture.nodes, fixture.edges);
       const updates = await autoLayout(
         fixture.nodes, fixture.edges,
         { direction: 'TB', respectPinned: true },
@@ -171,10 +199,11 @@ describe('no-overlap on .sky fixtures', () => {
         ...(updateMap.get(n.id) ?? n.position),
       }));
 
-      assertNoOverlap(allPositions);
+      assertNoOverlap(allPositions, heights);
     });
 
     it(`${name} — respectPinned=false`, async () => {
+      const heights = computeNodeHeights(fixture.nodes, fixture.edges);
       const updates = await autoLayout(
         fixture.nodes, fixture.edges,
         { direction: 'TB', respectPinned: false },
@@ -185,7 +214,7 @@ describe('no-overlap on .sky fixtures', () => {
         id: u.id, x: u.position.x, y: u.position.y,
       }));
 
-      assertNoOverlap(allPositions);
+      assertNoOverlap(allPositions, heights);
     });
   }
 });

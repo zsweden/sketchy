@@ -4,7 +4,7 @@ export const crtFramework: Framework = {
   id: 'crt',
   name: 'Current Reality Tree',
   description: 'Map cause-and-effect to find root causes of undesirable effects',
-  defaultLayoutDirection: 'TB',
+  defaultLayoutDirection: 'BT',
   supportsJunctions: true,
   edgeLabel: 'causes',
   nodeTags: [

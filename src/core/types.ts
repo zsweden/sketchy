@@ -41,7 +41,7 @@ export function createEmptyDiagram(frameworkId: string, id?: string): Diagram {
     name: 'Untitled Diagram',
     frameworkId,
     settings: {
-      layoutDirection: 'TB',
+      layoutDirection: 'BT',
       showGrid: true,
     },
     nodes: [],

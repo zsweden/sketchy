@@ -3,6 +3,7 @@ import { SCHEMA_VERSION } from '../types';
 import { getFramework } from '../../frameworks/registry';
 import { validateGraph } from '../graph/validation';
 import { migrate, validateDiagramShape } from './schema';
+import { isCausalJson, convertCausalJson } from './causal-json';
 
 interface SkyFile {
   format: 'sky';
@@ -84,6 +85,7 @@ export async function saveSkyFile(diagram: Diagram): Promise<void> {
 export interface LoadResult {
   diagram: Diagram;
   warnings: string[];
+  needsLayout: boolean;
 }
 
 export async function loadSkyFile(file: File): Promise<LoadResult> {
@@ -98,6 +100,7 @@ export async function loadSkyFile(file: File): Promise<LoadResult> {
   }
 
   let diagram: Diagram;
+  let needsLayout = false;
 
   // Check if it's a .sky wrapper format
   if (
@@ -111,6 +114,11 @@ export async function loadSkyFile(file: File): Promise<LoadResult> {
       throw new Error('Invalid .sky project. The diagram data is missing or malformed.');
     }
     diagram = migrate(inner as Record<string, unknown>);
+  }
+  // Accept causal JSON format (AI-generated CRT output)
+  else if (isCausalJson(parsed)) {
+    diagram = convertCausalJson(parsed);
+    needsLayout = true;
   }
   // Also accept raw diagram JSON (backwards compat with .json exports)
   else if (validateDiagramShape(parsed)) {
@@ -137,5 +145,5 @@ export async function loadSkyFile(file: File): Promise<LoadResult> {
     );
   }
 
-  return { diagram, warnings };
+  return { diagram, warnings, needsLayout };
 }
