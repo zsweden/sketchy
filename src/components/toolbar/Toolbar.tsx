@@ -7,13 +7,16 @@ import {
   PanelRightOpen,
   MousePointer2,
   Hand,
+  Settings,
 } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
+import { useSettingsStore } from '../../store/settings-store';
 import { autoLayout, elkEngine } from '../../core/layout';
 import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import FrameworkSelector from './FrameworkSelector';
+import SettingsPopover from './SettingsPopover';
 
 export default function Toolbar() {
   const diagram = useDiagramStore((s) => s.diagram);
@@ -31,6 +34,7 @@ export default function Toolbar() {
   const requestFitView = useUIStore((s) => s.requestFitView);
   const interactionMode = useUIStore((s) => s.interactionMode);
   const setInteractionMode = useUIStore((s) => s.setInteractionMode);
+  const toggleSettings = useSettingsStore((s) => s.toggleSettings);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -209,6 +213,18 @@ export default function Toolbar() {
         />
 
         <div className="toolbar-divider" />
+
+        <div style={{ position: 'relative' }}>
+          <button
+            className="btn btn-ghost btn-icon"
+            onClick={toggleSettings}
+            title="Settings"
+            aria-label="Settings"
+          >
+            <Settings size={16} />
+          </button>
+          <SettingsPopover />
+        </div>
 
         <button
           className="btn btn-ghost btn-icon"

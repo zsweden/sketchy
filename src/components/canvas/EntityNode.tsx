@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { useDiagramStore } from '../../store/diagram-store';
+import { useChatStore } from '../../store/chat-store';
 import { computeNodeDegrees, getDerivedIndicators } from '../../core/graph/derived';
 
 interface EntityNodeData {
@@ -23,6 +24,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
   const edges = useDiagramStore((s) => s.diagram.edges);
   const framework = useDiagramStore((s) => s.framework);
   const direction = useDiagramStore((s) => s.diagram.settings.layoutDirection);
+  const isAiModified = useChatStore((s) => s.aiModifiedNodeIds.has(id));
 
   const degreesMap = computeNodeDegrees(edges);
   const derived = getDerivedIndicators(id, degreesMap, framework.derivedIndicators);
@@ -96,6 +98,8 @@ function EntityNode({ id, data, selected }: NodeProps) {
           style={{ backgroundColor: accentColor }}
         />
       )}
+
+      {isAiModified && <div className="ai-modified-dot" />}
 
       <Handle
         type="target"
