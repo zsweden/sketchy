@@ -40,6 +40,7 @@ interface DiagramState {
   addEdge: (source: string, target: string) => { success: boolean; reason?: string };
   deleteEdges: (ids: string[]) => void;
   setEdgeConfidence: (id: string, confidence: EdgeConfidence) => void;
+  updateEdgeNotes: (id: string, notes: string) => void;
 
   // Diagram operations
   setFramework: (frameworkId: string) => void;
@@ -369,6 +370,17 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       },
       canUndo: true,
       canRedo: false,
+    }));
+  },
+
+  updateEdgeNotes: (id, notes) => {
+    set((s) => ({
+      diagram: {
+        ...s.diagram,
+        edges: s.diagram.edges.map((e) =>
+          e.id === id ? { ...e, notes: notes || undefined } : e,
+        ),
+      },
     }));
   },
 

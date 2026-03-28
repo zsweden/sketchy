@@ -2,13 +2,16 @@ import { useCallback, useRef, useState } from 'react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import NodePanel from './NodePanel';
+import EdgePanel from './EdgePanel';
 import SettingsPanel from './SettingsPanel';
 import ChatPanel from './ChatPanel';
 
 export default function SidePanel() {
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
+  const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
   const sidePanelOpen = useUIStore((s) => s.sidePanelOpen);
   const nodes = useDiagramStore((s) => s.diagram.nodes);
+  const edges = useDiagramStore((s) => s.diagram.edges);
   const deleteNodes = useDiagramStore((s) => s.deleteNodes);
 
   const [width, setWidth] = useState(320);
@@ -41,6 +44,7 @@ export default function SidePanel() {
   if (!sidePanelOpen) return null;
 
   const selectedNodes = nodes.filter((n) => selectedNodeIds.includes(n.id));
+  const selectedEdges = edges.filter((e) => selectedEdgeIds.includes(e.id));
 
   return (
     <div className="side-panel" style={{ width, minWidth: width }}>
@@ -63,6 +67,8 @@ export default function SidePanel() {
               Delete All
             </button>
           </div>
+        ) : selectedEdges.length === 1 ? (
+          <EdgePanel edge={selectedEdges[0]} />
         ) : (
           <SettingsPanel />
         )}

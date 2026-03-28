@@ -35,6 +35,7 @@ export interface DiagramEdge {
   source: string;
   target: string;
   confidence?: EdgeConfidence;
+  notes?: string;
 }
 
 export function createEmptyDiagram(frameworkId: string, id?: string): Diagram {
