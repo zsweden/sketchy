@@ -13,6 +13,7 @@ import { useCallback, useRef } from 'react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { useSettingsStore } from '../../store/settings-store';
+import { useChatStore } from '../../store/chat-store';
 import { autoLayout, elkEngine } from '../../core/layout';
 import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import FrameworkSelector from './FrameworkSelector';
@@ -46,6 +47,8 @@ export default function Toolbar() {
       return;
     }
     newDiagram();
+    useChatStore.getState().clearMessages();
+    useChatStore.getState().clearAiModified();
     requestFitView();
   }, [diagram.nodes.length, newDiagram, requestFitView]);
 
@@ -79,6 +82,8 @@ export default function Toolbar() {
       try {
         const result = await loadSkyFile(file);
         loadDiagram(result.diagram);
+        useChatStore.getState().clearMessages();
+        useChatStore.getState().clearAiModified();
 
         if (result.needsLayout) {
           const loaded = useDiagramStore.getState().diagram;

@@ -1,11 +1,31 @@
+import { useCallback } from 'react';
 import { useDiagramStore } from '../../store/diagram-store';
+import { useUIStore } from '../../store/ui-store';
+import { autoLayout, elkEngine } from '../../core/layout';
 
 export default function SettingsPanel() {
   const settings = useDiagramStore((s) => s.diagram.settings);
   const updateSettings = useDiagramStore((s) => s.updateSettings);
   const diagramName = useDiagramStore((s) => s.diagram.name);
   const setDiagramName = useDiagramStore((s) => s.setDiagramName);
+  const commitToHistory = useDiagramStore((s) => s.commitToHistory);
+  const moveNodes = useDiagramStore((s) => s.moveNodes);
+  const requestFitView = useUIStore((s) => s.requestFitView);
   const framework = useDiagramStore((s) => s.framework);
+
+  const handleDirectionChange = useCallback(
+    async (direction: 'TB' | 'BT') => {
+      updateSettings({ layoutDirection: direction });
+      const { nodes, edges } = useDiagramStore.getState().diagram;
+      const updates = await autoLayout(nodes, edges, { direction }, elkEngine);
+      if (updates.length > 0) {
+        commitToHistory();
+        moveNodes(updates);
+        requestFitView();
+      }
+    },
+    [updateSettings, commitToHistory, moveNodes, requestFitView],
+  );
 
   return (
     <div className="section-stack">
@@ -38,11 +58,7 @@ export default function SettingsPanel() {
         <select
           className="select-control"
           value={settings.layoutDirection}
-          onChange={(e) =>
-            updateSettings({
-              layoutDirection: e.target.value as 'TB' | 'BT',
-            })
-          }
+          onChange={(e) => handleDirectionChange(e.target.value as 'TB' | 'BT')}
         >
           <option value="TB">Top to Bottom</option>
           <option value="BT">Bottom to Top</option>

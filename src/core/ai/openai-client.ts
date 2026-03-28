@@ -213,8 +213,7 @@ export function streamChatMessage(
       const decoder = new TextDecoder();
       let buffer = '';
       let contentText = '';
-      let toolCallName = '';
-      let toolCallArgs = '';
+      const toolCalls: { name: string; args: string }[] = [];
 
       function processLine(line: string) {
         const trimmed = line.trim();
@@ -233,11 +232,14 @@ export function streamChatMessage(
             callbacks.onToken(delta.content);
           }
 
-          // Tool call chunks
-          if (delta.tool_calls?.[0]) {
-            const tc = delta.tool_calls[0];
-            if (tc.function?.name) toolCallName = tc.function.name;
-            if (tc.function?.arguments) toolCallArgs += tc.function.arguments;
+          // Tool call chunks — track each by index
+          if (delta.tool_calls) {
+            for (const tc of delta.tool_calls) {
+              const idx = tc.index ?? 0;
+              if (!toolCalls[idx]) toolCalls[idx] = { name: '', args: '' };
+              if (tc.function?.name) toolCalls[idx].name = tc.function.name;
+              if (tc.function?.arguments) toolCalls[idx].args += tc.function.arguments;
+            }
           }
         } catch {
           // Skip malformed SSE chunks
@@ -262,25 +264,39 @@ export function streamChatMessage(
         processLine(buffer);
       }
 
-      // Finalize
-      if (toolCallName === 'modify_diagram' && toolCallArgs) {
+      // Finalize — merge all modify_diagram tool calls into one modification
+      const modifyCalls = toolCalls.filter((tc) => tc.name === 'modify_diagram' && tc.args);
+      if (modifyCalls.length > 0) {
         try {
-          const args = JSON.parse(toolCallArgs);
-          const modifications: DiagramModification = {
-            addNodes: args.addNodes ?? [],
-            updateNodes: args.updateNodes ?? [],
-            removeNodeIds: args.removeNodeIds ?? [],
-            addEdges: args.addEdges ?? [],
-            updateEdges: args.updateEdges ?? [],
-            removeEdgeIds: args.removeEdgeIds ?? [],
+          const merged: DiagramModification = {
+            addNodes: [],
+            updateNodes: [],
+            removeNodeIds: [],
+            addEdges: [],
+            updateEdges: [],
+            removeEdgeIds: [],
           };
+          const explanations: string[] = [];
+
+          for (const tc of modifyCalls) {
+            const args = JSON.parse(tc.args);
+            if (args.explanation) explanations.push(args.explanation);
+            if (args.addNodes) merged.addNodes.push(...args.addNodes);
+            if (args.updateNodes) merged.updateNodes.push(...args.updateNodes);
+            if (args.removeNodeIds) merged.removeNodeIds.push(...args.removeNodeIds);
+            if (args.addEdges) merged.addEdges.push(...args.addEdges);
+            if (args.updateEdges) merged.updateEdges.push(...args.updateEdges);
+            if (args.removeEdgeIds) merged.removeEdgeIds.push(...args.removeEdgeIds);
+          }
+
           callbacks.onDone({
-            text: args.explanation ?? 'Changes applied.',
-            modifications,
+            text: explanations.join(' ') || 'Changes applied.',
+            modifications: merged,
           });
         } catch {
-          // Tool call arguments were malformed — treat as plain text response
-          callbacks.onDone({ text: contentText || 'The AI suggested changes but they could not be parsed. Please try again.' });
+          const rawArgs = modifyCalls.map((tc) => tc.args).join('\n\n');
+          const rawPreview = `The AI suggested changes but they could not be parsed. Please try again.\n\nRaw response:\n${rawArgs}`;
+          callbacks.onDone({ text: contentText || rawPreview });
         }
       } else {
         callbacks.onDone({ text: contentText });
