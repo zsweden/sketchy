@@ -11,6 +11,15 @@ interface DiagramSnapshot {
   edges: DiagramEdge[];
 }
 
+export interface BatchMutations {
+  addNodes?: { id: string; label: string; tags?: string[]; notes?: string }[];
+  updateNodes?: { id: string; label?: string; tags?: string[]; notes?: string }[];
+  removeNodeIds?: string[];
+  addEdges?: { source: string; target: string; confidence?: EdgeConfidence }[];
+  updateEdges?: { id: string; confidence?: EdgeConfidence }[];
+  removeEdgeIds?: string[];
+}
+
 const history = new UndoRedoManager<DiagramSnapshot>();
 
 interface DiagramState {
@@ -38,6 +47,9 @@ interface DiagramState {
   loadDiagram: (diagram: Diagram) => void;
   newDiagram: () => void;
   setDiagramName: (name: string) => void;
+
+  // Batch update (for AI modifications — single render)
+  batchApply: (mutations: BatchMutations) => Map<string, string>;
 
   // Undo/Redo
   undo: () => void;
@@ -243,6 +255,105 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       canUndo: true,
       canRedo: false,
     }));
+  },
+
+  batchApply: (mutations) => {
+    const state = get();
+    history.push(snapshot(state));
+
+    // Map from caller-provided IDs (e.g. "new_1") to real UUIDs
+    const idMap = new Map<string, string>();
+
+    let nodes = [...state.diagram.nodes];
+    let edges = [...state.diagram.edges];
+
+    // 1. Add new nodes
+    for (const n of mutations.addNodes ?? []) {
+      const realId = crypto.randomUUID();
+      idMap.set(n.id, realId);
+      nodes.push({
+        id: realId,
+        type: 'entity',
+        position: { x: 0, y: 0 },
+        data: {
+          label: n.label,
+          tags: n.tags ?? [],
+          junctionType: 'or',
+          ...(n.notes ? { notes: n.notes } : {}),
+        },
+      });
+    }
+
+    // 2. Update existing nodes
+    for (const upd of mutations.updateNodes ?? []) {
+      const realId = idMap.get(upd.id) ?? upd.id;
+      nodes = nodes.map((node) => {
+        if (node.id !== realId) return node;
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            ...(upd.label !== undefined ? { label: upd.label } : {}),
+            ...(upd.tags !== undefined ? { tags: upd.tags } : {}),
+            ...(upd.notes !== undefined ? { notes: upd.notes || undefined } : {}),
+          },
+        };
+      });
+    }
+
+    // 3. Remove nodes (and their connected edges)
+    if (mutations.removeNodeIds?.length) {
+      const removeSet = new Set(mutations.removeNodeIds.map((id) => idMap.get(id) ?? id));
+      nodes = nodes.filter((n) => !removeSet.has(n.id));
+      edges = edges.filter((e) => !removeSet.has(e.source) && !removeSet.has(e.target));
+    }
+
+    // 4. Add edges (with validation, resolving mapped IDs)
+    for (const e of mutations.addEdges ?? []) {
+      const source = idMap.get(e.source) ?? e.source;
+      const target = idMap.get(e.target) ?? e.target;
+      const result = validateEdge(edges, source, target);
+      if (result.valid) {
+        const newEdge: DiagramEdge = {
+          id: crypto.randomUUID(),
+          source,
+          target,
+          ...(e.confidence && e.confidence !== 'high' ? { confidence: e.confidence } : {}),
+        };
+        edges.push(newEdge);
+
+        // Auto-set junction when 2nd edge arrives
+        const incomingCount = edges.filter((ex) => ex.target === target).length;
+        if (incomingCount === 2) {
+          nodes = nodes.map((n) =>
+            n.id === target ? { ...n, data: { ...n.data, junctionType: 'or' as const } } : n,
+          );
+        }
+      }
+    }
+
+    // 5. Update existing edges
+    for (const upd of mutations.updateEdges ?? []) {
+      if (upd.confidence) {
+        edges = edges.map((e) =>
+          e.id === upd.id ? { ...e, confidence: upd.confidence } : e,
+        );
+      }
+    }
+
+    // 6. Remove edges
+    if (mutations.removeEdgeIds?.length) {
+      const removeSet = new Set(mutations.removeEdgeIds);
+      edges = edges.filter((e) => !removeSet.has(e.id));
+    }
+
+    set({
+      diagram: { ...state.diagram, nodes, edges },
+      canUndo: true,
+      canRedo: false,
+    });
+
+    return idMap;
   },
 
   setEdgeConfidence: (id, confidence) => {
