@@ -31,7 +31,7 @@ export function loadDiagram(): LoadResult {
       };
     }
 
-    const diagram = migrate(parsed);
+    const diagram = migrate(parsed as unknown as Record<string, unknown>);
     return { diagram };
   } catch {
     backupCorrupted(raw);

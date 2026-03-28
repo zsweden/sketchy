@@ -34,7 +34,7 @@ export async function importDiagram(file: File): Promise<ImportResult> {
     throw new Error('File is missing required diagram fields');
   }
 
-  const diagram = migrate(parsed as Record<string, unknown>);
+  const diagram = migrate(parsed as unknown as Record<string, unknown>);
 
   // Check framework
   if (!getFramework(diagram.frameworkId)) {

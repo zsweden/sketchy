@@ -102,11 +102,11 @@ export async function loadSkyFile(file: File): Promise<LoadResult> {
     if (!validateDiagramShape(inner)) {
       throw new Error('Invalid .sky project. The diagram data is missing or malformed.');
     }
-    diagram = migrate(inner as Record<string, unknown>);
+    diagram = migrate(inner as unknown as Record<string, unknown>);
   }
   // Legacy raw diagram JSON (has schemaVersion)
   else if (validateDiagramShape(parsed)) {
-    diagram = migrate(parsed as Record<string, unknown>);
+    diagram = migrate(parsed as unknown as Record<string, unknown>);
   } else {
     throw new Error('Unrecognized file format. Expected a .sky project file.');
   }

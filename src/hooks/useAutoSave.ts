@@ -5,7 +5,7 @@ import { saveDiagram } from '../core/persistence/local-storage';
 const DEBOUNCE_MS = 500;
 
 export function useAutoSave() {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     const unsubscribe = useDiagramStore.subscribe((state) => {

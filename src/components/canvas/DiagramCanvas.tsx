@@ -189,7 +189,7 @@ export default function DiagramCanvas() {
   );
 
   const onNodeDragStop = useCallback(
-    (_event: React.MouseEvent, node: Node) => {
+    (_event: React.MouseEvent, _node: Node) => {
       if (isDragging.current) {
         isDragging.current = false;
         commitToHistory();
