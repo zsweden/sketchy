@@ -1,4 +1,5 @@
 import type { Diagram } from '../types';
+import type { Framework } from '../framework-types';
 
 // --- Types ---
 
@@ -11,8 +12,8 @@ export interface DiagramModification {
   addNodes: { id: string; label: string; tags?: string[] }[];
   updateNodes: { id: string; label?: string; tags?: string[]; notes?: string }[];
   removeNodeIds: string[];
-  addEdges: { source: string; target: string; confidence?: 'high' | 'medium' | 'low' }[];
-  updateEdges: { id: string; confidence?: 'high' | 'medium' | 'low' }[];
+  addEdges: { source: string; target: string; confidence?: 'high' | 'medium' | 'low'; notes?: string }[];
+  updateEdges: { id: string; confidence?: 'high' | 'medium' | 'low'; notes?: string }[];
   removeEdgeIds: string[];
 }
 
@@ -47,7 +48,7 @@ const modifyDiagramTool = {
               tags: {
                 type: 'array',
                 items: { type: 'string' },
-                description: 'Tag IDs to apply (e.g. ["ude"])',
+                description: 'Tag IDs to apply',
               },
             },
             required: ['id', 'label'],
@@ -79,6 +80,7 @@ const modifyDiagramTool = {
               source: { type: 'string', description: 'Source node ID (cause)' },
               target: { type: 'string', description: 'Target node ID (effect)' },
               confidence: { type: 'string', enum: ['high', 'medium', 'low'], description: 'Confidence level (default: high)' },
+              notes: { type: 'string', description: 'Optional annotation or reasoning for this edge' },
             },
             required: ['source', 'target'],
           },
@@ -90,6 +92,7 @@ const modifyDiagramTool = {
             properties: {
               id: { type: 'string', description: 'Existing edge ID to update' },
               confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+              notes: { type: 'string', description: 'Annotation or reasoning for this edge' },
             },
             required: ['id'],
           },
@@ -108,7 +111,7 @@ const modifyDiagramTool = {
 
 // --- System prompt builder ---
 
-function buildSystemPrompt(diagram: Diagram, frameworkName: string): string {
+function buildSystemPrompt(diagram: Diagram, framework: Framework): string {
   const nodesDesc = diagram.nodes
     .map((n) => {
       const parts = [`id="${n.id}", label="${n.data.label}"`];
@@ -121,33 +124,43 @@ function buildSystemPrompt(diagram: Diagram, frameworkName: string): string {
 
   const edgesDesc = diagram.edges
     .map((e) => {
-      const conf = e.confidence && e.confidence !== 'high' ? `, confidence=${e.confidence}` : '';
-      return `  - id="${e.id}", "${e.source}" → "${e.target}"${conf}`;
+      const parts = [`id="${e.id}", "${e.source}" → "${e.target}"`];
+      if (e.confidence && e.confidence !== 'high') parts.push(`confidence=${e.confidence}`);
+      if (e.notes) parts.push(`notes="${e.notes}"`);
+      return `  - ${parts.join(', ')}`;
     })
     .join('\n');
 
+  const edgeVerb = framework.edgeLabel ?? 'causes';
+
+  const tagList = framework.nodeTags.length > 0
+    ? framework.nodeTags.map((t) => `${t.id} (${t.name})`).join(', ')
+    : 'none';
+
   return `You are an AI assistant for Sketchy, a thinking-frameworks diagram editor.
 
-The user is working on a "${frameworkName}" diagram called "${diagram.name}".
+The user is working on a "${framework.name}" diagram called "${diagram.name}".
+${framework.description}
 
 Current diagram state:
 Nodes:
 ${nodesDesc || '  (none)'}
 
-Edges (source causes target):
+Edges (source ${edgeVerb} target):
 ${edgesDesc || '  (none)'}
 
 You can either:
-1. Answer questions about the diagram — analyze the causal structure, identify issues, suggest improvements.
+1. Answer questions about the diagram — analyze the structure, identify issues, suggest improvements.
 2. Make changes by calling the modify_diagram tool — add/update/remove nodes and edges.
 
 Rules for modifications:
-- Edge direction means "source causes target" — this is a DAG (no cycles).
+- Edge direction means "source ${edgeVerb} target" — this is a DAG (no cycles).
 - Keep node labels concise (under 15 words).
 - When adding nodes, use IDs like "new_1", "new_2", etc.
 - When referencing existing nodes, use their exact IDs.
-- Available tags: ude (Undesirable Effect).
+- Available tags: ${tagList}.
 - Edges have a confidence level: high (default, solid), medium (dashed), or low (dotted).
+- Edges can have notes — use them to explain the causal reasoning behind the connection.
 - Always explain your reasoning.`;
 }
 
@@ -167,12 +180,12 @@ export function streamChatMessage(
   baseUrl: string,
   model: string,
   diagram: Diagram,
-  frameworkName: string,
+  framework: Framework,
   messages: ChatMessage[],
   callbacks: StreamCallbacks,
 ): AbortController {
   const controller = new AbortController();
-  const systemPrompt = buildSystemPrompt(diagram, frameworkName);
+  const systemPrompt = buildSystemPrompt(diagram, framework);
 
   const apiMessages = [
     { role: 'system', content: systemPrompt },

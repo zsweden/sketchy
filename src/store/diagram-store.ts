@@ -15,8 +15,8 @@ export interface BatchMutations {
   addNodes?: { id: string; label: string; tags?: string[]; notes?: string }[];
   updateNodes?: { id: string; label?: string; tags?: string[]; notes?: string }[];
   removeNodeIds?: string[];
-  addEdges?: { source: string; target: string; confidence?: EdgeConfidence }[];
-  updateEdges?: { id: string; confidence?: EdgeConfidence }[];
+  addEdges?: { source: string; target: string; confidence?: EdgeConfidence; notes?: string }[];
+  updateEdges?: { id: string; confidence?: EdgeConfidence; notes?: string }[];
   removeEdgeIds?: string[];
 }
 
@@ -71,6 +71,123 @@ function snapshot(state: { diagram: Diagram }): DiagramSnapshot {
     nodes: state.diagram.nodes,
     edges: state.diagram.edges,
   };
+}
+
+// --- Batch mutation helpers ---
+
+function batchAddNodes(
+  mutations: BatchMutations,
+  idMap: Map<string, string>,
+  nodes: DiagramNode[],
+): DiagramNode[] {
+  for (const n of mutations.addNodes ?? []) {
+    const realId = crypto.randomUUID();
+    idMap.set(n.id, realId);
+    nodes.push({
+      id: realId,
+      type: 'entity',
+      position: { x: 0, y: 0 },
+      data: {
+        label: n.label,
+        tags: n.tags ?? [],
+        junctionType: 'or',
+        ...(n.notes ? { notes: n.notes } : {}),
+      },
+    });
+  }
+  return nodes;
+}
+
+function batchUpdateNodes(
+  mutations: BatchMutations,
+  idMap: Map<string, string>,
+  nodes: DiagramNode[],
+): DiagramNode[] {
+  for (const upd of mutations.updateNodes ?? []) {
+    const realId = idMap.get(upd.id) ?? upd.id;
+    nodes = nodes.map((node) => {
+      if (node.id !== realId) return node;
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          ...(upd.label !== undefined ? { label: upd.label } : {}),
+          ...(upd.tags !== undefined ? { tags: upd.tags } : {}),
+          ...(upd.notes !== undefined ? { notes: upd.notes || undefined } : {}),
+        },
+      };
+    });
+  }
+  return nodes;
+}
+
+function batchRemoveNodes(
+  mutations: BatchMutations,
+  idMap: Map<string, string>,
+  nodes: DiagramNode[],
+  edges: DiagramEdge[],
+): { nodes: DiagramNode[]; edges: DiagramEdge[] } {
+  if (!mutations.removeNodeIds?.length) return { nodes, edges };
+  const removeSet = new Set(mutations.removeNodeIds.map((id) => idMap.get(id) ?? id));
+  return {
+    nodes: nodes.filter((n) => !removeSet.has(n.id)),
+    edges: edges.filter((e) => !removeSet.has(e.source) && !removeSet.has(e.target)),
+  };
+}
+
+function batchAddEdges(
+  mutations: BatchMutations,
+  idMap: Map<string, string>,
+  nodes: DiagramNode[],
+  edges: DiagramEdge[],
+): { nodes: DiagramNode[]; edges: DiagramEdge[] } {
+  for (const e of mutations.addEdges ?? []) {
+    const source = idMap.get(e.source) ?? e.source;
+    const target = idMap.get(e.target) ?? e.target;
+    const result = validateEdge(edges, source, target);
+    if (result.valid) {
+      edges.push({
+        id: crypto.randomUUID(),
+        source,
+        target,
+        ...(e.confidence && e.confidence !== 'high' ? { confidence: e.confidence } : {}),
+        ...(e.notes ? { notes: e.notes } : {}),
+      });
+      const incomingCount = edges.filter((ex) => ex.target === target).length;
+      if (incomingCount === 2) {
+        nodes = nodes.map((n) =>
+          n.id === target ? { ...n, data: { ...n.data, junctionType: 'or' as const } } : n,
+        );
+      }
+    }
+  }
+  return { nodes, edges };
+}
+
+function batchUpdateEdges(
+  mutations: BatchMutations,
+  edges: DiagramEdge[],
+): DiagramEdge[] {
+  for (const upd of mutations.updateEdges ?? []) {
+    const updates: Partial<DiagramEdge> = {};
+    if (upd.confidence) updates.confidence = upd.confidence;
+    if (upd.notes !== undefined) updates.notes = upd.notes || undefined;
+    if (Object.keys(updates).length > 0) {
+      edges = edges.map((e) =>
+        e.id === upd.id ? { ...e, ...updates } : e,
+      );
+    }
+  }
+  return edges;
+}
+
+function batchRemoveEdges(
+  mutations: BatchMutations,
+  edges: DiagramEdge[],
+): DiagramEdge[] {
+  if (!mutations.removeEdgeIds?.length) return edges;
+  const removeSet = new Set(mutations.removeEdgeIds);
+  return edges.filter((e) => !removeSet.has(e.id));
 }
 
 export const useDiagramStore = create<DiagramState>((set, get) => ({
@@ -262,91 +379,16 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
     const state = get();
     history.push(snapshot(state));
 
-    // Map from caller-provided IDs (e.g. "new_1") to real UUIDs
     const idMap = new Map<string, string>();
-
     let nodes = [...state.diagram.nodes];
     let edges = [...state.diagram.edges];
 
-    // 1. Add new nodes
-    for (const n of mutations.addNodes ?? []) {
-      const realId = crypto.randomUUID();
-      idMap.set(n.id, realId);
-      nodes.push({
-        id: realId,
-        type: 'entity',
-        position: { x: 0, y: 0 },
-        data: {
-          label: n.label,
-          tags: n.tags ?? [],
-          junctionType: 'or',
-          ...(n.notes ? { notes: n.notes } : {}),
-        },
-      });
-    }
-
-    // 2. Update existing nodes
-    for (const upd of mutations.updateNodes ?? []) {
-      const realId = idMap.get(upd.id) ?? upd.id;
-      nodes = nodes.map((node) => {
-        if (node.id !== realId) return node;
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            ...(upd.label !== undefined ? { label: upd.label } : {}),
-            ...(upd.tags !== undefined ? { tags: upd.tags } : {}),
-            ...(upd.notes !== undefined ? { notes: upd.notes || undefined } : {}),
-          },
-        };
-      });
-    }
-
-    // 3. Remove nodes (and their connected edges)
-    if (mutations.removeNodeIds?.length) {
-      const removeSet = new Set(mutations.removeNodeIds.map((id) => idMap.get(id) ?? id));
-      nodes = nodes.filter((n) => !removeSet.has(n.id));
-      edges = edges.filter((e) => !removeSet.has(e.source) && !removeSet.has(e.target));
-    }
-
-    // 4. Add edges (with validation, resolving mapped IDs)
-    for (const e of mutations.addEdges ?? []) {
-      const source = idMap.get(e.source) ?? e.source;
-      const target = idMap.get(e.target) ?? e.target;
-      const result = validateEdge(edges, source, target);
-      if (result.valid) {
-        const newEdge: DiagramEdge = {
-          id: crypto.randomUUID(),
-          source,
-          target,
-          ...(e.confidence && e.confidence !== 'high' ? { confidence: e.confidence } : {}),
-        };
-        edges.push(newEdge);
-
-        // Auto-set junction when 2nd edge arrives
-        const incomingCount = edges.filter((ex) => ex.target === target).length;
-        if (incomingCount === 2) {
-          nodes = nodes.map((n) =>
-            n.id === target ? { ...n, data: { ...n.data, junctionType: 'or' as const } } : n,
-          );
-        }
-      }
-    }
-
-    // 5. Update existing edges
-    for (const upd of mutations.updateEdges ?? []) {
-      if (upd.confidence) {
-        edges = edges.map((e) =>
-          e.id === upd.id ? { ...e, confidence: upd.confidence } : e,
-        );
-      }
-    }
-
-    // 6. Remove edges
-    if (mutations.removeEdgeIds?.length) {
-      const removeSet = new Set(mutations.removeEdgeIds);
-      edges = edges.filter((e) => !removeSet.has(e.id));
-    }
+    nodes = batchAddNodes(mutations, idMap, nodes);
+    nodes = batchUpdateNodes(mutations, idMap, nodes);
+    ({ nodes, edges } = batchRemoveNodes(mutations, idMap, nodes, edges));
+    ({ nodes, edges } = batchAddEdges(mutations, idMap, nodes, edges));
+    edges = batchUpdateEdges(mutations, edges);
+    edges = batchRemoveEdges(mutations, edges);
 
     set({
       diagram: { ...state.diagram, nodes, edges },
