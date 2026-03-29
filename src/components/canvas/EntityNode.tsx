@@ -3,6 +3,7 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
 import { computeNodeDegrees, getDerivedIndicators } from '../../core/graph/derived';
+import type { HandleSide } from '../../core/graph/ports';
 
 interface EntityNodeData {
   label: string;
@@ -12,6 +13,13 @@ interface EntityNodeData {
   highlightState?: 'highlighted' | 'dimmed' | 'none';
   [key: string]: unknown;
 }
+
+const HANDLE_SIDES: { side: HandleSide; position: Position }[] = [
+  { side: 'top', position: Position.Top },
+  { side: 'right', position: Position.Right },
+  { side: 'bottom', position: Position.Bottom },
+  { side: 'left', position: Position.Left },
+];
 
 function EntityNode({ id, data, selected }: NodeProps) {
   const nodeData = data as unknown as EntityNodeData;
@@ -24,7 +32,6 @@ function EntityNode({ id, data, selected }: NodeProps) {
   const commitToHistory = useDiagramStore((s) => s.commitToHistory);
   const edges = useDiagramStore((s) => s.diagram.edges);
   const framework = useDiagramStore((s) => s.framework);
-  const direction = useDiagramStore((s) => s.diagram.settings.layoutDirection);
   const isAiModified = useChatStore((s) => s.aiModifiedNodeIds.has(id));
 
   const degreesMap = computeNodeDegrees(edges);
@@ -87,8 +94,6 @@ function EntityNode({ id, data, selected }: NodeProps) {
       ? derived[0].color
       : undefined;
 
-  const isTopToBottom = direction === 'TB';
-
   return (
     <div
       className={`entity-node ${selected ? 'selected' : ''} ${nodeData.highlightState === 'dimmed' ? 'dimmed' : ''}`}
@@ -106,18 +111,21 @@ function EntityNode({ id, data, selected }: NodeProps) {
 
       {isAiModified && <div className="ai-modified-dot" />}
 
-      <Handle
-        type="target"
-        position={isTopToBottom ? Position.Top : Position.Bottom}
-        id="target"
-        className={framework.supportsJunctions && degrees.indegree >= 2 ? 'junction-handle nodrag' : ''}
-        onClick={framework.supportsJunctions && degrees.indegree >= 2 ? handleJunctionToggle : undefined}
-        title={framework.supportsJunctions && degrees.indegree >= 2 ? `Junction: ${nodeData.junctionType.toUpperCase()} — click to toggle` : undefined}
-      >
-        {framework.supportsJunctions && degrees.indegree >= 2 && nodeData.junctionType === 'and' && (
-          <span className="junction-symbol">&</span>
-        )}
-      </Handle>
+      {HANDLE_SIDES.map(({ side, position }) => (
+        <Handle
+          key={`target-${side}`}
+          type="target"
+          position={position}
+          id={`target-${side}`}
+          className={`handle-${side} ${framework.supportsJunctions && degrees.indegree >= 2 ? 'junction-handle nodrag' : ''}`}
+          onClick={framework.supportsJunctions && degrees.indegree >= 2 ? handleJunctionToggle : undefined}
+          title={framework.supportsJunctions && degrees.indegree >= 2 ? `Junction: ${nodeData.junctionType.toUpperCase()} — click to toggle` : undefined}
+        >
+          {framework.supportsJunctions && degrees.indegree >= 2 && nodeData.junctionType === 'and' && side === 'top' && (
+            <span className="junction-symbol">&</span>
+          )}
+        </Handle>
+      ))}
 
       <div className="entity-node-body">
         {editing ? (
@@ -171,11 +179,15 @@ function EntityNode({ id, data, selected }: NodeProps) {
         )}
       </div>
 
-      <Handle
-        type="source"
-        position={isTopToBottom ? Position.Bottom : Position.Top}
-        id="source"
-      />
+      {HANDLE_SIDES.map(({ side, position }) => (
+        <Handle
+          key={`source-${side}`}
+          type="source"
+          position={position}
+          id={`source-${side}`}
+          className={`handle-${side}`}
+        />
+      ))}
     </div>
   );
 }

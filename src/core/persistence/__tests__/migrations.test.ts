@@ -72,7 +72,8 @@ describe('migrations', () => {
       };
 
       const result = migrate(v1Data);
-      expect(result.schemaVersion).toBe(2);
+      expect(result.schemaVersion).toBe(3);
+      expect(result.settings).toMatchObject({ edgeRoutingMode: 'dynamic' });
       expect(result.edges[0]).toMatchObject({ confidence: 'high' });
     });
   });

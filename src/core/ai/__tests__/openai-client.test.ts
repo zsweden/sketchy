@@ -403,9 +403,12 @@ describe('buildSystemPrompt framework-agnostic', () => {
     diagram.nodes = [
       { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'Demand', tags: [], junctionType: 'or' } },
       { id: 'n2', type: 'entity', position: { x: 0, y: 100 }, data: { label: 'Growth', tags: [], junctionType: 'or' } },
+      { id: 'n3', type: 'entity', position: { x: 0, y: 200 }, data: { label: 'Adoption', tags: [], junctionType: 'or' } },
     ];
     diagram.edges = [
-      { id: 'e1', source: 'n1', target: 'n2', polarity: 'negative', delay: true },
+      { id: 'e1', source: 'n1', target: 'n2', polarity: 'positive' },
+      { id: 'e2', source: 'n2', target: 'n3', polarity: 'negative', delay: true },
+      { id: 'e3', source: 'n3', target: 'n1', polarity: 'positive' },
     ];
 
     await new Promise<void>((resolve) => {
@@ -419,6 +422,10 @@ describe('buildSystemPrompt framework-agnostic', () => {
     expect(systemContent).toContain('Cycles and feedback loops are allowed');
     expect(systemContent).toContain('polarity=negative');
     expect(systemContent).toContain('delay=true');
+    expect(systemContent).toContain('Detected feedback loops:');
+    expect(systemContent).toContain('B1: Demand');
+    expect(systemContent).toContain('refer to them by the provided R#/B# names');
+    expect(systemContent).toContain('suggest flywheel rewrites or simplifications');
     vi.unstubAllGlobals();
   });
 });

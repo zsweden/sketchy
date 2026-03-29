@@ -226,7 +226,8 @@ describe('e2e: schema migration path', () => {
     };
 
     const migrated = migrate(v1Data);
-    expect(migrated.schemaVersion).toBe(2);
+    expect(migrated.schemaVersion).toBe(3);
+    expect(migrated.settings.edgeRoutingMode).toBe('dynamic');
     expect(migrated.edges[0].confidence).toBe('high');
   });
 

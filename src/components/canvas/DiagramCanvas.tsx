@@ -22,6 +22,11 @@ import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { FIT_VIEW_OPTIONS } from '../../core/layout/fit-view-options';
 import { computeNodeDegrees, getDerivedIndicators, getConnectedSubgraph } from '../../core/graph/derived';
+import {
+  getEdgeHandlePlacement,
+  getSourceHandleId,
+  getTargetHandleId,
+} from '../../core/graph/ports';
 
 const nodeTypes = { entity: EntityNode };
 
@@ -51,6 +56,8 @@ export default function DiagramCanvas() {
   const interactionMode = useUIStore((s) => s.interactionMode);
 
   const framework = useDiagramStore((s) => s.framework);
+  const direction = useDiagramStore((s) => s.diagram.settings.layoutDirection);
+  const edgeRoutingMode = useDiagramStore((s) => s.diagram.settings.edgeRoutingMode);
 
   const isPanMode = interactionMode === 'pan';
 
@@ -82,8 +89,25 @@ export default function DiagramCanvas() {
 
   // Build React Flow edges from diagram
   const rfEdges: Edge[] = useMemo(
-    () =>
-      diagram.edges.map((e) => ({
+    () => {
+      const nodePositions = new Map(
+        diagram.nodes.map((node) => [node.id, node.position]),
+      );
+
+      return diagram.edges.map((e) => {
+        const placement = getEdgeHandlePlacement(
+          nodePositions.get(e.source),
+          nodePositions.get(e.target),
+          direction,
+        );
+        const sourceSide = edgeRoutingMode === 'fixed'
+          ? e.sourceSide ?? placement.sourceSide
+          : placement.sourceSide;
+        const targetSide = edgeRoutingMode === 'fixed'
+          ? e.targetSide ?? placement.targetSide
+          : placement.targetSide;
+
+        return {
         id: e.id,
         source: e.source,
         target: e.target,
@@ -106,8 +130,8 @@ export default function DiagramCanvas() {
           fontSize: 11,
           fontWeight: 700,
         },
-        sourceHandle: 'source',
-        targetHandle: 'target',
+        sourceHandle: getSourceHandleId(sourceSide),
+        targetHandle: getTargetHandleId(targetSide),
         pathOptions: { borderRadius: 100 },
         className: [
           `edge-confidence-${e.confidence ?? 'high'}`,
@@ -115,8 +139,10 @@ export default function DiagramCanvas() {
             ? highlightSets.edgeIds.has(e.id) ? 'edge-highlighted' : 'edge-dimmed'
             : '',
         ].join(' '),
-      })),
-    [diagram.edges, framework, highlightSets],
+      };
+      });
+    },
+    [diagram.edges, diagram.nodes, direction, edgeRoutingMode, framework, highlightSets],
   );
 
   // Local state for React Flow selection/interaction
@@ -242,7 +268,10 @@ export default function DiagramCanvas() {
   const onConnect = useCallback(
     (connection: Connection) => {
       if (!connection.source || !connection.target) return;
-      const result = addEdgeStore(connection.source, connection.target);
+      const result = addEdgeStore(connection.source, connection.target, {
+        sourceHandleId: connection.sourceHandle,
+        targetHandleId: connection.targetHandle,
+      });
       if (!result.success && result.reason) {
         addToast(result.reason, 'warning');
       }

@@ -96,10 +96,12 @@ describe('convertSkyJson', () => {
       framework: 'crt',
       direction: 'TB',
       showGrid: false,
+      edgeRoutingMode: 'fixed',
     });
     expect(diagram.name).toBe('My Tree');
     expect(diagram.settings.layoutDirection).toBe('TB');
     expect(diagram.settings.showGrid).toBe(false);
+    expect(diagram.settings.edgeRoutingMode).toBe('fixed');
   });
 
   it('defaults junctionType to or', () => {
@@ -179,6 +181,24 @@ describe('convertSkyJson', () => {
     expect(diagram.edges[0].delay).toBe(true);
     expect(diagram.edges[0].notes).toBe('lags by a quarter');
   });
+
+  it('preserves fixed edge sides', () => {
+    const { diagram } = convertSkyJson({
+      framework: 'cld',
+      edgeRoutingMode: 'fixed',
+      nodes: [
+        { id: 'n1', label: 'Demand' },
+        { id: 'n2', label: 'Growth' },
+      ],
+      edges: [
+        { source: 'n1', target: 'n2', sourceSide: 'right' as const, targetSide: 'left' as const },
+      ],
+    });
+
+    expect(diagram.settings.edgeRoutingMode).toBe('fixed');
+    expect(diagram.edges[0].sourceSide).toBe('right');
+    expect(diagram.edges[0].targetSide).toBe('left');
+  });
 });
 
 describe('diagramToSkyJson', () => {
@@ -254,20 +274,36 @@ describe('diagramToSkyJson', () => {
 
   it('round-trips CLD edge metadata', () => {
     const diagram = createEmptyDiagram('cld');
+    diagram.settings.edgeRoutingMode = 'fixed';
     diagram.nodes = [
       { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'A', tags: [], junctionType: 'or' } },
       { id: 'n2', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'B', tags: [], junctionType: 'or' } },
     ];
     diagram.edges = [
-      { id: 'e1', source: 'n1', target: 'n2', polarity: 'negative', delay: true, notes: 'counteracts later' },
+      {
+        id: 'e1',
+        source: 'n1',
+        target: 'n2',
+        sourceSide: 'right',
+        targetSide: 'left',
+        polarity: 'negative',
+        delay: true,
+        notes: 'counteracts later',
+      },
     ];
 
     const skyJson = diagramToSkyJson(diagram);
+    expect(skyJson.edgeRoutingMode).toBe('fixed');
+    expect(skyJson.edges[0].sourceSide).toBe('right');
+    expect(skyJson.edges[0].targetSide).toBe('left');
     expect(skyJson.edges[0].polarity).toBe('negative');
     expect(skyJson.edges[0].delay).toBe(true);
     expect(skyJson.edges[0].notes).toBe('counteracts later');
 
     const { diagram: loaded } = convertSkyJson(skyJson);
+    expect(loaded.settings.edgeRoutingMode).toBe('fixed');
+    expect(loaded.edges[0].sourceSide).toBe('right');
+    expect(loaded.edges[0].targetSide).toBe('left');
     expect(loaded.edges[0].polarity).toBe('negative');
     expect(loaded.edges[0].delay).toBe(true);
     expect(loaded.edges[0].notes).toBe('counteracts later');

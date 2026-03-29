@@ -19,6 +19,11 @@ export default function SidePanel() {
   const startX = useRef(0);
   const startWidth = useRef(0);
 
+  // Vertical split: percentage of panel height for the top section
+  const [topPercent, setTopPercent] = useState(40);
+  const [vDragging, setVDragging] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     startX.current = e.clientX;
@@ -41,18 +46,39 @@ export default function SidePanel() {
     document.addEventListener('mouseup', onMouseUp);
   }, [width]);
 
+  const onVMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setVDragging(true);
+
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!panelRef.current) return;
+      const rect = panelRef.current.getBoundingClientRect();
+      const pct = ((ev.clientY - rect.top) / rect.height) * 100;
+      setTopPercent(Math.min(80, Math.max(15, pct)));
+    };
+
+    const onMouseUp = () => {
+      setVDragging(false);
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, []);
+
   if (!sidePanelOpen) return null;
 
   const selectedNodes = nodes.filter((n) => selectedNodeIds.includes(n.id));
   const selectedEdges = edges.filter((e) => selectedEdgeIds.includes(e.id));
 
   return (
-    <div className="side-panel" style={{ width, minWidth: width }}>
+    <div className="side-panel" style={{ width, minWidth: width }} ref={panelRef}>
       <div
         className={`side-panel-resize ${dragging ? 'dragging' : ''}`}
         onMouseDown={onMouseDown}
       />
-      <div className="side-panel-top">
+      <div className="side-panel-top" style={{ height: `${topPercent}%` }}>
         {selectedNodes.length === 1 ? (
           <NodePanel node={selectedNodes[0]} />
         ) : selectedNodes.length > 1 ? (
@@ -73,6 +99,10 @@ export default function SidePanel() {
           <SettingsPanel />
         )}
       </div>
+      <div
+        className={`side-panel-v-resize ${vDragging ? 'dragging' : ''}`}
+        onMouseDown={onVMouseDown}
+      />
       <ChatPanel />
     </div>
   );

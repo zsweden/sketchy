@@ -111,7 +111,21 @@
 .side-panel-top {
   padding: 1.25rem;
   overflow-y: auto;
-  flex: 0 1 auto;
+  flex: none;
+}
+
+/* Vertical resize handle between top and chat */
+.side-panel-v-resize {
+  flex: none;
+  height: 6px;
+  cursor: row-resize;
+  transition: background 0.15s ease;
+}
+
+.side-panel-v-resize:hover,
+.side-panel-v-resize.dragging {
+  background: var(--accent);
+  opacity: 0.15;
 }
 
 /* Chat panel */
@@ -120,7 +134,7 @@
   display: flex;
   flex-direction: column;
   border-top: 1px solid var(--border);
-  min-height: 200px;
+  min-height: 0;
 }
 
 .chat-header {

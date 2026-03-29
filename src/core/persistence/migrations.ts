@@ -11,4 +11,15 @@ export const migrations: Record<
       edges: edges.map((e) => ({ ...e, confidence: e.confidence ?? 'high' })),
     };
   },
+  2: (data) => {
+    const settings = (data.settings as Record<string, unknown> | undefined) ?? {};
+    return {
+      ...data,
+      schemaVersion: 3,
+      settings: {
+        ...settings,
+        edgeRoutingMode: settings.edgeRoutingMode ?? 'dynamic',
+      },
+    };
+  },
 };

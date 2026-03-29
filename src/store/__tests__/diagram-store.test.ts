@@ -221,5 +221,34 @@ describe('diagram store', () => {
       useDiagramStore.getState().updateSettings({ showGrid: false });
       expect(useDiagramStore.getState().diagram.settings.showGrid).toBe(false);
     });
+
+    it('freezes current edge sides when routing mode switches to fixed', () => {
+      const leftId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const rightId = useDiagramStore.getState().addNode({ x: 200, y: 0 });
+      useDiagramStore.getState().addEdge(leftId, rightId);
+
+      useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });
+
+      const edge = useDiagramStore.getState().diagram.edges[0];
+      expect(useDiagramStore.getState().diagram.settings.edgeRoutingMode).toBe('fixed');
+      expect(edge.sourceSide).toBe('right');
+      expect(edge.targetSide).toBe('left');
+    });
+
+    it('preserves explicit handle sides for new edges in fixed mode', () => {
+      useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });
+      const id1 = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const id2 = useDiagramStore.getState().addNode({ x: 0, y: 200 });
+
+      const result = useDiagramStore.getState().addEdge(id1, id2, {
+        sourceHandleId: 'source-left',
+        targetHandleId: 'target-right',
+      });
+
+      expect(result.success).toBe(true);
+      const edge = useDiagramStore.getState().diagram.edges[0];
+      expect(edge.sourceSide).toBe('left');
+      expect(edge.targetSide).toBe('right');
+    });
   });
 });

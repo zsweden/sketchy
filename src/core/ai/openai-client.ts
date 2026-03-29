@@ -1,5 +1,6 @@
 import type { Diagram, EdgePolarity } from '../types';
 import type { Framework } from '../framework-types';
+import { findCausalLoops } from '../graph/derived';
 import { buildHeaders } from './model-fetcher';
 
 // --- Types ---
@@ -129,6 +130,34 @@ const modifyDiagramTool = {
 
 // --- System prompt builder ---
 
+function buildLoopAnalysis(diagram: Diagram): string {
+  const loops = findCausalLoops(diagram.edges);
+  if (loops.length === 0) return 'Detected feedback loops:\n  (none)';
+
+  let reinforcingIndex = 0;
+  let balancingIndex = 0;
+  const nodeLabels = new Map(
+    diagram.nodes.map((node) => [node.id, node.data.label || node.id]),
+  );
+
+  const lines = loops.map((loop) => {
+    const loopName = loop.kind === 'reinforcing'
+      ? `R${++reinforcingIndex}`
+      : `B${++balancingIndex}`;
+    const descriptors = [
+      loop.kind,
+      `${loop.negativeEdgeCount} negative edge${loop.negativeEdgeCount === 1 ? '' : 's'}`,
+      ...(loop.delayedEdgeCount > 0 ? [`${loop.delayedEdgeCount} delayed edge${loop.delayedEdgeCount === 1 ? '' : 's'}`] : []),
+    ];
+    const cycle = loop.nodeIds
+      .map((nodeId) => nodeLabels.get(nodeId) ?? nodeId)
+      .join(' → ');
+    return `  - ${loopName}: ${cycle} → ${nodeLabels.get(loop.nodeIds[0]) ?? loop.nodeIds[0]} (${descriptors.join(', ')})`;
+  });
+
+  return `Detected feedback loops:\n${lines.join('\n')}`;
+}
+
 function buildSystemPrompt(diagram: Diagram, framework: Framework): string {
   const nodesDesc = diagram.nodes
     .map((n) => {
@@ -165,6 +194,12 @@ function buildSystemPrompt(diagram: Diagram, framework: Framework): string {
   const delayRule = framework.supportsEdgeDelay
     ? 'Set delay=true when the source affects the target only after a noticeable lag.'
     : 'Use notes when you need to explain timing or caveats.';
+  const loopAnalysis = framework.allowsCycles
+    ? buildLoopAnalysis(diagram)
+    : '';
+  const loopReasoningRule = framework.allowsCycles
+    ? 'When loops are present, refer to them by the provided R#/B# names, explain whether each loop is reinforcing or balancing from its signed edges, and suggest flywheel rewrites or simplifications when the structure is overly redundant.'
+    : 'Focus on causes, dependencies, and missing links rather than feedback loops.';
 
   return `You are an AI assistant for Sketchy, a thinking-frameworks diagram editor.
 
@@ -177,6 +212,8 @@ ${nodesDesc || '  (none)'}
 
 Edges (source ${edgeVerb} target):
 ${edgesDesc || '  (none)'}
+
+${loopAnalysis}
 
 You can either:
 1. Answer questions about the diagram — analyze the structure, identify issues, suggest improvements.
@@ -191,6 +228,7 @@ Rules for modifications:
 - ${polarityRule}
 - Edges can also use confidence to express uncertainty: high (default, solid), medium (dashed), or low (dotted).
 - ${delayRule}
+- ${loopReasoningRule}
 - Edges can have notes — use them to explain the causal reasoning behind the connection.
 - Always explain your reasoning.`;
 }

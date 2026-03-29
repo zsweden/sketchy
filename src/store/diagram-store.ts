@@ -12,6 +12,7 @@ import type { Framework } from '../core/framework-types';
 import { getFramework } from '../frameworks/registry';
 import { validateEdge } from '../core/graph/validation';
 import { UndoRedoManager } from '../core/history/undo-redo';
+import { getEdgeHandlePlacement, getSideFromHandleId } from '../core/graph/ports';
 
 interface DiagramSnapshot {
   nodes: DiagramNode[];
@@ -57,7 +58,14 @@ interface DiagramState {
   deleteNodes: (ids: string[]) => void;
 
   // Edge operations
-  addEdge: (source: string, target: string) => { success: boolean; reason?: string };
+  addEdge: (
+    source: string,
+    target: string,
+    handles?: {
+      sourceHandleId?: string | null;
+      targetHandleId?: string | null;
+    },
+  ) => { success: boolean; reason?: string };
   deleteEdges: (ids: string[]) => void;
   setEdgeConfidence: (id: string, confidence: EdgeConfidence) => void;
   setEdgePolarity: (id: string, polarity: EdgePolarity) => void;
@@ -104,6 +112,57 @@ function getDefaultEdgeFields(framework: Framework): Pick<DiagramEdge, 'polarity
     ...(framework.supportsEdgePolarity ? { polarity: 'positive' as const } : {}),
     ...(framework.supportsEdgeDelay ? { delay: false } : {}),
   };
+}
+
+function getNodePositionMap(nodes: DiagramNode[]): Map<string, { x: number; y: number }> {
+  return new Map(nodes.map((node) => [node.id, node.position]));
+}
+
+function resolveEdgeSides(
+  source: string,
+  target: string,
+  nodes: DiagramNode[],
+  settings: DiagramSettings,
+  handles?: {
+    sourceHandleId?: string | null;
+    targetHandleId?: string | null;
+  },
+): Pick<DiagramEdge, 'sourceSide' | 'targetSide'> {
+  const explicitSourceSide = getSideFromHandleId(handles?.sourceHandleId, 'source');
+  const explicitTargetSide = getSideFromHandleId(handles?.targetHandleId, 'target');
+
+  if (explicitSourceSide && explicitTargetSide) {
+    return {
+      sourceSide: explicitSourceSide,
+      targetSide: explicitTargetSide,
+    };
+  }
+
+  const positions = getNodePositionMap(nodes);
+  const placement = getEdgeHandlePlacement(
+    positions.get(source),
+    positions.get(target),
+    settings.layoutDirection,
+  );
+
+  return {
+    sourceSide: explicitSourceSide ?? placement.sourceSide,
+    targetSide: explicitTargetSide ?? placement.targetSide,
+  };
+}
+
+function freezeEdgeSides(
+  edges: DiagramEdge[],
+  nodes: DiagramNode[],
+  settings: DiagramSettings,
+): DiagramEdge[] {
+  return edges.map((edge) => ({
+    ...edge,
+    ...resolveEdgeSides(edge.source, edge.target, nodes, settings, {
+      sourceHandleId: edge.sourceSide ? `source-${edge.sourceSide}` : undefined,
+      targetHandleId: edge.targetSide ? `target-${edge.targetSide}` : undefined,
+    }),
+  }));
 }
 
 function snapshot(state: { diagram: Diagram }): DiagramSnapshot {
@@ -181,6 +240,7 @@ function batchAddEdges(
   nodes: DiagramNode[],
   edges: DiagramEdge[],
   framework: Framework,
+  settings: DiagramSettings,
 ): { nodes: DiagramNode[]; edges: DiagramEdge[] } {
   const nodeIds = new Set(nodes.map((n) => n.id));
   for (const e of mutations.addEdges ?? []) {
@@ -191,10 +251,14 @@ function batchAddEdges(
       allowCycles: framework.allowsCycles,
     });
     if (result.valid) {
+      const routingSides = settings.edgeRoutingMode === 'fixed'
+        ? resolveEdgeSides(source, target, nodes, settings)
+        : {};
       edges.push({
         id: crypto.randomUUID(),
         source,
         target,
+        ...routingSides,
         ...(e.confidence && e.confidence !== 'high' ? { confidence: e.confidence } : {}),
         ...(framework.supportsEdgePolarity ? { polarity: e.polarity ?? 'positive' as const } : {}),
         ...(framework.supportsEdgeDelay && e.delay ? { delay: true } : {}),
@@ -369,7 +433,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
     }));
   },
 
-  addEdge: (source, target) => {
+  addEdge: (source, target, handles) => {
     const state = get();
     const result = validateEdge(state.diagram.edges, source, target, {
       allowCycles: state.framework.allowsCycles,
@@ -385,6 +449,9 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       id: crypto.randomUUID(),
       source,
       target,
+      ...(state.diagram.settings.edgeRoutingMode === 'fixed'
+        ? resolveEdgeSides(source, target, state.diagram.nodes, state.diagram.settings, handles)
+        : {}),
       ...getDefaultEdgeFields(state.framework),
     };
 
@@ -439,7 +506,14 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
     nodes = batchAddNodes(mutations, idMap, nodes);
     nodes = batchUpdateNodes(mutations, idMap, nodes);
     ({ nodes, edges } = batchRemoveNodes(mutations, idMap, nodes, edges));
-    ({ nodes, edges } = batchAddEdges(mutations, idMap, nodes, edges, state.framework));
+    ({ nodes, edges } = batchAddEdges(
+      mutations,
+      idMap,
+      nodes,
+      edges,
+      state.framework,
+      state.diagram.settings,
+    ));
     edges = batchUpdateEdges(mutations, edges, state.framework);
     edges = batchRemoveEdges(mutations, edges);
 
@@ -527,12 +601,22 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
   },
 
   updateSettings: (settings) => {
-    set((s) => ({
-      diagram: {
-        ...s.diagram,
-        settings: { ...s.diagram.settings, ...settings },
-      },
-    }));
+    set((s) => {
+      const nextSettings = { ...s.diagram.settings, ...settings };
+      const edgeRoutingModeChanged =
+        settings.edgeRoutingMode !== undefined
+        && settings.edgeRoutingMode !== s.diagram.settings.edgeRoutingMode;
+
+      return {
+        diagram: {
+          ...s.diagram,
+          settings: nextSettings,
+          edges: edgeRoutingModeChanged && nextSettings.edgeRoutingMode === 'fixed'
+            ? freezeEdgeSides(s.diagram.edges, s.diagram.nodes, nextSettings)
+            : s.diagram.edges,
+        },
+      };
+    });
   },
 
   loadDiagram: (diagram) => {
@@ -540,8 +624,19 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
     history.push(snapshot(state));
 
     const fw = getFramework(diagram.frameworkId) ?? state.framework;
+    const settings: DiagramSettings = {
+      layoutDirection: diagram.settings.layoutDirection,
+      showGrid: diagram.settings.showGrid,
+      edgeRoutingMode: diagram.settings.edgeRoutingMode ?? 'dynamic',
+    };
     set({
-      diagram,
+      diagram: {
+        ...diagram,
+        settings,
+        edges: settings.edgeRoutingMode === 'fixed'
+          ? freezeEdgeSides(diagram.edges, diagram.nodes, settings)
+          : diagram.edges,
+      },
       framework: fw,
       canUndo: true,
       canRedo: false,

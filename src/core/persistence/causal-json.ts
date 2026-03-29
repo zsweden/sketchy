@@ -23,6 +23,8 @@ interface SkyNode {
 interface SkyEdge {
   source: string;
   target: string;
+  sourceSide?: DiagramEdge['sourceSide'];
+  targetSide?: DiagramEdge['targetSide'];
   confidence?: EdgeConfidence;
   polarity?: EdgePolarity;
   delay?: boolean;
@@ -40,6 +42,7 @@ export interface SkyJson {
   framework?: string;
   direction?: 'TB' | 'BT';
   showGrid?: boolean;
+  edgeRoutingMode?: Diagram['settings']['edgeRoutingMode'];
   version?: number;
   createdAt?: string;
   nodes: SkyNode[];
@@ -98,6 +101,8 @@ export function convertSkyJson(data: SkyJson): { diagram: Diagram; needsLayout: 
     id: `e${i + 1}`,
     source: e.source,
     target: e.target,
+    ...(e.sourceSide ? { sourceSide: e.sourceSide } : {}),
+    ...(e.targetSide ? { targetSide: e.targetSide } : {}),
     ...(e.confidence ? { confidence: e.confidence } : {}),
     ...(e.polarity ? { polarity: e.polarity } : {}),
     ...(e.delay ? { delay: true } : {}),
@@ -112,6 +117,7 @@ export function convertSkyJson(data: SkyJson): { diagram: Diagram; needsLayout: 
     settings: {
       layoutDirection: data.direction ?? 'BT',
       showGrid: data.showGrid ?? true,
+      edgeRoutingMode: data.edgeRoutingMode ?? 'dynamic',
     },
     nodes,
     edges,
@@ -156,6 +162,8 @@ export function diagramToSkyJson(diagram: Diagram): SkyJson {
   const edges: SkyEdge[] = diagram.edges.map((e) => ({
     source: e.source,
     target: e.target,
+    ...(e.sourceSide ? { sourceSide: e.sourceSide } : {}),
+    ...(e.targetSide ? { targetSide: e.targetSide } : {}),
     ...(e.confidence && e.confidence !== 'high' ? { confidence: e.confidence } : {}),
     ...(e.polarity ? { polarity: e.polarity } : {}),
     ...(e.delay ? { delay: true } : {}),
@@ -172,6 +180,7 @@ export function diagramToSkyJson(diagram: Diagram): SkyJson {
     framework: diagram.frameworkId,
     direction: diagram.settings.layoutDirection,
     showGrid: diagram.settings.showGrid,
+    edgeRoutingMode: diagram.settings.edgeRoutingMode,
     version: diagram.schemaVersion,
     createdAt: new Date().toISOString(),
     nodes,

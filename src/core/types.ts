@@ -1,4 +1,7 @@
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
+
+export type EdgeRoutingMode = 'dynamic' | 'fixed';
+export type EdgeHandleSide = 'top' | 'right' | 'bottom' | 'left';
 
 export interface Diagram {
   schemaVersion: number;
@@ -13,6 +16,7 @@ export interface Diagram {
 export interface DiagramSettings {
   layoutDirection: 'TB' | 'BT';
   showGrid: boolean;
+  edgeRoutingMode: EdgeRoutingMode;
 }
 
 export interface DiagramNode {
@@ -35,6 +39,8 @@ export interface DiagramEdge {
   id: string;
   source: string;
   target: string;
+  sourceSide?: EdgeHandleSide;
+  targetSide?: EdgeHandleSide;
   confidence?: EdgeConfidence;
   polarity?: EdgePolarity;
   delay?: boolean;
@@ -50,6 +56,7 @@ export function createEmptyDiagram(frameworkId: string, id?: string): Diagram {
     settings: {
       layoutDirection: 'BT',
       showGrid: true,
+      edgeRoutingMode: 'dynamic',
     },
     nodes: [],
     edges: [],

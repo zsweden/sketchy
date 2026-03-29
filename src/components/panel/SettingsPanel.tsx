@@ -81,6 +81,24 @@ export default function SettingsPanel() {
         </select>
       </div>
 
+      <div className="section-stack" style={{ gap: '0.375rem' }}>
+        <p className="section-label">Arrow Routing</p>
+        <select
+          className="select-control"
+          value={settings.edgeRoutingMode}
+          onChange={(e) => updateSettings({ edgeRoutingMode: e.target.value as 'dynamic' | 'fixed' })}
+          aria-label="Arrow routing"
+        >
+          <option value="dynamic">Optimize Continuously</option>
+          <option value="fixed">Keep Fixed</option>
+        </select>
+        <p className="field-label">
+          {settings.edgeRoutingMode === 'dynamic'
+            ? 'Arrow attachments follow node geometry as nodes move.'
+            : 'Arrow attachments stay on their current sides until changed manually.'}
+        </p>
+      </div>
+
       {/* Grid */}
       <div className="control-row split-row">
         <p className="field-label">Show Grid</p>
