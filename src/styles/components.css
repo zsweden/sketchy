@@ -337,6 +337,10 @@
   gap: 0.25rem;
 }
 
+.toolbar-group-right {
+  margin-left: auto;
+}
+
 .toolbar-divider {
   width: 1px;
   height: 1.5rem;

@@ -219,7 +219,7 @@ export default function Toolbar() {
 
       </div>
 
-      <div className="toolbar-group">
+      <div className="toolbar-group toolbar-group-right">
         <div style={{ position: 'relative' }}>
           <button
             className="btn btn-ghost btn-icon"
