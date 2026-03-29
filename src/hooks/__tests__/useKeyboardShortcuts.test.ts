@@ -1,81 +1,23 @@
+import { createElement } from 'react';
+import { render } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
+import { useKeyboardShortcuts } from '../useKeyboardShortcuts';
 
-// Simulate the keyboard shortcut logic directly (no React rendering needed)
-// since the hook just adds document event listeners.
+function Harness() {
+  useKeyboardShortcuts();
+  return null;
+}
 
 function fireKey(key: string, opts: Partial<KeyboardEvent> = {}) {
   const event = new KeyboardEvent('keydown', { key, bubbles: true, ...opts });
-  document.dispatchEvent(event);
+  (opts.target ?? document).dispatchEvent(event);
 }
 
-function fireKeyUp(key: string) {
+function fireKeyUp(key: string, target: EventTarget = document) {
   const event = new KeyboardEvent('keyup', { key, bubbles: true });
-  document.dispatchEvent(event);
-}
-
-// Minimal reimplementation of the shortcut handler for unit testing
-// (avoids React hook rendering complexity)
-function installShortcuts() {
-  let spaceHeld = false;
-  let modeBeforeSpace: 'select' | 'pan' = 'select';
-
-  const onKeyDown = (e: KeyboardEvent) => {
-    const isMod = e.metaKey || e.ctrlKey;
-    const target = e.target as HTMLElement;
-    const isEditing =
-      target.tagName === 'INPUT' ||
-      target.tagName === 'TEXTAREA' ||
-      target.tagName === 'SELECT' ||
-      target.isContentEditable;
-
-    if (isMod && e.key === 'z' && !e.shiftKey) {
-      e.preventDefault();
-      useDiagramStore.getState().undo();
-      return;
-    }
-    if (isMod && e.key === 'z' && e.shiftKey) {
-      e.preventDefault();
-      useDiagramStore.getState().redo();
-      return;
-    }
-    if (isMod && e.key === 'y') {
-      e.preventDefault();
-      useDiagramStore.getState().redo();
-      return;
-    }
-    if (isEditing) return;
-    if (e.key === ' ' && !e.repeat && !spaceHeld) {
-      e.preventDefault();
-      spaceHeld = true;
-      modeBeforeSpace = useUIStore.getState().interactionMode;
-      useUIStore.getState().setInteractionMode('pan');
-      return;
-    }
-    if (e.key === 'v' || e.key === 'V') {
-      useUIStore.getState().setInteractionMode('select');
-      return;
-    }
-    if (e.key === 'h' || e.key === 'H') {
-      useUIStore.getState().setInteractionMode('pan');
-      return;
-    }
-  };
-
-  const onKeyUp = (e: KeyboardEvent) => {
-    if (e.key === ' ' && spaceHeld) {
-      spaceHeld = false;
-      useUIStore.getState().setInteractionMode(modeBeforeSpace);
-    }
-  };
-
-  document.addEventListener('keydown', onKeyDown);
-  document.addEventListener('keyup', onKeyUp);
-  return () => {
-    document.removeEventListener('keydown', onKeyDown);
-    document.removeEventListener('keyup', onKeyUp);
-  };
+  target.dispatchEvent(event);
 }
 
 describe('keyboard shortcuts', () => {
@@ -84,7 +26,7 @@ describe('keyboard shortcuts', () => {
   beforeEach(() => {
     useDiagramStore.getState().newDiagram();
     useUIStore.setState({ interactionMode: 'select' });
-    cleanup = installShortcuts();
+    cleanup = render(createElement(Harness)).unmount;
   });
 
   afterEach(() => {
@@ -120,6 +62,19 @@ describe('keyboard shortcuts', () => {
       fireKey('z', { metaKey: true }); // undo
       fireKey('y', { metaKey: true }); // redo
       expect(useDiagramStore.getState().diagram.nodes).toHaveLength(1);
+    });
+  });
+
+  describe('editing guard', () => {
+    it('does not switch tools while typing in an input', () => {
+      useUIStore.setState({ interactionMode: 'select' });
+      const input = document.createElement('input');
+      document.body.appendChild(input);
+
+      fireKey('h', { target: input });
+
+      expect(useUIStore.getState().interactionMode).toBe('select');
+      input.remove();
     });
   });
 

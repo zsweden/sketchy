@@ -40,6 +40,7 @@ export default function SettingsPanel() {
           value={diagramName}
           onChange={(e) => setDiagramName(e.target.value)}
           placeholder="Untitled Diagram"
+          aria-label="Diagram name"
         />
       </div>
 
@@ -59,6 +60,7 @@ export default function SettingsPanel() {
           className="select-control"
           value={settings.layoutDirection}
           onChange={(e) => handleDirectionChange(e.target.value as 'TB' | 'BT')}
+          aria-label="Layout direction"
         >
           <option value="TB">Top to Bottom</option>
           <option value="BT">Bottom to Top</option>

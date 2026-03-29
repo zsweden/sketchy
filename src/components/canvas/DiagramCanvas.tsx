@@ -278,6 +278,7 @@ export default function DiagramCanvas() {
 
   return (
     <ReactFlow
+      data-testid="diagram-flow"
       nodes={localNodes}
       edges={localEdges}
       nodeTypes={nodeTypes}

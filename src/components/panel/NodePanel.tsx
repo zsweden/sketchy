@@ -87,6 +87,7 @@ export default function NodePanel({ node }: Props) {
           onKeyDown={handleTextKeyDown}
           rows={3}
           placeholder="Enter text..."
+          aria-label="Node text"
         />
       </div>
 
@@ -101,6 +102,7 @@ export default function NodePanel({ node }: Props) {
           rows={4}
           placeholder="Add notes..."
           style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}
+          aria-label="Node notes"
         />
       </div>
 

@@ -32,6 +32,7 @@ export default function FrameworkSelector() {
       className="select-control"
       value={currentId}
       onChange={handleChange}
+      aria-label="Framework"
     >
       {frameworks.map((fw) => (
         <option key={fw.id} value={fw.id}>

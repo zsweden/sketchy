@@ -80,6 +80,7 @@ export default function EdgePanel({ edge }: Props) {
           rows={4}
           placeholder="Add notes..."
           style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}
+          aria-label="Edge notes"
         />
       </div>
     </div>

@@ -92,6 +92,8 @@ function EntityNode({ id, data, selected }: NodeProps) {
       className={`entity-node ${selected ? 'selected' : ''} ${nodeData.highlightState === 'dimmed' ? 'dimmed' : ''}`}
       onDoubleClick={handleDoubleClick}
       style={nodeData.color ? { backgroundColor: nodeData.color } : undefined}
+      data-testid={`entity-node-${id}`}
+      data-node-id={id}
     >
       {accentColor && (
         <div

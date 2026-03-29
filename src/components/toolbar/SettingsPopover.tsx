@@ -44,6 +44,7 @@ export default function SettingsPopover() {
             className="input-text"
             value={provider}
             onChange={(e) => setProvider(e.target.value)}
+            aria-label="Provider"
           >
             {PROVIDERS.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
@@ -65,6 +66,7 @@ export default function SettingsPopover() {
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="sk-..."
               autoComplete="off"
+              aria-label="API key"
             />
           </div>
         )}
@@ -79,6 +81,7 @@ export default function SettingsPopover() {
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
               placeholder="https://api.example.com/v1"
+              aria-label="API endpoint"
             />
           </div>
         )}
@@ -95,6 +98,7 @@ export default function SettingsPopover() {
               onFocus={() => setModelDropdownOpen(true)}
               onBlur={() => setTimeout(() => setModelDropdownOpen(false), 150)}
               placeholder="Type or select a model"
+              aria-label="Model"
             />
             {modelDropdownOpen && (
               <div className="model-dropdown">

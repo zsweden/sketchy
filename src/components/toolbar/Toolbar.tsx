@@ -1,5 +1,4 @@
 import {
-  SquarePlus,
   LayoutDashboard,
   Undo2,
   Redo2,
@@ -127,17 +126,6 @@ export default function Toolbar() {
 
       <div className="toolbar-group">
         <button
-          className="btn btn-secondary btn-icon"
-          onClick={handleNew}
-          title="New diagram"
-          aria-label="New diagram"
-        >
-          <SquarePlus size={16} />
-        </button>
-
-        <div className="toolbar-divider" />
-
-        <button
           className={`btn btn-secondary btn-icon ${interactionMode === 'select' ? 'btn-toggle-active' : ''}`}
           onClick={() => setInteractionMode('select')}
           title="Select tool (V)"
@@ -188,6 +176,13 @@ export default function Toolbar() {
 
         <div className="toolbar-divider" />
 
+        <button
+          className="btn btn-secondary"
+          onClick={handleNew}
+          title="New diagram"
+        >
+          New
+        </button>
         <button
           className="btn btn-secondary"
           onClick={handleLoad}

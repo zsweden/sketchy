@@ -192,6 +192,7 @@ export default function ChatPanel() {
             placeholder="Ask about your diagram..."
             rows={1}
             disabled={loading}
+            aria-label="Chat input"
           />
           {loading ? (
             <button
