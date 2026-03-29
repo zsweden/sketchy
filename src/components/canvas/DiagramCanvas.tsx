@@ -21,7 +21,7 @@ import EntityNode from './EntityNode';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { FIT_VIEW_OPTIONS } from '../../core/layout/fit-view-options';
-import { computeNodeDegrees, getDerivedIndicators } from '../../core/graph/derived';
+import { computeNodeDegrees, getDerivedIndicators, getConnectedSubgraph } from '../../core/graph/derived';
 
 const nodeTypes = { entity: EntityNode };
 
@@ -42,6 +42,7 @@ export default function DiagramCanvas() {
   const deleteNodes = useDiagramStore((s) => s.deleteNodes);
   const deleteEdges = useDiagramStore((s) => s.deleteEdges);
 
+  const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
   const setSelectedNodes = useUIStore((s) => s.setSelectedNodes);
   const setSelectedEdges = useUIStore((s) => s.setSelectedEdges);
   const openContextMenu = useUIStore((s) => s.openContextMenu);
@@ -56,6 +57,12 @@ export default function DiagramCanvas() {
   const isDragging = useRef(false);
   const lastPaneClickTime = useRef(0);
 
+  // Compute connected subgraph for single-node selection highlighting
+  const highlightSets = useMemo(() => {
+    if (selectedNodeIds.length !== 1) return null;
+    return getConnectedSubgraph(diagram.edges, selectedNodeIds[0]);
+  }, [selectedNodeIds, diagram.edges]);
+
   // Build React Flow nodes from diagram, letting RF manage selection
   const rfNodes: Node[] = useMemo(
     () =>
@@ -63,9 +70,14 @@ export default function DiagramCanvas() {
         id: n.id,
         type: n.type,
         position: n.position,
-        data: n.data,
+        data: {
+          ...n.data,
+          highlightState: highlightSets
+            ? highlightSets.nodeIds.has(n.id) ? 'highlighted' : 'dimmed'
+            : 'none',
+        },
       })),
-    [diagram.nodes],
+    [diagram.nodes, highlightSets],
   );
 
   // Build React Flow edges from diagram
@@ -78,9 +90,14 @@ export default function DiagramCanvas() {
         sourceHandle: 'source',
         targetHandle: 'target',
         pathOptions: { borderRadius: 100 },
-        className: `edge-confidence-${e.confidence ?? 'high'}`,
+        className: [
+          `edge-confidence-${e.confidence ?? 'high'}`,
+          highlightSets
+            ? highlightSets.edgeIds.has(e.id) ? 'edge-highlighted' : 'edge-dimmed'
+            : '',
+        ].join(' '),
       })),
-    [diagram.edges],
+    [diagram.edges, highlightSets],
   );
 
   // Local state for React Flow selection/interaction

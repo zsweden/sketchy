@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeNodeDegrees, getDerivedIndicators } from '../derived';
+import { computeNodeDegrees, getDerivedIndicators, getConnectedSubgraph } from '../derived';
 import { crtFramework } from '../../../frameworks/crt';
 import type { DiagramEdge } from '../../types';
 
@@ -67,5 +67,48 @@ describe('getDerivedIndicators', () => {
 
     // CRT doesn't define a 'leaf' indicator
     expect(result).toHaveLength(0);
+  });
+});
+
+describe('getConnectedSubgraph', () => {
+  it('returns only selected node when no edges', () => {
+    const result = getConnectedSubgraph([], 'a');
+    expect(result.nodeIds).toEqual(new Set(['a']));
+    expect(result.edgeIds.size).toBe(0);
+  });
+
+  it('finds upstream and downstream in a chain (select middle)', () => {
+    const edges = [edge('a', 'b'), edge('b', 'c')];
+    const result = getConnectedSubgraph(edges, 'b');
+    expect(result.nodeIds).toEqual(new Set(['a', 'b', 'c']));
+    expect(result.edgeIds).toEqual(new Set(['a-b', 'b-c']));
+  });
+
+  it('finds multiple inputs in a diamond (select merge node)', () => {
+    const edges = [edge('a', 'b'), edge('a', 'c'), edge('b', 'd'), edge('c', 'd')];
+    const result = getConnectedSubgraph(edges, 'd');
+    expect(result.nodeIds).toEqual(new Set(['b', 'c', 'd']));
+    expect(result.edgeIds).toEqual(new Set(['b-d', 'c-d']));
+  });
+
+  it('finds only downstream for root node', () => {
+    const edges = [edge('a', 'b'), edge('a', 'c')];
+    const result = getConnectedSubgraph(edges, 'a');
+    expect(result.nodeIds).toEqual(new Set(['a', 'b', 'c']));
+    expect(result.edgeIds).toEqual(new Set(['a-b', 'a-c']));
+  });
+
+  it('finds only upstream for leaf node', () => {
+    const edges = [edge('a', 'b'), edge('b', 'c')];
+    const result = getConnectedSubgraph(edges, 'c');
+    expect(result.nodeIds).toEqual(new Set(['b', 'c']));
+    expect(result.edgeIds).toEqual(new Set(['b-c']));
+  });
+
+  it('returns only selected node when isolated', () => {
+    const edges = [edge('a', 'b')];
+    const result = getConnectedSubgraph(edges, 'x');
+    expect(result.nodeIds).toEqual(new Set(['x']));
+    expect(result.edgeIds.size).toBe(0);
   });
 });

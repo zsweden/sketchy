@@ -9,6 +9,7 @@ interface EntityNodeData {
   tags: string[];
   junctionType: 'and' | 'or';
   color?: string;
+  highlightState?: 'highlighted' | 'dimmed' | 'none';
   [key: string]: unknown;
 }
 
@@ -88,7 +89,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
 
   return (
     <div
-      className={`entity-node ${selected ? 'selected' : ''}`}
+      className={`entity-node ${selected ? 'selected' : ''} ${nodeData.highlightState === 'dimmed' ? 'dimmed' : ''}`}
       onDoubleClick={handleDoubleClick}
       style={nodeData.color ? { backgroundColor: nodeData.color } : undefined}
     >

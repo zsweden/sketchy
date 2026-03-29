@@ -42,6 +42,31 @@ function matchesCondition(
   }
 }
 
+// --- Connected subgraph for highlight ---
+
+export interface ConnectedSubgraph {
+  nodeIds: Set<string>;
+  edgeIds: Set<string>;
+}
+
+export function getConnectedSubgraph(
+  edges: DiagramEdge[],
+  selectedNodeId: string,
+): ConnectedSubgraph {
+  const nodeIds = new Set<string>([selectedNodeId]);
+  const edgeIds = new Set<string>();
+
+  for (const edge of edges) {
+    if (edge.source === selectedNodeId || edge.target === selectedNodeId) {
+      edgeIds.add(edge.id);
+      nodeIds.add(edge.source);
+      nodeIds.add(edge.target);
+    }
+  }
+
+  return { nodeIds, edgeIds };
+}
+
 export function getDerivedIndicators(
   nodeId: string,
   degreesMap: Map<string, NodeDegrees>,
