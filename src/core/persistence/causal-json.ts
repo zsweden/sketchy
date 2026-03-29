@@ -1,4 +1,10 @@
-import type { Diagram, DiagramNode, DiagramEdge, EdgeConfidence } from '../types';
+import type {
+  Diagram,
+  DiagramNode,
+  DiagramEdge,
+  EdgeConfidence,
+  EdgePolarity,
+} from '../types';
 import { SCHEMA_VERSION } from '../types';
 
 // --- Unified .sky format types ---
@@ -18,6 +24,9 @@ interface SkyEdge {
   source: string;
   target: string;
   confidence?: EdgeConfidence;
+  polarity?: EdgePolarity;
+  delay?: boolean;
+  notes?: string;
 }
 
 interface SkyJunction {
@@ -90,6 +99,9 @@ export function convertSkyJson(data: SkyJson): { diagram: Diagram; needsLayout: 
     source: e.source,
     target: e.target,
     ...(e.confidence ? { confidence: e.confidence } : {}),
+    ...(e.polarity ? { polarity: e.polarity } : {}),
+    ...(e.delay ? { delay: true } : {}),
+    ...(e.notes ? { notes: e.notes } : {}),
   }));
 
   const diagram: Diagram = {
@@ -145,6 +157,9 @@ export function diagramToSkyJson(diagram: Diagram): SkyJson {
     source: e.source,
     target: e.target,
     ...(e.confidence && e.confidence !== 'high' ? { confidence: e.confidence } : {}),
+    ...(e.polarity ? { polarity: e.polarity } : {}),
+    ...(e.delay ? { delay: true } : {}),
+    ...(e.notes ? { notes: e.notes } : {}),
   }));
 
   const junctions: SkyJunction[] = [];

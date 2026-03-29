@@ -29,12 +29,15 @@ export interface DiagramNode {
 }
 
 export type EdgeConfidence = 'high' | 'medium' | 'low';
+export type EdgePolarity = 'positive' | 'negative';
 
 export interface DiagramEdge {
   id: string;
   source: string;
   target: string;
   confidence?: EdgeConfidence;
+  polarity?: EdgePolarity;
+  delay?: boolean;
   notes?: string;
 }
 

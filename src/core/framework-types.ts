@@ -4,6 +4,9 @@ export interface Framework {
   description: string;
   defaultLayoutDirection: LayoutDirection;
   supportsJunctions: boolean;
+  allowsCycles?: boolean;
+  supportsEdgePolarity?: boolean;
+  supportsEdgeDelay?: boolean;
   nodeTags: NodeTag[];
   derivedIndicators: DerivedIndicator[];
   edgeLabel?: string;

@@ -2,9 +2,12 @@ import { useCallback } from 'react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { autoLayout, elkEngine } from '../../core/layout';
+import { findCausalLoops, summarizeCausalLoops } from '../../core/graph/derived';
 
 export default function SettingsPanel() {
   const settings = useDiagramStore((s) => s.diagram.settings);
+  const nodes = useDiagramStore((s) => s.diagram.nodes);
+  const edges = useDiagramStore((s) => s.diagram.edges);
   const updateSettings = useDiagramStore((s) => s.updateSettings);
   const diagramName = useDiagramStore((s) => s.diagram.name);
   const setDiagramName = useDiagramStore((s) => s.setDiagramName);
@@ -12,12 +15,23 @@ export default function SettingsPanel() {
   const moveNodes = useDiagramStore((s) => s.moveNodes);
   const requestFitView = useUIStore((s) => s.requestFitView);
   const framework = useDiagramStore((s) => s.framework);
+  const loops = framework.allowsCycles ? findCausalLoops(edges) : [];
+  const loopSummary = summarizeCausalLoops(loops);
+  const nodeLabels = new Map(nodes.map((node) => [node.id, node.data.label || node.id]));
 
   const handleDirectionChange = useCallback(
     async (direction: 'TB' | 'BT') => {
       updateSettings({ layoutDirection: direction });
       const { nodes, edges } = useDiagramStore.getState().diagram;
-      const updates = await autoLayout(nodes, edges, { direction }, elkEngine);
+      const updates = await autoLayout(
+        nodes,
+        edges,
+        {
+          direction,
+          cyclic: useDiagramStore.getState().framework.allowsCycles,
+        },
+        elkEngine,
+      );
       if (updates.length > 0) {
         commitToHistory();
         moveNodes(updates);
@@ -79,6 +93,55 @@ export default function SettingsPanel() {
           <div className="toggle-thumb" />
         </button>
       </div>
+
+      {framework.allowsCycles && (
+        <div className="section-stack" style={{ gap: '0.5rem' }}>
+          <p className="section-label">Feedback Loops</p>
+          <div className="control-row">
+            <span className="badge" style={{ backgroundColor: '#5C8DB515', color: '#5C8DB5' }}>
+              {loopSummary.totalLoops} Total
+            </span>
+            <span className="badge" style={{ backgroundColor: '#4CAF5015', color: '#4CAF50' }}>
+              {loopSummary.reinforcingLoops} Reinforcing
+            </span>
+            <span className="badge" style={{ backgroundColor: '#FB8C0015', color: '#FB8C00' }}>
+              {loopSummary.balancingLoops} Balancing
+            </span>
+            {loopSummary.delayedLoops > 0 && (
+              <span className="badge" style={{ backgroundColor: '#8A8A7A15', color: '#8A8A7A' }}>
+                {loopSummary.delayedLoops} Delayed
+              </span>
+            )}
+          </div>
+          {loops.length === 0 ? (
+            <p className="field-label">No feedback loops detected yet.</p>
+          ) : (
+            loops.slice(0, 6).map((loop, index) => (
+              <div key={loop.edgeIds.join('-')} className="section-stack" style={{ gap: '0.25rem' }}>
+                <div className="control-row" style={{ gap: '0.5rem' }}>
+                  <span
+                    className="badge"
+                    style={{
+                      backgroundColor: loop.kind === 'reinforcing' ? '#4CAF5015' : '#FB8C0015',
+                      color: loop.kind === 'reinforcing' ? '#4CAF50' : '#FB8C00',
+                    }}
+                  >
+                    {loop.kind === 'reinforcing' ? `R${index + 1}` : `B${index + 1}`}
+                  </span>
+                  {loop.delayedEdgeCount > 0 && (
+                    <span className="badge" style={{ backgroundColor: '#8A8A7A15', color: '#8A8A7A' }}>
+                      Delay
+                    </span>
+                  )}
+                </div>
+                <p className="field-label">
+                  {loop.nodeIds.map((nodeId) => nodeLabels.get(nodeId) ?? nodeId).join(' -> ')}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }

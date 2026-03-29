@@ -98,6 +98,12 @@ describe('validateEdge', () => {
     const result = validateEdge([edge('1', 'a', 'b')], 'b', 'c');
     expect(result.valid).toBe(true);
   });
+
+  it('allows cycle when explicitly enabled', () => {
+    const edges = [edge('1', 'a', 'b'), edge('2', 'b', 'c')];
+    const result = validateEdge(edges, 'c', 'a', { allowCycles: true });
+    expect(result.valid).toBe(true);
+  });
 });
 
 describe('validateGraph', () => {
@@ -136,5 +142,17 @@ describe('validateGraph', () => {
     const result = validateGraph(nodes, edges);
     expect(result.droppedEdges).toHaveLength(1);
     expect(result.droppedEdges[0].id).toBe('3');
+  });
+
+  it('preserves cyclic edges when cycles are allowed', () => {
+    const nodes = [node('a'), node('b'), node('c')];
+    const edges = [
+      edge('1', 'a', 'b'),
+      edge('2', 'b', 'c'),
+      edge('3', 'c', 'a'),
+    ];
+    const result = validateGraph(nodes, edges, { allowCycles: true });
+    expect(result.valid).toBe(true);
+    expect(result.droppedEdges).toHaveLength(0);
   });
 });

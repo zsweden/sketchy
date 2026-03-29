@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { saveDiagram, loadDiagram, clearDiagram } from '../local-storage';
 import { createEmptyDiagram } from '../../types';
 

@@ -28,6 +28,7 @@ export default function Toolbar() {
   const moveNodesStore = useDiagramStore((s) => s.moveNodes);
   const commitToHistory = useDiagramStore((s) => s.commitToHistory);
   const loadDiagram = useDiagramStore((s) => s.loadDiagram);
+  const framework = useDiagramStore((s) => s.framework);
   const addToast = useUIStore((s) => s.addToast);
   const sidePanelOpen = useUIStore((s) => s.sidePanelOpen);
   const toggleSidePanel = useUIStore((s) => s.toggleSidePanel);
@@ -54,13 +55,14 @@ export default function Toolbar() {
   const handleAutoLayout = useCallback(async () => {
     const updates = await autoLayout(diagram.nodes, diagram.edges, {
       direction: diagram.settings.layoutDirection,
+      cyclic: framework.allowsCycles,
     }, elkEngine);
     if (updates.length > 0) {
       commitToHistory();
       moveNodesStore(updates);
       requestFitView();
     }
-  }, [diagram, commitToHistory, moveNodesStore, requestFitView]);
+  }, [diagram, framework.allowsCycles, commitToHistory, moveNodesStore, requestFitView]);
 
   const handleSave = useCallback(async () => {
     try {
@@ -88,6 +90,7 @@ export default function Toolbar() {
           const loaded = useDiagramStore.getState().diagram;
           const updates = await autoLayout(loaded.nodes, loaded.edges, {
             direction: loaded.settings.layoutDirection,
+            cyclic: useDiagramStore.getState().framework.allowsCycles,
           }, elkEngine);
           if (updates.length > 0) {
             moveNodesStore(updates);

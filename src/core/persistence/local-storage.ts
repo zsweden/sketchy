@@ -1,5 +1,6 @@
 import type { Diagram } from '../types';
 import { validateGraph } from '../graph/validation';
+import { getFramework } from '../../frameworks/registry';
 import { migrate, validateDiagramShape } from './schema';
 
 const STORAGE_KEY = 'sketchy_diagram';
@@ -37,7 +38,9 @@ export function loadDiagram(): LoadResult {
 
     // Validate graph — sanitize dangling edges, cycles, duplicates
     const warnings: string[] = [];
-    const graphResult = validateGraph(diagram.nodes, diagram.edges);
+    const graphResult = validateGraph(diagram.nodes, diagram.edges, {
+      allowCycles: getFramework(diagram.frameworkId)?.allowsCycles,
+    });
     if (!graphResult.valid) {
       diagram.edges = diagram.edges.filter(
         (e) => !graphResult.droppedEdges.some((d) => d.id === e.id),

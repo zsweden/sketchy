@@ -181,8 +181,10 @@ function applyModifications(mods: DiagramModification) {
 
   // Auto-layout after AI changes
   const updated = useDiagramStore.getState().diagram;
+  const framework = useDiagramStore.getState().framework;
   autoLayout(updated.nodes, updated.edges, {
     direction: updated.settings.layoutDirection,
+    cyclic: framework.allowsCycles,
   }, elkEngine).then((updates) => {
     if (updates.length > 0) {
       useDiagramStore.getState().moveNodes(updates);

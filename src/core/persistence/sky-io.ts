@@ -112,14 +112,17 @@ export async function loadSkyFile(file: File): Promise<LoadResult> {
   }
 
   // Check framework
-  if (!getFramework(diagram.frameworkId)) {
+  const framework = getFramework(diagram.frameworkId);
+  if (!framework) {
     warnings.push(
       `Unknown framework "${diagram.frameworkId}" — loading as generic diagram`,
     );
   }
 
   // Validate graph — sanitize dangling edges, cycles, duplicates
-  const graphResult = validateGraph(diagram.nodes, diagram.edges);
+  const graphResult = validateGraph(diagram.nodes, diagram.edges, {
+    allowCycles: framework?.allowsCycles,
+  });
   if (!graphResult.valid) {
     diagram.edges = diagram.edges.filter(
       (e) => !graphResult.droppedEdges.some((d) => d.id === e.id),

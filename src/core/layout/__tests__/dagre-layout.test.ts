@@ -52,4 +52,24 @@ describe('autoLayout', () => {
     expect(Math.abs(posMap['b'].y - posMap['c'].y)).toBeLessThan(10);
     expect(posMap['b'].x).not.toBe(posMap['c'].x);
   });
+
+  it('circularizes strongly connected components when cyclic mode is enabled', async () => {
+    const nodes = [node('a'), node('b'), node('c')];
+    const edges = [edge('a', 'b'), edge('b', 'c'), edge('c', 'a')];
+    const updates = await autoLayout(nodes, edges, {
+      direction: 'TB',
+      cyclic: true,
+    }, elkEngine);
+
+    const positions = updates.map((update) => update.position);
+    const centerX = positions.reduce((sum, position) => sum + position.x, 0) / positions.length;
+    const centerY = positions.reduce((sum, position) => sum + position.y, 0) / positions.length;
+    const distances = positions.map((position) =>
+      Math.hypot(position.x - centerX, position.y - centerY),
+    );
+    const maxDistance = Math.max(...distances);
+    const minDistance = Math.min(...distances);
+
+    expect(maxDistance - minDistance).toBeLessThan(60);
+  });
 });

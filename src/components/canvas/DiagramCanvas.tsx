@@ -87,6 +87,25 @@ export default function DiagramCanvas() {
         id: e.id,
         source: e.source,
         target: e.target,
+        label: [
+          framework.supportsEdgePolarity
+            ? e.polarity === 'negative' ? '-' : '+'
+            : null,
+          framework.supportsEdgeDelay && e.delay ? 'D' : null,
+        ].filter(Boolean).join(' '),
+        labelShowBg: framework.supportsEdgePolarity || (framework.supportsEdgeDelay && e.delay),
+        labelBgPadding: [4, 2],
+        labelBgBorderRadius: 999,
+        labelBgStyle: {
+          fill: 'rgba(255, 255, 255, 0.92)',
+          stroke: 'var(--border)',
+          strokeWidth: 1,
+        },
+        labelStyle: {
+          fill: 'var(--text-muted)',
+          fontSize: 11,
+          fontWeight: 700,
+        },
         sourceHandle: 'source',
         targetHandle: 'target',
         pathOptions: { borderRadius: 100 },
@@ -97,7 +116,7 @@ export default function DiagramCanvas() {
             : '',
         ].join(' '),
       })),
-    [diagram.edges, highlightSets],
+    [diagram.edges, framework, highlightSets],
   );
 
   // Local state for React Flow selection/interaction
@@ -106,6 +125,9 @@ export default function DiagramCanvas() {
 
   // Sync store -> local when diagram data changes, preserving selection state
   useEffect(() => {
+    // React Flow keeps transient selection/measurement state locally; syncing
+    // new store data into that local model is intentional here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalNodes((prev) => {
       const selectionMap = new Map(prev.map((n) => [n.id, n.selected]));
       return rfNodes.map((n) => ({
@@ -116,6 +138,9 @@ export default function DiagramCanvas() {
   }, [rfNodes]);
 
   useEffect(() => {
+    // React Flow keeps transient selection/measurement state locally; syncing
+    // new store data into that local model is intentional here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalEdges((prev) => {
       const selectionMap = new Map(prev.map((e) => [e.id, e.selected]));
       return rfEdges.map((e) => ({
@@ -134,9 +159,8 @@ export default function DiagramCanvas() {
     // Fallback: for position-only changes (auto-layout), React Flow won't fire
     // 'dimensions' changes, so the onNodesChange handler won't catch it.
     // Wait two animation frames (render + paint) then fit if still pending.
-    let frame1: number;
-    let frame2: number;
-    frame1 = requestAnimationFrame(() => {
+    let frame2 = 0;
+    const frame1 = requestAnimationFrame(() => {
       frame2 = requestAnimationFrame(() => {
         if (pendingFitView.current) {
           pendingFitView.current = false;
@@ -206,7 +230,7 @@ export default function DiagramCanvas() {
   );
 
   const onNodeDragStop = useCallback(
-    (_event: React.MouseEvent, _node: Node) => {
+    () => {
       if (isDragging.current) {
         isDragging.current = false;
         commitToHistory();

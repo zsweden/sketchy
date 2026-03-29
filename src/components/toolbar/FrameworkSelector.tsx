@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { listFrameworks } from '../../frameworks/registry';
 
@@ -9,23 +8,20 @@ export default function FrameworkSelector() {
 
   const frameworks = listFrameworks();
 
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const newId = e.target.value;
-      if (newId === currentId) return;
-      if (
-        nodeCount > 0 &&
-        !window.confirm(
-          'Switching framework will reset the diagram. Continue?',
-        )
-      ) {
-        e.target.value = currentId;
-        return;
-      }
-      setFramework(newId);
-    },
-    [currentId, nodeCount, setFramework],
-  );
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newId = e.target.value;
+    if (newId === currentId) return;
+    if (
+      nodeCount > 0 &&
+      !window.confirm(
+        'Switching framework will reset the diagram. Continue?',
+      )
+    ) {
+      e.target.value = currentId;
+      return;
+    }
+    setFramework(newId);
+  };
 
   return (
     <select

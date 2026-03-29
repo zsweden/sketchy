@@ -232,4 +232,23 @@ describe('loadSkyFile', () => {
     expect(node1?.data.tags).toEqual(['ude']);
     expect(node1?.data.label).toBe('Node 1');
   });
+
+  it('keeps cyclic CLD edges when loading', async () => {
+    const diagram = createEmptyDiagram('cld', 'cld-id');
+    diagram.nodes = [
+      { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'A', tags: [], junctionType: 'or' } },
+      { id: 'n2', type: 'entity', position: { x: 0, y: 100 }, data: { label: 'B', tags: [], junctionType: 'or' } },
+    ];
+    diagram.edges = [
+      { id: 'e1', source: 'n1', target: 'n2', polarity: 'positive' },
+      { id: 'e2', source: 'n2', target: 'n1', polarity: 'negative', delay: true },
+    ];
+
+    const result = await loadSkyFile(makeFile(JSON.stringify(diagram)));
+
+    expect(result.diagram.edges).toHaveLength(2);
+    expect(result.warnings).toHaveLength(0);
+    expect(result.diagram.edges[1].polarity).toBe('negative');
+    expect(result.diagram.edges[1].delay).toBe(true);
+  });
 });

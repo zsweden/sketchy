@@ -1,4 +1,4 @@
-import type { Diagram } from '../types';
+import type { Diagram, EdgePolarity } from '../types';
 import type { Framework } from '../framework-types';
 import { buildHeaders } from './model-fetcher';
 
@@ -13,8 +13,21 @@ export interface DiagramModification {
   addNodes: { id: string; label: string; tags?: string[] }[];
   updateNodes: { id: string; label?: string; tags?: string[]; notes?: string }[];
   removeNodeIds: string[];
-  addEdges: { source: string; target: string; confidence?: 'high' | 'medium' | 'low'; notes?: string }[];
-  updateEdges: { id: string; confidence?: 'high' | 'medium' | 'low'; notes?: string }[];
+  addEdges: {
+    source: string;
+    target: string;
+    confidence?: 'high' | 'medium' | 'low';
+    polarity?: EdgePolarity;
+    delay?: boolean;
+    notes?: string;
+  }[];
+  updateEdges: {
+    id: string;
+    confidence?: 'high' | 'medium' | 'low';
+    polarity?: EdgePolarity;
+    delay?: boolean;
+    notes?: string;
+  }[];
   removeEdgeIds: string[];
 }
 
@@ -81,6 +94,8 @@ const modifyDiagramTool = {
               source: { type: 'string', description: 'Source node ID (cause)' },
               target: { type: 'string', description: 'Target node ID (effect)' },
               confidence: { type: 'string', enum: ['high', 'medium', 'low'], description: 'Confidence level (default: high)' },
+              polarity: { type: 'string', enum: ['positive', 'negative'], description: 'For signed diagrams: positive = same-direction influence, negative = opposite-direction influence' },
+              delay: { type: 'boolean', description: 'Whether the source affects the target with a delay' },
               notes: { type: 'string', description: 'Optional annotation or reasoning for this edge' },
             },
             required: ['source', 'target'],
@@ -93,6 +108,8 @@ const modifyDiagramTool = {
             properties: {
               id: { type: 'string', description: 'Existing edge ID to update' },
               confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+              polarity: { type: 'string', enum: ['positive', 'negative'] },
+              delay: { type: 'boolean' },
               notes: { type: 'string', description: 'Annotation or reasoning for this edge' },
             },
             required: ['id'],
@@ -127,6 +144,8 @@ function buildSystemPrompt(diagram: Diagram, framework: Framework): string {
     .map((e) => {
       const parts = [`id="${e.id}", "${e.source}" → "${e.target}"`];
       if (e.confidence && e.confidence !== 'high') parts.push(`confidence=${e.confidence}`);
+      if (framework.supportsEdgePolarity && e.polarity) parts.push(`polarity=${e.polarity}`);
+      if (framework.supportsEdgeDelay && e.delay) parts.push('delay=true');
       if (e.notes) parts.push(`notes="${e.notes}"`);
       return `  - ${parts.join(', ')}`;
     })
@@ -137,6 +156,15 @@ function buildSystemPrompt(diagram: Diagram, framework: Framework): string {
   const tagList = framework.nodeTags.length > 0
     ? framework.nodeTags.map((t) => `${t.id} (${t.name})`).join(', ')
     : 'none';
+  const graphRule = framework.allowsCycles
+    ? 'Cycles and feedback loops are allowed when they reflect real system behavior.'
+    : `Edge direction means "source ${edgeVerb} target" — this is a DAG (no cycles).`;
+  const polarityRule = framework.supportsEdgePolarity
+    ? 'Use polarity=positive for same-direction influence and polarity=negative for opposite-direction influence.'
+    : 'Confidence is the primary edge attribute: high (default, solid), medium (dashed), or low (dotted).';
+  const delayRule = framework.supportsEdgeDelay
+    ? 'Set delay=true when the source affects the target only after a noticeable lag.'
+    : 'Use notes when you need to explain timing or caveats.';
 
   return `You are an AI assistant for Sketchy, a thinking-frameworks diagram editor.
 
@@ -155,12 +183,14 @@ You can either:
 2. Make changes by calling the modify_diagram tool — add/update/remove nodes and edges.
 
 Rules for modifications:
-- Edge direction means "source ${edgeVerb} target" — this is a DAG (no cycles).
+- ${graphRule}
 - Keep node labels concise (under 15 words).
 - When adding nodes, use IDs like "new_1", "new_2", etc.
 - When referencing existing nodes, use their exact IDs.
 - Available tags: ${tagList}.
-- Edges have a confidence level: high (default, solid), medium (dashed), or low (dotted).
+- ${polarityRule}
+- Edges can also use confidence to express uncertainty: high (default, solid), medium (dashed), or low (dotted).
+- ${delayRule}
 - Edges can have notes — use them to explain the causal reasoning behind the connection.
 - Always explain your reasoning.`;
 }

@@ -19,6 +19,20 @@ const mockFrameworkCRT: Framework = {
   derivedIndicators: [],
 };
 
+const mockFrameworkCLD: Framework = {
+  id: 'cld',
+  name: 'Causal Loop Diagram',
+  description: 'Model feedback loops with signed causal links',
+  defaultLayoutDirection: 'TB',
+  supportsJunctions: false,
+  allowsCycles: true,
+  supportsEdgePolarity: true,
+  supportsEdgeDelay: true,
+  edgeLabel: 'influences',
+  nodeTags: [],
+  derivedIndicators: [],
+};
+
 const mockFrameworkFRT: Framework = {
   id: 'frt',
   name: 'Future Reality Tree',
@@ -369,6 +383,42 @@ describe('buildSystemPrompt framework-agnostic', () => {
     });
 
     expect(systemContent).toContain('confidence=medium');
+    vi.unstubAllGlobals();
+  });
+
+  it('describes CLD polarity and cycle rules in the system prompt', async () => {
+    const { streamChatMessage } = await import('../openai-client');
+
+    let systemContent = '';
+
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string);
+      systemContent = body.messages[0].content;
+      return Promise.resolve(mockSSEResponse([
+        JSON.stringify({ choices: [{ delta: { content: 'ok' } }] }),
+      ]));
+    }));
+
+    const diagram = createEmptyDiagram('cld');
+    diagram.nodes = [
+      { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'Demand', tags: [], junctionType: 'or' } },
+      { id: 'n2', type: 'entity', position: { x: 0, y: 100 }, data: { label: 'Growth', tags: [], junctionType: 'or' } },
+    ];
+    diagram.edges = [
+      { id: 'e1', source: 'n1', target: 'n2', polarity: 'negative', delay: true },
+    ];
+
+    await new Promise<void>((resolve) => {
+      streamChatMessage('key', 'https://api.test.com/v1', 'gpt-4o', diagram, mockFrameworkCLD, [], {
+        onToken: () => {},
+        onDone: () => resolve(),
+        onError: () => resolve(),
+      });
+    });
+
+    expect(systemContent).toContain('Cycles and feedback loops are allowed');
+    expect(systemContent).toContain('polarity=negative');
+    expect(systemContent).toContain('delay=true');
     vi.unstubAllGlobals();
   });
 });

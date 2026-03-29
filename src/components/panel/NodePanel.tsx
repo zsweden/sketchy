@@ -2,7 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import type { DiagramNode } from '../../core/types';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
-import { computeNodeDegrees, getDerivedIndicators } from '../../core/graph/derived';
+import {
+  computeNodeDegrees,
+  findCausalLoops,
+  getDerivedIndicators,
+} from '../../core/graph/derived';
 
 interface Props {
   node: DiagramNode;
@@ -13,6 +17,7 @@ export default function NodePanel({ node }: Props) {
   const [notes, setNotes] = useState(node.data.notes ?? '');
 
   const framework = useDiagramStore((s) => s.framework);
+  const nodes = useDiagramStore((s) => s.diagram.nodes);
   const edges = useDiagramStore((s) => s.diagram.edges);
   const updateNodeText = useDiagramStore((s) => s.updateNodeText);
   const updateNodeTags = useDiagramStore((s) => s.updateNodeTags);
@@ -29,12 +34,19 @@ export default function NodePanel({ node }: Props) {
   const degreesMap = computeNodeDegrees(edges);
   const degrees = degreesMap.get(node.id) ?? { indegree: 0, outdegree: 0 };
   const derived = getDerivedIndicators(node.id, degreesMap, framework.derivedIndicators);
+  const loops = framework.allowsCycles ? findCausalLoops(edges) : [];
+  const nodeLoops = loops.filter((loop) => loop.nodeIds.includes(node.id));
+  const nodeLabels = new Map(nodes.map((entry) => [entry.id, entry.data.label || entry.id]));
 
   useEffect(() => {
+    // Keep the text draft aligned when the selected node changes externally.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setText(node.data.label);
   }, [node.data.label]);
 
   useEffect(() => {
+    // Keep the notes draft aligned when the selected node changes externally.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNotes(node.data.notes ?? '');
   }, [node.data.notes]);
 
@@ -189,6 +201,39 @@ export default function NodePanel({ node }: Props) {
               <span className="field-label">{ind.description}</span>
             </div>
           ))}
+        </div>
+      )}
+
+      {framework.allowsCycles && (
+        <div className="section-stack" style={{ gap: '0.375rem' }}>
+          <p className="section-label">Loop Membership</p>
+          {nodeLoops.length === 0 ? (
+            <p className="field-label">This variable is not part of a detected feedback loop.</p>
+          ) : (
+            nodeLoops.map((loop, index) => (
+              <div key={loop.edgeIds.join('-')} className="section-stack" style={{ gap: '0.25rem' }}>
+                <div className="control-row" style={{ gap: '0.5rem' }}>
+                  <span
+                    className="badge"
+                    style={{
+                      backgroundColor: loop.kind === 'reinforcing' ? '#4CAF5015' : '#FB8C0015',
+                      color: loop.kind === 'reinforcing' ? '#4CAF50' : '#FB8C00',
+                    }}
+                  >
+                    {loop.kind === 'reinforcing' ? `R${index + 1}` : `B${index + 1}`}
+                  </span>
+                  {loop.delayedEdgeCount > 0 && (
+                    <span className="badge" style={{ backgroundColor: '#8A8A7A15', color: '#8A8A7A' }}>
+                      Delay
+                    </span>
+                  )}
+                </div>
+                <p className="field-label">
+                  {loop.nodeIds.map((nodeId) => nodeLabels.get(nodeId) ?? nodeId).join(' -> ')}
+                </p>
+              </div>
+            ))
+          )}
         </div>
       )}
     </div>

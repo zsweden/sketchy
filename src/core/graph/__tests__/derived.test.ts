@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { computeNodeDegrees, getDerivedIndicators, getConnectedSubgraph } from '../derived';
+import {
+  computeNodeDegrees,
+  findCausalLoops,
+  findStronglyConnectedComponents,
+  getDerivedIndicators,
+  getConnectedSubgraph,
+  summarizeCausalLoops,
+} from '../derived';
 import { crtFramework } from '../../../frameworks/crt';
 import type { DiagramEdge } from '../../types';
 
@@ -110,5 +117,87 @@ describe('getConnectedSubgraph', () => {
     const result = getConnectedSubgraph(edges, 'x');
     expect(result.nodeIds).toEqual(new Set(['x']));
     expect(result.edgeIds.size).toBe(0);
+  });
+});
+
+describe('findStronglyConnectedComponents', () => {
+  it('finds cyclic components separately from singletons', () => {
+    const edges = [
+      edge('a', 'b'),
+      edge('b', 'a'),
+      edge('c', 'd'),
+    ];
+
+    const components = findStronglyConnectedComponents(['a', 'b', 'c', 'd'], edges);
+    expect(components).toContainEqual(['a', 'b']);
+    expect(components).toContainEqual(['c']);
+    expect(components).toContainEqual(['d']);
+  });
+});
+
+describe('findCausalLoops', () => {
+  it('detects reinforcing loops', () => {
+    const edges = [
+      { ...edge('a', 'b'), polarity: 'positive' as const },
+      { ...edge('b', 'c'), polarity: 'positive' as const },
+      { ...edge('c', 'a'), polarity: 'positive' as const },
+    ];
+
+    const loops = findCausalLoops(edges);
+    expect(loops).toHaveLength(1);
+    expect(loops[0].kind).toBe('reinforcing');
+    expect(loops[0].nodeIds).toEqual(['a', 'b', 'c']);
+  });
+
+  it('detects balancing loops with an odd number of negative edges', () => {
+    const edges = [
+      { ...edge('a', 'b'), polarity: 'positive' as const },
+      { ...edge('b', 'c'), polarity: 'negative' as const },
+      { ...edge('c', 'a'), polarity: 'positive' as const },
+    ];
+
+    const loops = findCausalLoops(edges);
+    expect(loops).toHaveLength(1);
+    expect(loops[0].kind).toBe('balancing');
+    expect(loops[0].negativeEdgeCount).toBe(1);
+  });
+
+  it('deduplicates the same loop discovered from different start nodes', () => {
+    const edges = [
+      { ...edge('a', 'b'), polarity: 'positive' as const },
+      { ...edge('b', 'c'), polarity: 'positive' as const },
+      { ...edge('c', 'a'), polarity: 'positive' as const },
+    ];
+
+    const loops = findCausalLoops(edges);
+    expect(loops).toHaveLength(1);
+  });
+});
+
+describe('summarizeCausalLoops', () => {
+  it('counts reinforcing, balancing, and delayed loops', () => {
+    const loops = [
+      {
+        nodeIds: ['a', 'b'],
+        edgeIds: ['e1', 'e2'],
+        kind: 'reinforcing' as const,
+        negativeEdgeCount: 0,
+        delayedEdgeCount: 0,
+      },
+      {
+        nodeIds: ['c', 'd'],
+        edgeIds: ['e3', 'e4'],
+        kind: 'balancing' as const,
+        negativeEdgeCount: 1,
+        delayedEdgeCount: 1,
+      },
+    ];
+
+    expect(summarizeCausalLoops(loops)).toEqual({
+      totalLoops: 2,
+      reinforcingLoops: 1,
+      balancingLoops: 1,
+      delayedLoops: 1,
+    });
   });
 });

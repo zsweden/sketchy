@@ -32,6 +32,8 @@ function EntityNode({ id, data, selected }: NodeProps) {
   const degrees = degreesMap.get(id) ?? { indegree: 0, outdegree: 0 };
 
   useEffect(() => {
+    // Keep the inline draft aligned when the store updates this node externally.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setText(nodeData.label);
   }, [nodeData.label]);
 

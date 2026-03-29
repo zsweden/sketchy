@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { useDiagramStore } from '../diagram-store';
 
 function resetStore() {
+  useDiagramStore.getState().setFramework('crt');
   useDiagramStore.getState().newDiagram();
   // Clear undo history by making a fresh start
 }
@@ -79,6 +80,21 @@ describe('diagram store', () => {
 
       const node3 = useDiagramStore.getState().diagram.nodes.find((n) => n.id === id3);
       expect(node3?.data.junctionType).toBe('or');
+    });
+
+    it('allows cycles for CLD and defaults polarity to positive', () => {
+      useDiagramStore.getState().setFramework('cld');
+      const id1 = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const id2 = useDiagramStore.getState().addNode({ x: 0, y: 100 });
+      const id3 = useDiagramStore.getState().addNode({ x: 0, y: 200 });
+
+      useDiagramStore.getState().addEdge(id1, id2);
+      useDiagramStore.getState().addEdge(id2, id3);
+      const result = useDiagramStore.getState().addEdge(id3, id1);
+
+      expect(result.success).toBe(true);
+      expect(useDiagramStore.getState().diagram.edges).toHaveLength(3);
+      expect(useDiagramStore.getState().diagram.edges[0].polarity).toBe('positive');
     });
   });
 

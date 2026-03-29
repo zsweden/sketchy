@@ -1,5 +1,9 @@
 import type { DiagramEdge, DiagramNode } from '../types';
 
+export interface GraphValidationOptions {
+  allowCycles?: boolean;
+}
+
 export function isSelfLoop(source: string, target: string): boolean {
   return source === target;
 }
@@ -57,6 +61,7 @@ export function validateEdge(
   edges: DiagramEdge[],
   source: string,
   target: string,
+  options: GraphValidationOptions = {},
 ): ValidationResult {
   if (isSelfLoop(source, target)) {
     return { valid: false, reason: 'Cannot connect a node to itself' };
@@ -64,7 +69,7 @@ export function validateEdge(
   if (isDuplicateEdge(edges, source, target)) {
     return { valid: false, reason: 'Connection already exists' };
   }
-  if (wouldCreateCycle(edges, source, target)) {
+  if (!options.allowCycles && wouldCreateCycle(edges, source, target)) {
     return { valid: false, reason: 'Cannot connect: would create a cycle' };
   }
   return { valid: true };
@@ -79,6 +84,7 @@ export interface GraphValidationResult {
 export function validateGraph(
   nodes: DiagramNode[],
   edges: DiagramEdge[],
+  options: GraphValidationOptions = {},
 ): GraphValidationResult {
   const nodeIds = new Set(nodes.map((n) => n.id));
   const validEdges: DiagramEdge[] = [];
@@ -95,7 +101,7 @@ export function validateGraph(
       continue;
     }
 
-    const result = validateEdge(validEdges, edge.source, edge.target);
+    const result = validateEdge(validEdges, edge.source, edge.target, options);
     if (result.valid) {
       validEdges.push(edge);
     } else {

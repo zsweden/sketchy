@@ -35,7 +35,7 @@ describe('keyboard shortcuts', () => {
 
   describe('undo/redo', () => {
     it('Cmd+Z triggers undo', () => {
-      const id = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      useDiagramStore.getState().addNode({ x: 0, y: 0 });
       expect(useDiagramStore.getState().diagram.nodes).toHaveLength(1);
 
       fireKey('z', { metaKey: true });

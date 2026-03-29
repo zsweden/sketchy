@@ -1,5 +1,12 @@
 import { create } from 'zustand';
-import type { Diagram, DiagramEdge, DiagramNode, DiagramSettings, EdgeConfidence } from '../core/types';
+import type {
+  Diagram,
+  DiagramEdge,
+  DiagramNode,
+  DiagramSettings,
+  EdgeConfidence,
+  EdgePolarity,
+} from '../core/types';
 import { createEmptyDiagram } from '../core/types';
 import type { Framework } from '../core/framework-types';
 import { getFramework } from '../frameworks/registry';
@@ -15,8 +22,21 @@ export interface BatchMutations {
   addNodes?: { id: string; label: string; tags?: string[]; notes?: string }[];
   updateNodes?: { id: string; label?: string; tags?: string[]; notes?: string }[];
   removeNodeIds?: string[];
-  addEdges?: { source: string; target: string; confidence?: EdgeConfidence; notes?: string }[];
-  updateEdges?: { id: string; confidence?: EdgeConfidence; notes?: string }[];
+  addEdges?: {
+    source: string;
+    target: string;
+    confidence?: EdgeConfidence;
+    polarity?: EdgePolarity;
+    delay?: boolean;
+    notes?: string;
+  }[];
+  updateEdges?: {
+    id: string;
+    confidence?: EdgeConfidence;
+    polarity?: EdgePolarity;
+    delay?: boolean;
+    notes?: string;
+  }[];
   removeEdgeIds?: string[];
 }
 
@@ -40,6 +60,8 @@ interface DiagramState {
   addEdge: (source: string, target: string) => { success: boolean; reason?: string };
   deleteEdges: (ids: string[]) => void;
   setEdgeConfidence: (id: string, confidence: EdgeConfidence) => void;
+  setEdgePolarity: (id: string, polarity: EdgePolarity) => void;
+  setEdgeDelay: (id: string, delay: boolean) => void;
   updateEdgeNotes: (id: string, notes: string) => void;
 
   // Diagram operations
@@ -74,6 +96,13 @@ function createDiagramForFramework(framework: Framework): Diagram {
       ...diagram.settings,
       layoutDirection: framework.defaultLayoutDirection,
     },
+  };
+}
+
+function getDefaultEdgeFields(framework: Framework): Pick<DiagramEdge, 'polarity' | 'delay'> {
+  return {
+    ...(framework.supportsEdgePolarity ? { polarity: 'positive' as const } : {}),
+    ...(framework.supportsEdgeDelay ? { delay: false } : {}),
   };
 }
 
@@ -151,23 +180,28 @@ function batchAddEdges(
   idMap: Map<string, string>,
   nodes: DiagramNode[],
   edges: DiagramEdge[],
+  framework: Framework,
 ): { nodes: DiagramNode[]; edges: DiagramEdge[] } {
   const nodeIds = new Set(nodes.map((n) => n.id));
   for (const e of mutations.addEdges ?? []) {
     const source = idMap.get(e.source) ?? e.source;
     const target = idMap.get(e.target) ?? e.target;
     if (!nodeIds.has(source) || !nodeIds.has(target)) continue;
-    const result = validateEdge(edges, source, target);
+    const result = validateEdge(edges, source, target, {
+      allowCycles: framework.allowsCycles,
+    });
     if (result.valid) {
       edges.push({
         id: crypto.randomUUID(),
         source,
         target,
         ...(e.confidence && e.confidence !== 'high' ? { confidence: e.confidence } : {}),
+        ...(framework.supportsEdgePolarity ? { polarity: e.polarity ?? 'positive' as const } : {}),
+        ...(framework.supportsEdgeDelay && e.delay ? { delay: true } : {}),
         ...(e.notes ? { notes: e.notes } : {}),
       });
       const incomingCount = edges.filter((ex) => ex.target === target).length;
-      if (incomingCount === 2) {
+      if (framework.supportsJunctions && incomingCount === 2) {
         nodes = nodes.map((n) =>
           n.id === target ? { ...n, data: { ...n.data, junctionType: 'or' as const } } : n,
         );
@@ -180,10 +214,13 @@ function batchAddEdges(
 function batchUpdateEdges(
   mutations: BatchMutations,
   edges: DiagramEdge[],
+  framework: Framework,
 ): DiagramEdge[] {
   for (const upd of mutations.updateEdges ?? []) {
     const updates: Partial<DiagramEdge> = {};
     if (upd.confidence) updates.confidence = upd.confidence;
+    if (framework.supportsEdgePolarity && upd.polarity) updates.polarity = upd.polarity;
+    if (framework.supportsEdgeDelay && upd.delay !== undefined) updates.delay = upd.delay;
     if (upd.notes !== undefined) updates.notes = upd.notes || undefined;
     if (Object.keys(updates).length > 0) {
       edges = edges.map((e) =>
@@ -334,7 +371,9 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
 
   addEdge: (source, target) => {
     const state = get();
-    const result = validateEdge(state.diagram.edges, source, target);
+    const result = validateEdge(state.diagram.edges, source, target, {
+      allowCycles: state.framework.allowsCycles,
+    });
 
     if (!result.valid) {
       return { success: false, reason: result.reason };
@@ -346,6 +385,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       id: crypto.randomUUID(),
       source,
       target,
+      ...getDefaultEdgeFields(state.framework),
     };
 
     // Check if target node now has indegree >= 2 — default junction to 'and'
@@ -354,7 +394,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
 
     set((s) => {
       let nodes = s.diagram.nodes;
-      if (targetIncomingCount === 2) {
+      if (state.framework.supportsJunctions && targetIncomingCount === 2) {
         nodes = nodes.map((n) =>
           n.id === target ? { ...n, data: { ...n.data, junctionType: 'or' as const } } : n,
         );
@@ -399,8 +439,8 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
     nodes = batchAddNodes(mutations, idMap, nodes);
     nodes = batchUpdateNodes(mutations, idMap, nodes);
     ({ nodes, edges } = batchRemoveNodes(mutations, idMap, nodes, edges));
-    ({ nodes, edges } = batchAddEdges(mutations, idMap, nodes, edges));
-    edges = batchUpdateEdges(mutations, edges);
+    ({ nodes, edges } = batchAddEdges(mutations, idMap, nodes, edges, state.framework));
+    edges = batchUpdateEdges(mutations, edges, state.framework);
     edges = batchRemoveEdges(mutations, edges);
 
     set({
@@ -421,6 +461,38 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
         ...s.diagram,
         edges: s.diagram.edges.map((e) =>
           e.id === id ? { ...e, confidence } : e,
+        ),
+      },
+      canUndo: true,
+      canRedo: false,
+    }));
+  },
+
+  setEdgePolarity: (id, polarity) => {
+    const state = get();
+    history.push(snapshot(state));
+
+    set((s) => ({
+      diagram: {
+        ...s.diagram,
+        edges: s.diagram.edges.map((e) =>
+          e.id === id ? { ...e, polarity } : e,
+        ),
+      },
+      canUndo: true,
+      canRedo: false,
+    }));
+  },
+
+  setEdgeDelay: (id, delay) => {
+    const state = get();
+    history.push(snapshot(state));
+
+    set((s) => ({
+      diagram: {
+        ...s.diagram,
+        edges: s.diagram.edges.map((e) =>
+          e.id === id ? { ...e, delay } : e,
         ),
       },
       canUndo: true,

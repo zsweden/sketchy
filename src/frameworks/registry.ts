@@ -1,4 +1,5 @@
 import type { Framework } from '../core/framework-types';
+import { cldFramework } from './cld';
 import { crtFramework } from './crt';
 import { frtFramework } from './frt';
 import { prtFramework } from './prt';
@@ -6,6 +7,7 @@ import { sttFramework } from './stt';
 
 const frameworks = new Map<string, Framework>();
 
+frameworks.set(cldFramework.id, cldFramework);
 frameworks.set(crtFramework.id, crtFramework);
 frameworks.set(frtFramework.id, frtFramework);
 frameworks.set(prtFramework.id, prtFramework);

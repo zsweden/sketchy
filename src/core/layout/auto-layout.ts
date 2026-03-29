@@ -1,10 +1,12 @@
 import type { DiagramNode, DiagramEdge } from '../types';
 import type { LayoutDirection } from '../framework-types';
+import { findStronglyConnectedComponents } from '../graph/derived';
 import type { LayoutEngine } from './layout-engine';
 import { NODE_WIDTH, estimateHeight } from './layout-engine';
 
 export interface AutoLayoutOptions {
   direction: LayoutDirection;
+  cyclic?: boolean;
 }
 
 export interface NodePositionUpdate {
@@ -31,10 +33,60 @@ export async function autoLayout(
 
   const results = await engine(inputs, edgeInputs, { direction: options.direction });
 
-  return results.map((r) => ({
+  const adjustedResults = options.cyclic
+    ? circularizeCyclicComponents(inputs, edges, results)
+    : results;
+
+  return adjustedResults.map((r) => ({
     id: r.id,
     position: { x: r.x, y: r.y },
   }));
+}
+
+function circularizeCyclicComponents(
+  nodes: { id: string; width: number; height: number }[],
+  edges: DiagramEdge[],
+  results: { id: string; x: number; y: number }[],
+): { id: string; x: number; y: number }[] {
+  const positions = new Map(results.map((result) => [result.id, result]));
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+  const components = findStronglyConnectedComponents(
+    nodes.map((node) => node.id),
+    edges,
+  ).filter((component) => component.length >= 2);
+
+  for (const component of components) {
+    const positioned = component
+      .map((nodeId) => {
+        const node = nodeMap.get(nodeId);
+        const position = positions.get(nodeId);
+        if (!node || !position) return null;
+        return { nodeId, node, position };
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+
+    if (positioned.length < 2) continue;
+
+    const centerX = positioned.reduce((sum, entry) => sum + entry.position.x, 0) / positioned.length;
+    const centerY = positioned.reduce((sum, entry) => sum + entry.position.y, 0) / positioned.length;
+    const radius = Math.max(
+      140,
+      ...positioned.map((entry) => Math.max(entry.node.width, entry.node.height)),
+    );
+    const sorted = [...positioned].sort((a, b) => a.nodeId.localeCompare(b.nodeId));
+    const angleStep = (Math.PI * 2) / sorted.length;
+
+    sorted.forEach((entry, index) => {
+      const angle = -Math.PI / 2 + index * angleStep;
+      positions.set(entry.nodeId, {
+        id: entry.nodeId,
+        x: centerX + radius * Math.cos(angle) - entry.node.width / 2,
+        y: centerY + radius * Math.sin(angle) - entry.node.height / 2,
+      });
+    });
+  }
+
+  return results.map((result) => positions.get(result.id) ?? result);
 }
 
 function computeDegrees(

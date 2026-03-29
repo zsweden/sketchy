@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it } from 'vitest';
 import { autoLayout, elkEngine } from '..';
 import type { DiagramNode, DiagramEdge } from '../../types';
 import { NODE_WIDTH, estimateHeight } from '../layout-engine';

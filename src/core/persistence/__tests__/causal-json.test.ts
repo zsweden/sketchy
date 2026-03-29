@@ -162,6 +162,23 @@ describe('convertSkyJson', () => {
     });
     expect(diagram.nodes[0].data.notes).toBe('some note');
   });
+
+  it('preserves edge polarity, delay, and notes', () => {
+    const { diagram } = convertSkyJson({
+      framework: 'cld',
+      nodes: [
+        { id: 'n1', label: 'Demand' },
+        { id: 'n2', label: 'Growth' },
+      ],
+      edges: [
+        { source: 'n1', target: 'n2', polarity: 'positive' as const, delay: true, notes: 'lags by a quarter' },
+      ],
+    });
+
+    expect(diagram.edges[0].polarity).toBe('positive');
+    expect(diagram.edges[0].delay).toBe(true);
+    expect(diagram.edges[0].notes).toBe('lags by a quarter');
+  });
 });
 
 describe('diagramToSkyJson', () => {
@@ -233,5 +250,26 @@ describe('diagramToSkyJson', () => {
 
     const skyJson = diagramToSkyJson(diagram);
     expect(skyJson.junctions).toBeUndefined();
+  });
+
+  it('round-trips CLD edge metadata', () => {
+    const diagram = createEmptyDiagram('cld');
+    diagram.nodes = [
+      { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'A', tags: [], junctionType: 'or' } },
+      { id: 'n2', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'B', tags: [], junctionType: 'or' } },
+    ];
+    diagram.edges = [
+      { id: 'e1', source: 'n1', target: 'n2', polarity: 'negative', delay: true, notes: 'counteracts later' },
+    ];
+
+    const skyJson = diagramToSkyJson(diagram);
+    expect(skyJson.edges[0].polarity).toBe('negative');
+    expect(skyJson.edges[0].delay).toBe(true);
+    expect(skyJson.edges[0].notes).toBe('counteracts later');
+
+    const { diagram: loaded } = convertSkyJson(skyJson);
+    expect(loaded.edges[0].polarity).toBe('negative');
+    expect(loaded.edges[0].delay).toBe(true);
+    expect(loaded.edges[0].notes).toBe('counteracts later');
   });
 });
