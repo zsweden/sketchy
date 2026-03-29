@@ -8,7 +8,12 @@ import { diagramToSkyJson, convertSkyJson } from '../core/persistence/causal-jso
 import { getFramework, listFrameworks } from '../frameworks/registry';
 
 function resetStore() {
-  useDiagramStore.getState().newDiagram();
+  const store = useDiagramStore.getState();
+  if (store.framework.id !== 'crt') {
+    store.setFramework('crt');
+  } else {
+    store.newDiagram();
+  }
 }
 
 describe('end-to-end: CRT workflow', () => {
@@ -152,6 +157,90 @@ describe('end-to-end: FRT workflow', () => {
     // Save and verify .sky format
     const sky = diagramToSkyJson(store().diagram);
     expect(sky.framework).toBe('frt');
+    expect(sky.nodes.find((n) => n.id === n1)?.tags).toEqual(['injection']);
+  });
+});
+
+describe('end-to-end: PRT workflow', () => {
+  beforeEach(() => {
+    useDiagramStore.getState().setFramework('prt');
+  });
+
+  it('PRT framework is registered and supports prerequisite tags', () => {
+    const prt = getFramework('prt');
+    expect(prt).toBeDefined();
+    expect(prt!.nodeTags.map((t) => t.id)).toEqual(['obstacle', 'io', 'goal']);
+    expect(prt!.edgeLabel).toBe('enables');
+  });
+
+  it('create PRT diagram and preserve tags through .sky round-trip', () => {
+    const store = useDiagramStore.getState;
+
+    const n1 = store().addNode({ x: 0, y: 0 });
+    store().updateNodeText(n1, 'Lack of onboarding');
+    store().updateNodeTags(n1, ['obstacle']);
+
+    const n2 = store().addNode({ x: 0, y: 100 });
+    store().updateNodeText(n2, 'Create onboarding checklist');
+    store().updateNodeTags(n2, ['io']);
+
+    const n3 = store().addNode({ x: 0, y: 200 });
+    store().updateNodeText(n3, 'New hires productive faster');
+    store().updateNodeTags(n3, ['goal']);
+
+    store().addEdge(n1, n2);
+    store().addEdge(n2, n3);
+
+    const sky = diagramToSkyJson(store().diagram);
+    expect(sky.framework).toBe('prt');
+    expect(sky.nodes.find((n) => n.id === n1)?.tags).toEqual(['obstacle']);
+
+    const { diagram: loaded } = convertSkyJson(sky);
+    expect(loaded.frameworkId).toBe('prt');
+    expect(loaded.nodes.find((n) => n.id === n2)?.data.tags).toEqual(['io']);
+    expect(loaded.nodes.find((n) => n.id === n3)?.data.tags).toEqual(['goal']);
+  });
+});
+
+describe('end-to-end: STT workflow', () => {
+  beforeEach(() => {
+    useDiagramStore.getState().setFramework('stt');
+  });
+
+  it('STT framework is registered and uses top-down default layout', () => {
+    const store = useDiagramStore.getState();
+    const stt = getFramework('stt');
+    expect(stt).toBeDefined();
+    expect(stt!.nodeTags.map((t) => t.id)).toEqual(['objective', 'strategy', 'tactic']);
+    expect(store.diagram.settings.layoutDirection).toBe('TB');
+  });
+
+  it('create STT diagram and preserve tags through .sky round-trip', () => {
+    const store = useDiagramStore.getState;
+
+    const n1 = store().addNode({ x: 0, y: 0 });
+    store().updateNodeText(n1, 'Improve retention');
+    store().updateNodeTags(n1, ['objective']);
+
+    const n2 = store().addNode({ x: 0, y: 100 });
+    store().updateNodeText(n2, 'Improve manager quality');
+    store().updateNodeTags(n2, ['strategy']);
+
+    const n3 = store().addNode({ x: 0, y: 200 });
+    store().updateNodeText(n3, 'Run monthly coaching sessions');
+    store().updateNodeTags(n3, ['tactic']);
+
+    store().addEdge(n1, n2);
+    store().addEdge(n2, n3);
+
+    const sky = diagramToSkyJson(store().diagram);
+    expect(sky.framework).toBe('stt');
+    expect(sky.nodes.find((n) => n.id === n2)?.tags).toEqual(['strategy']);
+
+    const { diagram: loaded } = convertSkyJson(sky);
+    expect(loaded.frameworkId).toBe('stt');
+    expect(loaded.nodes.find((n) => n.id === n1)?.data.tags).toEqual(['objective']);
+    expect(loaded.nodes.find((n) => n.id === n3)?.data.tags).toEqual(['tactic']);
   });
 });
 
@@ -163,6 +252,8 @@ describe('end-to-end: framework switching', () => {
     const ids = frameworks.map((f) => f.id);
     expect(ids).toContain('crt');
     expect(ids).toContain('frt');
+    expect(ids).toContain('prt');
+    expect(ids).toContain('stt');
   });
 
   it('switching framework resets diagram', () => {

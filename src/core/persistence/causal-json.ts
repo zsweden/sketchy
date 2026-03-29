@@ -6,6 +6,7 @@ import { SCHEMA_VERSION } from '../types';
 interface SkyNode {
   id: string;
   label: string;
+  tags?: string[];
   isUDE?: boolean;
   notes?: string;
   color?: string;
@@ -66,12 +67,18 @@ export function convertSkyJson(data: SkyJson): { diagram: Diagram; needsLayout: 
   );
 
   const nodes: DiagramNode[] = data.nodes.map((n) => ({
+    // Preserve generic framework tags while keeping legacy isUDE compatibility.
     id: n.id,
     type: 'entity' as const,
     position: { x: n.x ?? 0, y: n.y ?? 0 },
     data: {
       label: n.label,
-      tags: n.isUDE ? ['ude'] : [],
+      tags: Array.from(
+        new Set([
+          ...(Array.isArray(n.tags) ? n.tags.filter((tag): tag is string => typeof tag === 'string') : []),
+          ...(n.isUDE ? ['ude'] : []),
+        ]),
+      ),
       junctionType: andTargets.has(n.id) ? ('and' as const) : ('or' as const),
       ...(n.notes ? { notes: n.notes } : {}),
       ...(n.color ? { color: n.color } : {}),
@@ -126,6 +133,7 @@ export function diagramToSkyJson(diagram: Diagram): SkyJson {
   const nodes: SkyNode[] = diagram.nodes.map((n) => ({
     id: n.id,
     label: n.data.label,
+    ...(n.data.tags.length > 0 ? { tags: n.data.tags } : {}),
     ...(n.data.tags.includes('ude') ? { isUDE: true } : {}),
     ...(n.data.notes ? { notes: n.data.notes } : {}),
     ...(n.data.color ? { color: n.data.color } : {}),

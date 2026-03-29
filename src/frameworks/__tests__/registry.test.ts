@@ -2,10 +2,16 @@ import { describe, it, expect } from 'vitest';
 import { getFramework, listFrameworks, registerFramework } from '../registry';
 
 describe('framework registry', () => {
-  it('has CRT registered by default', () => {
+  it('has core frameworks registered by default', () => {
     const crt = getFramework('crt');
+    const frt = getFramework('frt');
+    const prt = getFramework('prt');
+    const stt = getFramework('stt');
     expect(crt).toBeDefined();
     expect(crt!.name).toBe('Current Reality Tree');
+    expect(frt?.name).toBe('Future Reality Tree');
+    expect(prt?.name).toBe('Prerequisite Tree');
+    expect(stt?.name).toBe('Strategy & Tactics Tree');
   });
 
   it('returns undefined for unknown framework', () => {
@@ -14,8 +20,11 @@ describe('framework registry', () => {
 
   it('lists all frameworks', () => {
     const frameworks = listFrameworks();
-    expect(frameworks.length).toBeGreaterThanOrEqual(1);
+    expect(frameworks.length).toBeGreaterThanOrEqual(4);
     expect(frameworks.some((f) => f.id === 'crt')).toBe(true);
+    expect(frameworks.some((f) => f.id === 'frt')).toBe(true);
+    expect(frameworks.some((f) => f.id === 'prt')).toBe(true);
+    expect(frameworks.some((f) => f.id === 'stt')).toBe(true);
   });
 
   it('can register a new framework', () => {

@@ -1,73 +1,98 @@
-# React + TypeScript + Vite
+# Sketchy
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sketchy is a browser-based editor for structured thinking diagrams. It is designed around Theory of Constraints style cause-and-effect work rather than generic whiteboarding.
 
-Currently, two official plugins are available:
+Today the app supports:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Current Reality Tree (CRT)
+- Future Reality Tree (FRT)
+- Prerequisite Tree (PRT)
+- Strategy & Tactics Tree (STT)
+- AI-assisted diagram analysis and modification through a configurable OpenAI-compatible endpoint
+- `.sky` project save/load, plus in-session autosave
+- Auto-layout, undo/redo, edge confidence, notes, and framework-specific tags
 
-## React Compiler
+## Why Sketchy
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Sketchy's core model is intentionally narrow:
 
-## Expanding the ESLint configuration
+- Diagrams are directed graphs with framework-specific semantics
+- Nodes share a common base shape and are enriched by tags, notes, and derived indicators
+- The editor enforces DAG-style validity for current frameworks: no self-loops, no duplicate edges, no cycles
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+That constraint is a feature. It keeps the product focused on structured reasoning instead of drifting into a generic diagram tool.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Supported Frameworks
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Current Reality Tree
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Use CRT to trace undesirable effects back to root causes.
+
+- Edge semantics: `causes`
+- Tags: `Undesirable Effect`
+- Derived indicators: `Root Cause`, `Intermediate Effect`
+
+### Future Reality Tree
+
+Use FRT to test whether proposed injections lead to desirable effects.
+
+- Edge semantics: `leads to`
+- Tags: `Injection`, `Desirable Effect`
+- Derived indicators: `Foundation`, `Intermediate Effect`
+
+## Recommended Next Frameworks
+
+The strongest near-term additions are frameworks that fit the current engine without turning Sketchy into a generic diagrammer.
+
+1. `Evaporating Cloud (EC)`
+2. `Transition Tree`
+
+Frameworks to defer for now:
+
+- `Generic Causal Loop Diagrams`: require cycle support, which conflicts with the current validator
+- General UML/ERD/sequence diagrams: different product category, weak fit with the current engine
+
+## Tech Stack
+
+- React 19
+- TypeScript
+- Vite
+- React Flow (`@xyflow/react`)
+- Zustand
+- ELK (`elkjs`) for primary auto-layout
+- dagre retained as an alternative/tested layout engine
+- Tailwind CSS v4 plus project CSS
+
+## Local Development
+
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Useful checks:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
+npm run lint
+npx tsc --noEmit
+npx vitest run
 ```
+
+## Persistence Model
+
+- Session autosave uses `sessionStorage`
+- App settings such as API key, model, and base URL use `localStorage`
+- Explicit project save/load uses `.sky` files
+
+## AI Integration
+
+Sketchy can analyze and modify the current diagram through the side-panel chat.
+
+- Configure API key, model, and endpoint from the toolbar settings popover
+- OpenAI-compatible endpoints are supported
+- The assistant can answer questions about the current diagram and apply batched node/edge edits
+
+## Project Status
+
+The app is already beyond the original CRT-only concept. The next product question is not whether Sketchy should support more diagram types in general, but which additional thinking frameworks deepen the existing workflow without breaking its constraints.

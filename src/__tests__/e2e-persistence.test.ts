@@ -131,6 +131,31 @@ describe('e2e: .sky format round-trips', () => {
     expect(loaded.edges).toHaveLength(2);
   });
 
+  it('generic framework tags survive .sky round-trip', () => {
+    useDiagramStore.getState().setFramework('prt');
+    const store = useDiagramStore.getState;
+
+    const n1 = store().addNode({ x: 0, y: 0 });
+    store().updateNodeText(n1, 'Blocked by missing documentation');
+    store().updateNodeTags(n1, ['obstacle']);
+
+    const n2 = store().addNode({ x: 0, y: 100 });
+    store().updateNodeText(n2, 'Write setup guide');
+    store().updateNodeTags(n2, ['io']);
+
+    store().addEdge(n1, n2);
+
+    const sky = diagramToSkyJson(store().diagram);
+    expect(sky.framework).toBe('prt');
+    expect(sky.nodes.find((n) => n.id === n1)?.tags).toEqual(['obstacle']);
+    expect(sky.nodes.find((n) => n.id === n2)?.tags).toEqual(['io']);
+
+    const { diagram: loaded } = convertSkyJson(sky);
+    expect(loaded.frameworkId).toBe('prt');
+    expect(loaded.nodes.find((n) => n.id === n1)?.data.tags).toEqual(['obstacle']);
+    expect(loaded.nodes.find((n) => n.id === n2)?.data.tags).toEqual(['io']);
+  });
+
   it('UDE tags survive .sky round-trip (CRT)', () => {
     const store = useDiagramStore.getState;
     const n1 = store().addNode({ x: 0, y: 0 });

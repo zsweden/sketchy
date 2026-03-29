@@ -144,6 +144,27 @@ describe('loadSkyFile', () => {
     expect(result.warnings).toHaveLength(0);
   });
 
+  it('loads causal JSON with generic tags', async () => {
+    const causal = {
+      framework: 'prt',
+      nodes: [
+        { id: 'n1', label: 'Obstacle', tags: ['obstacle'] },
+        { id: 'n2', label: 'Intermediate objective', tags: ['io'] },
+      ],
+      edges: [{ source: 'n1', target: 'n2' }],
+    };
+
+    const result = await loadSkyFile(makeFile(JSON.stringify(causal), 'test.json'));
+
+    expect(result.diagram.frameworkId).toBe('prt');
+    expect(result.diagram.nodes.find((n) => n.id === 'n1')?.data.tags).toEqual([
+      'obstacle',
+    ]);
+    expect(result.diagram.nodes.find((n) => n.id === 'n2')?.data.tags).toEqual([
+      'io',
+    ]);
+  });
+
   it('loads causal JSON with junctions', async () => {
     const causal = {
       nodes: [

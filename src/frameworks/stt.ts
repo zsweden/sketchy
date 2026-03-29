@@ -1,0 +1,62 @@
+import type { Framework } from '../core/framework-types';
+
+export const sttFramework: Framework = {
+  id: 'stt',
+  name: 'Strategy & Tactics Tree',
+  description: 'Break an objective into strategy, tactics, and supporting actions',
+  defaultLayoutDirection: 'TB',
+  supportsJunctions: true,
+  edgeLabel: 'is achieved through',
+  nodeTags: [
+    {
+      id: 'objective',
+      name: 'Objective',
+      shortName: 'OBJ',
+      color: '#5C8DB5',
+      description: 'The outcome you want to achieve',
+      exclusive: false,
+    },
+    {
+      id: 'strategy',
+      name: 'Strategy',
+      shortName: 'STR',
+      color: '#7E57C2',
+      description: 'A high-level approach for achieving the objective',
+      exclusive: false,
+    },
+    {
+      id: 'tactic',
+      name: 'Tactic',
+      shortName: 'TAC',
+      color: '#26A69A',
+      description: 'A concrete action or execution pattern that supports the strategy',
+      exclusive: false,
+    },
+  ],
+  derivedIndicators: [
+    {
+      id: 'top-level',
+      name: 'Top-Level Aim',
+      shortName: 'Aim',
+      color: '#5C8DB5',
+      condition: 'indegree-zero',
+      description: 'No incoming edges — a top-level direction or objective',
+    },
+    {
+      id: 'bridge',
+      name: 'Bridge',
+      shortName: 'Bridge',
+      color: '#9E9E9E',
+      condition: 'indegree-and-outdegree',
+      description: 'Has both incoming and outgoing edges — links strategy to execution',
+    },
+    {
+      id: 'execution',
+      name: 'Execution Point',
+      shortName: 'Exec',
+      color: '#26A69A',
+      condition: 'leaf',
+      description: 'No outgoing edges — a final action or implementation point',
+    },
+  ],
+};

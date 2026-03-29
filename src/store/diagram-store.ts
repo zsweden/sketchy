@@ -66,6 +66,17 @@ function getDefaultFramework(): Framework {
   return fw;
 }
 
+function createDiagramForFramework(framework: Framework): Diagram {
+  const diagram = createEmptyDiagram(framework.id);
+  return {
+    ...diagram,
+    settings: {
+      ...diagram.settings,
+      layoutDirection: framework.defaultLayoutDirection,
+    },
+  };
+}
+
 function snapshot(state: { diagram: Diagram }): DiagramSnapshot {
   return {
     nodes: state.diagram.nodes,
@@ -193,7 +204,7 @@ function batchRemoveEdges(
 }
 
 export const useDiagramStore = create<DiagramState>((set, get) => ({
-  diagram: createEmptyDiagram('crt'),
+  diagram: createDiagramForFramework(getDefaultFramework()),
   framework: getDefaultFramework(),
 
   addNode: (position) => {
@@ -436,7 +447,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
     history.push(snapshot(state));
 
     set({
-      diagram: createEmptyDiagram(frameworkId),
+      diagram: createDiagramForFramework(fw),
       framework: fw,
       canUndo: true,
       canRedo: false,
@@ -470,7 +481,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
     history.push(snapshot(state));
 
     set((s) => ({
-      diagram: createEmptyDiagram(s.framework.id),
+      diagram: createDiagramForFramework(s.framework),
       canUndo: true,
       canRedo: false,
     }));

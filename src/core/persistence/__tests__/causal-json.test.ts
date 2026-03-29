@@ -66,6 +66,16 @@ describe('convertSkyJson', () => {
     expect(n2.data.tags).toEqual(['ude']);
   });
 
+  it('preserves generic tags from sky JSON', () => {
+    const { diagram } = convertSkyJson({
+      nodes: [{ id: 'n1', label: 'Injection', tags: ['injection', 'de'] }],
+      edges: [],
+      framework: 'frt',
+    });
+
+    expect(diagram.nodes[0].data.tags).toEqual(['injection', 'de']);
+  });
+
   it('generates edge IDs', () => {
     const { diagram } = convertSkyJson(minimal);
     expect(diagram.edges).toHaveLength(1);
@@ -173,6 +183,26 @@ describe('diagramToSkyJson', () => {
     expect(skyJson.nodes[0].notes).toBe('a note');
     expect(skyJson.edges).toHaveLength(1);
     expect(skyJson.edges[0].source).toBe('n1');
+  });
+
+  it('persists non-CRT tags generically', () => {
+    const diagram = createEmptyDiagram('frt');
+    diagram.nodes = [
+      {
+        id: 'n1',
+        type: 'entity',
+        position: { x: 0, y: 0 },
+        data: { label: 'Injection', tags: ['injection'], junctionType: 'or' },
+      },
+    ];
+    diagram.edges = [];
+
+    const skyJson = diagramToSkyJson(diagram);
+    expect(skyJson.nodes[0].tags).toEqual(['injection']);
+    expect(skyJson.nodes[0].isUDE).toBeUndefined();
+
+    const { diagram: loaded } = convertSkyJson(skyJson);
+    expect(loaded.nodes[0].data.tags).toEqual(['injection']);
   });
 
   it('includes junctions for AND nodes with 2+ incoming', () => {
