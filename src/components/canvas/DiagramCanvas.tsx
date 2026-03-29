@@ -289,7 +289,7 @@ export default function DiagramCanvas() {
       {diagram.settings.showGrid && (
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
       )}
-      <Controls fitViewOptions={FIT_VIEW_OPTIONS} />
+      <Controls fitViewOptions={FIT_VIEW_OPTIONS} showInteractive={false} />
       <MiniMap
         pannable
         zoomable

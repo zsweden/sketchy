@@ -1,5 +1,5 @@
 import {
-  FilePlus,
+  SquarePlus,
   LayoutDashboard,
   Undo2,
   Redo2,
@@ -132,7 +132,7 @@ export default function Toolbar() {
           title="New diagram"
           aria-label="New diagram"
         >
-          <FilePlus size={16} />
+          <SquarePlus size={16} />
         </button>
 
         <div className="toolbar-divider" />
