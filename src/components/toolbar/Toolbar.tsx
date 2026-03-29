@@ -217,8 +217,9 @@ export default function Toolbar() {
           onChange={handleFileChange}
         />
 
-        <div className="toolbar-divider" />
+      </div>
 
+      <div className="toolbar-group">
         <div style={{ position: 'relative' }}>
           <button
             className="btn btn-ghost btn-icon"
