@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSettingsStore, MODEL_OPTIONS } from '../../store/settings-store';
+import { useSettingsStore } from '../../store/settings-store';
 
 export default function SettingsPopover() {
   const open = useSettingsStore((s) => s.settingsOpen);
@@ -10,6 +10,8 @@ export default function SettingsPopover() {
   const setBaseUrl = useSettingsStore((s) => s.setBaseUrl);
   const model = useSettingsStore((s) => s.model);
   const setModel = useSettingsStore((s) => s.setModel);
+  const availableModels = useSettingsStore((s) => s.availableModels);
+  const modelsLoading = useSettingsStore((s) => s.modelsLoading);
   const ref = useRef<HTMLDivElement>(null);
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
 
@@ -57,20 +59,25 @@ export default function SettingsPopover() {
             />
             {modelDropdownOpen && (
               <div className="model-dropdown">
-                {MODEL_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    className="model-dropdown-item"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setModel(opt.value);
-                      setModelDropdownOpen(false);
-                    }}
-                  >
-                    <span>{opt.value}</span>
-                    <span className="model-dropdown-cost">{opt.cost}</span>
-                  </button>
-                ))}
+                {modelsLoading ? (
+                  <div className="model-dropdown-loading">Loading models...</div>
+                ) : availableModels.length > 0 ? (
+                  availableModels.map((m) => (
+                    <button
+                      key={m.id}
+                      className="model-dropdown-item"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setModel(m.id);
+                        setModelDropdownOpen(false);
+                      }}
+                    >
+                      <span>{m.id}</span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="model-dropdown-loading">No models found</div>
+                )}
               </div>
             )}
           </div>
