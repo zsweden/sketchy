@@ -1,5 +1,6 @@
 import type { Diagram } from '../types';
 import type { Framework } from '../framework-types';
+import { buildHeaders } from './model-fetcher';
 
 // --- Types ---
 
@@ -173,6 +174,180 @@ function pruneHistory(messages: ChatMessage[]): ChatMessage[] {
   return messages.slice(-MAX_HISTORY_MESSAGES);
 }
 
+// --- Anthropic tool format ---
+
+const anthropicModifyDiagramTool = {
+  name: modifyDiagramTool.function.name,
+  description: modifyDiagramTool.function.description,
+  input_schema: modifyDiagramTool.function.parameters,
+};
+
+// --- Request builders ---
+
+function buildOpenAIRequest(
+  baseUrl: string,
+  apiKey: string,
+  model: string,
+  systemPrompt: string,
+  messages: ChatMessage[],
+): { url: string; headers: Record<string, string>; body: string } {
+  const apiMessages = [
+    { role: 'system', content: systemPrompt },
+    ...pruneHistory(messages).map((m) => ({ role: m.role, content: m.content })),
+  ];
+  return {
+    url: `${baseUrl.replace(/\/+$/, '')}/chat/completions`,
+    headers: buildHeaders(apiKey, 'openai'),
+    body: JSON.stringify({
+      model,
+      messages: apiMessages,
+      tools: [modifyDiagramTool],
+      tool_choice: 'auto',
+      stream: true,
+    }),
+  };
+}
+
+function buildAnthropicRequest(
+  baseUrl: string,
+  apiKey: string,
+  model: string,
+  systemPrompt: string,
+  messages: ChatMessage[],
+): { url: string; headers: Record<string, string>; body: string } {
+  const userMessages = pruneHistory(messages)
+    .filter((m) => m.role !== 'system')
+    .map((m) => ({ role: m.role, content: m.content }));
+  return {
+    url: `${baseUrl.replace(/\/+$/, '')}/messages`,
+    headers: buildHeaders(apiKey, 'anthropic'),
+    body: JSON.stringify({
+      model,
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: userMessages,
+      tools: [anthropicModifyDiagramTool],
+      stream: true,
+    }),
+  };
+}
+
+// --- SSE line parsers ---
+
+interface ParseState {
+  contentText: string;
+  toolCalls: { name: string; args: string }[];
+}
+
+function processOpenAILine(
+  line: string,
+  state: ParseState,
+  callbacks: StreamCallbacks,
+): void {
+  const trimmed = line.trim();
+  if (!trimmed || !trimmed.startsWith('data:')) return;
+  const data = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed.slice(5);
+  if (data === '[DONE]') return;
+
+  try {
+    const parsed = JSON.parse(data);
+    const delta = parsed.choices?.[0]?.delta;
+    if (!delta) return;
+
+    if (delta.content) {
+      state.contentText += delta.content;
+      callbacks.onToken(delta.content);
+    }
+
+    if (delta.tool_calls) {
+      for (const tc of delta.tool_calls) {
+        const idx = tc.index ?? 0;
+        if (!state.toolCalls[idx]) state.toolCalls[idx] = { name: '', args: '' };
+        if (tc.function?.name) state.toolCalls[idx].name = tc.function.name;
+        if (tc.function?.arguments) state.toolCalls[idx].args += tc.function.arguments;
+      }
+    }
+  } catch {
+    // Skip malformed SSE chunks
+  }
+}
+
+function processAnthropicLine(
+  line: string,
+  state: ParseState,
+  callbacks: StreamCallbacks,
+): void {
+  const trimmed = line.trim();
+  if (!trimmed || !trimmed.startsWith('data:')) return;
+  const data = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed.slice(5);
+
+  try {
+    const parsed = JSON.parse(data);
+
+    if (parsed.type === 'content_block_start' && parsed.content_block?.type === 'tool_use') {
+      state.toolCalls.push({ name: parsed.content_block.name ?? '', args: '' });
+    }
+
+    if (parsed.type === 'content_block_delta') {
+      if (parsed.delta?.type === 'text_delta' && parsed.delta.text) {
+        state.contentText += parsed.delta.text;
+        callbacks.onToken(parsed.delta.text);
+      }
+      if (parsed.delta?.type === 'input_json_delta' && parsed.delta.partial_json) {
+        const lastTool = state.toolCalls[state.toolCalls.length - 1];
+        if (lastTool) lastTool.args += parsed.delta.partial_json;
+      }
+    }
+  } catch {
+    // Skip malformed SSE chunks
+  }
+}
+
+// --- Finalize tool calls into modifications ---
+
+function finalizeToolCalls(
+  toolCalls: { name: string; args: string }[],
+  contentText: string,
+  callbacks: StreamCallbacks,
+): void {
+  const modifyCalls = toolCalls.filter((tc) => tc.name === 'modify_diagram' && tc.args);
+  if (modifyCalls.length > 0) {
+    try {
+      const merged: DiagramModification = {
+        addNodes: [],
+        updateNodes: [],
+        removeNodeIds: [],
+        addEdges: [],
+        updateEdges: [],
+        removeEdgeIds: [],
+      };
+      const explanations: string[] = [];
+
+      for (const tc of modifyCalls) {
+        const args = JSON.parse(tc.args);
+        if (args.explanation) explanations.push(args.explanation);
+        if (args.addNodes) merged.addNodes.push(...args.addNodes);
+        if (args.updateNodes) merged.updateNodes.push(...args.updateNodes);
+        if (args.removeNodeIds) merged.removeNodeIds.push(...args.removeNodeIds);
+        if (args.addEdges) merged.addEdges.push(...args.addEdges);
+        if (args.updateEdges) merged.updateEdges.push(...args.updateEdges);
+        if (args.removeEdgeIds) merged.removeEdgeIds.push(...args.removeEdgeIds);
+      }
+
+      callbacks.onDone({
+        text: explanations.join(' ') || contentText || 'Changes applied.',
+        modifications: merged,
+      });
+    } catch {
+      const rawArgs = modifyCalls.map((tc) => tc.args).join('\n\n');
+      const rawPreview = `The AI suggested changes but they could not be parsed. Please try again.\n\nRaw response:\n${rawArgs}`;
+      callbacks.onDone({ text: contentText || rawPreview });
+    }
+  } else {
+    callbacks.onDone({ text: contentText });
+  }
+}
+
 // --- Streaming API call ---
 
 export function streamChatMessage(
@@ -183,34 +358,22 @@ export function streamChatMessage(
   framework: Framework,
   messages: ChatMessage[],
   callbacks: StreamCallbacks,
+  provider: string = 'openai',
 ): AbortController {
   const controller = new AbortController();
   const systemPrompt = buildSystemPrompt(diagram, framework);
 
-  const apiMessages = [
-    { role: 'system', content: systemPrompt },
-    ...pruneHistory(messages).map((m) => ({ role: m.role, content: m.content })),
-  ];
+  const isAnthropic = provider === 'anthropic';
+  const req = isAnthropic
+    ? buildAnthropicRequest(baseUrl, apiKey, model, systemPrompt, messages)
+    : buildOpenAIRequest(baseUrl, apiKey, model, systemPrompt, messages);
 
-  const url = `${baseUrl.replace(/\/+$/, '')}/chat/completions`;
+  const processLine = isAnthropic ? processAnthropicLine : processOpenAILine;
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  if (apiKey) {
-    headers['Authorization'] = `Bearer ${apiKey}`;
-  }
-
-  fetch(url, {
+  fetch(req.url, {
     method: 'POST',
-    headers,
-    body: JSON.stringify({
-      model,
-      messages: apiMessages,
-      tools: [modifyDiagramTool],
-      tool_choice: 'auto',
-      stream: true,
-    }),
+    headers: req.headers,
+    body: req.body,
     signal: controller.signal,
   })
     .then(async (res) => {
@@ -224,39 +387,7 @@ export function streamChatMessage(
 
       const decoder = new TextDecoder();
       let buffer = '';
-      let contentText = '';
-      const toolCalls: { name: string; args: string }[] = [];
-
-      function processLine(line: string) {
-        const trimmed = line.trim();
-        if (!trimmed || !trimmed.startsWith('data:')) return;
-        const data = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed.slice(5);
-        if (data === '[DONE]') return;
-
-        try {
-          const parsed = JSON.parse(data);
-          const delta = parsed.choices?.[0]?.delta;
-          if (!delta) return;
-
-          // Content tokens (plain text response)
-          if (delta.content) {
-            contentText += delta.content;
-            callbacks.onToken(delta.content);
-          }
-
-          // Tool call chunks — track each by index
-          if (delta.tool_calls) {
-            for (const tc of delta.tool_calls) {
-              const idx = tc.index ?? 0;
-              if (!toolCalls[idx]) toolCalls[idx] = { name: '', args: '' };
-              if (tc.function?.name) toolCalls[idx].name = tc.function.name;
-              if (tc.function?.arguments) toolCalls[idx].args += tc.function.arguments;
-            }
-          }
-        } catch {
-          // Skip malformed SSE chunks
-        }
-      }
+      const state: ParseState = { contentText: '', toolCalls: [] };
 
       while (true) {
         const { done, value } = await reader.read();
@@ -267,52 +398,15 @@ export function streamChatMessage(
         buffer = lines.pop() ?? '';
 
         for (const line of lines) {
-          processLine(line);
+          processLine(line, state, callbacks);
         }
       }
 
-      // Process any remaining data left in the buffer
       if (buffer.trim()) {
-        processLine(buffer);
+        processLine(buffer, state, callbacks);
       }
 
-      // Finalize — merge all modify_diagram tool calls into one modification
-      const modifyCalls = toolCalls.filter((tc) => tc.name === 'modify_diagram' && tc.args);
-      if (modifyCalls.length > 0) {
-        try {
-          const merged: DiagramModification = {
-            addNodes: [],
-            updateNodes: [],
-            removeNodeIds: [],
-            addEdges: [],
-            updateEdges: [],
-            removeEdgeIds: [],
-          };
-          const explanations: string[] = [];
-
-          for (const tc of modifyCalls) {
-            const args = JSON.parse(tc.args);
-            if (args.explanation) explanations.push(args.explanation);
-            if (args.addNodes) merged.addNodes.push(...args.addNodes);
-            if (args.updateNodes) merged.updateNodes.push(...args.updateNodes);
-            if (args.removeNodeIds) merged.removeNodeIds.push(...args.removeNodeIds);
-            if (args.addEdges) merged.addEdges.push(...args.addEdges);
-            if (args.updateEdges) merged.updateEdges.push(...args.updateEdges);
-            if (args.removeEdgeIds) merged.removeEdgeIds.push(...args.removeEdgeIds);
-          }
-
-          callbacks.onDone({
-            text: explanations.join(' ') || 'Changes applied.',
-            modifications: merged,
-          });
-        } catch {
-          const rawArgs = modifyCalls.map((tc) => tc.args).join('\n\n');
-          const rawPreview = `The AI suggested changes but they could not be parsed. Please try again.\n\nRaw response:\n${rawArgs}`;
-          callbacks.onDone({ text: contentText || rawPreview });
-        }
-      } else {
-        callbacks.onDone({ text: contentText });
-      }
+      finalizeToolCalls(state.toolCalls, state.contentText, callbacks);
     })
     .catch((err) => {
       if (err.name === 'AbortError') return;

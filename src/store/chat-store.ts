@@ -35,7 +35,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   aiModifiedNodeIds: new Set(),
 
   sendMessage: (text) => {
-    const { openaiApiKey, baseUrl, model } = useSettingsStore.getState();
+    const { openaiApiKey, baseUrl, model, provider } = useSettingsStore.getState();
     if (!baseUrl || !model) {
       set((s) => ({
         messages: [
@@ -79,6 +79,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       framework,
       history,
       {
+
         onToken: (token) => {
           set((s) => ({ streamingContent: s.streamingContent + token }));
         },
@@ -117,6 +118,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           }));
         },
       },
+      provider,
     );
   },
 

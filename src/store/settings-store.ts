@@ -3,16 +3,40 @@ import { fetchAvailableModels, type ModelInfo } from '../core/ai/model-fetcher';
 
 const STORAGE_KEY = 'sketchy-settings';
 
-const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
 const DEFAULT_MODEL = 'gpt-4o';
+
+export interface Provider {
+  id: string;
+  name: string;
+  baseUrl: string;
+  requiresKey: boolean;
+}
+
+export const PROVIDERS: Provider[] = [
+  { id: 'openai', name: 'OpenAI', baseUrl: 'https://api.openai.com/v1', requiresKey: true },
+  { id: 'anthropic', name: 'Anthropic', baseUrl: 'https://api.anthropic.com/v1', requiresKey: true },
+  { id: 'openrouter', name: 'OpenRouter', baseUrl: 'https://openrouter.ai/api/v1', requiresKey: true },
+  { id: 'groq', name: 'Groq', baseUrl: 'https://api.groq.com/openai/v1', requiresKey: true },
+  { id: 'together', name: 'Together', baseUrl: 'https://api.together.xyz/v1', requiresKey: true },
+  { id: 'ollama', name: 'Ollama', baseUrl: 'http://localhost:11434/v1', requiresKey: false },
+  { id: 'lmstudio', name: 'LM Studio', baseUrl: 'http://localhost:1234/v1', requiresKey: false },
+  { id: 'custom', name: 'Custom', baseUrl: '', requiresKey: false },
+];
+
+function detectProvider(baseUrl: string): string {
+  const match = PROVIDERS.find((p) => p.id !== 'custom' && p.baseUrl === baseUrl);
+  return match?.id ?? 'custom';
+}
 
 interface StoredSettings {
   apiKey: string;
   baseUrl: string;
   model: string;
+  provider?: string;
 }
 
 interface SettingsState {
+  provider: string;
   openaiApiKey: string;
   baseUrl: string;
   model: string;
@@ -21,6 +45,7 @@ interface SettingsState {
   modelsLoading: boolean;
   modelsError: string | null;
 
+  setProvider: (providerId: string) => void;
   setOpenaiApiKey: (key: string) => void;
   setBaseUrl: (url: string) => void;
   setModel: (model: string) => void;
@@ -34,14 +59,16 @@ function loadSettings(): StoredSettings {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
+      const baseUrl = parsed.baseUrl ?? PROVIDERS[0].baseUrl;
       return {
         apiKey: parsed.apiKey ?? '',
-        baseUrl: parsed.baseUrl ?? DEFAULT_BASE_URL,
+        baseUrl,
         model: parsed.model ?? DEFAULT_MODEL,
+        provider: parsed.provider ?? detectProvider(baseUrl),
       };
     }
   } catch { /* ignore */ }
-  return { apiKey: '', baseUrl: DEFAULT_BASE_URL, model: DEFAULT_MODEL };
+  return { apiKey: '', baseUrl: PROVIDERS[0].baseUrl, model: DEFAULT_MODEL, provider: PROVIDERS[0].id };
 }
 
 function saveSettings(patch: Partial<StoredSettings>) {
@@ -57,14 +84,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
   let abortController: AbortController | null = null;
 
   function refreshModels() {
-    const { baseUrl, openaiApiKey } = get();
+    const { baseUrl, openaiApiKey, provider } = get();
     abortController?.abort();
     const controller = new AbortController();
     abortController = controller;
 
     set({ modelsLoading: true, modelsError: null });
 
-    fetchAvailableModels(baseUrl, openaiApiKey, controller.signal)
+    fetchAvailableModels(baseUrl, openaiApiKey, controller.signal, provider)
       .then((models) => {
         if (!controller.signal.aborted) {
           set({ availableModels: models, modelsLoading: false });
@@ -78,6 +105,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
   }
 
   return {
+    provider: initial.provider ?? PROVIDERS[0].id,
     openaiApiKey: initial.apiKey,
     baseUrl: initial.baseUrl,
     model: initial.model,
@@ -85,6 +113,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     availableModels: [],
     modelsLoading: false,
     modelsError: null,
+
+    setProvider: (providerId) => {
+      const p = PROVIDERS.find((pr) => pr.id === providerId);
+      if (!p) return;
+      const baseUrl = p.id === 'custom' ? get().baseUrl : p.baseUrl;
+      saveSettings({ provider: providerId, baseUrl });
+      set({ provider: providerId, baseUrl });
+      refreshModels();
+    },
 
     setOpenaiApiKey: (key) => {
       saveSettings({ apiKey: key });
@@ -111,6 +148,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
 
 // Fetch models on startup if we have a key or a non-default base URL
 const { openaiApiKey, baseUrl, refreshModels } = useSettingsStore.getState();
-if (openaiApiKey || baseUrl !== DEFAULT_BASE_URL) {
+if (openaiApiKey || baseUrl !== PROVIDERS[0].baseUrl) {
   refreshModels();
 }

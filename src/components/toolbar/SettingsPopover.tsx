@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSettingsStore } from '../../store/settings-store';
+import { Check } from 'lucide-react';
+import { useSettingsStore, PROVIDERS } from '../../store/settings-store';
 
 export default function SettingsPopover() {
   const open = useSettingsStore((s) => s.settingsOpen);
   const closeSettings = useSettingsStore((s) => s.closeSettings);
+  const provider = useSettingsStore((s) => s.provider);
+  const setProvider = useSettingsStore((s) => s.setProvider);
   const apiKey = useSettingsStore((s) => s.openaiApiKey);
   const setApiKey = useSettingsStore((s) => s.setOpenaiApiKey);
   const baseUrl = useSettingsStore((s) => s.baseUrl);
@@ -12,6 +15,9 @@ export default function SettingsPopover() {
   const setModel = useSettingsStore((s) => s.setModel);
   const availableModels = useSettingsStore((s) => s.availableModels);
   const modelsLoading = useSettingsStore((s) => s.modelsLoading);
+  const modelsError = useSettingsStore((s) => s.modelsError);
+  const currentProvider = PROVIDERS.find((p) => p.id === provider) ?? PROVIDERS[0];
+  const keyValid = apiKey.length > 0 && !modelsLoading && !modelsError && availableModels.length > 0;
   const ref = useRef<HTMLDivElement>(null);
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
 
@@ -31,18 +37,51 @@ export default function SettingsPopover() {
   return (
     <div className="settings-popover" ref={ref}>
       <div className="section-stack" style={{ gap: '0.75rem' }}>
-        {/* API Key */}
+        {/* Provider */}
         <div className="section-stack" style={{ gap: '0.375rem' }}>
-          <p className="section-label">API Key</p>
-          <input
+          <p className="section-label">Provider</p>
+          <select
             className="input-text"
-            type="password"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="sk-... (optional for local models)"
-            autoComplete="off"
-          />
+            value={provider}
+            onChange={(e) => setProvider(e.target.value)}
+          >
+            {PROVIDERS.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
         </div>
+
+        {/* API Key — shown when provider requires one */}
+        {currentProvider.requiresKey && (
+          <div className="section-stack" style={{ gap: '0.375rem' }}>
+            <p className="section-label" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              API Key
+              {keyValid && <Check size={14} style={{ color: '#22c55e' }} />}
+            </p>
+            <input
+              className="input-text"
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="sk-..."
+              autoComplete="off"
+            />
+          </div>
+        )}
+
+        {/* Custom Endpoint — shown only for Custom provider */}
+        {provider === 'custom' && (
+          <div className="section-stack" style={{ gap: '0.375rem' }}>
+            <p className="section-label">API Endpoint</p>
+            <input
+              className="input-text"
+              type="text"
+              value={baseUrl}
+              onChange={(e) => setBaseUrl(e.target.value)}
+              placeholder="https://api.example.com/v1"
+            />
+          </div>
+        )}
 
         {/* Model */}
         <div className="section-stack" style={{ gap: '0.375rem' }}>
@@ -55,7 +94,7 @@ export default function SettingsPopover() {
               onChange={(e) => setModel(e.target.value)}
               onFocus={() => setModelDropdownOpen(true)}
               onBlur={() => setTimeout(() => setModelDropdownOpen(false), 150)}
-              placeholder="gpt-4o or any model name"
+              placeholder="Type or select a model"
             />
             {modelDropdownOpen && (
               <div className="model-dropdown">
@@ -81,18 +120,6 @@ export default function SettingsPopover() {
               </div>
             )}
           </div>
-        </div>
-
-        {/* Endpoint */}
-        <div className="section-stack" style={{ gap: '0.375rem' }}>
-          <p className="section-label">API Endpoint</p>
-          <input
-            className="input-text"
-            type="text"
-            value={baseUrl}
-            onChange={(e) => setBaseUrl(e.target.value)}
-            placeholder="https://api.openai.com/v1"
-          />
         </div>
 
         <p className="field-label" style={{ color: 'var(--text-soft)', fontSize: '0.7rem' }}>
