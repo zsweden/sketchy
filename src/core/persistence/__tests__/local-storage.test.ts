@@ -101,6 +101,37 @@ describe('local-storage', () => {
       expect(keys.length).toBe(1);
       expect(localStorage.getItem(keys[0])).toBe(invalidDiagram);
     });
+
+    it('sanitizes dangling edges and returns warnings', () => {
+      const diagram = createEmptyDiagram('crt');
+      diagram.nodes = [
+        {
+          id: 'n1',
+          type: 'entity',
+          position: { x: 0, y: 0 },
+          data: { label: 'Node 1', tags: [], junctionType: 'or' },
+        },
+        {
+          id: 'n2',
+          type: 'entity',
+          position: { x: 0, y: 100 },
+          data: { label: 'Node 2', tags: [], junctionType: 'or' },
+        },
+      ];
+      diagram.edges = [
+        { id: 'e1', source: 'n1', target: 'n2' },
+        { id: 'e2', source: 'n1', target: 'ghost' },
+      ];
+
+      saveDiagram(diagram);
+      const result = loadDiagram();
+
+      expect(result.diagram).not.toBeNull();
+      expect(result.diagram!.edges).toHaveLength(1);
+      expect(result.diagram!.edges[0].id).toBe('e1');
+      expect(result.warnings).toHaveLength(1);
+      expect(result.warnings![0]).toContain('errors and was sanitized');
+    });
   });
 
   describe('clearDiagram', () => {

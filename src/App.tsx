@@ -24,6 +24,11 @@ export default function App() {
     if (result.error) {
       useUIStore.getState().addToast(result.error, 'error');
     }
+    if (result.warnings) {
+      for (const warning of result.warnings) {
+        useUIStore.getState().addToast(warning, 'warning');
+      }
+    }
   }, []);
 
   return (

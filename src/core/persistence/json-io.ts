@@ -43,14 +43,14 @@ export async function importDiagram(file: File): Promise<ImportResult> {
     );
   }
 
-  // Validate graph
+  // Validate graph — sanitize dangling edges, cycles, duplicates
   const graphResult = validateGraph(diagram.nodes, diagram.edges);
   if (!graphResult.valid) {
     diagram.edges = diagram.edges.filter(
       (e) => !graphResult.droppedEdges.some((d) => d.id === e.id),
     );
     warnings.push(
-      `Dropped ${graphResult.droppedEdges.length} invalid edge(s): ${graphResult.reasons.join('; ')}`,
+      `File contained errors and was sanitized: removed ${graphResult.droppedEdges.length} invalid connection(s) referencing non-existent nodes.`,
     );
   }
 

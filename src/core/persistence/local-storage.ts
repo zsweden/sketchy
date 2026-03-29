@@ -1,4 +1,5 @@
 import type { Diagram } from '../types';
+import { validateGraph } from '../graph/validation';
 import { migrate, validateDiagramShape } from './schema';
 
 const STORAGE_KEY = 'sketchy_diagram';
@@ -14,6 +15,7 @@ export function saveDiagram(diagram: Diagram): void {
 export interface LoadResult {
   diagram: Diagram | null;
   error?: string;
+  warnings?: string[];
 }
 
 export function loadDiagram(): LoadResult {
@@ -32,7 +34,20 @@ export function loadDiagram(): LoadResult {
     }
 
     const diagram = migrate(parsed as unknown as Record<string, unknown>);
-    return { diagram };
+
+    // Validate graph — sanitize dangling edges, cycles, duplicates
+    const warnings: string[] = [];
+    const graphResult = validateGraph(diagram.nodes, diagram.edges);
+    if (!graphResult.valid) {
+      diagram.edges = diagram.edges.filter(
+        (e) => !graphResult.droppedEdges.some((d) => d.id === e.id),
+      );
+      warnings.push(
+        `Recovered session contained errors and was sanitized: removed ${graphResult.droppedEdges.length} invalid connection(s).`,
+      );
+    }
+
+    return { diagram, ...(warnings.length > 0 ? { warnings } : {}) };
   } catch {
     backupCorrupted(raw);
     return {

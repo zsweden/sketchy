@@ -98,7 +98,30 @@ describe('loadSkyFile', () => {
 
     expect(result.diagram.edges).toHaveLength(1);
     expect(result.warnings).toHaveLength(1);
-    expect(result.warnings[0]).toContain('Dropped');
+    expect(result.warnings[0]).toContain('errors and was sanitized');
+  });
+
+  it('sanitizes dangling edges in causal JSON and warns', async () => {
+    const causal = {
+      nodes: [
+        { id: 'n1', label: 'Cause' },
+        { id: 'n2', label: 'Effect' },
+      ],
+      edges: [
+        { source: 'n1', target: 'n2' },
+        { source: 'n1', target: 'ghost-node' },
+        { source: 'phantom-node', target: 'n2' },
+      ],
+    };
+
+    const result = await loadSkyFile(makeFile(JSON.stringify(causal)));
+
+    expect(result.diagram.edges).toHaveLength(1);
+    expect(result.diagram.edges[0].source).toBe('n1');
+    expect(result.diagram.edges[0].target).toBe('n2');
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0]).toContain('errors and was sanitized');
+    expect(result.warnings[0]).toContain('2 invalid connection(s)');
   });
 
   it('loads causal JSON format', async () => {
