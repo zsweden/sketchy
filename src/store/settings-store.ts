@@ -151,3 +151,20 @@ const { openaiApiKey, baseUrl, refreshModels } = useSettingsStore.getState();
 if (openaiApiKey || baseUrl !== PROVIDERS[0].baseUrl) {
   refreshModels();
 }
+
+// Sync settings across tabs via localStorage storage event
+window.addEventListener('storage', (e) => {
+  if (e.key !== STORAGE_KEY || !e.newValue) return;
+  try {
+    const parsed = JSON.parse(e.newValue);
+    const newBaseUrl = parsed.baseUrl ?? PROVIDERS[0].baseUrl;
+    const newProvider = parsed.provider ?? detectProvider(newBaseUrl);
+    useSettingsStore.setState({
+      openaiApiKey: parsed.apiKey ?? '',
+      baseUrl: newBaseUrl,
+      model: parsed.model ?? DEFAULT_MODEL,
+      provider: newProvider,
+    });
+    useSettingsStore.getState().refreshModels();
+  } catch { /* ignore malformed data */ }
+});
