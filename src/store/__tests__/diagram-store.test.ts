@@ -250,5 +250,41 @@ describe('diagram store', () => {
       expect(edge.sourceSide).toBe('left');
       expect(edge.targetSide).toBe('right');
     });
+
+    it('blocks edge anchor move in dynamic mode and returns sentinel', () => {
+      // Default mode is 'dynamic'
+      const id1 = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const id2 = useDiagramStore.getState().addNode({ x: 200, y: 0 });
+      useDiagramStore.getState().addEdge(id1, id2);
+
+      // Try to reconnect to different anchors
+      const result = useDiagramStore.getState().addEdge(id1, id2, {
+        sourceHandleId: 'source-top',
+        targetHandleId: 'target-bottom',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.reason).toBe('dynamic-edge-move');
+      // Edge should remain unchanged
+      expect(useDiagramStore.getState().diagram.edges).toHaveLength(1);
+    });
+
+    it('allows edge anchor move in fixed mode', () => {
+      useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });
+      const id1 = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const id2 = useDiagramStore.getState().addNode({ x: 200, y: 0 });
+      useDiagramStore.getState().addEdge(id1, id2);
+
+      const result = useDiagramStore.getState().addEdge(id1, id2, {
+        sourceHandleId: 'source-top',
+        targetHandleId: 'target-bottom',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.reason).toBe('Edge moved');
+      const edge = useDiagramStore.getState().diagram.edges[0];
+      expect(edge.sourceSide).toBe('top');
+      expect(edge.targetSide).toBe('bottom');
+    });
   });
 });

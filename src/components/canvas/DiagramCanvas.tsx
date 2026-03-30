@@ -39,6 +39,7 @@ export default function DiagramCanvas() {
   const deleteEdges = useDiagramStore((s) => s.deleteEdges);
   const framework = useDiagramStore((s) => s.framework);
   const snapToGrid = useDiagramStore((s) => s.diagram.settings.snapToGrid);
+  const updateSettings = useDiagramStore((s) => s.updateSettings);
 
   const setSelectedNodes = useUIStore((s) => s.setSelectedNodes);
   const setSelectedEdges = useUIStore((s) => s.setSelectedEdges);
@@ -176,13 +177,19 @@ export default function DiagramCanvas() {
         sourceHandleId: connection.sourceHandle,
         targetHandleId: connection.targetHandle,
       });
-      if (!result.success && result.reason) {
+      if (result.reason === 'dynamic-edge-move') {
+        addToast(
+          'Edge anchors can\'t be changed while routing is set to "Optimize Continuously".',
+          'warning',
+          { label: 'Keep Fixed', onClick: () => updateSettings({ edgeRoutingMode: 'fixed' }) },
+        );
+      } else if (!result.success && result.reason) {
         addToast(result.reason, 'warning');
       } else if (result.success && result.reason) {
         addToast(result.reason, 'info');
       }
     },
-    [addEdgeStore, addToast],
+    [addEdgeStore, addToast, updateSettings],
   );
 
   const onPaneClickHandler = useCallback(() => closeContextMenu(), [closeContextMenu]);

@@ -4,6 +4,7 @@ export interface Toast {
   id: string;
   message: string;
   type: 'info' | 'warning' | 'error';
+  action?: { label: string; onClick: () => void };
 }
 
 export type InteractionMode = 'select' | 'pan';
@@ -23,7 +24,7 @@ interface UIState {
   setSelectedLoop: (id: string | null) => void;
   openContextMenu: (x: number, y: number, nodeId?: string, edgeId?: string) => void;
   closeContextMenu: () => void;
-  addToast: (message: string, type?: 'info' | 'warning' | 'error') => void;
+  addToast: (message: string, type?: 'info' | 'warning' | 'error', action?: { label: string; onClick: () => void }) => void;
   dismissToast: (id: string) => void;
   toggleSidePanel: () => void;
   setInteractionMode: (mode: InteractionMode) => void;
@@ -51,16 +52,16 @@ export const useUIStore = create<UIState>((set) => ({
 
   closeContextMenu: () => set({ contextMenu: null }),
 
-  addToast: (message, type = 'info') => {
+  addToast: (message, type = 'info', action) => {
     const id = crypto.randomUUID();
     set((s) => ({
-      toasts: [...s.toasts, { id, message, type }],
+      toasts: [...s.toasts, { id, message, type, action }],
     }));
     setTimeout(() => {
       set((s) => ({
         toasts: s.toasts.filter((t) => t.id !== id),
       }));
-    }, 4000);
+    }, action ? 6000 : 4000);
   },
 
   dismissToast: (id) =>

@@ -305,6 +305,24 @@
   color: #1a1a1a;
 }
 
+.toast-action {
+  margin-left: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border: 1.5px solid currentColor;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.toast-action:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
 .toast--error {
   background: var(--ude-color);
 }

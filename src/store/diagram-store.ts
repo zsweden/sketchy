@@ -284,13 +284,15 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       }
 
       // Different anchors — replace the existing edge
+      if (state.diagram.settings.edgeRoutingMode === 'dynamic') {
+        return { success: false, reason: 'dynamic-edge-move' };
+      }
       history.push(snapshot(state));
-      const storeSides = state.diagram.settings.edgeRoutingMode === 'fixed' ? newSides : {};
       set((s) => ({
         diagram: {
           ...s.diagram,
           edges: s.diagram.edges.map((e) =>
-            e.id === existing.id ? { ...e, ...storeSides } : e,
+            e.id === existing.id ? { ...e, ...newSides } : e,
           ),
         },
         canUndo: true,

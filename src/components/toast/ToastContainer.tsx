@@ -15,7 +15,19 @@ export default function ToastContainer() {
           onClick={() => dismissToast(toast.id)}
           role="alert"
         >
-          {toast.message}
+          <span>{toast.message}</span>
+          {toast.action && (
+            <button
+              className="toast-action"
+              onClick={(e) => {
+                e.stopPropagation();
+                toast.action!.onClick();
+                dismissToast(toast.id);
+              }}
+            >
+              {toast.action.label}
+            </button>
+          )}
         </div>
       ))}
     </div>
