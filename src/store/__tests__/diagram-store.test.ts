@@ -252,7 +252,7 @@ describe('diagram store', () => {
     });
 
     it('blocks edge anchor move in dynamic mode and returns sentinel', () => {
-      // Default mode is 'dynamic'
+      useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'dynamic' });
       const id1 = useDiagramStore.getState().addNode({ x: 0, y: 0 });
       const id2 = useDiagramStore.getState().addNode({ x: 200, y: 0 });
       useDiagramStore.getState().addEdge(id1, id2);

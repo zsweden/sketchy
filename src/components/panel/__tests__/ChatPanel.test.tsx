@@ -18,7 +18,7 @@ function resetStore() {
     removeAiModified: useChatStore.getState().removeAiModified,
   });
   // Set a dummy API key so ChatPanel shows the normal empty state
-  useSettingsStore.setState({ openaiApiKey: 'sk-test' });
+  useSettingsStore.setState({ openaiApiKey: 'sk-test', model: 'gpt-4.1-mini' });
 }
 
 describe('ChatPanel', () => {
@@ -30,6 +30,8 @@ describe('ChatPanel', () => {
   it('renders the empty state by default', () => {
     render(<ChatPanel />);
 
+    expect(screen.getByText('AI Chat')).toBeInTheDocument();
+    expect(screen.getByText('gpt-4.1-mini')).toBeInTheDocument();
     expect(
       screen.getByText('Ask questions about your diagram or request changes.'),
     ).toBeInTheDocument();

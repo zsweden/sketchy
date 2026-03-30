@@ -36,6 +36,7 @@ export default function ChatPanel() {
 
   const provider = useSettingsStore((s) => s.provider);
   const apiKey = useSettingsStore((s) => s.openaiApiKey);
+  const model = useSettingsStore((s) => s.model);
   const availableModels = useSettingsStore((s) => s.availableModels);
   const modelsLoading = useSettingsStore((s) => s.modelsLoading);
   const modelsError = useSettingsStore((s) => s.modelsError);
@@ -119,8 +120,9 @@ export default function ChatPanel() {
   return (
     <div className="chat-panel">
       <div className="chat-header">
-        <p className="section-heading" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          AI Chat
+        <p className="section-heading chat-header-title">
+          <span>AI Chat</span>
+          {model && <span className="chat-model-name">{model}</span>}
           {isConnected && <Check size={14} style={{ color: '#22c55e' }} />}
         </p>
         {messages.length > 0 && (
