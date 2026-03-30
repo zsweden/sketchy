@@ -227,7 +227,7 @@ export default function SettingsPopover() {
         </div>
       </div>
 
-      <p className="field-label" style={{ color: 'var(--text-soft)', fontSize: '0.65rem', marginTop: '0.25rem' }}>
+      <p className="settings-footer">
         Settings stored locally in your browser.
       </p>
     </div>

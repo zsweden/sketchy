@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Send, Square, Trash2, Copy, Check, Paperclip, X } from 'lucide-react';
+import { Send, Square, Trash2, Copy, Check, Paperclip, X, Settings } from 'lucide-react';
 import { useChatStore } from '../../store/chat-store';
+import { useSettingsStore, PROVIDERS } from '../../store/settings-store';
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -32,6 +33,12 @@ export default function ChatPanel() {
   const cancelStream = useChatStore((s) => s.cancelStream);
   const clearMessages = useChatStore((s) => s.clearMessages);
 
+  const provider = useSettingsStore((s) => s.provider);
+  const apiKey = useSettingsStore((s) => s.openaiApiKey);
+  const toggleSettings = useSettingsStore((s) => s.toggleSettings);
+  const currentProvider = PROVIDERS.find((p) => p.id === provider) ?? PROVIDERS[0];
+  const isConfigured = !currentProvider.requiresKey || apiKey.length > 0;
+
   const [input, setInput] = useState('');
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [attachedFile, setAttachedFile] = useState<{ name: string; content: string } | null>(null);
@@ -45,7 +52,7 @@ export default function ChatPanel() {
 
   const handleSend = useCallback(() => {
     const trimmed = input.trim();
-    if (!trimmed || loading) return;
+    if (!trimmed || loading || !isConfigured) return;
     queryHistory.current.push(trimmed);
     setHistoryIndex(-1);
     setInput('');
@@ -57,7 +64,7 @@ export default function ChatPanel() {
     }
 
     sendMessage(message);
-  }, [input, loading, sendMessage, attachedFile]);
+  }, [input, loading, sendMessage, attachedFile, isConfigured]);
 
   const handleAttach = useCallback(() => {
     fileInputRef.current?.click();
@@ -123,9 +130,25 @@ export default function ChatPanel() {
       {loading && <div className="chat-progress-bar" />}
       <div className="chat-messages">
         {messages.length === 0 && !loading && (
-          <p className="chat-empty">
-            Ask questions about your diagram or request changes.
-          </p>
+          isConfigured ? (
+            <p className="chat-empty">
+              Ask questions about your diagram or request changes.
+            </p>
+          ) : (
+            <div className="chat-setup">
+              <Settings size={24} style={{ color: 'var(--text-soft)', marginBottom: '0.5rem' }} />
+              <p className="chat-setup-title">AI not configured</p>
+              <p className="chat-setup-text">
+                Set up an AI provider and API key in Settings to use chat.
+              </p>
+              <button
+                className="btn btn-secondary btn-xs"
+                onClick={toggleSettings}
+              >
+                Open Settings
+              </button>
+            </div>
+          )
         )}
         {messages.map((msg) => (
           <div key={msg.id} className={`chat-bubble chat-bubble--${msg.role}`}>
@@ -190,9 +213,9 @@ export default function ChatPanel() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about your diagram..."
+            placeholder={isConfigured ? 'Ask about your diagram...' : 'Configure AI provider in Settings'}
             rows={1}
-            disabled={loading}
+            disabled={loading || !isConfigured}
             aria-label="Chat input"
           />
           {loading ? (
@@ -208,7 +231,7 @@ export default function ChatPanel() {
             <button
               className="btn btn-secondary btn-icon-sm"
               onClick={handleSend}
-              disabled={!input.trim()}
+              disabled={!input.trim() || !isConfigured}
               title="Send"
               aria-label="Send message"
             >
