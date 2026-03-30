@@ -430,8 +430,10 @@ export default function DiagramCanvas() {
           pannable
           zoomable
           nodeColor={(node) => {
-            const data = node.data as { tags?: string[] };
-            // User-applied tags take priority
+            const data = node.data as { tags?: string[]; color?: string };
+            // User-assigned background color takes priority
+            if (data?.color) return data.color;
+            // Then user-applied tags
             const tagColor = data?.tags
               ?.map((t) => framework.nodeTags.find((nt) => nt.id === t))
               .find(Boolean)?.color;
