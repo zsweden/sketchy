@@ -5,6 +5,7 @@ import SidePanel from '../SidePanel';
 import { useChatStore } from '../../../store/chat-store';
 import { useDiagramStore } from '../../../store/diagram-store';
 import { useUIStore } from '../../../store/ui-store';
+import { useSettingsStore } from '../../../store/settings-store';
 
 function resetStores() {
   window.localStorage?.removeItem?.('sketchy-settings');
@@ -26,6 +27,7 @@ function resetStores() {
     interactionMode: 'select',
     fitViewTrigger: 0,
   });
+  useSettingsStore.setState({ openaiApiKey: 'sk-test' });
 }
 
 describe('SidePanel', () => {

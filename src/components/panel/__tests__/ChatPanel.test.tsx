@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ChatPanel from '../ChatPanel';
 import { useChatStore } from '../../../store/chat-store';
+import { useSettingsStore } from '../../../store/settings-store';
 
 function resetStore() {
   useChatStore.setState({
@@ -16,6 +17,8 @@ function resetStore() {
     clearAiModified: useChatStore.getState().clearAiModified,
     removeAiModified: useChatStore.getState().removeAiModified,
   });
+  // Set a dummy API key so ChatPanel shows the normal empty state
+  useSettingsStore.setState({ openaiApiKey: 'sk-test' });
 }
 
 describe('ChatPanel', () => {

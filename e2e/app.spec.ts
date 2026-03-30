@@ -116,8 +116,8 @@ test('undo restores a deleted node and redo removes it again', async ({ page }) 
   await page.getByLabel('Node text').fill('Keep me');
   await page.getByLabel('Node text').blur();
 
-  await page.locator('.react-flow__node').nth(1).click({ button: 'right' });
-  await page.locator('.context-menu-item--danger').click();
+  await page.locator('.react-flow__node').nth(1).click();
+  await page.keyboard.press('Backspace');
   await expect(page.locator('.entity-node')).toHaveCount(1);
 
   await page.getByRole('button', { name: 'Undo' }).click();
@@ -237,7 +237,7 @@ test('side panel switches between Node and Diagram views', async ({ page }) => {
 // --- 8. Provider / model settings ---
 
 test('switching provider updates settings correctly', async ({ page }) => {
-  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
   await expect(page.locator('.settings-popover')).toBeVisible();
   await expect(page.getByLabel('Provider')).toHaveValue('openai');
 
