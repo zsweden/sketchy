@@ -57,7 +57,7 @@ export function createEmptyDiagram(frameworkId: string, id?: string): Diagram {
     settings: {
       layoutDirection: 'BT',
       showGrid: true,
-      edgeRoutingMode: 'dynamic',
+      edgeRoutingMode: 'fixed',
     },
     nodes: [],
     edges: [],

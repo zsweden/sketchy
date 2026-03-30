@@ -1,28 +1,28 @@
 :root {
-  color: #212121;
-  background: #F5F5EC;
+  color: #F0F0F0;
+  background: #1E1E1E;
 
-  --app-bg-top: #F5F5EC;
-  --app-bg-bottom: #EBE9E0;
-  --surface: rgba(255, 255, 255, 0.96);
-  --surface-muted: #F5F5EC;
-  --border: #E0DDD4;
-  --border-strong: #D4D0C6;
-  --text: #212121;
-  --text-muted: #6B6B6B;
-  --text-soft: #8A8A7A;
-  --accent: #212121;
-  --accent-hover: #3a3a3a;
-  --accent-shadow: rgba(33, 33, 33, 0.18);
-  --secondary: #E8E4DA;
-  --secondary-hover: #DDD8CC;
-  --shadow: 0 20px 45px rgba(33, 33, 33, 0.06);
+  --app-bg-top: #1E1E1E;
+  --app-bg-bottom: #1A1A1A;
+  --surface: #2D2D2D;
+  --surface-muted: #3A3A3A;
+  --border: #5A5A5A;
+  --border-strong: #6A6A6A;
+  --text: #F0F0F0;
+  --text-muted: #C0C0C0;
+  --text-soft: #A0A0A0;
+  --accent: #0C8CE9;
+  --accent-hover: #3DA8F5;
+  --accent-shadow: rgba(12, 140, 233, 0.25);
+  --secondary: #3A3A3A;
+  --secondary-hover: #4A4A4A;
+  --shadow: 0 20px 45px rgba(0, 0, 0, 0.3);
 
-  --ude-color: #E57373;
-  --root-cause-color: #5C8DB5;
-  --intermediate-color: #9E9E9E;
+  --ude-color: #F56565;
+  --root-cause-color: #63B3ED;
+  --intermediate-color: #A0AEC0;
 
-  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', 'DM Sans', system-ui, -apple-system, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

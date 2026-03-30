@@ -13,6 +13,7 @@ import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { useSettingsStore } from '../../store/settings-store';
 import { useChatStore } from '../../store/chat-store';
+import { version } from '../../../package.json';
 import { autoLayout, elkEngine } from '../../core/layout';
 import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import FrameworkSelector from './FrameworkSelector';
@@ -122,7 +123,7 @@ export default function Toolbar() {
   return (
     <header className="app-header">
       <div className="toolbar-group">
-        <h1 className="app-title">Sketchy <span className="app-version">v1.0.0</span></h1>
+        <h1 className="app-title">Sketchy <span className="app-version">v{version}</span></h1>
         <div className="toolbar-divider" />
         <FrameworkSelector />
       </div>

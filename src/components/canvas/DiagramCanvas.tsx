@@ -39,7 +39,7 @@ const nodeTypes = { entity: EntityNode };
 
 const defaultEdgeOptions = {
   type: 'smoothstep',
-  markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: '#8A8A7A' },
+  markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: '#8C8C8C' },
   style: { strokeWidth: 2 },
 };
 
@@ -151,7 +151,7 @@ export default function DiagramCanvas() {
           labelBgPadding: [4, 2],
           labelBgBorderRadius: 999,
           labelBgStyle: {
-            fill: 'rgba(255, 255, 255, 0.92)',
+            fill: 'rgba(44, 44, 44, 0.92)',
             stroke: 'var(--border)',
             strokeWidth: 1,
           },
@@ -164,7 +164,7 @@ export default function DiagramCanvas() {
           targetHandle: getTargetHandleId(targetSide),
           pathOptions: { borderRadius: 100 },
           ...((selectedEdgeIds.includes(e.id) || highlightSets?.edgeIds.has(e.id)) && {
-            markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: '#212121' },
+            markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: '#E5E5E5' },
           }),
           className: [
             `edge-confidence-${e.confidence ?? 'high'}`,
@@ -414,7 +414,7 @@ export default function DiagramCanvas() {
             const degreesMap = computeNodeDegrees(diagram.edges);
             const derived = getDerivedIndicators(node.id, degreesMap, framework.derivedIndicators);
             if (derived.length > 0) return derived[0].color;
-            return '#D4D0C6';
+            return '#555555';
           }}
         />
       </ReactFlow>

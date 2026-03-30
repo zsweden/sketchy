@@ -324,7 +324,7 @@
   padding: 0.5rem 0.625rem;
   border: 1px solid var(--border-strong);
   border-radius: 0.625rem;
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--surface-muted);
   font-family: inherit;
   font-size: 0.8rem;
   color: var(--text);
