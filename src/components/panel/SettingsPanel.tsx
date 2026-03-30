@@ -30,7 +30,7 @@ export default function SettingsPanel() {
 
       {/* Diagram name */}
       <div className="section-stack" style={{ gap: '0.375rem' }}>
-        <p className="section-label">Diagram Name</p>
+        <p className="section-label">Name</p>
         <input
           className="input-text"
           type="text"
@@ -39,15 +39,6 @@ export default function SettingsPanel() {
           placeholder="Untitled Diagram"
           aria-label="Diagram name"
         />
-      </div>
-
-      {/* Framework info */}
-      <div className="section-stack" style={{ gap: '0.375rem' }}>
-        <p className="section-label">Framework</p>
-        <p className="field-label">{framework.name}</p>
-        <p className="field-label" style={{ color: 'var(--text-soft)' }}>
-          {framework.description}
-        </p>
       </div>
 
 
@@ -64,11 +55,6 @@ export default function SettingsPanel() {
             <span className="badge" style={{ backgroundColor: '#FB8C0015', color: '#FB8C00' }}>
               {loopSummary.balancingLoops} Balancing
             </span>
-            {loopSummary.delayedLoops > 0 && (
-              <span className="badge" style={{ backgroundColor: '#8A8A7A15', color: '#8A8A7A' }}>
-                {loopSummary.delayedLoops} Delayed
-              </span>
-            )}
             {selectedLoopId && (
               <button
                 className="btn btn-secondary btn-xs"

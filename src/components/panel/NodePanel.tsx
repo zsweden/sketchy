@@ -95,7 +95,7 @@ export default function NodePanel({ node }: Props) {
       <p className="section-heading">Node</p>
       {/* Text */}
       <div className="section-stack" style={{ gap: '0.375rem' }}>
-        <p className="section-label">Text</p>
+        <p className="section-label">Name</p>
         <textarea
           className="input-text"
           value={text}
