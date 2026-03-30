@@ -10,6 +10,7 @@ interface EntityNodeData {
   tags: string[];
   junctionType: 'and' | 'or';
   color?: string;
+  locked?: boolean;
   highlightState?: 'highlighted' | 'dimmed' | 'none';
   loopKind?: 'reinforcing' | 'balancing';
   [key: string]: unknown;
@@ -118,6 +119,14 @@ function EntityNode({ id, data, selected }: NodeProps) {
       )}
 
       {isAiModified && <div className="ai-modified-dot" />}
+      {nodeData.locked && (
+        <div className="node-lock-indicator" title="Position locked">
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+            <rect x="2" y="7" width="12" height="8" rx="1.5" />
+            <path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" strokeWidth="2" />
+          </svg>
+        </div>
+      )}
 
       {HANDLE_SIDES.map(({ side, position }) => (
         <Handle

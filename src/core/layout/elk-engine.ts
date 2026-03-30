@@ -31,6 +31,12 @@ export const elkEngine: LayoutEngine = async (nodes, edges, options) => {
       width: n.width,
       height: n.height,
       ...(n.position && { x: n.position.x, y: n.position.y }),
+      ...(n.locked && {
+        layoutOptions: {
+          'elk.position': `(${n.position?.x ?? 0}, ${n.position?.y ?? 0})`,
+          'elk.layered.layering.layerConstraint': 'NONE',
+        },
+      }),
     })),
     edges: edges.map((e, i) => ({
       id: `e${i}`,

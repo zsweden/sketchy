@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { Lock, Unlock } from 'lucide-react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import NodePanel from './NodePanel';
@@ -60,6 +61,7 @@ export default function SidePanel() {
   const nodes = useDiagramStore((s) => s.diagram.nodes);
   const edges = useDiagramStore((s) => s.diagram.edges);
   const deleteNodes = useDiagramStore((s) => s.deleteNodes);
+  const toggleNodeLocked = useDiagramStore((s) => s.toggleNodeLocked);
   const moveNodes = useDiagramStore((s) => s.moveNodes);
   const commitToHistory = useDiagramStore((s) => s.commitToHistory);
 
@@ -194,6 +196,26 @@ export default function SidePanel() {
                   }}
                 >
                   <DistributeVerticalIcon />
+                </button>
+              </div>
+            </div>
+
+            <div className="section-stack" style={{ gap: '0.375rem' }}>
+              <p className="section-label">Position</p>
+              <div className="control-row" style={{ gap: '0.25rem' }}>
+                <button
+                  className="btn btn-secondary btn-xs"
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                  onClick={() => toggleNodeLocked(selectedNodes.map((n) => n.id), true)}
+                >
+                  <Lock size={12} /> Lock All
+                </button>
+                <button
+                  className="btn btn-secondary btn-xs"
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                  onClick={() => toggleNodeLocked(selectedNodes.map((n) => n.id), false)}
+                >
+                  <Unlock size={12} /> Unlock All
                 </button>
               </div>
             </div>

@@ -29,8 +29,16 @@ A web-based thinking-frameworks diagram editor focused on structured reasoning. 
 npm run dev          # Start dev server (Vite, http://localhost:5173)
 npm run build        # Production build
 npm run lint         # ESLint
-npx vitest run       # Run all tests
+npx vitest run       # Run unit tests
+npm run test:e2e     # Run Playwright E2E tests
+npm run test:all     # Run unit + E2E tests together
 npx tsc --noEmit     # Type check
+```
+
+### Post-Change Verification
+After every code change, run the full verification suite before committing:
+```bash
+npm run lint && npx tsc --noEmit && npm run test:all
 ```
 
 ## Tech Stack

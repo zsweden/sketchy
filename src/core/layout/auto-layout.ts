@@ -20,6 +20,7 @@ export async function autoLayout(
   options: AutoLayoutOptions,
   engine: LayoutEngine,
 ): Promise<NodePositionUpdate[]> {
+  const lockedIds = new Set(nodes.filter((n) => n.data.locked).map((n) => n.id));
   const degrees = computeDegrees(nodes, edges);
   const inputs = nodes.map((n) => {
     const deg = degrees.get(n.id) ?? { indegree: 0, outdegree: 0 };
@@ -27,7 +28,7 @@ export async function autoLayout(
       || (deg.indegree === 0 && deg.outdegree > 0)
       || (deg.indegree > 0 && deg.outdegree > 0);
     const height = estimateHeight(n.data.label, hasBadges);
-    return { id: n.id, width: NODE_WIDTH, height, position: n.position };
+    return { id: n.id, width: NODE_WIDTH, height, position: n.position, locked: n.data.locked };
   });
   const edgeInputs = edges.map((e) => ({ source: e.source, target: e.target }));
 
@@ -37,10 +38,14 @@ export async function autoLayout(
     ? circularizeCyclicComponents(inputs, edges, results)
     : results;
 
-  return adjustedResults.map((r) => ({
-    id: r.id,
-    position: { x: r.x, y: r.y },
-  }));
+  return adjustedResults.map((r) => {
+    // Locked nodes keep their current position
+    if (lockedIds.has(r.id)) {
+      const node = nodes.find((n) => n.id === r.id)!;
+      return { id: r.id, position: node.position };
+    }
+    return { id: r.id, position: { x: r.x, y: r.y } };
+  });
 }
 
 function circularizeCyclicComponents(

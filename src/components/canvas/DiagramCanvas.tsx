@@ -103,6 +103,7 @@ export default function DiagramCanvas() {
         id: n.id,
         type: n.type,
         position: n.position,
+        draggable: !n.data.locked,
         data: {
           ...n.data,
           highlightState: highlightSets

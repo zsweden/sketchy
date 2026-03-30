@@ -281,3 +281,11 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   z-index: 5;
 }
+
+.node-lock-indicator {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  color: var(--text-muted);
+  z-index: 5;
+}

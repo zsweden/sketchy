@@ -16,6 +16,7 @@ interface SkyNode {
   isUDE?: boolean;
   notes?: string;
   color?: string;
+  locked?: boolean;
   x?: number;
   y?: number;
 }
@@ -94,6 +95,7 @@ export function convertSkyJson(data: SkyJson): { diagram: Diagram; needsLayout: 
       junctionType: andTargets.has(n.id) ? ('and' as const) : ('or' as const),
       ...(n.notes ? { notes: n.notes } : {}),
       ...(n.color ? { color: n.color } : {}),
+      ...(n.locked ? { locked: true } : {}),
     },
   }));
 
@@ -155,6 +157,7 @@ export function diagramToSkyJson(diagram: Diagram): SkyJson {
     ...(n.data.tags.includes('ude') ? { isUDE: true } : {}),
     ...(n.data.notes ? { notes: n.data.notes } : {}),
     ...(n.data.color ? { color: n.data.color } : {}),
+    ...(n.data.locked ? { locked: true } : {}),
     x: n.position.x,
     y: n.position.y,
   }));

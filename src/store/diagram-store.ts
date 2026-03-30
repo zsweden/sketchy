@@ -54,6 +54,7 @@ interface DiagramState {
   updateNodeJunction: (id: string, type: 'and' | 'or') => void;
   updateNodeColor: (id: string, color: string | undefined) => void;
   updateNodeNotes: (id: string, notes: string) => void;
+  toggleNodeLocked: (ids: string[], locked: boolean) => void;
   moveNodes: (changes: { id: string; position: { x: number; y: number } }[]) => void;
   deleteNodes: (ids: string[]) => void;
 
@@ -400,6 +401,22 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
           n.id === id ? { ...n, data: { ...n.data, notes: notes || undefined } } : n,
         ),
       },
+    }));
+  },
+
+  toggleNodeLocked: (ids, locked) => {
+    const state = get();
+    history.push(snapshot(state));
+    const idSet = new Set(ids);
+    set((s) => ({
+      diagram: {
+        ...s.diagram,
+        nodes: s.diagram.nodes.map((n) =>
+          idSet.has(n.id) ? { ...n, data: { ...n.data, locked: locked || undefined } } : n,
+        ),
+      },
+      canUndo: true,
+      canRedo: false,
     }));
   },
 

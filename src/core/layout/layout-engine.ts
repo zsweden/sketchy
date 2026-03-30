@@ -11,6 +11,8 @@ export interface LayoutInput {
   height: number;
   /** Current position hint — engines may use this for ordering. */
   position?: { x: number; y: number };
+  /** When true, layout engine should treat this node's position as fixed. */
+  locked?: boolean;
 }
 
 export interface LayoutEdgeInput {

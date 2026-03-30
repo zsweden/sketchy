@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Lock, Unlock } from 'lucide-react';
 import type { DiagramNode } from '../../core/types';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
@@ -25,6 +26,7 @@ export default function NodePanel({ node }: Props) {
   const updateNodeTags = useDiagramStore((s) => s.updateNodeTags);
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
   const updateNodeNotes = useDiagramStore((s) => s.updateNodeNotes);
+  const toggleNodeLocked = useDiagramStore((s) => s.toggleNodeLocked);
   const commitToHistory = useDiagramStore((s) => s.commitToHistory);
   const removeAiModified = useChatStore((s) => s.removeAiModified);
   const selectedLoopId = useUIStore((s) => s.selectedLoopId);
@@ -92,7 +94,18 @@ export default function NodePanel({ node }: Props) {
 
   return (
     <div className="section-stack">
-      <p className="section-heading">Node</p>
+      <div className="control-row split-row">
+        <p className="section-heading">Node</p>
+        <button
+          className="btn btn-secondary btn-xs"
+          title={node.data.locked ? 'Unlock position' : 'Lock position'}
+          onClick={() => toggleNodeLocked([node.id], !node.data.locked)}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+        >
+          {node.data.locked ? <Lock size={12} /> : <Unlock size={12} />}
+          {node.data.locked ? 'Locked' : 'Unlocked'}
+        </button>
+      </div>
       {/* Text */}
       <div className="section-stack" style={{ gap: '0.375rem' }}>
         <p className="section-label">Name</p>

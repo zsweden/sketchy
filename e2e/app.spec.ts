@@ -58,7 +58,4 @@ test('supports local chat fallback and framework switching in the browser', asyn
 
   await expect(page.locator('.entity-node')).toHaveCount(0);
   await expect(page.getByLabel('Framework')).toHaveValue('frt');
-  await expect(
-    page.getByText('Validate a proposed solution by tracing injections to desirable effects'),
-  ).toBeVisible();
 });
