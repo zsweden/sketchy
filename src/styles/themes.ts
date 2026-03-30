@@ -1,0 +1,236 @@
+// --- Theme definitions ---
+
+export type ThemeId =
+  | 'figma-dark'
+  | 'warm-light'
+  | 'nord'
+  | 'solarized-light'
+  | 'midnight'
+  | 'rose'
+  | 'forest';
+
+export interface ThemeDefinition {
+  id: ThemeId;
+  name: string;
+  vars: Record<string, string>;
+  js: {
+    arrowColor: string;
+    arrowColorSelected: string;
+    edgeLabelBg: string;
+    minimapFallback: string;
+  };
+}
+
+export const THEMES: ThemeDefinition[] = [
+  {
+    id: 'figma-dark',
+    name: 'Figma Dark',
+    vars: {
+      '--app-bg-top': '#1E1E1E',
+      '--app-bg-bottom': '#1A1A1A',
+      '--surface': '#2D2D2D',
+      '--surface-muted': '#3A3A3A',
+      '--border': '#5A5A5A',
+      '--border-strong': '#6A6A6A',
+      '--text': '#F0F0F0',
+      '--text-muted': '#C0C0C0',
+      '--text-soft': '#A0A0A0',
+      '--accent': '#0C8CE9',
+      '--accent-hover': '#3DA8F5',
+      '--accent-shadow': 'rgba(12, 140, 233, 0.25)',
+      '--secondary': '#3A3A3A',
+      '--secondary-hover': '#4A4A4A',
+      '--shadow': '0 20px 45px rgba(0, 0, 0, 0.3)',
+      '--header-bg': 'rgba(30, 30, 30, 0.92)',
+      '--toggle-thumb': '#E5E5E5',
+    },
+    js: {
+      arrowColor: '#A0A0A0',
+      arrowColorSelected: '#F0F0F0',
+      edgeLabelBg: 'rgba(45, 45, 45, 0.92)',
+      minimapFallback: '#555555',
+    },
+  },
+  {
+    id: 'warm-light',
+    name: 'Warm Light',
+    vars: {
+      '--app-bg-top': '#F5F5EC',
+      '--app-bg-bottom': '#EBE9E0',
+      '--surface': 'rgba(255, 255, 255, 0.96)',
+      '--surface-muted': '#F0EDE4',
+      '--border': '#E0DDD4',
+      '--border-strong': '#D4D0C6',
+      '--text': '#212121',
+      '--text-muted': '#6B6B6B',
+      '--text-soft': '#8A8A7A',
+      '--accent': '#212121',
+      '--accent-hover': '#3a3a3a',
+      '--accent-shadow': 'rgba(33, 33, 33, 0.18)',
+      '--secondary': '#E8E4DA',
+      '--secondary-hover': '#DDD8CC',
+      '--shadow': '0 20px 45px rgba(33, 33, 33, 0.06)',
+      '--header-bg': 'rgba(245, 245, 236, 0.85)',
+      '--toggle-thumb': '#ffffff',
+    },
+    js: {
+      arrowColor: '#8A8A7A',
+      arrowColorSelected: '#212121',
+      edgeLabelBg: 'rgba(255, 255, 255, 0.92)',
+      minimapFallback: '#D4D0C6',
+    },
+  },
+  {
+    id: 'nord',
+    name: 'Nord',
+    vars: {
+      '--app-bg-top': '#2E3440',
+      '--app-bg-bottom': '#272C36',
+      '--surface': '#3B4252',
+      '--surface-muted': '#434C5E',
+      '--border': '#4C566A',
+      '--border-strong': '#616E88',
+      '--text': '#ECEFF4',
+      '--text-muted': '#D8DEE9',
+      '--text-soft': '#9BA4B4',
+      '--accent': '#88C0D0',
+      '--accent-hover': '#8FBCBB',
+      '--accent-shadow': 'rgba(136, 192, 208, 0.25)',
+      '--secondary': '#434C5E',
+      '--secondary-hover': '#4C566A',
+      '--shadow': '0 20px 45px rgba(0, 0, 0, 0.3)',
+      '--header-bg': 'rgba(46, 52, 64, 0.92)',
+      '--toggle-thumb': '#ECEFF4',
+    },
+    js: {
+      arrowColor: '#9BA4B4',
+      arrowColorSelected: '#ECEFF4',
+      edgeLabelBg: 'rgba(59, 66, 82, 0.92)',
+      minimapFallback: '#4C566A',
+    },
+  },
+  {
+    id: 'solarized-light',
+    name: 'Solarized Light',
+    vars: {
+      '--app-bg-top': '#FDF6E3',
+      '--app-bg-bottom': '#F5EDDA',
+      '--surface': '#FFFDF5',
+      '--surface-muted': '#F5EDDA',
+      '--border': '#E0D8C0',
+      '--border-strong': '#D0C8A8',
+      '--text': '#073642',
+      '--text-muted': '#586E75',
+      '--text-soft': '#93A1A1',
+      '--accent': '#268BD2',
+      '--accent-hover': '#1A7ABF',
+      '--accent-shadow': 'rgba(38, 139, 210, 0.2)',
+      '--secondary': '#EEE8D5',
+      '--secondary-hover': '#E0DACB',
+      '--shadow': '0 20px 45px rgba(7, 54, 66, 0.06)',
+      '--header-bg': 'rgba(253, 246, 227, 0.88)',
+      '--toggle-thumb': '#ffffff',
+    },
+    js: {
+      arrowColor: '#93A1A1',
+      arrowColorSelected: '#073642',
+      edgeLabelBg: 'rgba(253, 246, 227, 0.92)',
+      minimapFallback: '#D0C8A8',
+    },
+  },
+  {
+    id: 'midnight',
+    name: 'Midnight',
+    vars: {
+      '--app-bg-top': '#0D1117',
+      '--app-bg-bottom': '#090C10',
+      '--surface': '#161B22',
+      '--surface-muted': '#21262D',
+      '--border': '#30363D',
+      '--border-strong': '#484F58',
+      '--text': '#F0F6FC',
+      '--text-muted': '#C9D1D9',
+      '--text-soft': '#8B949E',
+      '--accent': '#58A6FF',
+      '--accent-hover': '#79C0FF',
+      '--accent-shadow': 'rgba(88, 166, 255, 0.25)',
+      '--secondary': '#21262D',
+      '--secondary-hover': '#30363D',
+      '--shadow': '0 20px 45px rgba(0, 0, 0, 0.5)',
+      '--header-bg': 'rgba(13, 17, 23, 0.92)',
+      '--toggle-thumb': '#F0F6FC',
+    },
+    js: {
+      arrowColor: '#8B949E',
+      arrowColorSelected: '#F0F6FC',
+      edgeLabelBg: 'rgba(22, 27, 34, 0.92)',
+      minimapFallback: '#30363D',
+    },
+  },
+  {
+    id: 'rose',
+    name: 'Rose',
+    vars: {
+      '--app-bg-top': '#FFF5F5',
+      '--app-bg-bottom': '#FEE2E2',
+      '--surface': '#FFFFFF',
+      '--surface-muted': '#FFF0F0',
+      '--border': '#FECACA',
+      '--border-strong': '#FDA4AF',
+      '--text': '#1F1215',
+      '--text-muted': '#6B3A3A',
+      '--text-soft': '#9F6565',
+      '--accent': '#E11D48',
+      '--accent-hover': '#BE123C',
+      '--accent-shadow': 'rgba(225, 29, 72, 0.2)',
+      '--secondary': '#FFE4E6',
+      '--secondary-hover': '#FECDD3',
+      '--shadow': '0 20px 45px rgba(31, 18, 21, 0.06)',
+      '--header-bg': 'rgba(255, 245, 245, 0.88)',
+      '--toggle-thumb': '#ffffff',
+    },
+    js: {
+      arrowColor: '#9F6565',
+      arrowColorSelected: '#1F1215',
+      edgeLabelBg: 'rgba(255, 245, 245, 0.92)',
+      minimapFallback: '#FECACA',
+    },
+  },
+  {
+    id: 'forest',
+    name: 'Forest',
+    vars: {
+      '--app-bg-top': '#1A2421',
+      '--app-bg-bottom': '#141E1A',
+      '--surface': '#243029',
+      '--surface-muted': '#2D3B34',
+      '--border': '#3D5247',
+      '--border-strong': '#4D6558',
+      '--text': '#E8F0EC',
+      '--text-muted': '#B8D0C4',
+      '--text-soft': '#88A898',
+      '--accent': '#10B981',
+      '--accent-hover': '#34D399',
+      '--accent-shadow': 'rgba(16, 185, 129, 0.25)',
+      '--secondary': '#2D3B34',
+      '--secondary-hover': '#3D5247',
+      '--shadow': '0 20px 45px rgba(0, 0, 0, 0.35)',
+      '--header-bg': 'rgba(26, 36, 33, 0.92)',
+      '--toggle-thumb': '#E8F0EC',
+    },
+    js: {
+      arrowColor: '#88A898',
+      arrowColorSelected: '#E8F0EC',
+      edgeLabelBg: 'rgba(36, 48, 41, 0.92)',
+      minimapFallback: '#3D5247',
+    },
+  },
+];
+
+const DEFAULT_THEME: ThemeId = 'figma-dark';
+
+export function getTheme(id: string): ThemeDefinition {
+  return THEMES.find((t) => t.id === id) ?? THEMES[0];
+}
+
+export { DEFAULT_THEME };

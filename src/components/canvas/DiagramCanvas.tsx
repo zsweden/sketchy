@@ -34,14 +34,10 @@ import {
   getSourceHandleId,
   getTargetHandleId,
 } from '../../core/graph/ports';
+import { useSettingsStore } from '../../store/settings-store';
+import { getTheme } from '../../styles/themes';
 
 const nodeTypes = { entity: EntityNode };
-
-const defaultEdgeOptions = {
-  type: 'smoothstep',
-  markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: '#8C8C8C' },
-  style: { strokeWidth: 2 },
-};
 
 export default function DiagramCanvas() {
   const { screenToFlowPosition, fitView } = useReactFlow();
@@ -67,6 +63,14 @@ export default function DiagramCanvas() {
   const framework = useDiagramStore((s) => s.framework);
   const direction = useDiagramStore((s) => s.diagram.settings.layoutDirection);
   const edgeRoutingMode = useDiagramStore((s) => s.diagram.settings.edgeRoutingMode);
+  const themeId = useSettingsStore((s) => s.theme);
+  const activeTheme = useMemo(() => getTheme(themeId), [themeId]);
+
+  const defaultEdgeOptions = useMemo(() => ({
+    type: 'smoothstep',
+    markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: activeTheme.js.arrowColor },
+    style: { strokeWidth: 2 },
+  }), [activeTheme]);
 
   const isPanMode = interactionMode === 'pan';
 
@@ -151,7 +155,7 @@ export default function DiagramCanvas() {
           labelBgPadding: [4, 2],
           labelBgBorderRadius: 999,
           labelBgStyle: {
-            fill: 'rgba(44, 44, 44, 0.92)',
+            fill: activeTheme.js.edgeLabelBg,
             stroke: 'var(--border)',
             strokeWidth: 1,
           },
@@ -164,7 +168,7 @@ export default function DiagramCanvas() {
           targetHandle: getTargetHandleId(targetSide),
           pathOptions: { borderRadius: 100 },
           ...((selectedEdgeIds.includes(e.id) || highlightSets?.edgeIds.has(e.id)) && {
-            markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: '#E5E5E5' },
+            markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: activeTheme.js.arrowColorSelected },
           }),
           className: [
             `edge-confidence-${e.confidence ?? 'high'}`,
@@ -179,7 +183,7 @@ export default function DiagramCanvas() {
         };
       });
     },
-    [diagram.edges, diagram.nodes, direction, edgeRoutingMode, framework, highlightSets, selectedLoop, selectedEdgeIds],
+    [diagram.edges, diagram.nodes, direction, edgeRoutingMode, framework, highlightSets, selectedLoop, selectedEdgeIds, activeTheme],
   );
 
   // Local state for React Flow selection/interaction
@@ -414,7 +418,7 @@ export default function DiagramCanvas() {
             const degreesMap = computeNodeDegrees(diagram.edges);
             const derived = getDerivedIndicators(node.id, degreesMap, framework.derivedIndicators);
             if (derived.length > 0) return derived[0].color;
-            return '#555555';
+            return activeTheme.js.minimapFallback;
           }}
         />
       </ReactFlow>

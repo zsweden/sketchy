@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { fetchAvailableModels, type ModelInfo } from '../core/ai/model-fetcher';
+import { DEFAULT_THEME, type ThemeId } from '../styles/themes';
 
 const STORAGE_KEY = 'sketchy-settings';
 
@@ -33,10 +34,12 @@ interface StoredSettings {
   baseUrl: string;
   model: string;
   provider?: string;
+  theme?: string;
 }
 
 interface SettingsState {
   provider: string;
+  theme: ThemeId;
   openaiApiKey: string;
   baseUrl: string;
   model: string;
@@ -46,6 +49,7 @@ interface SettingsState {
   modelsError: string | null;
 
   setProvider: (providerId: string) => void;
+  setTheme: (theme: ThemeId) => void;
   setOpenaiApiKey: (key: string) => void;
   setBaseUrl: (url: string) => void;
   setModel: (model: string) => void;
@@ -65,10 +69,11 @@ function loadSettings(): StoredSettings {
         baseUrl,
         model: parsed.model ?? DEFAULT_MODEL,
         provider: parsed.provider ?? detectProvider(baseUrl),
+        theme: parsed.theme ?? DEFAULT_THEME,
       };
     }
   } catch { /* ignore */ }
-  return { apiKey: '', baseUrl: PROVIDERS[0].baseUrl, model: DEFAULT_MODEL, provider: PROVIDERS[0].id };
+  return { apiKey: '', baseUrl: PROVIDERS[0].baseUrl, model: DEFAULT_MODEL, provider: PROVIDERS[0].id, theme: DEFAULT_THEME };
 }
 
 function saveSettings(patch: Partial<StoredSettings>) {
@@ -106,6 +111,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
 
   return {
     provider: initial.provider ?? PROVIDERS[0].id,
+    theme: (initial.theme as ThemeId) ?? DEFAULT_THEME,
     openaiApiKey: initial.apiKey,
     baseUrl: initial.baseUrl,
     model: initial.model,
@@ -121,6 +127,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       saveSettings({ provider: providerId, baseUrl });
       set({ provider: providerId, baseUrl });
       refreshModels();
+    },
+
+    setTheme: (theme) => {
+      saveSettings({ theme });
+      set({ theme });
     },
 
     setOpenaiApiKey: (key) => {
@@ -164,6 +175,7 @@ window.addEventListener('storage', (e) => {
       baseUrl: newBaseUrl,
       model: parsed.model ?? DEFAULT_MODEL,
       provider: newProvider,
+      theme: (parsed.theme as ThemeId) ?? DEFAULT_THEME,
     });
     useSettingsStore.getState().refreshModels();
   } catch { /* ignore malformed data */ }

@@ -4,7 +4,7 @@
   align-items: center;
   gap: 1rem;
   padding: 0.75rem 1.25rem;
-  background: rgba(44, 44, 44, 0.92);
+  background: var(--header-bg);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border);
   z-index: 40;
@@ -250,7 +250,7 @@
   width: 0.875rem;
   height: 0.875rem;
   border-radius: 9999px;
-  background: #E5E5E5;
+  background: var(--toggle-thumb);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   transition: transform 0.2s ease;
 }

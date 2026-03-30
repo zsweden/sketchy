@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
 import { useSettingsStore, PROVIDERS } from '../../store/settings-store';
+import { THEMES, type ThemeId } from '../../styles/themes';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { autoLayout, elkEngine } from '../../core/layout';
@@ -8,6 +9,8 @@ import { autoLayout, elkEngine } from '../../core/layout';
 export default function SettingsPopover() {
   const open = useSettingsStore((s) => s.settingsOpen);
   const closeSettings = useSettingsStore((s) => s.closeSettings);
+  const theme = useSettingsStore((s) => s.theme);
+  const setTheme = useSettingsStore((s) => s.setTheme);
   const provider = useSettingsStore((s) => s.provider);
   const setProvider = useSettingsStore((s) => s.setProvider);
   const apiKey = useSettingsStore((s) => s.openaiApiKey);
@@ -63,6 +66,21 @@ export default function SettingsPopover() {
   return (
     <div className="settings-popover" ref={ref}>
       <div className="section-stack" style={{ gap: '0.75rem' }}>
+        {/* Theme */}
+        <div className="section-stack" style={{ gap: '0.375rem' }}>
+          <p className="section-label">Theme</p>
+          <select
+            className="input-text"
+            value={theme}
+            onChange={(e) => setTheme(e.target.value as ThemeId)}
+            aria-label="Theme"
+          >
+            {THEMES.map((t) => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+        </div>
+
         {/* Provider */}
         <div className="section-stack" style={{ gap: '0.375rem' }}>
           <p className="section-label">Provider</p>
