@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
 import { useSettingsStore, PROVIDERS } from '../../store/settings-store';
+import { formatModelDate } from '../../core/ai/model-fetcher';
 import { THEMES, type ThemeId } from '../../styles/themes';
+import { DROPDOWN_BLUR_DELAY_MS } from '../../constants/timing';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { autoLayout, elkEngine } from '../../core/layout';
@@ -196,7 +198,7 @@ export default function SettingsPopover() {
               value={model}
               onChange={(e) => setModel(e.target.value)}
               onFocus={() => setModelDropdownOpen(true)}
-              onBlur={() => setTimeout(() => setModelDropdownOpen(false), 150)}
+              onBlur={() => setTimeout(() => setModelDropdownOpen(false), DROPDOWN_BLUR_DELAY_MS)}
               placeholder="Type or select a model"
               aria-label="Model"
             />
@@ -205,19 +207,23 @@ export default function SettingsPopover() {
                 {modelsLoading ? (
                   <div className="model-dropdown-loading">Loading models...</div>
                 ) : availableModels.length > 0 ? (
-                  availableModels.map((m) => (
-                    <button
-                      key={m.id}
-                      className="model-dropdown-item"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        setModel(m.id);
-                        setModelDropdownOpen(false);
-                      }}
-                    >
-                      <span>{m.id}</span>
-                    </button>
-                  ))
+                  availableModels.map((m) => {
+                    const date = formatModelDate(m.created);
+                    return (
+                      <button
+                        key={m.id}
+                        className="model-dropdown-item"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setModel(m.id);
+                          setModelDropdownOpen(false);
+                        }}
+                      >
+                        <span>{m.id}</span>
+                        {date && <span className="model-dropdown-date">{date}</span>}
+                      </button>
+                    );
+                  })
                 ) : (
                   <div className="model-dropdown-loading">No models found</div>
                 )}

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { DiagramEdge, EdgeConfidence, EdgePolarity } from '../../core/types';
 import { useDiagramStore } from '../../store/diagram-store';
+import FormField from '../form/FormField';
+import ButtonGroup from '../form/ButtonGroup';
 
 interface Props {
   edge: DiagramEdge;
@@ -12,9 +14,9 @@ const CONFIDENCE_LEVELS: { value: EdgeConfidence; label: string }[] = [
   { value: 'low', label: 'Low' },
 ];
 
-const POLARITY_LEVELS: { value: EdgePolarity; label: string; hint: string }[] = [
-  { value: 'positive', label: '+', hint: 'Moves in the same direction' },
-  { value: 'negative', label: '-', hint: 'Moves in the opposite direction' },
+const POLARITY_LEVELS: { value: EdgePolarity; label: string; title: string }[] = [
+  { value: 'positive', label: '+', title: 'Moves in the same direction' },
+  { value: 'negative', label: '-', title: 'Moves in the opposite direction' },
 ];
 
 export default function EdgePanel({ edge }: Props) {
@@ -52,45 +54,29 @@ export default function EdgePanel({ edge }: Props) {
     <div className="section-stack">
       <p className="section-heading">Edge</p>
 
-      {/* Source / Target */}
-      <div className="section-stack" style={{ gap: '0.375rem' }}>
-        <p className="section-label">Connection</p>
+      <FormField label="Connection">
         <p className="field-label">
           {sourceNode?.data.label ?? 'Unknown'} &rarr; {targetNode?.data.label ?? 'Unknown'}
         </p>
-      </div>
+      </FormField>
 
       {framework.supportsEdgePolarity && (
-        <div className="section-stack" style={{ gap: '0.375rem' }}>
-          <p className="section-label">Polarity</p>
-          <div className="control-row">
-            {POLARITY_LEVELS.map((level) => (
-              <button
-                key={level.value}
-                className="btn btn-xs"
-                style={
-                  polarity === level.value
-                    ? { background: 'var(--accent)', color: 'white' }
-                    : { background: 'var(--secondary)' }
-                }
-                title={level.hint}
-                onClick={() => setEdgePolarity(edge.id, level.value)}
-              >
-                {level.label}
-              </button>
-            ))}
-          </div>
+        <FormField label="Polarity">
+          <ButtonGroup
+            items={POLARITY_LEVELS}
+            selected={polarity}
+            onSelect={(v) => setEdgePolarity(edge.id, v)}
+          />
           <p className="field-label" style={{ marginTop: '-0.25rem' }}>
             {polarity === 'positive'
               ? 'If the source rises, the target tends to rise too.'
               : 'If the source rises, the target tends to fall.'}
           </p>
-        </div>
+        </FormField>
       )}
 
       {framework.supportsEdgeDelay && (
-        <div className="section-stack" style={{ gap: '0.375rem' }}>
-          <p className="section-label">Delay</p>
+        <FormField label="Delay">
           <div className="control-row">
             <button
               className="btn btn-xs"
@@ -104,33 +90,18 @@ export default function EdgePanel({ edge }: Props) {
               {delay ? 'Delayed' : 'No Delay'}
             </button>
           </div>
-        </div>
+        </FormField>
       )}
 
-      {/* Confidence */}
-      <div className="section-stack" style={{ gap: '0.375rem' }}>
-        <p className="section-label">Confidence</p>
-        <div className="control-row">
-          {CONFIDENCE_LEVELS.map((level) => (
-            <button
-              key={level.value}
-              className="btn btn-xs"
-              style={
-                confidence === level.value
-                  ? { background: 'var(--accent)', color: 'white' }
-                  : { background: 'var(--secondary)' }
-              }
-              onClick={() => setEdgeConfidence(edge.id, level.value)}
-            >
-              {level.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <FormField label="Confidence">
+        <ButtonGroup
+          items={CONFIDENCE_LEVELS}
+          selected={confidence}
+          onSelect={(v) => setEdgeConfidence(edge.id, v)}
+        />
+      </FormField>
 
-      {/* Notes */}
-      <div className="section-stack" style={{ gap: '0.375rem' }}>
-        <p className="section-label">Notes</p>
+      <FormField label="Notes">
         <textarea
           className="input-text"
           value={notes}
@@ -141,7 +112,7 @@ export default function EdgePanel({ edge }: Props) {
           style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}
           aria-label="Edge notes"
         />
-      </div>
+      </FormField>
     </div>
   );
 }

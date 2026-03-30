@@ -53,23 +53,36 @@ describe('autoLayout', () => {
     expect(posMap['b'].x).not.toBe(posMap['c'].x);
   });
 
-  it('circularizes strongly connected components when cyclic mode is enabled', async () => {
-    const nodes = [node('a'), node('b'), node('c')];
-    const edges = [edge('a', 'b'), edge('b', 'c'), edge('c', 'a')];
+  it('spreads strongly connected components without overlapping when cyclic mode is enabled', async () => {
+    const nodes = [node('a'), node('b'), node('c'), node('d')];
+    const edges = [edge('a', 'b'), edge('b', 'c'), edge('c', 'd'), edge('d', 'a'), edge('a', 'c')];
     const updates = await autoLayout(nodes, edges, {
       direction: 'TB',
       cyclic: true,
     }, elkEngine);
 
-    const positions = updates.map((update) => update.position);
-    const centerX = positions.reduce((sum, position) => sum + position.x, 0) / positions.length;
-    const centerY = positions.reduce((sum, position) => sum + position.y, 0) / positions.length;
-    const distances = positions.map((position) =>
-      Math.hypot(position.x - centerX, position.y - centerY),
-    );
-    const maxDistance = Math.max(...distances);
-    const minDistance = Math.min(...distances);
+    const positions = updates.map((update) => ({ id: update.id, ...update.position }));
 
-    expect(maxDistance - minDistance).toBeLessThan(60);
+    for (let i = 0; i < positions.length; i++) {
+      for (let j = i + 1; j < positions.length; j++) {
+        const a = positions[i];
+        const b = positions[j];
+        const overlapsX = Math.abs(a.x - b.x) < 220;
+        const overlapsY = Math.abs(a.y - b.y) < 44;
+        expect(overlapsX && overlapsY).toBe(false);
+      }
+    }
+
+    const uniqueX = new Set(positions.map((position) => Math.round(position.x / 10)));
+    const uniqueY = new Set(positions.map((position) => Math.round(position.y / 10)));
+    expect(uniqueX.size).toBeGreaterThan(1);
+    expect(uniqueY.size).toBeGreaterThan(1);
+
+    const minX = Math.min(...positions.map((position) => position.x));
+    const maxX = Math.max(...positions.map((position) => position.x));
+    const minY = Math.min(...positions.map((position) => position.y));
+    const maxY = Math.max(...positions.map((position) => position.y));
+    expect(maxX - minX).toBeLessThan(420);
+    expect(maxY - minY).toBeLessThan(265);
   });
 });

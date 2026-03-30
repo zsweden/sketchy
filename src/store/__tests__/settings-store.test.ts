@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const STORAGE_KEY = 'sketchy-settings';
 const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
-const DEFAULT_MODEL = 'gpt-4o';
+const DEFAULT_MODEL = '';
 
 // Mock localStorage since jsdom doesn't provide it in this environment
 function createMockLocalStorage() {

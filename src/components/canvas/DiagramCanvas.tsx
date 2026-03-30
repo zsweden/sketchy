@@ -35,6 +35,7 @@ import {
   getTargetHandleId,
 } from '../../core/graph/ports';
 import { useSettingsStore } from '../../store/settings-store';
+import { GRID_SIZE, DEFAULT_NODE_WIDTH, DEFAULT_NODE_HEIGHT, ARROW_MARKER_SIZE } from '../../constants/layout';
 import { getTheme } from '../../styles/themes';
 
 const nodeTypes = { entity: EntityNode };
@@ -69,7 +70,7 @@ export default function DiagramCanvas() {
 
   const defaultEdgeOptions = useMemo(() => ({
     type: 'smoothstep',
-    markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: activeTheme.js.arrowColor },
+    markerEnd: { type: MarkerType.ArrowClosed, width: ARROW_MARKER_SIZE, height: ARROW_MARKER_SIZE, color: activeTheme.js.arrowColor },
     style: { strokeWidth: 2 },
   }), [activeTheme]);
 
@@ -173,7 +174,7 @@ export default function DiagramCanvas() {
           targetHandle: getTargetHandleId(targetSide),
           pathOptions: { borderRadius: 100 },
           ...((selectedEdgeIds.includes(e.id) || highlightSets?.edgeIds.has(e.id)) && {
-            markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: activeTheme.js.arrowColorSelected },
+            markerEnd: { type: MarkerType.ArrowClosed, width: ARROW_MARKER_SIZE, height: ARROW_MARKER_SIZE, color: activeTheme.js.arrowColorSelected },
           }),
           className: [
             `edge-confidence-${e.confidence ?? 'high'}`,
@@ -246,8 +247,6 @@ export default function DiagramCanvas() {
     };
   }, [fitViewTrigger, fitView]);
 
-  const GRID = 20;
-
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
       // Snap center to grid: adjust position so node center aligns with grid
@@ -255,13 +254,13 @@ export default function DiagramCanvas() {
         for (const c of changes) {
           if (c.type === 'position' && 'position' in c && c.position) {
             const node = localNodes.find((n) => n.id === c.id);
-            const w = node?.measured?.width ?? 240;
-            const h = node?.measured?.height ?? 48;
+            const w = node?.measured?.width ?? DEFAULT_NODE_WIDTH;
+            const h = node?.measured?.height ?? DEFAULT_NODE_HEIGHT;
             const cx = c.position.x + w / 2;
             const cy = c.position.y + h / 2;
             c.position = {
-              x: Math.round(cx / GRID) * GRID - w / 2,
-              y: Math.round(cy / GRID) * GRID - h / 2,
+              x: Math.round(cx / GRID_SIZE) * GRID_SIZE - w / 2,
+              y: Math.round(cy / GRID_SIZE) * GRID_SIZE - h / 2,
             };
           }
         }

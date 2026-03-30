@@ -4,8 +4,6 @@ import { DEFAULT_THEME, type ThemeId } from '../styles/themes';
 
 const STORAGE_KEY = 'sketchy-settings';
 
-const DEFAULT_MODEL = 'gpt-4o';
-
 export interface Provider {
   id: string;
   name: string;
@@ -23,6 +21,7 @@ export const PROVIDERS: Provider[] = [
   { id: 'lmstudio', name: 'LM Studio', baseUrl: 'http://localhost:1234/v1', requiresKey: false },
   { id: 'custom', name: 'Custom', baseUrl: '', requiresKey: false },
 ];
+
 
 function detectProvider(baseUrl: string): string {
   const match = PROVIDERS.find((p) => p.id !== 'custom' && p.baseUrl === baseUrl);
@@ -67,13 +66,13 @@ function loadSettings(): StoredSettings {
       return {
         apiKey: parsed.apiKey ?? '',
         baseUrl,
-        model: parsed.model ?? DEFAULT_MODEL,
+        model: parsed.model ?? '',
         provider: parsed.provider ?? detectProvider(baseUrl),
         theme: parsed.theme ?? DEFAULT_THEME,
       };
     }
   } catch { /* ignore */ }
-  return { apiKey: '', baseUrl: PROVIDERS[0].baseUrl, model: DEFAULT_MODEL, provider: PROVIDERS[0].id, theme: DEFAULT_THEME };
+  return { apiKey: '', baseUrl: PROVIDERS[0].baseUrl, model: '', provider: PROVIDERS[0].id, theme: DEFAULT_THEME };
 }
 
 function saveSettings(patch: Partial<StoredSettings>) {
@@ -99,7 +98,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     fetchAvailableModels(baseUrl, openaiApiKey, controller.signal, provider)
       .then((models) => {
         if (!controller.signal.aborted) {
-          set({ availableModels: models, modelsLoading: false });
+          const currentModel = get().model;
+          const modelExists = models.some((m) => m.id === currentModel);
+          const nextModel = !currentModel || !modelExists ? (models[0]?.id ?? '') : currentModel;
+          set({ availableModels: models, modelsLoading: false, model: nextModel });
+          if (nextModel !== currentModel) saveSettings({ model: nextModel });
         }
       })
       .catch((err) => {
@@ -124,8 +127,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       const p = PROVIDERS.find((pr) => pr.id === providerId);
       if (!p) return;
       const baseUrl = p.id === 'custom' ? get().baseUrl : p.baseUrl;
-      saveSettings({ provider: providerId, baseUrl });
-      set({ provider: providerId, baseUrl });
+      saveSettings({ provider: providerId, baseUrl, model: '' });
+      set({ provider: providerId, baseUrl, model: '' });
       refreshModels();
     },
 
@@ -173,7 +176,7 @@ window.addEventListener('storage', (e) => {
     useSettingsStore.setState({
       openaiApiKey: parsed.apiKey ?? '',
       baseUrl: newBaseUrl,
-      model: parsed.model ?? DEFAULT_MODEL,
+      model: parsed.model ?? '',
       provider: newProvider,
       theme: (parsed.theme as ThemeId) ?? DEFAULT_THEME,
     });

@@ -452,6 +452,13 @@
   background: var(--secondary);
 }
 
+.model-dropdown-date {
+  font-size: 0.65rem;
+  color: var(--text-soft);
+  white-space: nowrap;
+  margin-left: 0.5rem;
+}
+
 .model-dropdown-loading {
   padding: 0.5rem;
   text-align: center;

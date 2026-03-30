@@ -3,6 +3,8 @@ import { Lock, Unlock } from 'lucide-react';
 import type { DiagramNode } from '../../core/types';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
+import FormField from '../form/FormField';
+import ButtonGroup from '../form/ButtonGroup';
 import {
   findCausalLoops,
   labelCausalLoops,
@@ -106,9 +108,7 @@ export default function NodePanel({ node }: Props) {
           {node.data.locked ? 'Locked' : 'Unlocked'}
         </button>
       </div>
-      {/* Text */}
-      <div className="section-stack" style={{ gap: '0.375rem' }}>
-        <p className="section-label">Name</p>
+      <FormField label="Name">
         <textarea
           className="input-text"
           value={text}
@@ -119,11 +119,9 @@ export default function NodePanel({ node }: Props) {
           placeholder="Enter text..."
           aria-label="Node text"
         />
-      </div>
+      </FormField>
 
-      {/* Notes */}
-      <div className="section-stack" style={{ gap: '0.375rem' }}>
-        <p className="section-label">Notes</p>
+      <FormField label="Notes">
         <textarea
           className="input-text"
           value={notes}
@@ -134,12 +132,11 @@ export default function NodePanel({ node }: Props) {
           style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}
           aria-label="Node notes"
         />
-      </div>
+      </FormField>
 
       {/* Tags */}
       {framework.nodeTags.length > 0 && (
-        <div className="section-stack" style={{ gap: '0.375rem' }}>
-          <p className="section-label">Tags</p>
+        <FormField label="Tags">
           <div className="control-row">
             {framework.nodeTags.map((tag) => (
               <button
@@ -162,49 +159,31 @@ export default function NodePanel({ node }: Props) {
               </button>
             ))}
           </div>
-        </div>
+        </FormField>
       )}
 
       {/* Junction */}
       {framework.supportsJunctions && degrees.indegree >= 2 && (
-        <div className="section-stack" style={{ gap: '0.375rem' }}>
-          <p className="section-label">Junction Logic</p>
-          <div className="control-row">
-            <button
-              className="btn btn-xs"
-              style={
-                node.data.junctionType === 'and'
-                  ? { background: 'var(--accent)', color: 'white' }
-                  : { background: 'var(--secondary)' }
-              }
-              onClick={() => updateNodeJunction(node.id, 'and')}
-            >
-              AND
-            </button>
-            <button
-              className="btn btn-xs"
-              style={
-                node.data.junctionType === 'or'
-                  ? { background: 'var(--accent)', color: 'white' }
-                  : { background: 'var(--secondary)' }
-              }
-              onClick={() => updateNodeJunction(node.id, 'or')}
-            >
-              OR
-            </button>
-          </div>
+        <FormField label="Junction Logic">
+          <ButtonGroup
+            items={[
+              { value: 'and' as const, label: 'AND' },
+              { value: 'or' as const, label: 'OR' },
+            ]}
+            selected={node.data.junctionType}
+            onSelect={(v) => updateNodeJunction(node.id, v)}
+          />
           <p className="field-label" style={{ marginTop: '-0.25rem' }}>
             {node.data.junctionType === 'and'
               ? 'All incoming causes required'
               : 'Any single cause is sufficient'}
           </p>
-        </div>
+        </FormField>
       )}
 
       {/* Derived indicators */}
       {derived.length > 0 && (
-        <div className="section-stack" style={{ gap: '0.375rem' }}>
-          <p className="section-label">Derived Properties</p>
+        <FormField label="Derived Properties">
           {derived.map((ind) => (
             <div key={ind.id} className="control-row" style={{ gap: '0.5rem' }}>
               <span
@@ -219,12 +198,11 @@ export default function NodePanel({ node }: Props) {
               <span className="field-label">{ind.description}</span>
             </div>
           ))}
-        </div>
+        </FormField>
       )}
 
       {framework.allowsCycles && (
-        <div className="section-stack" style={{ gap: '0.375rem' }}>
-          <p className="section-label">Loop Membership</p>
+        <FormField label="Loop Membership">
           {nodeLoops.length === 0 ? (
             <p className="field-label">This variable is not part of a detected feedback loop.</p>
           ) : (
@@ -268,7 +246,7 @@ export default function NodePanel({ node }: Props) {
               </button>
             ))
           )}
-        </div>
+        </FormField>
       )}
     </div>
   );

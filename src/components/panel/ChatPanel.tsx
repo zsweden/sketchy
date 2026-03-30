@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Send, Square, Trash2, Copy, Check, Paperclip, X, Settings } from 'lucide-react';
 import { useChatStore } from '../../store/chat-store';
 import { useSettingsStore, PROVIDERS } from '../../store/settings-store';
+import { COPY_FEEDBACK_MS } from '../../constants/timing';
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -9,7 +10,7 @@ function CopyButton({ text }: { text: string }) {
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      setTimeout(() => setCopied(false), COPY_FEEDBACK_MS);
     });
   }, [text]);
 
