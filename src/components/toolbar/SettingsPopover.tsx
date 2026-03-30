@@ -65,9 +65,10 @@ export default function SettingsPopover() {
 
   return (
     <div className="settings-popover" ref={ref}>
-      <div className="section-stack" style={{ gap: '0.75rem' }}>
-        {/* Theme */}
-        <div className="section-stack" style={{ gap: '0.375rem' }}>
+      {/* Appearance */}
+      <div className="settings-section">
+        <p className="settings-section-title">Appearance</p>
+        <div className="settings-field">
           <p className="section-label">Theme</p>
           <select
             className="input-text"
@@ -80,9 +81,67 @@ export default function SettingsPopover() {
             ))}
           </select>
         </div>
+        <div className="control-row split-row">
+          <p className="section-label">Show Grid</p>
+          <button
+            className="toggle-track"
+            data-active={diagramSettings.showGrid}
+            onClick={() => updateDiagramSettings({ showGrid: !diagramSettings.showGrid })}
+            aria-label="Toggle grid"
+          >
+            <div className="toggle-thumb" />
+          </button>
+        </div>
+        <div className="control-row split-row">
+          <p className="section-label">Snap to Grid</p>
+          <button
+            className="toggle-track"
+            data-active={diagramSettings.snapToGrid}
+            onClick={() => updateDiagramSettings({ snapToGrid: !diagramSettings.snapToGrid })}
+            aria-label="Toggle snap to grid"
+          >
+            <div className="toggle-thumb" />
+          </button>
+        </div>
+      </div>
 
-        {/* Provider */}
-        <div className="section-stack" style={{ gap: '0.375rem' }}>
+      <div className="settings-divider" />
+
+      {/* Layout */}
+      <div className="settings-section">
+        <p className="settings-section-title">Layout</p>
+        <div className="settings-field">
+          <p className="section-label">Direction</p>
+          <select
+            className="input-text"
+            value={diagramSettings.layoutDirection}
+            onChange={(e) => handleDirectionChange(e.target.value as 'TB' | 'BT')}
+            aria-label="Layout direction"
+          >
+            <option value="TB">Top to Bottom</option>
+            <option value="BT">Bottom to Top</option>
+          </select>
+        </div>
+        <div className="settings-field">
+          <p className="section-label">Arrow Routing</p>
+          <select
+            className="input-text"
+            value={diagramSettings.edgeRoutingMode}
+            onChange={(e) => updateDiagramSettings({ edgeRoutingMode: e.target.value as 'dynamic' | 'fixed' })}
+            aria-label="Arrow routing"
+          >
+            <option value="dynamic">Optimize Continuously</option>
+            <option value="fixed">Keep Fixed</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="settings-divider" />
+
+      {/* AI Provider */}
+      <div className="settings-section">
+        <p className="settings-section-title">AI Provider</p>
+        <div className="settings-field">
           <p className="section-label">Provider</p>
           <select
             className="input-text"
@@ -96,9 +155,8 @@ export default function SettingsPopover() {
           </select>
         </div>
 
-        {/* API Key — shown when provider requires one */}
         {currentProvider.requiresKey && (
-          <div className="section-stack" style={{ gap: '0.375rem' }}>
+          <div className="settings-field">
             <p className="section-label" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
               API Key
               {keyValid && <Check size={14} style={{ color: '#22c55e' }} />}
@@ -115,9 +173,8 @@ export default function SettingsPopover() {
           </div>
         )}
 
-        {/* Custom Endpoint — shown only for Custom provider */}
         {provider === 'custom' && (
-          <div className="section-stack" style={{ gap: '0.375rem' }}>
+          <div className="settings-field">
             <p className="section-label">API Endpoint</p>
             <input
               className="input-text"
@@ -130,8 +187,7 @@ export default function SettingsPopover() {
           </div>
         )}
 
-        {/* Model */}
-        <div className="section-stack" style={{ gap: '0.375rem' }}>
+        <div className="settings-field">
           <p className="section-label">Model</p>
           <div style={{ position: 'relative' }}>
             <input
@@ -169,52 +225,11 @@ export default function SettingsPopover() {
             )}
           </div>
         </div>
-
-        {/* Layout Direction */}
-        <div className="section-stack" style={{ gap: '0.375rem' }}>
-          <p className="section-label">Layout Direction</p>
-          <select
-            className="input-text"
-            value={diagramSettings.layoutDirection}
-            onChange={(e) => handleDirectionChange(e.target.value as 'TB' | 'BT')}
-            aria-label="Layout direction"
-          >
-            <option value="TB">Top to Bottom</option>
-            <option value="BT">Bottom to Top</option>
-          </select>
-        </div>
-
-        {/* Arrow Routing */}
-        <div className="section-stack" style={{ gap: '0.375rem' }}>
-          <p className="section-label">Arrow Routing</p>
-          <select
-            className="input-text"
-            value={diagramSettings.edgeRoutingMode}
-            onChange={(e) => updateDiagramSettings({ edgeRoutingMode: e.target.value as 'dynamic' | 'fixed' })}
-            aria-label="Arrow routing"
-          >
-            <option value="dynamic">Optimize Continuously</option>
-            <option value="fixed">Keep Fixed</option>
-          </select>
-        </div>
-
-        {/* Show Grid */}
-        <div className="control-row split-row">
-          <p className="section-label">Show Grid</p>
-          <button
-            className="toggle-track"
-            data-active={diagramSettings.showGrid}
-            onClick={() => updateDiagramSettings({ showGrid: !diagramSettings.showGrid })}
-            aria-label="Toggle grid"
-          >
-            <div className="toggle-thumb" />
-          </button>
-        </div>
-
-        <p className="field-label" style={{ color: 'var(--text-soft)', fontSize: '0.7rem' }}>
-          Stored locally in your browser.
-        </p>
       </div>
+
+      <p className="field-label" style={{ color: 'var(--text-soft)', fontSize: '0.65rem', marginTop: '0.25rem' }}>
+        Settings stored locally in your browser.
+      </p>
     </div>
   );
 }

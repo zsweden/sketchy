@@ -76,32 +76,36 @@ export default function ContextMenu() {
       {node ? (
         <>
           {/* Tag shortcuts */}
-          {framework.nodeTags.map((tag) => {
-            const active = node.data.tags.includes(tag.id);
-            return (
-              <button
-                key={tag.id}
-                className="context-menu-item"
-                onClick={() => {
-                  const next = active
-                    ? node.data.tags.filter((t) => t !== tag.id)
-                    : [...node.data.tags, tag.id];
-                  updateNodeTags(node.id, next);
-                  closeContextMenu();
-                }}
-              >
-                <span
-                  className="tag-chip-dot"
-                  style={{ backgroundColor: tag.color }}
-                />
-                {tag.name}
-                {active && <Check size={14} style={{ marginLeft: 'auto' }} />}
-              </button>
-            );
-          })}
+          {framework.nodeTags.length > 0 && (
+            <>
+              {framework.nodeTags.map((tag) => {
+                const active = node.data.tags.includes(tag.id);
+                return (
+                  <button
+                    key={tag.id}
+                    className="context-menu-item"
+                    onClick={() => {
+                      const next = active
+                        ? node.data.tags.filter((t) => t !== tag.id)
+                        : [...node.data.tags, tag.id];
+                      updateNodeTags(node.id, next);
+                      closeContextMenu();
+                    }}
+                  >
+                    <span
+                      className="tag-chip-dot"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    {tag.name}
+                    {active && <Check size={14} style={{ marginLeft: 'auto' }} />}
+                  </button>
+                );
+              })}
+              <div className="context-menu-separator" />
+            </>
+          )}
 
           {/* Color palette */}
-          <div className="context-menu-separator" />
           <div className="context-menu-label">Color</div>
           <div className="context-menu-colors">
             {NODE_COLORS.map((c) => (

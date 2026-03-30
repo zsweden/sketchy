@@ -43,6 +43,7 @@ export interface SkyJson {
   framework?: string;
   direction?: 'TB' | 'BT';
   showGrid?: boolean;
+  snapToGrid?: boolean;
   edgeRoutingMode?: Diagram['settings']['edgeRoutingMode'];
   version?: number;
   createdAt?: string;
@@ -119,6 +120,7 @@ export function convertSkyJson(data: SkyJson): { diagram: Diagram; needsLayout: 
     settings: {
       layoutDirection: data.direction ?? 'BT',
       showGrid: data.showGrid ?? true,
+      snapToGrid: data.snapToGrid ?? false,
       edgeRoutingMode: data.edgeRoutingMode ?? 'dynamic',
     },
     nodes,
@@ -183,6 +185,7 @@ export function diagramToSkyJson(diagram: Diagram): SkyJson {
     framework: diagram.frameworkId,
     direction: diagram.settings.layoutDirection,
     showGrid: diagram.settings.showGrid,
+    snapToGrid: diagram.settings.snapToGrid,
     edgeRoutingMode: diagram.settings.edgeRoutingMode,
     version: diagram.schemaVersion,
     createdAt: new Date().toISOString(),

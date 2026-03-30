@@ -16,6 +16,7 @@ export interface Diagram {
 export interface DiagramSettings {
   layoutDirection: 'TB' | 'BT';
   showGrid: boolean;
+  snapToGrid: boolean;
   edgeRoutingMode: EdgeRoutingMode;
 }
 
@@ -57,6 +58,7 @@ export function createEmptyDiagram(frameworkId: string, id?: string): Diagram {
     settings: {
       layoutDirection: 'BT',
       showGrid: true,
+      snapToGrid: false,
       edgeRoutingMode: 'fixed',
     },
     nodes: [],

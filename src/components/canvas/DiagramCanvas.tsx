@@ -63,6 +63,7 @@ export default function DiagramCanvas() {
   const framework = useDiagramStore((s) => s.framework);
   const direction = useDiagramStore((s) => s.diagram.settings.layoutDirection);
   const edgeRoutingMode = useDiagramStore((s) => s.diagram.settings.edgeRoutingMode);
+  const snapToGrid = useDiagramStore((s) => s.diagram.settings.snapToGrid);
   const themeId = useSettingsStore((s) => s.theme);
   const activeTheme = useMemo(() => getTheme(themeId), [themeId]);
 
@@ -397,6 +398,8 @@ export default function DiagramCanvas() {
         nodesDraggable={!isPanMode}
         nodesConnectable={!isPanMode}
         elementsSelectable={!isPanMode}
+        snapToGrid={snapToGrid}
+        snapGrid={[20, 20]}
         proOptions={{ hideAttribution: true }}
         className={isPanMode ? 'pan-mode' : ''}
       >

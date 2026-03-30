@@ -676,6 +676,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
     const settings: DiagramSettings = {
       layoutDirection: diagram.settings.layoutDirection,
       showGrid: diagram.settings.showGrid,
+      snapToGrid: diagram.settings.snapToGrid ?? false,
       edgeRoutingMode: diagram.settings.edgeRoutingMode ?? 'dynamic',
     };
     set({

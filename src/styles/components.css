@@ -383,6 +383,32 @@
   }
 }
 
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.settings-section-title {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-soft);
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.settings-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.25rem 0;
+}
+
 /* Model dropdown */
 .model-dropdown {
   position: absolute;
