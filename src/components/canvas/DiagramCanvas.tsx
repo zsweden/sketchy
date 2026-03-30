@@ -101,6 +101,9 @@ export default function DiagramCanvas() {
     return null;
   }, [selectedLoop, selectedNodeIds, selectedEdgeIds, diagram.edges]);
 
+  // Memoize degree computation once — shared by rfNodes (EntityNode) and MiniMap
+  const degreesMap = useMemo(() => computeNodeDegrees(diagram.edges), [diagram.edges]);
+
   // Build React Flow nodes from diagram, letting RF manage selection
   const rfNodes: Node[] = useMemo(
     () =>
@@ -111,6 +114,7 @@ export default function DiagramCanvas() {
         draggable: !n.data.locked,
         data: {
           ...n.data,
+          degreesMap,
           highlightState: highlightSets
             ? highlightSets.nodeIds.has(n.id) ? 'highlighted' : 'dimmed'
             : 'none',
@@ -119,7 +123,7 @@ export default function DiagramCanvas() {
             : undefined,
         },
       })),
-    [diagram.nodes, highlightSets, selectedLoop],
+    [diagram.nodes, degreesMap, highlightSets, selectedLoop],
   );
 
   // Build React Flow edges from diagram
@@ -439,7 +443,6 @@ export default function DiagramCanvas() {
               .find(Boolean)?.color;
             if (tagColor) return tagColor;
             // Then derived indicators (root-cause = blue, intermediate = grey)
-            const degreesMap = computeNodeDegrees(diagram.edges);
             const derived = getDerivedIndicators(node.id, degreesMap, framework.derivedIndicators);
             if (derived.length > 0) return derived[0].color;
             return activeTheme.js.minimapFallback;

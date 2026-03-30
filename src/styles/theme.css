@@ -21,6 +21,10 @@
   --ude-color: #F56565;
   --root-cause-color: #63B3ED;
   --intermediate-color: #A0AEC0;
+  --loop-reinforcing: #4CAF50;
+  --loop-balancing: #FB8C00;
+  --loop-info: #5C8DB5;
+  --loop-muted: #8A8A7A;
 
   font-family: 'Inter', 'DM Sans', system-ui, -apple-system, sans-serif;
   font-synthesis: none;

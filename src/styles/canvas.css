@@ -227,14 +227,14 @@
 
 .entity-node.loop-focused.loop-reinforcing {
   box-shadow:
-    0 0 0 2px rgba(76, 175, 80, 0.9),
-    0 8px 24px rgba(76, 175, 80, 0.18);
+    0 0 0 2px var(--loop-reinforcing),
+    0 8px 24px color-mix(in srgb, var(--loop-reinforcing) 18%, transparent);
 }
 
 .entity-node.loop-focused.loop-balancing {
   box-shadow:
-    0 0 0 2px rgba(251, 140, 0, 0.9),
-    0 8px 24px rgba(251, 140, 0, 0.18);
+    0 0 0 2px var(--loop-balancing),
+    0 8px 24px color-mix(in srgb, var(--loop-balancing) 18%, transparent);
 }
 
 /* Highlight subgraph: dim non-connected edges */
@@ -251,11 +251,11 @@
 }
 
 .react-flow__edge.edge-highlighted.edge-loop-reinforcing .react-flow__edge-path {
-  stroke: #4CAF50 !important;
+  stroke: var(--loop-reinforcing) !important;
 }
 
 .react-flow__edge.edge-highlighted.edge-loop-balancing .react-flow__edge-path {
-  stroke: #FB8C00 !important;
+  stroke: var(--loop-balancing) !important;
 }
 
 .react-flow__edge.edge-highlighted:not(.edge-loop-reinforcing):not(.edge-loop-balancing) .react-flow__edge-path {
@@ -276,7 +276,7 @@
   width: 10px;
   height: 10px;
   border-radius: 9999px;
-  background: #4CAF50;
+  background: var(--loop-reinforcing);
   border: 2px solid var(--surface);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   z-index: 5;

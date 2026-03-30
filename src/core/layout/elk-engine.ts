@@ -1,8 +1,15 @@
-import ELK from 'elkjs/lib/elk.bundled.js';
 import type { LayoutEngine } from './layout-engine';
 import { RANK_SEP, NODE_SEP } from './layout-engine';
 
-const elk = new ELK();
+let elkInstance: import('elkjs/lib/elk.bundled.js').default | null = null;
+
+async function getElk() {
+  if (!elkInstance) {
+    const ELK = (await import('elkjs/lib/elk.bundled.js')).default;
+    elkInstance = new ELK();
+  }
+  return elkInstance;
+}
 
 const DIRECTION_MAP: Record<string, string> = {
   TB: 'DOWN',
@@ -45,6 +52,7 @@ export const elkEngine: LayoutEngine = async (nodes, edges, options) => {
     })),
   };
 
+  const elk = await getElk();
   const laid = await elk.layout(graph);
 
   return (laid.children ?? [])

@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
-import { computeNodeDegrees, getDerivedIndicators } from '../../core/graph/derived';
+import { getDerivedIndicators } from '../../core/graph/derived';
 import type { EdgeHandleSide as HandleSide } from '../../core/types';
 
 interface EntityNodeData {
@@ -33,13 +33,14 @@ function EntityNode({ id, data, selected }: NodeProps) {
   const updateNodeText = useDiagramStore((s) => s.updateNodeText);
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
   const commitToHistory = useDiagramStore((s) => s.commitToHistory);
-  const edges = useDiagramStore((s) => s.diagram.edges);
   const framework = useDiagramStore((s) => s.framework);
   const isAiModified = useChatStore((s) => s.aiModifiedNodeIds.has(id));
 
-  const degreesMap = computeNodeDegrees(edges);
-  const derived = getDerivedIndicators(id, degreesMap, framework.derivedIndicators);
-  const degrees = degreesMap.get(id) ?? { indegree: 0, outdegree: 0 };
+  const degreesMap = nodeData.degreesMap as Map<string, { indegree: number; outdegree: number }> | undefined;
+  const derived = degreesMap
+    ? getDerivedIndicators(id, degreesMap, framework.derivedIndicators)
+    : [];
+  const degrees = degreesMap?.get(id) ?? { indegree: 0, outdegree: 0 };
 
   useEffect(() => {
     // Keep the inline draft aligned when the store updates this node externally.

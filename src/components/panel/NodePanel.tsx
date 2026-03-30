@@ -250,14 +250,14 @@ export default function NodePanel({ node }: Props) {
                   <span
                     className="badge"
                     style={{
-                      backgroundColor: loop.kind === 'reinforcing' ? '#4CAF5015' : '#FB8C0015',
-                      color: loop.kind === 'reinforcing' ? '#4CAF50' : '#FB8C00',
+                      backgroundColor: loop.kind === 'reinforcing' ? 'color-mix(in srgb, var(--loop-reinforcing) 8%, transparent)' : 'color-mix(in srgb, var(--loop-balancing) 8%, transparent)',
+                      color: loop.kind === 'reinforcing' ? 'var(--loop-reinforcing)' : 'var(--loop-balancing)',
                     }}
                   >
                     {loop.label}
                   </span>
                   {loop.delayedEdgeCount > 0 && (
-                    <span className="badge" style={{ backgroundColor: '#8A8A7A15', color: '#8A8A7A' }}>
+                    <span className="badge" style={{ backgroundColor: 'color-mix(in srgb, var(--loop-muted) 8%, transparent)', color: 'var(--loop-muted)' }}>
                       Delay
                     </span>
                   )}

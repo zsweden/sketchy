@@ -46,13 +46,13 @@ export default function SettingsPanel() {
         <div className="section-stack" style={{ gap: '0.5rem' }}>
           <p className="section-label">Feedback Loops</p>
           <div className="control-row">
-            <span className="badge" style={{ backgroundColor: '#5C8DB515', color: '#5C8DB5' }}>
+            <span className="badge" style={{ backgroundColor: 'color-mix(in srgb, var(--loop-info) 8%, transparent)', color: 'var(--loop-info)' }}>
               {loopSummary.totalLoops} Total
             </span>
-            <span className="badge" style={{ backgroundColor: '#4CAF5015', color: '#4CAF50' }}>
+            <span className="badge" style={{ backgroundColor: 'color-mix(in srgb, var(--loop-reinforcing) 8%, transparent)', color: 'var(--loop-reinforcing)' }}>
               {loopSummary.reinforcingLoops} Reinforcing
             </span>
-            <span className="badge" style={{ backgroundColor: '#FB8C0015', color: '#FB8C00' }}>
+            <span className="badge" style={{ backgroundColor: 'color-mix(in srgb, var(--loop-balancing) 8%, transparent)', color: 'var(--loop-balancing)' }}>
               {loopSummary.balancingLoops} Balancing
             </span>
             {selectedLoopId && (
@@ -96,7 +96,7 @@ export default function SettingsPanel() {
                     {loop.label}
                   </span>
                   {loop.delayedEdgeCount > 0 && (
-                    <span className="badge" style={{ backgroundColor: '#8A8A7A15', color: '#8A8A7A' }}>
+                    <span className="badge" style={{ backgroundColor: 'color-mix(in srgb, var(--loop-muted) 8%, transparent)', color: 'var(--loop-muted)' }}>
                       Delay
                     </span>
                   )}
