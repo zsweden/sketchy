@@ -3,10 +3,12 @@ import type { DiagramNode } from '../../core/types';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
 import {
-  computeNodeDegrees,
   findCausalLoops,
+  labelCausalLoops,
+  computeNodeDegrees,
   getDerivedIndicators,
 } from '../../core/graph/derived';
+import { useUIStore } from '../../store/ui-store';
 
 interface Props {
   node: DiagramNode;
@@ -25,6 +27,8 @@ export default function NodePanel({ node }: Props) {
   const updateNodeNotes = useDiagramStore((s) => s.updateNodeNotes);
   const commitToHistory = useDiagramStore((s) => s.commitToHistory);
   const removeAiModified = useChatStore((s) => s.removeAiModified);
+  const selectedLoopId = useUIStore((s) => s.selectedLoopId);
+  const setSelectedLoop = useUIStore((s) => s.setSelectedLoop);
 
   // Clear the AI-modified green dot when the user views this node
   useEffect(() => {
@@ -34,7 +38,7 @@ export default function NodePanel({ node }: Props) {
   const degreesMap = computeNodeDegrees(edges);
   const degrees = degreesMap.get(node.id) ?? { indegree: 0, outdegree: 0 };
   const derived = getDerivedIndicators(node.id, degreesMap, framework.derivedIndicators);
-  const loops = framework.allowsCycles ? findCausalLoops(edges) : [];
+  const loops = framework.allowsCycles ? labelCausalLoops(findCausalLoops(edges)) : [];
   const nodeLoops = loops.filter((loop) => loop.nodeIds.includes(node.id));
   const nodeLabels = new Map(nodes.map((entry) => [entry.id, entry.data.label || entry.id]));
 
@@ -88,6 +92,7 @@ export default function NodePanel({ node }: Props) {
 
   return (
     <div className="section-stack">
+      <p className="section-heading">Node</p>
       {/* Text */}
       <div className="section-stack" style={{ gap: '0.375rem' }}>
         <p className="section-label">Text</p>
@@ -210,8 +215,24 @@ export default function NodePanel({ node }: Props) {
           {nodeLoops.length === 0 ? (
             <p className="field-label">This variable is not part of a detected feedback loop.</p>
           ) : (
-            nodeLoops.map((loop, index) => (
-              <div key={loop.edgeIds.join('-')} className="section-stack" style={{ gap: '0.25rem' }}>
+            nodeLoops.map((loop) => (
+              <button
+                key={loop.id}
+                type="button"
+                className="section-stack"
+                onClick={() => setSelectedLoop(selectedLoopId === loop.id ? null : loop.id)}
+                style={{
+                  gap: '0.25rem',
+                  width: '100%',
+                  padding: '0.5rem',
+                  border: selectedLoopId === loop.id ? '1px solid var(--accent)' : '1px solid var(--border)',
+                  borderRadius: '0.75rem',
+                  background: selectedLoopId === loop.id ? 'rgba(92, 141, 181, 0.08)' : 'var(--surface)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+                aria-pressed={selectedLoopId === loop.id}
+              >
                 <div className="control-row" style={{ gap: '0.5rem' }}>
                   <span
                     className="badge"
@@ -220,7 +241,7 @@ export default function NodePanel({ node }: Props) {
                       color: loop.kind === 'reinforcing' ? '#4CAF50' : '#FB8C00',
                     }}
                   >
-                    {loop.kind === 'reinforcing' ? `R${index + 1}` : `B${index + 1}`}
+                    {loop.label}
                   </span>
                   {loop.delayedEdgeCount > 0 && (
                     <span className="badge" style={{ backgroundColor: '#8A8A7A15', color: '#8A8A7A' }}>
@@ -231,7 +252,7 @@ export default function NodePanel({ node }: Props) {
                 <p className="field-label">
                   {loop.nodeIds.map((nodeId) => nodeLabels.get(nodeId) ?? nodeId).join(' -> ')}
                 </p>
-              </div>
+              </button>
             ))
           )}
         </div>

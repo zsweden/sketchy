@@ -1,8 +1,8 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { autoLayout, elkEngine } from '../../core/layout';
-import { findCausalLoops, summarizeCausalLoops } from '../../core/graph/derived';
+import { findCausalLoops, labelCausalLoops, summarizeCausalLoops } from '../../core/graph/derived';
 
 export default function SettingsPanel() {
   const settings = useDiagramStore((s) => s.diagram.settings);
@@ -14,10 +14,21 @@ export default function SettingsPanel() {
   const commitToHistory = useDiagramStore((s) => s.commitToHistory);
   const moveNodes = useDiagramStore((s) => s.moveNodes);
   const requestFitView = useUIStore((s) => s.requestFitView);
+  const selectedLoopId = useUIStore((s) => s.selectedLoopId);
+  const setSelectedLoop = useUIStore((s) => s.setSelectedLoop);
   const framework = useDiagramStore((s) => s.framework);
-  const loops = framework.allowsCycles ? findCausalLoops(edges) : [];
+  const loops = useMemo(
+    () => (framework.allowsCycles ? labelCausalLoops(findCausalLoops(edges)) : []),
+    [edges, framework.allowsCycles],
+  );
   const loopSummary = summarizeCausalLoops(loops);
   const nodeLabels = new Map(nodes.map((node) => [node.id, node.data.label || node.id]));
+
+  useEffect(() => {
+    if (selectedLoopId && !loops.some((loop) => loop.id === selectedLoopId)) {
+      setSelectedLoop(null);
+    }
+  }, [loops, selectedLoopId, setSelectedLoop]);
 
   const handleDirectionChange = useCallback(
     async (direction: 'TB' | 'BT') => {
@@ -43,7 +54,7 @@ export default function SettingsPanel() {
 
   return (
     <div className="section-stack">
-      <p className="section-heading">Settings</p>
+      <p className="section-heading">Diagram</p>
 
       {/* Diagram name */}
       <div className="section-stack" style={{ gap: '0.375rem' }}>
@@ -130,12 +141,36 @@ export default function SettingsPanel() {
                 {loopSummary.delayedLoops} Delayed
               </span>
             )}
+            {selectedLoopId && (
+              <button
+                className="btn btn-secondary btn-xs"
+                onClick={() => setSelectedLoop(null)}
+              >
+                Show All
+              </button>
+            )}
           </div>
           {loops.length === 0 ? (
             <p className="field-label">No feedback loops detected yet.</p>
           ) : (
-            loops.slice(0, 6).map((loop, index) => (
-              <div key={loop.edgeIds.join('-')} className="section-stack" style={{ gap: '0.25rem' }}>
+            loops.slice(0, 6).map((loop) => (
+              <button
+                key={loop.id}
+                type="button"
+                className="section-stack"
+                onClick={() => setSelectedLoop(selectedLoopId === loop.id ? null : loop.id)}
+                style={{
+                  gap: '0.25rem',
+                  width: '100%',
+                  padding: '0.5rem',
+                  border: selectedLoopId === loop.id ? '1px solid var(--accent)' : '1px solid var(--border)',
+                  borderRadius: '0.75rem',
+                  background: selectedLoopId === loop.id ? 'rgba(92, 141, 181, 0.08)' : 'var(--surface)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+                aria-pressed={selectedLoopId === loop.id}
+              >
                 <div className="control-row" style={{ gap: '0.5rem' }}>
                   <span
                     className="badge"
@@ -144,7 +179,7 @@ export default function SettingsPanel() {
                       color: loop.kind === 'reinforcing' ? '#4CAF50' : '#FB8C00',
                     }}
                   >
-                    {loop.kind === 'reinforcing' ? `R${index + 1}` : `B${index + 1}`}
+                    {loop.label}
                   </span>
                   {loop.delayedEdgeCount > 0 && (
                     <span className="badge" style={{ backgroundColor: '#8A8A7A15', color: '#8A8A7A' }}>
@@ -155,7 +190,7 @@ export default function SettingsPanel() {
                 <p className="field-label">
                   {loop.nodeIds.map((nodeId) => nodeLabels.get(nodeId) ?? nodeId).join(' -> ')}
                 </p>
-              </div>
+              </button>
             ))
           )}
         </div>

@@ -120,6 +120,7 @@ export default function ChatPanel() {
         )}
       </div>
 
+      {loading && <div className="chat-progress-bar" />}
       <div className="chat-messages">
         {messages.length === 0 && !loading && (
           <p className="chat-empty">

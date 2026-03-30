@@ -7,11 +7,16 @@ export interface NodeDegrees {
 }
 
 export interface CausalLoop {
+  id: string;
   nodeIds: string[];
   edgeIds: string[];
   kind: 'reinforcing' | 'balancing';
   negativeEdgeCount: number;
   delayedEdgeCount: number;
+}
+
+export interface NamedCausalLoop extends CausalLoop {
+  label: string;
 }
 
 export interface LoopSummary {
@@ -203,6 +208,7 @@ export function findCausalLoops(edges: DiagramEdge[]): CausalLoop[] {
       .length;
 
     loops.set(canonical.key, {
+      id: canonical.key,
       nodeIds: [...canonical.nodeIds],
       edgeIds: [...canonical.edgeIds],
       kind: negativeEdgeCount % 2 === 0 ? 'reinforcing' : 'balancing',
@@ -258,5 +264,24 @@ export function summarizeCausalLoops(loops: CausalLoop[]): LoopSummary {
     reinforcingLoops: loops.filter((loop) => loop.kind === 'reinforcing').length,
     balancingLoops: loops.filter((loop) => loop.kind === 'balancing').length,
     delayedLoops: loops.filter((loop) => loop.delayedEdgeCount > 0).length,
+  };
+}
+
+export function labelCausalLoops(loops: CausalLoop[]): NamedCausalLoop[] {
+  let reinforcingIndex = 0;
+  let balancingIndex = 0;
+
+  return loops.map((loop) => ({
+    ...loop,
+    label: loop.kind === 'reinforcing'
+      ? `R${++reinforcingIndex}`
+      : `B${++balancingIndex}`,
+  }));
+}
+
+export function getLoopSubgraph(loop: CausalLoop): ConnectedSubgraph {
+  return {
+    nodeIds: new Set(loop.nodeIds),
+    edgeIds: new Set(loop.edgeIds),
   };
 }

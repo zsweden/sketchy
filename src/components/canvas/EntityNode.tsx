@@ -11,6 +11,7 @@ interface EntityNodeData {
   junctionType: 'and' | 'or';
   color?: string;
   highlightState?: 'highlighted' | 'dimmed' | 'none';
+  loopKind?: 'reinforcing' | 'balancing';
   [key: string]: unknown;
 }
 
@@ -96,7 +97,14 @@ function EntityNode({ id, data, selected }: NodeProps) {
 
   return (
     <div
-      className={`entity-node ${selected ? 'selected' : ''} ${nodeData.highlightState === 'dimmed' ? 'dimmed' : ''}`}
+      className={[
+        'entity-node',
+        selected ? 'selected' : '',
+        nodeData.highlightState === 'dimmed' ? 'dimmed' : '',
+        nodeData.highlightState === 'highlighted' && nodeData.loopKind
+          ? `loop-focused loop-${nodeData.loopKind}`
+          : '',
+      ].join(' ')}
       onDoubleClick={handleDoubleClick}
       style={nodeData.color ? { backgroundColor: nodeData.color } : undefined}
       data-testid={`entity-node-${id}`}

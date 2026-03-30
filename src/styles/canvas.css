@@ -216,6 +216,18 @@
   transition: opacity 0.2s ease;
 }
 
+.entity-node.loop-focused.loop-reinforcing {
+  box-shadow:
+    0 0 0 2px rgba(76, 175, 80, 0.9),
+    0 8px 24px rgba(76, 175, 80, 0.18);
+}
+
+.entity-node.loop-focused.loop-balancing {
+  box-shadow:
+    0 0 0 2px rgba(251, 140, 0, 0.9),
+    0 8px 24px rgba(251, 140, 0, 0.18);
+}
+
 /* Highlight subgraph: dim non-connected edges */
 .react-flow__edge.edge-dimmed .react-flow__edge-path {
   opacity: 0.15;
@@ -224,10 +236,21 @@
 
 /* Highlight subgraph: animate connected edges */
 .react-flow__edge.edge-highlighted .react-flow__edge-path {
-  stroke: var(--accent) !important;
   stroke-width: 2.5 !important;
   stroke-dasharray: 8 4;
   animation: edge-flow 0.6s linear infinite;
+}
+
+.react-flow__edge.edge-highlighted.edge-loop-reinforcing .react-flow__edge-path {
+  stroke: #4CAF50 !important;
+}
+
+.react-flow__edge.edge-highlighted.edge-loop-balancing .react-flow__edge-path {
+  stroke: #FB8C00 !important;
+}
+
+.react-flow__edge.edge-highlighted:not(.edge-loop-reinforcing):not(.edge-loop-balancing) .react-flow__edge-path {
+  stroke: var(--accent) !important;
 }
 
 @keyframes edge-flow {

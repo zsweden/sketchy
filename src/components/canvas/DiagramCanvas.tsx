@@ -21,7 +21,12 @@ import EntityNode from './EntityNode';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { FIT_VIEW_OPTIONS } from '../../core/layout/fit-view-options';
-import { computeNodeDegrees, getDerivedIndicators, getConnectedSubgraph } from '../../core/graph/derived';
+import {
+  findCausalLoops,
+  getConnectedSubgraph,
+  getLoopSubgraph,
+  labelCausalLoops,
+} from '../../core/graph/derived';
 import {
   getEdgeHandlePlacement,
   getSourceHandleId,
@@ -48,6 +53,7 @@ export default function DiagramCanvas() {
   const deleteEdges = useDiagramStore((s) => s.deleteEdges);
 
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
+  const selectedLoopId = useUIStore((s) => s.selectedLoopId);
   const setSelectedNodes = useUIStore((s) => s.setSelectedNodes);
   const setSelectedEdges = useUIStore((s) => s.setSelectedEdges);
   const openContextMenu = useUIStore((s) => s.openContextMenu);
@@ -64,11 +70,18 @@ export default function DiagramCanvas() {
   const isDragging = useRef(false);
   const lastPaneClickTime = useRef(0);
 
-  // Compute connected subgraph for single-node selection highlighting
+  const selectedLoop = useMemo(() => {
+    if (!framework.allowsCycles || !selectedLoopId) return null;
+    return labelCausalLoops(findCausalLoops(diagram.edges))
+      .find((loop) => loop.id === selectedLoopId) ?? null;
+  }, [diagram.edges, framework.allowsCycles, selectedLoopId]);
+
+  // Loop focus overrides single-node neighborhood highlight.
   const highlightSets = useMemo(() => {
+    if (selectedLoop) return getLoopSubgraph(selectedLoop);
     if (selectedNodeIds.length !== 1) return null;
     return getConnectedSubgraph(diagram.edges, selectedNodeIds[0]);
-  }, [selectedNodeIds, diagram.edges]);
+  }, [selectedLoop, selectedNodeIds, diagram.edges]);
 
   // Build React Flow nodes from diagram, letting RF manage selection
   const rfNodes: Node[] = useMemo(
@@ -82,9 +95,12 @@ export default function DiagramCanvas() {
           highlightState: highlightSets
             ? highlightSets.nodeIds.has(n.id) ? 'highlighted' : 'dimmed'
             : 'none',
+          loopKind: selectedLoop && highlightSets?.nodeIds.has(n.id)
+            ? selectedLoop.kind
+            : undefined,
         },
       })),
-    [diagram.nodes, highlightSets],
+    [diagram.nodes, highlightSets, selectedLoop],
   );
 
   // Build React Flow edges from diagram
@@ -108,41 +124,44 @@ export default function DiagramCanvas() {
           : placement.targetSide;
 
         return {
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        label: [
-          framework.supportsEdgePolarity
-            ? e.polarity === 'negative' ? '-' : '+'
-            : null,
-          framework.supportsEdgeDelay && e.delay ? 'D' : null,
-        ].filter(Boolean).join(' '),
-        labelShowBg: framework.supportsEdgePolarity || (framework.supportsEdgeDelay && e.delay),
-        labelBgPadding: [4, 2],
-        labelBgBorderRadius: 999,
-        labelBgStyle: {
-          fill: 'rgba(255, 255, 255, 0.92)',
-          stroke: 'var(--border)',
-          strokeWidth: 1,
-        },
-        labelStyle: {
-          fill: 'var(--text-muted)',
-          fontSize: 11,
-          fontWeight: 700,
-        },
-        sourceHandle: getSourceHandleId(sourceSide),
-        targetHandle: getTargetHandleId(targetSide),
-        pathOptions: { borderRadius: 100 },
-        className: [
-          `edge-confidence-${e.confidence ?? 'high'}`,
-          highlightSets
-            ? highlightSets.edgeIds.has(e.id) ? 'edge-highlighted' : 'edge-dimmed'
-            : '',
-        ].join(' '),
-      };
+          id: e.id,
+          source: e.source,
+          target: e.target,
+          label: [
+            framework.supportsEdgePolarity
+              ? e.polarity === 'negative' ? '-' : '+'
+              : null,
+            framework.supportsEdgeDelay && e.delay ? 'D' : null,
+          ].filter(Boolean).join(' '),
+          labelShowBg: framework.supportsEdgePolarity || (framework.supportsEdgeDelay && e.delay),
+          labelBgPadding: [4, 2],
+          labelBgBorderRadius: 999,
+          labelBgStyle: {
+            fill: 'rgba(255, 255, 255, 0.92)',
+            stroke: 'var(--border)',
+            strokeWidth: 1,
+          },
+          labelStyle: {
+            fill: 'var(--text-muted)',
+            fontSize: 11,
+            fontWeight: 700,
+          },
+          sourceHandle: getSourceHandleId(sourceSide),
+          targetHandle: getTargetHandleId(targetSide),
+          pathOptions: { borderRadius: 100 },
+          className: [
+            `edge-confidence-${e.confidence ?? 'high'}`,
+            highlightSets
+              ? highlightSets.edgeIds.has(e.id) ? 'edge-highlighted' : 'edge-dimmed'
+              : '',
+            selectedLoop && highlightSets?.edgeIds.has(e.id)
+              ? `edge-loop-${selectedLoop.kind}`
+              : '',
+          ].join(' '),
+        };
       });
     },
-    [diagram.edges, diagram.nodes, direction, edgeRoutingMode, framework, highlightSets],
+    [diagram.edges, diagram.nodes, direction, edgeRoutingMode, framework, highlightSets, selectedLoop],
   );
 
   // Local state for React Flow selection/interaction
