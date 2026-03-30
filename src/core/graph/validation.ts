@@ -16,6 +16,14 @@ export function isDuplicateEdge(
   return edges.some((e) => e.source === source && e.target === target);
 }
 
+export function findExistingEdge(
+  edges: DiagramEdge[],
+  source: string,
+  target: string,
+): DiagramEdge | undefined {
+  return edges.find((e) => e.source === source && e.target === target);
+}
+
 export function wouldCreateCycle(
   edges: DiagramEdge[],
   source: string,

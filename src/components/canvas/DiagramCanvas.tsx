@@ -294,6 +294,8 @@ export default function DiagramCanvas() {
       });
       if (!result.success && result.reason) {
         addToast(result.reason, 'warning');
+      } else if (result.success && result.reason) {
+        addToast(result.reason, 'info');
       }
     },
     [addEdgeStore, addToast],

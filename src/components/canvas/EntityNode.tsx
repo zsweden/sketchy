@@ -3,7 +3,7 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
 import { computeNodeDegrees, getDerivedIndicators } from '../../core/graph/derived';
-import type { HandleSide } from '../../core/graph/ports';
+import type { EdgeHandleSide as HandleSide } from '../../core/types';
 
 interface EntityNodeData {
   label: string;

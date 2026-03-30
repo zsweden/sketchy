@@ -122,7 +122,7 @@ export default function Toolbar() {
   return (
     <header className="app-header">
       <div className="toolbar-group">
-        <h1 className="app-title">Sketchy</h1>
+        <h1 className="app-title">Sketchy <span className="app-version">v1.0.0</span></h1>
         <div className="toolbar-divider" />
         <FrameworkSelector />
       </div>

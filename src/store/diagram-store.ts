@@ -10,7 +10,7 @@ import type {
 import { createEmptyDiagram } from '../core/types';
 import type { Framework } from '../core/framework-types';
 import { getFramework } from '../frameworks/registry';
-import { validateEdge } from '../core/graph/validation';
+import { validateEdge, findExistingEdge } from '../core/graph/validation';
 import { UndoRedoManager } from '../core/history/undo-redo';
 import { getEdgeHandlePlacement, getSideFromHandleId } from '../core/graph/ports';
 
@@ -435,6 +435,36 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
 
   addEdge: (source, target, handles) => {
     const state = get();
+
+    // Check for existing edge between the same source→target
+    const existing = findExistingEdge(state.diagram.edges, source, target);
+    if (existing) {
+      const newSides = state.diagram.settings.edgeRoutingMode === 'fixed'
+        ? resolveEdgeSides(source, target, state.diagram.nodes, state.diagram.settings, handles)
+        : {};
+      const sameAnchors =
+        existing.sourceSide === (newSides.sourceSide ?? existing.sourceSide) &&
+        existing.targetSide === (newSides.targetSide ?? existing.targetSide);
+
+      if (sameAnchors) {
+        return { success: false, reason: 'Edge already exists' };
+      }
+
+      // Different anchors — replace the existing edge
+      history.push(snapshot(state));
+      set((s) => ({
+        diagram: {
+          ...s.diagram,
+          edges: s.diagram.edges.map((e) =>
+            e.id === existing.id ? { ...e, ...newSides } : e,
+          ),
+        },
+        canUndo: true,
+        canRedo: false,
+      }));
+      return { success: true, reason: 'Edge moved' };
+    }
+
     const result = validateEdge(state.diagram.edges, source, target, {
       allowCycles: state.framework.allowsCycles,
     });

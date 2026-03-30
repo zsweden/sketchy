@@ -19,6 +19,15 @@
   line-height: 1;
 }
 
+.app-version {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: var(--text-soft);
+  vertical-align: super;
+  margin-left: 0.15rem;
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;
