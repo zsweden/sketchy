@@ -154,7 +154,7 @@ export default function DiagramCanvas() {
           ].filter(Boolean).join(' '),
           labelShowBg: framework.supportsEdgePolarity || (framework.supportsEdgeDelay && e.delay),
           labelBgPadding: [4, 2],
-          labelBgBorderRadius: 999,
+          labelBgBorderRadius: 0,
           labelBgStyle: {
             fill: activeTheme.js.edgeLabelBg,
             stroke: 'var(--border)',
