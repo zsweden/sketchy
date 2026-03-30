@@ -67,7 +67,7 @@ export default function SettingsPanel() {
           {loops.length === 0 ? (
             <p className="field-label">No feedback loops detected yet.</p>
           ) : (
-            loops.slice(0, 6).map((loop) => (
+            loops.map((loop) => (
               <button
                 key={loop.id}
                 type="button"
