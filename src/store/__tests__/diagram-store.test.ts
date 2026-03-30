@@ -235,6 +235,64 @@ describe('diagram store', () => {
       expect(edge.targetSide).toBe('left');
     });
 
+    it('captures the final dynamic edge state when switching back to fixed', () => {
+      const sourceId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const targetId = useDiagramStore.getState().addNode({ x: 200, y: 0 });
+
+      useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });
+      useDiagramStore.getState().addEdge(sourceId, targetId);
+
+      useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'dynamic' });
+      useDiagramStore.getState().moveNodes([{ id: targetId, position: { x: 0, y: 200 } }]);
+      useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });
+
+      const edge = useDiagramStore.getState().diagram.edges[0];
+      expect(edge.sourceSide).toBe('bottom');
+      expect(edge.targetSide).toBe('top');
+    });
+
+    it('preserves stored fixed edge sides when loading a fixed diagram', () => {
+      useDiagramStore.getState().loadDiagram({
+        schemaVersion: 3,
+        id: 'diagram-1',
+        name: 'Loaded Diagram',
+        frameworkId: 'crt',
+        settings: {
+          layoutDirection: 'BT',
+          showGrid: true,
+          snapToGrid: false,
+          edgeRoutingMode: 'fixed',
+        },
+        nodes: [
+          {
+            id: 'n1',
+            type: 'entity',
+            position: { x: 0, y: 0 },
+            data: { label: 'A', tags: [], junctionType: 'or' },
+          },
+          {
+            id: 'n2',
+            type: 'entity',
+            position: { x: 0, y: 200 },
+            data: { label: 'B', tags: [], junctionType: 'or' },
+          },
+        ],
+        edges: [
+          {
+            id: 'e1',
+            source: 'n1',
+            target: 'n2',
+            sourceSide: 'left',
+            targetSide: 'right',
+          },
+        ],
+      });
+
+      const edge = useDiagramStore.getState().diagram.edges[0];
+      expect(edge.sourceSide).toBe('left');
+      expect(edge.targetSide).toBe('right');
+    });
+
     it('preserves explicit handle sides for new edges in fixed mode', () => {
       useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });
       const id1 = useDiagramStore.getState().addNode({ x: 0, y: 0 });

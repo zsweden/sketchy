@@ -3,7 +3,8 @@ import { MarkerType, type Edge, type Node } from '@xyflow/react';
 import { useDiagramStore } from '../store/diagram-store';
 import { useUIStore } from '../store/ui-store';
 import { useSettingsStore } from '../store/settings-store';
-import { getEdgeHandlePlacement, getSourceHandleId, getTargetHandleId } from '../core/graph/ports';
+import { getSourceHandleId, getTargetHandleId } from '../core/graph/ports';
+import { getAutomaticEdgeSides, getStoredOrAutomaticEdgeSides } from '../store/diagram-helpers';
 import { getTheme } from '../styles/themes';
 import { ARROW_MARKER_SIZE } from '../constants/layout';
 import type { ConnectedSubgraph, NamedCausalLoop, NodeDegrees } from '../core/graph/derived';
@@ -22,7 +23,6 @@ export function useRFNodeEdgeBuilder(
 ): BuilderResult {
   const diagram = useDiagramStore((s) => s.diagram);
   const framework = useDiagramStore((s) => s.framework);
-  const direction = useDiagramStore((s) => s.diagram.settings.layoutDirection);
   const edgeRoutingMode = useDiagramStore((s) => s.diagram.settings.edgeRoutingMode);
   const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
   const themeId = useSettingsStore((s) => s.theme);
@@ -57,22 +57,10 @@ export function useRFNodeEdgeBuilder(
 
   const rfEdges: Edge[] = useMemo(
     () => {
-      const nodePositions = new Map(
-        diagram.nodes.map((node) => [node.id, node.position]),
-      );
-
       return diagram.edges.map((e) => {
-        const placement = getEdgeHandlePlacement(
-          nodePositions.get(e.source),
-          nodePositions.get(e.target),
-          direction,
-        );
-        const sourceSide = edgeRoutingMode === 'fixed'
-          ? e.sourceSide ?? placement.sourceSide
-          : placement.sourceSide;
-        const targetSide = edgeRoutingMode === 'fixed'
-          ? e.targetSide ?? placement.targetSide
-          : placement.targetSide;
+        const { sourceSide, targetSide } = edgeRoutingMode === 'fixed'
+          ? getStoredOrAutomaticEdgeSides(e, diagram.nodes, diagram.settings)
+          : getAutomaticEdgeSides(e.source, e.target, diagram.nodes, diagram.settings);
 
         return {
           id: e.id,
@@ -116,7 +104,7 @@ export function useRFNodeEdgeBuilder(
         };
       });
     },
-    [diagram.edges, diagram.nodes, direction, edgeRoutingMode, framework, highlightSets, selectedLoop, selectedEdgeIds, activeTheme],
+    [diagram.edges, diagram.nodes, diagram.settings, edgeRoutingMode, framework, highlightSets, selectedLoop, selectedEdgeIds, activeTheme],
   );
 
   return { rfNodes, rfEdges, defaultEdgeOptions, activeTheme };

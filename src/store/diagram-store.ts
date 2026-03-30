@@ -16,7 +16,8 @@ import {
   createDiagramForFramework,
   getDefaultEdgeFields,
   resolveEdgeSides,
-  freezeEdgeSides,
+  captureCurrentEdgeSides,
+  ensureFixedEdgeSides,
   snapshot,
   batchAddNodes,
   batchUpdateNodes,
@@ -473,16 +474,16 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
         settings.edgeRoutingMode !== undefined
         && settings.edgeRoutingMode !== s.diagram.settings.edgeRoutingMode;
 
-      return {
-        diagram: {
-          ...s.diagram,
-          settings: nextSettings,
-          edges: edgeRoutingModeChanged && nextSettings.edgeRoutingMode === 'fixed'
-            ? freezeEdgeSides(s.diagram.edges, s.diagram.nodes, nextSettings)
+        return {
+          diagram: {
+            ...s.diagram,
+            settings: nextSettings,
+            edges: edgeRoutingModeChanged && nextSettings.edgeRoutingMode === 'fixed'
+            ? captureCurrentEdgeSides(s.diagram.edges, s.diagram.nodes, nextSettings)
             : s.diagram.edges,
-        },
-      };
-    });
+          },
+        };
+      });
   },
 
   loadDiagram: (diagram) => {
@@ -501,7 +502,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
         ...diagram,
         settings,
         edges: settings.edgeRoutingMode === 'fixed'
-          ? freezeEdgeSides(diagram.edges, diagram.nodes, settings)
+          ? ensureFixedEdgeSides(diagram.edges, diagram.nodes, settings)
           : diagram.edges,
       },
       framework: fw,

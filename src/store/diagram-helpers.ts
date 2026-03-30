@@ -10,6 +10,7 @@ import type { Framework } from '../core/framework-types';
 import { getFramework } from '../frameworks/registry';
 import { validateEdge } from '../core/graph/validation';
 import { getEdgeHandlePlacement, getSideFromHandleId } from '../core/graph/ports';
+import type { EdgeHandlePlacement } from '../core/graph/ports';
 import type { BatchMutations } from './diagram-store';
 
 // --- Framework helpers ---
@@ -44,6 +45,20 @@ function getNodePositionMap(nodes: DiagramNode[]): Map<string, { x: number; y: n
   return new Map(nodes.map((node) => [node.id, node.position]));
 }
 
+export function getAutomaticEdgeSides(
+  source: string,
+  target: string,
+  nodes: DiagramNode[],
+  settings: DiagramSettings,
+): EdgeHandlePlacement {
+  const positions = getNodePositionMap(nodes);
+  return getEdgeHandlePlacement(
+    positions.get(source),
+    positions.get(target),
+    settings.layoutDirection,
+  );
+}
+
 export function resolveEdgeSides(
   source: string,
   target: string,
@@ -53,38 +68,52 @@ export function resolveEdgeSides(
     sourceHandleId?: string | null;
     targetHandleId?: string | null;
   },
-): Pick<DiagramEdge, 'sourceSide' | 'targetSide'> {
+): EdgeHandlePlacement {
   const explicitSourceSide = getSideFromHandleId(handles?.sourceHandleId, 'source');
   const explicitTargetSide = getSideFromHandleId(handles?.targetHandleId, 'target');
+  const automaticSides = getAutomaticEdgeSides(source, target, nodes, settings);
 
   if (explicitSourceSide && explicitTargetSide) {
     return { sourceSide: explicitSourceSide, targetSide: explicitTargetSide };
   }
 
-  const positions = getNodePositionMap(nodes);
-  const placement = getEdgeHandlePlacement(
-    positions.get(source),
-    positions.get(target),
-    settings.layoutDirection,
-  );
-
   return {
-    sourceSide: explicitSourceSide ?? placement.sourceSide,
-    targetSide: explicitTargetSide ?? placement.targetSide,
+    sourceSide: explicitSourceSide ?? automaticSides.sourceSide,
+    targetSide: explicitTargetSide ?? automaticSides.targetSide,
   };
 }
 
-export function freezeEdgeSides(
+export function getStoredOrAutomaticEdgeSides(
+  edge: Pick<DiagramEdge, 'source' | 'target' | 'sourceSide' | 'targetSide'>,
+  nodes: DiagramNode[],
+  settings: DiagramSettings,
+): EdgeHandlePlacement {
+  const automaticSides = getAutomaticEdgeSides(edge.source, edge.target, nodes, settings);
+  return {
+    sourceSide: edge.sourceSide ?? automaticSides.sourceSide,
+    targetSide: edge.targetSide ?? automaticSides.targetSide,
+  };
+}
+
+export function captureCurrentEdgeSides(
   edges: DiagramEdge[],
   nodes: DiagramNode[],
   settings: DiagramSettings,
 ): DiagramEdge[] {
   return edges.map((edge) => ({
     ...edge,
-    ...resolveEdgeSides(edge.source, edge.target, nodes, settings, {
-      sourceHandleId: edge.sourceSide ? `source-${edge.sourceSide}` : undefined,
-      targetHandleId: edge.targetSide ? `target-${edge.targetSide}` : undefined,
-    }),
+    ...getAutomaticEdgeSides(edge.source, edge.target, nodes, settings),
+  }));
+}
+
+export function ensureFixedEdgeSides(
+  edges: DiagramEdge[],
+  nodes: DiagramNode[],
+  settings: DiagramSettings,
+): DiagramEdge[] {
+  return edges.map((edge) => ({
+    ...edge,
+    ...getStoredOrAutomaticEdgeSides(edge, nodes, settings),
   }));
 }
 
