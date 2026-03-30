@@ -115,6 +115,38 @@ describe('Toolbar', () => {
     expect(useUIStore.getState().fitViewTrigger).toBe(1);
   });
 
+  it('runs auto edges once in fixed mode', async () => {
+    const user = userEvent.setup();
+    useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });
+    const edge1Source = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+    const edge1Target = useDiagramStore.getState().addNode({ x: -200, y: -200 });
+    useDiagramStore.getState().addEdge(edge1Source, edge1Target, {
+      sourceHandleId: 'source-bottom',
+      targetHandleId: 'target-top',
+    });
+    const edge2Source = useDiagramStore.getState().addNode({ x: -200, y: 0 });
+    const edge2Target = useDiagramStore.getState().addNode({ x: 0, y: -200 });
+    useDiagramStore.getState().addEdge(edge2Source, edge2Target, {
+      sourceHandleId: 'source-top',
+      targetHandleId: 'target-bottom',
+    });
+
+    render(<Toolbar />);
+    await user.click(screen.getByRole('button', { name: 'Auto edges' }));
+
+    const edge = useDiagramStore.getState().diagram.edges[0];
+    expect(edge.sourceSide).toBe('right');
+    expect(edge.targetSide).toBe('right');
+  });
+
+  it('disables auto edges in continuous optimize mode', () => {
+    useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'dynamic' });
+
+    render(<Toolbar />);
+
+    expect(screen.getByRole('button', { name: 'Auto edges' })).toBeDisabled();
+  });
+
   it('loads a project file, clears chat history, and surfaces warnings', async () => {
     const user = userEvent.setup();
     const loadedDiagram = {

@@ -17,7 +17,7 @@ const DIRECTION_MAP: Record<string, string> = {
   BT: 'UP',
 };
 
-export const elkEngine: LayoutEngine = async (nodes, edges, options) => {
+export const elkLayeredEngine: LayoutEngine = async (nodes, edges, options) => {
   const hasPositions = nodes.some((n) => n.position);
   const cyclic = options.cyclic === true;
 
@@ -68,3 +68,6 @@ export const elkEngine: LayoutEngine = async (nodes, edges, options) => {
     .filter((c: { x?: number; y?: number }) => c.x !== undefined && c.y !== undefined)
     .map((c: { id: string; x: number; y: number }) => ({ id: c.id, x: c.x, y: c.y }));
 };
+
+export const elkEngine: LayoutEngine = async (nodes, edges, options) =>
+  elkLayeredEngine(nodes, edges, { ...options, cyclic: false });

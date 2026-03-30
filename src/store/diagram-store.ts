@@ -17,6 +17,7 @@ import {
   getDefaultEdgeFields,
   resolveEdgeSides,
   captureCurrentEdgeSides,
+  captureOptimizedStoredEdgeSides,
   ensureFixedEdgeSides,
   snapshot,
   batchAddNodes,
@@ -86,6 +87,7 @@ interface DiagramState {
   setEdgePolarity: (id: string, polarity: EdgePolarity) => void;
   setEdgeDelay: (id: string, delay: boolean) => void;
   updateEdgeNotes: (id: string, notes: string) => void;
+  optimizeEdges: () => boolean;
 
   // Diagram operations
   setFramework: (frameworkId: string) => void;
@@ -450,6 +452,34 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
         ),
       },
     }));
+  },
+
+  optimizeEdges: () => {
+    const state = get();
+    if (state.diagram.settings.edgeRoutingMode !== 'fixed') return false;
+
+    const optimizedEdges = captureOptimizedStoredEdgeSides(
+      state.diagram.edges,
+      state.diagram.nodes,
+      state.diagram.settings,
+    );
+    const changed = optimizedEdges.some((edge, index) => {
+      const current = state.diagram.edges[index];
+      return edge.sourceSide !== current?.sourceSide || edge.targetSide !== current?.targetSide;
+    });
+
+    if (!changed) return false;
+
+    history.push(snapshot(state));
+    set((s) => ({
+      diagram: {
+        ...s.diagram,
+        edges: optimizedEdges,
+      },
+      canUndo: true,
+      canRedo: false,
+    }));
+    return true;
   },
 
   setFramework: (frameworkId) => {

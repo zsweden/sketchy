@@ -344,5 +344,67 @@ describe('diagram store', () => {
       expect(edge.sourceSide).toBe('top');
       expect(edge.targetSide).toBe('bottom');
     });
+
+    it('keeps the current fixed routing when there is no better edge-set arrangement', () => {
+      useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });
+      const sourceId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const targetId = useDiagramStore.getState().addNode({ x: 200, y: 0 });
+      useDiagramStore.getState().addEdge(sourceId, targetId);
+      useDiagramStore.getState().moveNodes([{ id: targetId, position: { x: 0, y: 200 } }]);
+
+      const optimized = useDiagramStore.getState().optimizeEdges();
+
+      expect(optimized).toBe(true);
+      const edge = useDiagramStore.getState().diagram.edges[0];
+      expect(edge.sourceSide).toBe('right');
+      expect(edge.targetSide).toBe('right');
+    });
+
+    it('does not optimize edges while routing is set to dynamic', () => {
+      useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });
+      const sourceId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const targetId = useDiagramStore.getState().addNode({ x: 200, y: 0 });
+      useDiagramStore.getState().addEdge(sourceId, targetId);
+      useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'dynamic' });
+      useDiagramStore.getState().moveNodes([{ id: targetId, position: { x: 0, y: 200 } }]);
+
+      const optimized = useDiagramStore.getState().optimizeEdges();
+
+      expect(optimized).toBe(false);
+      const edge = useDiagramStore.getState().diagram.edges[0];
+      expect(edge.sourceSide).toBe('right');
+      expect(edge.targetSide).toBe('left');
+    });
+
+    it('re-optimizes against the current edge set when new edges are added', () => {
+      useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });
+
+      const edge1Source = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const edge1Target = useDiagramStore.getState().addNode({ x: -200, y: -200 });
+      useDiagramStore.getState().addEdge(edge1Source, edge1Target, {
+        sourceHandleId: 'source-bottom',
+        targetHandleId: 'target-top',
+      });
+
+      const initialOptimize = useDiagramStore.getState().optimizeEdges();
+      expect(initialOptimize).toBe(true);
+      let edge = useDiagramStore.getState().diagram.edges[0];
+      expect(edge.sourceSide).toBe('bottom');
+      expect(edge.targetSide).toBe('right');
+
+      const edge2Source = useDiagramStore.getState().addNode({ x: -200, y: 0 });
+      const edge2Target = useDiagramStore.getState().addNode({ x: 0, y: -200 });
+      useDiagramStore.getState().addEdge(edge2Source, edge2Target, {
+        sourceHandleId: 'source-top',
+        targetHandleId: 'target-bottom',
+      });
+
+      const reoptimized = useDiagramStore.getState().optimizeEdges();
+
+      expect(reoptimized).toBe(true);
+      edge = useDiagramStore.getState().diagram.edges[0];
+      expect(edge.sourceSide).toBe('right');
+      expect(edge.targetSide).toBe('right');
+    });
   });
 });

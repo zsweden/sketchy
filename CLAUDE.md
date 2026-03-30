@@ -20,6 +20,7 @@ A web-based thinking-frameworks diagram editor focused on structured reasoning. 
 - Keep functions under ~80 lines. Decompose longer ones.
 - No compatibility helpers or workarounds — fix the root cause.
 - Prefer framework additions that fit the current DAG model. Diagram types that require cycles or new structural primitives are product-level decisions, not just config work.
+- Keep cyclic layout logic isolated to `src/core/layout/`. Loop-specific placement, SCC handling, and cyclic heuristics must not change graph routing, stores, persistence, or UI code.
 
 ### Self-Improvement
 - Track rules that would have prevented bugs. After a 2nd occurrence, promote to this CLAUDE.md.
@@ -59,7 +60,7 @@ npm run lint && npx tsc --noEmit && npm run test:all
 - `src/core/graph/validation.ts` — DAG enforcement (no cycles, self-loops, duplicate edges)
 - `src/core/graph/derived.ts` — Compute node indicators from graph topology (root cause = indegree 0, etc.)
 - `src/core/history/undo-redo.ts` — Generic undo/redo with snapshot stack
-- `src/core/layout/` — Auto-layout with pluggable engine interface. ELK is lazy-loaded on first use
+- `src/core/layout/` — Auto-layout with pluggable engine interface. Tree and cyclic layout engines live here behind a shared boundary; ELK is lazy-loaded on first use
 - `src/core/persistence/` — session autosave, `.sky` file save/load, schema migrations, legacy format support
 
 ### Stores (Zustand)
@@ -97,3 +98,4 @@ Matches the Bricky project design:
 - **File format**: `.sky` is the canonical explicit save format. Loader also accepts legacy wrapped `.sky` and raw diagram JSON for backwards compatibility.
 - **Autosave model**: Diagram autosave uses `sessionStorage`; settings use `localStorage`.
 - **AI workflow**: The chat store streams text and can batch-apply node/edge mutations, then auto-layout the updated diagram.
+- **Layout boundary**: `autoLayout()` selects between a tree engine and a cyclic engine based on actual graph topology. Changes to loop readability should stay inside `src/core/layout` unless there is a deliberate product decision to change routing behavior.

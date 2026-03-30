@@ -4,7 +4,7 @@ import { useDiagramStore } from '../store/diagram-store';
 import { useUIStore } from '../store/ui-store';
 import { useSettingsStore } from '../store/settings-store';
 import { getSourceHandleId, getTargetHandleId } from '../core/graph/ports';
-import { getAutomaticEdgeSides, getStoredOrAutomaticEdgeSides } from '../store/diagram-helpers';
+import { getAutomaticEdgeSides, getOptimizedEdgePlacements, getStoredOrAutomaticEdgeSides } from '../store/diagram-helpers';
 import { getTheme } from '../styles/themes';
 import { ARROW_MARKER_SIZE } from '../constants/layout';
 import type { ConnectedSubgraph, NamedCausalLoop, NodeDegrees } from '../core/graph/derived';
@@ -34,6 +34,11 @@ export function useRFNodeEdgeBuilder(
     style: { strokeWidth: 2 },
   }), [activeTheme]);
 
+  const optimizedPlacements = useMemo(
+    () => getOptimizedEdgePlacements(diagram.edges, diagram.nodes, diagram.settings, { preferStored: false }),
+    [diagram.edges, diagram.nodes, diagram.settings],
+  );
+
   const rfNodes: Node[] = useMemo(
     () =>
       diagram.nodes.map((n) => ({
@@ -60,7 +65,7 @@ export function useRFNodeEdgeBuilder(
       return diagram.edges.map((e) => {
         const { sourceSide, targetSide } = edgeRoutingMode === 'fixed'
           ? getStoredOrAutomaticEdgeSides(e, diagram.nodes, diagram.settings)
-          : getAutomaticEdgeSides(e.source, e.target, diagram.nodes, diagram.settings);
+          : optimizedPlacements.get(e.id) ?? getAutomaticEdgeSides(e.source, e.target, diagram.nodes, diagram.settings);
 
         return {
           id: e.id,
@@ -104,7 +109,7 @@ export function useRFNodeEdgeBuilder(
         };
       });
     },
-    [diagram.edges, diagram.nodes, diagram.settings, edgeRoutingMode, framework, highlightSets, selectedLoop, selectedEdgeIds, activeTheme],
+    [diagram.edges, diagram.nodes, diagram.settings, edgeRoutingMode, framework, highlightSets, selectedLoop, selectedEdgeIds, activeTheme, optimizedPlacements],
   );
 
   return { rfNodes, rfEdges, defaultEdgeOptions, activeTheme };

@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  Route,
   Undo2,
   Redo2,
   PanelRightClose,
@@ -32,6 +33,7 @@ export default function Toolbar() {
   const moveNodesStore = useDiagramStore((s) => s.moveNodes);
   const commitToHistory = useDiagramStore((s) => s.commitToHistory);
   const loadDiagram = useDiagramStore((s) => s.loadDiagram);
+  const optimizeEdges = useDiagramStore((s) => s.optimizeEdges);
   const framework = useDiagramStore((s) => s.framework);
   const addToast = useUIStore((s) => s.addToast);
   const sidePanelOpen = useUIStore((s) => s.sidePanelOpen);
@@ -51,6 +53,7 @@ export default function Toolbar() {
   const hasSelection = selectedNodeIds.length > 0 || selectedEdgeIds.length > 0 || selectedLoopId !== null;
   const canAlign = selectedNodes.length >= 2;
   const canDistribute = selectedNodes.length >= 3;
+  const canOptimizeEdges = diagram.settings.edgeRoutingMode === 'fixed';
 
   const handleAlignH = useCallback(() => {
     commitToHistory();
@@ -105,6 +108,10 @@ export default function Toolbar() {
       requestFitView();
     }
   }, [diagram, framework.allowsCycles, commitToHistory, moveNodesStore, requestFitView]);
+
+  const handleAutoEdges = useCallback(() => {
+    optimizeEdges();
+  }, [optimizeEdges]);
 
   const handleSave = useCallback(async () => {
     try {
@@ -246,6 +253,15 @@ export default function Toolbar() {
           aria-label="Auto-layout"
         >
           <LayoutDashboard size={16} />
+        </button>
+        <button
+          className="btn btn-secondary btn-icon"
+          onClick={handleAutoEdges}
+          disabled={!canOptimizeEdges}
+          title="Auto edges"
+          aria-label="Auto edges"
+        >
+          <Route size={16} />
         </button>
 
         <div className="toolbar-divider" />
