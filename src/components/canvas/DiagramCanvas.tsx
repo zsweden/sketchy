@@ -22,8 +22,10 @@ import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { FIT_VIEW_OPTIONS } from '../../core/layout/fit-view-options';
 import {
+  computeNodeDegrees,
   findCausalLoops,
   getConnectedSubgraph,
+  getDerivedIndicators,
   getLoopSubgraph,
   labelCausalLoops,
 } from '../../core/graph/derived';
@@ -68,7 +70,6 @@ export default function DiagramCanvas() {
   const isPanMode = interactionMode === 'pan';
 
   const isDragging = useRef(false);
-  const lastPaneClickTime = useRef(0);
 
   const selectedLoop = useMemo(() => {
     if (!framework.allowsCycles || !selectedLoopId) return null;
@@ -298,22 +299,22 @@ export default function DiagramCanvas() {
     [addEdgeStore, addToast],
   );
 
-  const onPaneClickHandler = useCallback(
-    (event: React.MouseEvent) => {
-      closeContextMenu();
-      const now = Date.now();
-      if (now - lastPaneClickTime.current < 300) {
-        const position = screenToFlowPosition({
-          x: event.clientX,
-          y: event.clientY,
-        });
-        addNode(position);
-        lastPaneClickTime.current = 0;
-      } else {
-        lastPaneClickTime.current = now;
-      }
+  const onPaneClickHandler = useCallback(() => {
+    closeContextMenu();
+  }, [closeContextMenu]);
+
+  const onCanvasDoubleClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!(event.target instanceof Element)) return;
+      if (!event.target.closest('.react-flow__pane')) return;
+
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+      addNode(position);
     },
-    [screenToFlowPosition, addNode, closeContextMenu],
+    [screenToFlowPosition, addNode],
   );
 
   const onSelectionChange = useCallback(
@@ -349,54 +350,55 @@ export default function DiagramCanvas() {
   );
 
   return (
-    <ReactFlow
-      data-testid="diagram-flow"
-      nodes={localNodes}
-      edges={localEdges}
-      nodeTypes={nodeTypes}
-      defaultEdgeOptions={defaultEdgeOptions}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onNodeDragStop={onNodeDragStop}
-      onConnect={onConnect}
-      onSelectionChange={onSelectionChange}
-      onPaneContextMenu={onPaneContextMenu}
-      onNodeContextMenu={onNodeContextMenu}
-      onEdgeContextMenu={onEdgeContextMenu}
-      onPaneClick={onPaneClickHandler}
-      fitView
-      fitViewOptions={FIT_VIEW_OPTIONS}
-      deleteKeyCode={['Backspace', 'Delete']}
-      multiSelectionKeyCode="Shift"
-      selectionOnDrag={!isPanMode}
-      panOnDrag={isPanMode ? [0, 1, 2] : [1, 2]}
-      nodesDraggable={!isPanMode}
-      nodesConnectable={!isPanMode}
-      elementsSelectable={!isPanMode}
-      proOptions={{ hideAttribution: true }}
-      className={isPanMode ? 'pan-mode' : ''}
-    >
-      {diagram.settings.showGrid && (
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
-      )}
-      <Controls fitViewOptions={FIT_VIEW_OPTIONS} showInteractive={false} />
-      <MiniMap
-        pannable
-        zoomable
-        nodeColor={(node) => {
-          const data = node.data as { tags?: string[] };
-          // User-applied tags take priority
-          const tagColor = data?.tags
-            ?.map((t) => framework.nodeTags.find((nt) => nt.id === t))
-            .find(Boolean)?.color;
-          if (tagColor) return tagColor;
-          // Then derived indicators (root-cause = blue, intermediate = grey)
-          const degreesMap = computeNodeDegrees(diagram.edges);
-          const derived = getDerivedIndicators(node.id, degreesMap, framework.derivedIndicators);
-          if (derived.length > 0) return derived[0].color;
-          return '#D4D0C6';
-        }}
-      />
-    </ReactFlow>
+    <div data-testid="diagram-flow" onDoubleClickCapture={onCanvasDoubleClick} style={{ width: '100%', height: '100%' }}>
+      <ReactFlow
+        nodes={localNodes}
+        edges={localEdges}
+        nodeTypes={nodeTypes}
+        defaultEdgeOptions={defaultEdgeOptions}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onNodeDragStop={onNodeDragStop}
+        onConnect={onConnect}
+        onSelectionChange={onSelectionChange}
+        onPaneContextMenu={onPaneContextMenu}
+        onNodeContextMenu={onNodeContextMenu}
+        onEdgeContextMenu={onEdgeContextMenu}
+        onPaneClick={onPaneClickHandler}
+        fitView
+        fitViewOptions={FIT_VIEW_OPTIONS}
+        deleteKeyCode={['Backspace', 'Delete']}
+        multiSelectionKeyCode="Shift"
+        selectionOnDrag={!isPanMode}
+        panOnDrag={isPanMode ? [0, 1, 2] : [1, 2]}
+        nodesDraggable={!isPanMode}
+        nodesConnectable={!isPanMode}
+        elementsSelectable={!isPanMode}
+        proOptions={{ hideAttribution: true }}
+        className={isPanMode ? 'pan-mode' : ''}
+      >
+        {diagram.settings.showGrid && (
+          <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
+        )}
+        <Controls fitViewOptions={FIT_VIEW_OPTIONS} showInteractive={false} />
+        <MiniMap
+          pannable
+          zoomable
+          nodeColor={(node) => {
+            const data = node.data as { tags?: string[] };
+            // User-applied tags take priority
+            const tagColor = data?.tags
+              ?.map((t) => framework.nodeTags.find((nt) => nt.id === t))
+              .find(Boolean)?.color;
+            if (tagColor) return tagColor;
+            // Then derived indicators (root-cause = blue, intermediate = grey)
+            const degreesMap = computeNodeDegrees(diagram.edges);
+            const derived = getDerivedIndicators(node.id, degreesMap, framework.derivedIndicators);
+            if (derived.length > 0) return derived[0].color;
+            return '#D4D0C6';
+          }}
+        />
+      </ReactFlow>
+    </div>
   );
 }
