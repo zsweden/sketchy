@@ -128,6 +128,15 @@
   stroke-width: 2.5 !important;
 }
 
+/* Animate edge when directly selected via click */
+.react-flow__edge.edge-selected-animated .react-flow__edge-path {
+  stroke: var(--accent) !important;
+  stroke-width: 2.5 !important;
+  stroke-dasharray: 12 6;
+  animation: edge-flow 0.8s linear infinite;
+}
+
+
 .react-flow__minimap {
   border-radius: 0.75rem !important;
   overflow: hidden !important;

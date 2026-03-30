@@ -39,7 +39,7 @@ const nodeTypes = { entity: EntityNode };
 
 const defaultEdgeOptions = {
   type: 'smoothstep',
-  markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: '#212121' },
+  markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: '#8A8A7A' },
   style: { strokeWidth: 2 },
 };
 
@@ -55,6 +55,7 @@ export default function DiagramCanvas() {
   const deleteEdges = useDiagramStore((s) => s.deleteEdges);
 
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
+  const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
   const selectedLoopId = useUIStore((s) => s.selectedLoopId);
   const setSelectedNodes = useUIStore((s) => s.setSelectedNodes);
   const setSelectedEdges = useUIStore((s) => s.setSelectedEdges);
@@ -80,9 +81,20 @@ export default function DiagramCanvas() {
   // Loop focus overrides single-node neighborhood highlight.
   const highlightSets = useMemo(() => {
     if (selectedLoop) return getLoopSubgraph(selectedLoop);
-    if (selectedNodeIds.length !== 1) return null;
-    return getConnectedSubgraph(diagram.edges, selectedNodeIds[0]);
-  }, [selectedLoop, selectedNodeIds, diagram.edges]);
+    if (selectedNodeIds.length === 1) {
+      return getConnectedSubgraph(diagram.edges, selectedNodeIds[0]);
+    }
+    if (selectedEdgeIds.length === 1 && selectedNodeIds.length === 0) {
+      const edge = diagram.edges.find((e) => e.id === selectedEdgeIds[0]);
+      if (edge) {
+        return {
+          nodeIds: new Set([edge.source, edge.target]),
+          edgeIds: new Set([edge.id]),
+        };
+      }
+    }
+    return null;
+  }, [selectedLoop, selectedNodeIds, selectedEdgeIds, diagram.edges]);
 
   // Build React Flow nodes from diagram, letting RF manage selection
   const rfNodes: Node[] = useMemo(
@@ -150,6 +162,9 @@ export default function DiagramCanvas() {
           sourceHandle: getSourceHandleId(sourceSide),
           targetHandle: getTargetHandleId(targetSide),
           pathOptions: { borderRadius: 100 },
+          ...((selectedEdgeIds.includes(e.id) || highlightSets?.edgeIds.has(e.id)) && {
+            markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: '#212121' },
+          }),
           className: [
             `edge-confidence-${e.confidence ?? 'high'}`,
             highlightSets
@@ -158,11 +173,12 @@ export default function DiagramCanvas() {
             selectedLoop && highlightSets?.edgeIds.has(e.id)
               ? `edge-loop-${selectedLoop.kind}`
               : '',
+            selectedEdgeIds.includes(e.id) ? 'edge-selected-animated' : '',
           ].join(' '),
         };
       });
     },
-    [diagram.edges, diagram.nodes, direction, edgeRoutingMode, framework, highlightSets, selectedLoop],
+    [diagram.edges, diagram.nodes, direction, edgeRoutingMode, framework, highlightSets, selectedLoop, selectedEdgeIds],
   );
 
   // Local state for React Flow selection/interaction
