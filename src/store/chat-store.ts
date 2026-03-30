@@ -89,7 +89,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           const assistantMsg: DisplayMessage = {
             id: crypto.randomUUID(),
             role: 'assistant',
-            content: result.text,
+            content: result.text.trim(),
             modifications: result.modifications,
           };
 

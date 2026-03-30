@@ -58,11 +58,11 @@ test('creates a node, edits it from the inspector, and restores it after reload'
   await expect(page.locator('.entity-node').first()).toContainText('Root cause');
 });
 
-test('shows fallback message for custom provider with no endpoint and supports framework switching', async ({ page }) => {
+test('supports local chat fallback and framework switching in the browser', async ({ page }) => {
   await page.evaluate(() => {
     localStorage.setItem(
       'sketchy-settings',
-      JSON.stringify({ apiKey: 'sk-test', baseUrl: '', model: '', provider: 'custom' }),
+      JSON.stringify({ apiKey: '', baseUrl: '', model: '', provider: 'custom' }),
     );
   });
   await page.reload();
