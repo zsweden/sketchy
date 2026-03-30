@@ -28,6 +28,7 @@ export interface LayoutResult {
 
 export interface LayoutEngineOptions {
   direction: LayoutDirection;
+  cyclic?: boolean;
 }
 
 /** A layout engine computes top-left positions for a set of nodes. */

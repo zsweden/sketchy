@@ -47,6 +47,16 @@ export function isNonChatModel(modelId: string): boolean {
 
 // --- Format ---
 
+/** Normalize OpenAI `created` (unix seconds) or Anthropic `created_at` (ISO string) to unix seconds. */
+function parseCreated(raw: { created?: number; created_at?: string }): number | null {
+  if (typeof raw.created === 'number') return raw.created;
+  if (typeof raw.created_at === 'string') {
+    const ms = Date.parse(raw.created_at);
+    return Number.isNaN(ms) ? null : Math.floor(ms / 1000);
+  }
+  return null;
+}
+
 export function formatModelDate(created: number | null): string {
   if (!created) return '';
   const d = new Date(created * 1000);
@@ -109,10 +119,10 @@ export async function fetchAvailableModels(
 
     const json = await res.json();
     const all: ModelInfo[] = (json.data ?? []).map(
-      (m: { id: string; owned_by?: string; created?: number }) => ({
+      (m: { id: string; owned_by?: string; created?: number; created_at?: string }) => ({
         id: m.id,
         owned_by: m.owned_by ?? 'unknown',
-        created: m.created ?? null,
+        created: parseCreated(m),
       }),
     );
 

@@ -33,12 +33,12 @@ describe('isNonChatModel', () => {
 describe('fetchAvailableModels', () => {
   const mockModelsResponse = {
     data: [
-      { id: 'gpt-4o', owned_by: 'openai' },
-      { id: 'gpt-4o-mini', owned_by: 'openai' },
-      { id: 'text-embedding-3-small', owned_by: 'openai' },
-      { id: 'tts-1', owned_by: 'openai' },
-      { id: 'dall-e-3', owned_by: 'openai' },
-      { id: 'o3-mini', owned_by: 'openai' },
+      { id: 'gpt-4o', owned_by: 'openai', created: 1715367049 },
+      { id: 'gpt-4o-mini', owned_by: 'openai', created: 1721172600 },
+      { id: 'text-embedding-3-small', owned_by: 'openai', created: 1705948800 },
+      { id: 'tts-1', owned_by: 'openai', created: 1699401600 },
+      { id: 'dall-e-3', owned_by: 'openai', created: 1698796800 },
+      { id: 'o3-mini', owned_by: 'openai', created: 1737590400 },
     ],
   };
 
@@ -50,14 +50,32 @@ describe('fetchAvailableModels', () => {
     vi.unstubAllGlobals();
   });
 
-  it('fetches and filters to chat models only, sorted alphabetically', async () => {
+  it('fetches and filters to chat models only, sorted newest first', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockModelsResponse),
     }));
 
     const models = await fetchAvailableModels('https://api.openai.com/v1', 'sk-test');
-    expect(models.map((m) => m.id)).toEqual(['gpt-4o', 'gpt-4o-mini', 'o3-mini']);
+    expect(models.map((m) => m.id)).toEqual(['o3-mini', 'gpt-4o-mini', 'gpt-4o']);
+  });
+
+  it('parses Anthropic created_at (ISO string) and sorts newest first', async () => {
+    const anthropicResponse = {
+      data: [
+        { id: 'claude-haiku-4-5', type: 'model', created_at: '2025-10-01T00:00:00Z' },
+        { id: 'claude-sonnet-4-6', type: 'model', created_at: '2026-02-17T00:00:00Z' },
+        { id: 'claude-opus-4-6', type: 'model', created_at: '2026-01-15T00:00:00Z' },
+      ],
+    };
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(anthropicResponse),
+    }));
+
+    const models = await fetchAvailableModels('https://api.anthropic.com/v1', 'sk-ant-test', undefined, 'anthropic');
+    expect(models.map((m) => m.id)).toEqual(['claude-sonnet-4-6', 'claude-opus-4-6', 'claude-haiku-4-5']);
+    expect(models[0].created).toBe(Math.floor(Date.parse('2026-02-17T00:00:00Z') / 1000));
   });
 
   it('sends Authorization header when apiKey is provided', async () => {

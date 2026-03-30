@@ -32,7 +32,10 @@ export async function autoLayout(
   });
   const edgeInputs = edges.map((e) => ({ source: e.source, target: e.target }));
 
-  const results = await engine(inputs, edgeInputs, { direction: options.direction });
+  const results = await engine(inputs, edgeInputs, {
+    direction: options.direction,
+    cyclic: options.cyclic,
+  });
 
   const adjustedResults = options.cyclic
     ? relaxCyclicComponents(inputs, edges, results, options.direction)
@@ -117,7 +120,6 @@ function applyForceRelaxation(
   }
 
   const avgWidth = sorted.reduce((sum, entry) => sum + entry.node.width, 0) / sorted.length;
-  const avgHeight = sorted.reduce((sum, entry) => sum + entry.node.height, 0) / sorted.length;
   const idealEdgeLength = Math.max(120, avgWidth * 0.55);
   const repulsion = Math.max(90, avgWidth * 0.45);
   const iterations = Math.min(200, Math.max(96, sorted.length * 22));
@@ -175,7 +177,8 @@ function applyForceRelaxation(
         dy = bias.y;
         dist = Math.hypot(dx, dy);
       }
-      const degreeBias = ((connectionCounts.get(edge.source) ?? 0) + (connectionCounts.get(edge.target) ?? 0)) * 2;
+      const degreeBias =
+        ((connectionCounts.get(edge.source) ?? 0) + (connectionCounts.get(edge.target) ?? 0)) * 2;
       const force = (dist - (idealEdgeLength + degreeBias)) * springStrength;
       const ux = dx / dist;
       const uy = dy / dist;

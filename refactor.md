@@ -23,19 +23,22 @@ Grid size (20), node defaults (240x48), timeouts (1500, 150), marker size (14) a
 ## Medium Effort
 
 ### 4. Decompose DiagramCanvas (454 lines)
-Extract custom hooks: `useCanvasHighlighting`, `useRFStateSync`, `useCanvasHandlers`.
-- **Impact**: Testable units, cleaner component
-- **Effort**: 1-2 hours
+Extract custom hooks: `useCanvasHighlighting`, `useRFNodeEdgeBuilder`.
+- **Impact**: Testable units, cleaner component (454 → ~250 lines)
+- **Files**: `src/hooks/useCanvasHighlighting.ts`, `src/hooks/useRFNodeEdgeBuilder.ts`
+- **Status**: Done
 
 ### 5. Split diagram-store (771 lines)
-Separate node ops, edge ops, batch ops into slice files.
-- **Impact**: Most impactful for long-term maintainability
-- **Effort**: 2-3 hours
+Extract batch ops, edge routing, framework helpers into `diagram-helpers.ts`.
+- **Impact**: Store reduced from 771 → 569 lines; 227-line helpers file is independently testable
+- **Files**: `src/store/diagram-helpers.ts`
+- **Status**: Done
 
 ### 6. Extract LoopCard component
 Identical loop display pattern in NodePanel and SettingsPanel.
-- **Impact**: Single source of truth for loop UI
-- **Effort**: 20 min
+- **Impact**: Single source of truth for loop UI; also fixed remaining hardcoded loop colors in SettingsPanel
+- **Files**: `src/components/form/LoopCard.tsx`
+- **Status**: Done
 
 ## Architecture Notes
 

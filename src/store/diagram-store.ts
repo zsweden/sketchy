@@ -7,17 +7,24 @@ import type {
   EdgeConfidence,
   EdgePolarity,
 } from '../core/types';
-import { createEmptyDiagram } from '../core/types';
 import type { Framework } from '../core/framework-types';
 import { getFramework } from '../frameworks/registry';
 import { validateEdge, findExistingEdge } from '../core/graph/validation';
 import { UndoRedoManager } from '../core/history/undo-redo';
-import { getEdgeHandlePlacement, getSideFromHandleId } from '../core/graph/ports';
-
-interface DiagramSnapshot {
-  nodes: DiagramNode[];
-  edges: DiagramEdge[];
-}
+import {
+  getDefaultFramework,
+  createDiagramForFramework,
+  getDefaultEdgeFields,
+  resolveEdgeSides,
+  freezeEdgeSides,
+  snapshot,
+  batchAddNodes,
+  batchUpdateNodes,
+  batchRemoveNodes,
+  batchAddEdges,
+  batchUpdateEdges,
+  batchRemoveEdges,
+} from './diagram-helpers';
 
 export interface BatchMutations {
   addNodes?: { id: string; label: string; tags?: string[]; notes?: string }[];
@@ -39,6 +46,11 @@ export interface BatchMutations {
     notes?: string;
   }[];
   removeEdgeIds?: string[];
+}
+
+interface DiagramSnapshot {
+  nodes: DiagramNode[];
+  edges: DiagramEdge[];
 }
 
 const history = new UndoRedoManager<DiagramSnapshot>();
@@ -90,220 +102,6 @@ interface DiagramState {
   canUndo: boolean;
   canRedo: boolean;
   commitToHistory: () => void;
-}
-
-function getDefaultFramework(): Framework {
-  const fw = getFramework('crt');
-  if (!fw) throw new Error('CRT framework not registered');
-  return fw;
-}
-
-function createDiagramForFramework(framework: Framework): Diagram {
-  const diagram = createEmptyDiagram(framework.id);
-  return {
-    ...diagram,
-    settings: {
-      ...diagram.settings,
-      layoutDirection: framework.defaultLayoutDirection,
-    },
-  };
-}
-
-function getDefaultEdgeFields(framework: Framework): Pick<DiagramEdge, 'polarity' | 'delay'> {
-  return {
-    ...(framework.supportsEdgePolarity ? { polarity: 'positive' as const } : {}),
-    ...(framework.supportsEdgeDelay ? { delay: false } : {}),
-  };
-}
-
-function getNodePositionMap(nodes: DiagramNode[]): Map<string, { x: number; y: number }> {
-  return new Map(nodes.map((node) => [node.id, node.position]));
-}
-
-function resolveEdgeSides(
-  source: string,
-  target: string,
-  nodes: DiagramNode[],
-  settings: DiagramSettings,
-  handles?: {
-    sourceHandleId?: string | null;
-    targetHandleId?: string | null;
-  },
-): Pick<DiagramEdge, 'sourceSide' | 'targetSide'> {
-  const explicitSourceSide = getSideFromHandleId(handles?.sourceHandleId, 'source');
-  const explicitTargetSide = getSideFromHandleId(handles?.targetHandleId, 'target');
-
-  if (explicitSourceSide && explicitTargetSide) {
-    return {
-      sourceSide: explicitSourceSide,
-      targetSide: explicitTargetSide,
-    };
-  }
-
-  const positions = getNodePositionMap(nodes);
-  const placement = getEdgeHandlePlacement(
-    positions.get(source),
-    positions.get(target),
-    settings.layoutDirection,
-  );
-
-  return {
-    sourceSide: explicitSourceSide ?? placement.sourceSide,
-    targetSide: explicitTargetSide ?? placement.targetSide,
-  };
-}
-
-function freezeEdgeSides(
-  edges: DiagramEdge[],
-  nodes: DiagramNode[],
-  settings: DiagramSettings,
-): DiagramEdge[] {
-  return edges.map((edge) => ({
-    ...edge,
-    ...resolveEdgeSides(edge.source, edge.target, nodes, settings, {
-      sourceHandleId: edge.sourceSide ? `source-${edge.sourceSide}` : undefined,
-      targetHandleId: edge.targetSide ? `target-${edge.targetSide}` : undefined,
-    }),
-  }));
-}
-
-function snapshot(state: { diagram: Diagram }): DiagramSnapshot {
-  return {
-    nodes: state.diagram.nodes,
-    edges: state.diagram.edges,
-  };
-}
-
-// --- Batch mutation helpers ---
-
-function batchAddNodes(
-  mutations: BatchMutations,
-  idMap: Map<string, string>,
-  nodes: DiagramNode[],
-): DiagramNode[] {
-  for (const n of mutations.addNodes ?? []) {
-    const realId = crypto.randomUUID();
-    idMap.set(n.id, realId);
-    nodes.push({
-      id: realId,
-      type: 'entity',
-      position: { x: 0, y: 0 },
-      data: {
-        label: n.label,
-        tags: n.tags ?? [],
-        junctionType: 'or',
-        ...(n.notes ? { notes: n.notes } : {}),
-      },
-    });
-  }
-  return nodes;
-}
-
-function batchUpdateNodes(
-  mutations: BatchMutations,
-  idMap: Map<string, string>,
-  nodes: DiagramNode[],
-): DiagramNode[] {
-  for (const upd of mutations.updateNodes ?? []) {
-    const realId = idMap.get(upd.id) ?? upd.id;
-    nodes = nodes.map((node) => {
-      if (node.id !== realId) return node;
-      return {
-        ...node,
-        data: {
-          ...node.data,
-          ...(upd.label !== undefined ? { label: upd.label } : {}),
-          ...(upd.tags !== undefined ? { tags: upd.tags } : {}),
-          ...(upd.notes !== undefined ? { notes: upd.notes || undefined } : {}),
-        },
-      };
-    });
-  }
-  return nodes;
-}
-
-function batchRemoveNodes(
-  mutations: BatchMutations,
-  idMap: Map<string, string>,
-  nodes: DiagramNode[],
-  edges: DiagramEdge[],
-): { nodes: DiagramNode[]; edges: DiagramEdge[] } {
-  if (!mutations.removeNodeIds?.length) return { nodes, edges };
-  const removeSet = new Set(mutations.removeNodeIds.map((id) => idMap.get(id) ?? id));
-  return {
-    nodes: nodes.filter((n) => !removeSet.has(n.id)),
-    edges: edges.filter((e) => !removeSet.has(e.source) && !removeSet.has(e.target)),
-  };
-}
-
-function batchAddEdges(
-  mutations: BatchMutations,
-  idMap: Map<string, string>,
-  nodes: DiagramNode[],
-  edges: DiagramEdge[],
-  framework: Framework,
-  settings: DiagramSettings,
-): { nodes: DiagramNode[]; edges: DiagramEdge[] } {
-  const nodeIds = new Set(nodes.map((n) => n.id));
-  for (const e of mutations.addEdges ?? []) {
-    const source = idMap.get(e.source) ?? e.source;
-    const target = idMap.get(e.target) ?? e.target;
-    if (!nodeIds.has(source) || !nodeIds.has(target)) continue;
-    const result = validateEdge(edges, source, target, {
-      allowCycles: framework.allowsCycles,
-    });
-    if (result.valid) {
-      const routingSides = settings.edgeRoutingMode === 'fixed'
-        ? resolveEdgeSides(source, target, nodes, settings)
-        : {};
-      edges.push({
-        id: crypto.randomUUID(),
-        source,
-        target,
-        ...routingSides,
-        ...(e.confidence && e.confidence !== 'high' ? { confidence: e.confidence } : {}),
-        ...(framework.supportsEdgePolarity ? { polarity: e.polarity ?? 'positive' as const } : {}),
-        ...(framework.supportsEdgeDelay && e.delay ? { delay: true } : {}),
-        ...(e.notes ? { notes: e.notes } : {}),
-      });
-      const incomingCount = edges.filter((ex) => ex.target === target).length;
-      if (framework.supportsJunctions && incomingCount === 2) {
-        nodes = nodes.map((n) =>
-          n.id === target ? { ...n, data: { ...n.data, junctionType: 'or' as const } } : n,
-        );
-      }
-    }
-  }
-  return { nodes, edges };
-}
-
-function batchUpdateEdges(
-  mutations: BatchMutations,
-  edges: DiagramEdge[],
-  framework: Framework,
-): DiagramEdge[] {
-  for (const upd of mutations.updateEdges ?? []) {
-    const updates: Partial<DiagramEdge> = {};
-    if (upd.confidence) updates.confidence = upd.confidence;
-    if (framework.supportsEdgePolarity && upd.polarity) updates.polarity = upd.polarity;
-    if (framework.supportsEdgeDelay && upd.delay !== undefined) updates.delay = upd.delay;
-    if (upd.notes !== undefined) updates.notes = upd.notes || undefined;
-    if (Object.keys(updates).length > 0) {
-      edges = edges.map((e) =>
-        e.id === upd.id ? { ...e, ...updates } : e,
-      );
-    }
-  }
-  return edges;
-}
-
-function batchRemoveEdges(
-  mutations: BatchMutations,
-  edges: DiagramEdge[],
-): DiagramEdge[] {
-  if (!mutations.removeEdgeIds?.length) return edges;
-  const removeSet = new Set(mutations.removeEdgeIds);
-  return edges.filter((e) => !removeSet.has(e.id));
 }
 
 export const useDiagramStore = create<DiagramState>((set, get) => ({
