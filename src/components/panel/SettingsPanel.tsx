@@ -4,10 +4,8 @@ import { useUIStore } from '../../store/ui-store';
 import { findCausalLoops, labelCausalLoops, summarizeCausalLoops } from '../../core/graph/derived';
 
 export default function SettingsPanel() {
-  const settings = useDiagramStore((s) => s.diagram.settings);
   const nodes = useDiagramStore((s) => s.diagram.nodes);
   const edges = useDiagramStore((s) => s.diagram.edges);
-  const updateSettings = useDiagramStore((s) => s.updateSettings);
   const diagramName = useDiagramStore((s) => s.diagram.name);
   const setDiagramName = useDiagramStore((s) => s.setDiagramName);
   const selectedLoopId = useUIStore((s) => s.selectedLoopId);
