@@ -52,18 +52,6 @@ export default function SettingsPanel() {
         </p>
       </div>
 
-      {/* Grid */}
-      <div className="control-row split-row">
-        <p className="field-label">Show Grid</p>
-        <button
-          className="toggle-track"
-          data-active={settings.showGrid}
-          onClick={() => updateSettings({ showGrid: !settings.showGrid })}
-          aria-label="Toggle grid"
-        >
-          <div className="toggle-thumb" />
-        </button>
-      </div>
 
       {framework.allowsCycles && (
         <div className="section-stack" style={{ gap: '0.5rem' }}>
