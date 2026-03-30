@@ -29,6 +29,8 @@ export default function ContextMenu() {
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
   const updateNodeColor = useDiagramStore((s) => s.updateNodeColor);
   const setEdgeConfidence = useDiagramStore((s) => s.setEdgeConfidence);
+  const setEdgePolarity = useDiagramStore((s) => s.setEdgePolarity);
+  const setEdgeDelay = useDiagramStore((s) => s.setEdgeDelay);
   const toggleNodeLocked = useDiagramStore((s) => s.toggleNodeLocked);
 
   const menuRef = useRef<HTMLDivElement>(null);
@@ -167,6 +169,51 @@ export default function ContextMenu() {
         </>
       ) : edge ? (
         <>
+          {/* Polarity */}
+          {framework.supportsEdgePolarity && (
+            <>
+              <div className="context-menu-label">Polarity</div>
+              {([
+                { value: 'positive' as const, label: 'Positive (+)' },
+                { value: 'negative' as const, label: 'Negative (-)' },
+              ]).map((p) => {
+                const current = edge.polarity ?? 'positive';
+                return (
+                  <button
+                    key={p.value}
+                    className="context-menu-item"
+                    onClick={() => {
+                      setEdgePolarity(edge.id, p.value);
+                      closeContextMenu();
+                    }}
+                  >
+                    {p.label}
+                    {current === p.value && <Check size={14} style={{ marginLeft: 'auto' }} />}
+                  </button>
+                );
+              })}
+              <div className="context-menu-separator" />
+            </>
+          )}
+
+          {/* Delay */}
+          {framework.supportsEdgeDelay && (
+            <>
+              <button
+                className="context-menu-item"
+                onClick={() => {
+                  setEdgeDelay(edge.id, !edge.delay);
+                  closeContextMenu();
+                }}
+              >
+                {edge.delay ? 'Remove Delay' : 'Add Delay'}
+                {edge.delay && <Check size={14} style={{ marginLeft: 'auto' }} />}
+              </button>
+              <div className="context-menu-separator" />
+            </>
+          )}
+
+          {/* Confidence */}
           <div className="context-menu-label">Confidence</div>
           {(['high', 'medium', 'low'] as const).map((level) => {
             const current = edge.confidence ?? 'high';
