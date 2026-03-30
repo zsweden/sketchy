@@ -16,6 +16,17 @@ const NODE_COLORS = [
   { id: 'pink', label: 'Pink', value: '#FBCFE8' },
 ];
 
+const TEXT_COLORS = [
+  { id: 'none', label: 'Default', value: undefined },
+  { id: 'black', label: 'Black', value: '#1A1A1A' },
+  { id: 'white', label: 'White', value: '#FFFFFF' },
+  { id: 'red', label: 'Red', value: '#DC2626' },
+  { id: 'orange', label: 'Orange', value: '#EA580C' },
+  { id: 'green', label: 'Green', value: '#16A34A' },
+  { id: 'blue', label: 'Blue', value: '#2563EB' },
+  { id: 'purple', label: 'Purple', value: '#7C3AED' },
+];
+
 export default function ContextMenu() {
   const contextMenu = useUIStore((s) => s.contextMenu);
   const closeContextMenu = useUIStore((s) => s.closeContextMenu);
@@ -28,6 +39,7 @@ export default function ContextMenu() {
   const updateNodeTags = useDiagramStore((s) => s.updateNodeTags);
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
   const updateNodeColor = useDiagramStore((s) => s.updateNodeColor);
+  const updateNodeTextColor = useDiagramStore((s) => s.updateNodeTextColor);
   const setEdgeConfidence = useDiagramStore((s) => s.setEdgeConfidence);
   const setEdgePolarity = useDiagramStore((s) => s.setEdgePolarity);
   const setEdgeDelay = useDiagramStore((s) => s.setEdgeDelay);
@@ -108,8 +120,8 @@ export default function ContextMenu() {
             </>
           )}
 
-          {/* Color palette */}
-          <div className="context-menu-label">Color</div>
+          {/* Background color palette */}
+          <div className="context-menu-label">Background</div>
           <div className="context-menu-colors">
             {NODE_COLORS.map((c) => (
               <button
@@ -120,6 +132,24 @@ export default function ContextMenu() {
                 title={c.label}
                 onClick={() => {
                   updateNodeColor(node.id, c.value);
+                  closeContextMenu();
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Text color palette */}
+          <div className="context-menu-label">Text Color</div>
+          <div className="context-menu-colors">
+            {TEXT_COLORS.map((c) => (
+              <button
+                key={c.id}
+                className="color-swatch"
+                data-active={node.data.textColor === c.value || (!node.data.textColor && !c.value)}
+                style={{ backgroundColor: c.value ?? 'var(--text)' }}
+                title={c.label}
+                onClick={() => {
+                  updateNodeTextColor(node.id, c.value);
                   closeContextMenu();
                 }}
               />

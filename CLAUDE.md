@@ -11,6 +11,7 @@ A web-based thinking-frameworks diagram editor focused on structured reasoning. 
 ### Testing
 - TDD by default — write failing tests before implementation when practical.
 - Every bug fix must include a test proving it's fixed and preventing regression.
+- Every new feature must ship with tests — no exceptions, even for "small" UI changes. Add unit tests for new logic/state and E2E tests for new user-facing behavior.
 - Never modify tests to make them pass — investigate the root cause.
 - Verify before done: `npm run lint && npx tsc --noEmit && npx vitest run`.
 

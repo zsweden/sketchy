@@ -35,9 +35,14 @@ export default function ChatPanel() {
 
   const provider = useSettingsStore((s) => s.provider);
   const apiKey = useSettingsStore((s) => s.openaiApiKey);
+  const availableModels = useSettingsStore((s) => s.availableModels);
+  const modelsLoading = useSettingsStore((s) => s.modelsLoading);
+  const modelsError = useSettingsStore((s) => s.modelsError);
   const toggleSettings = useSettingsStore((s) => s.toggleSettings);
   const currentProvider = PROVIDERS.find((p) => p.id === provider) ?? PROVIDERS[0];
-  const isConfigured = !currentProvider.requiresKey || apiKey.length > 0;
+  const isConfigured = currentProvider.requiresKey
+    ? apiKey.length > 0 && !modelsLoading && !modelsError && availableModels.length > 0
+    : !modelsLoading && !modelsError && availableModels.length > 0;
 
   const [input, setInput] = useState('');
   const [historyIndex, setHistoryIndex] = useState(-1);

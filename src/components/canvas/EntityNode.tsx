@@ -10,6 +10,7 @@ interface EntityNodeData {
   tags: string[];
   junctionType: 'and' | 'or';
   color?: string;
+  textColor?: string;
   locked?: boolean;
   highlightState?: 'highlighted' | 'dimmed' | 'none';
   loopKind?: 'reinforcing' | 'balancing';
@@ -149,6 +150,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
           <textarea
             ref={textareaRef}
             className="entity-node-textarea nodrag nowheel"
+            style={nodeData.textColor ? { color: nodeData.textColor } : undefined}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onBlur={handleBlur}
@@ -157,7 +159,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
             placeholder="Enter text..."
           />
         ) : (
-          <div className="entity-node-label">
+          <div className="entity-node-label" style={nodeData.textColor ? { color: nodeData.textColor } : undefined}>
             {nodeData.label || (
               <span style={{ color: 'var(--text-soft)', fontStyle: 'italic' }}>
                 Double-click to edit

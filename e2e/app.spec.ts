@@ -270,3 +270,153 @@ test('clicking a node highlights connected edges and dims unconnected nodes', as
   await expect(page.locator('.edge-highlighted')).toHaveCount(0);
   await expect(page.locator('.entity-node.dimmed')).toHaveCount(0);
 });
+
+// --- 10. Mascot renders ---
+
+test('mascot image renders in toolbar', async ({ page }) => {
+  const mascot = page.locator('.app-mascot');
+  await expect(mascot).toBeVisible();
+  await expect(mascot).toHaveAttribute('src', '/mascot.svg');
+});
+
+// --- 11. Theme switching ---
+
+test('theme switching updates CSS variables on the document', async ({ page }) => {
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await expect(page.locator('.settings-popover')).toBeVisible();
+
+  // Switch to Nord
+  await page.getByLabel('Theme').selectOption('nord');
+
+  const accent = await page.evaluate(() =>
+    document.documentElement.style.getPropertyValue('--accent'),
+  );
+  expect(accent).toBe('#88C0D0');
+
+  // Switch to Rose (light theme)
+  await page.getByLabel('Theme').selectOption('rose');
+  const roseAccent = await page.evaluate(() =>
+    document.documentElement.style.getPropertyValue('--accent'),
+  );
+  expect(roseAccent).toBe('#E11D48');
+});
+
+// --- 12. Snap-to-grid toggle ---
+
+test('snap-to-grid setting persists to diagram settings', async ({ page }) => {
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await expect(page.locator('.settings-popover')).toBeVisible();
+
+  // Default is off
+  const initialSnap = await page.evaluate(() => {
+    const raw = sessionStorage.getItem('sketchy_diagram');
+    if (!raw) return null;
+    return JSON.parse(raw).settings?.snapToGrid;
+  });
+  expect(initialSnap).toBeFalsy();
+
+  // Toggle snap on
+  await page.getByLabel('Toggle snap to grid').click();
+
+  // Verify it persisted
+  await page.waitForFunction(() => {
+    const raw = sessionStorage.getItem('sketchy_diagram');
+    if (!raw) return false;
+    return JSON.parse(raw).settings?.snapToGrid === true;
+  });
+});
+
+// --- 13. Node locking ---
+
+test('locked node shows lock indicator and survives auto-layout', async ({ page }) => {
+  await createNode(page, 200, 250);
+  const node = page.locator('.entity-node').first();
+  await expect(node).toHaveCount(1);
+
+  // Right-click to lock
+  await page.locator('.react-flow__node').first().click({ button: 'right' });
+  await expect(page.locator('.context-menu')).toBeVisible();
+  await page.locator('.context-menu-item', { hasText: 'Unlocked' }).click();
+
+  // Verify lock indicator appears
+  await expect(page.locator('.node-lock-indicator')).toHaveCount(1);
+
+  // Get locked position
+  const lockedPos = await page.locator('.react-flow__node').first().evaluate(
+    (el) => (el as HTMLElement).style.transform,
+  );
+
+  // Create another node and auto-layout
+  await createNode(page, 400, 400);
+  await page.getByRole('button', { name: 'Auto-layout' }).click();
+  await page.waitForTimeout(500);
+
+  // Locked node should not have moved
+  const afterPos = await page.locator('.react-flow__node').first().evaluate(
+    (el) => (el as HTMLElement).style.transform,
+  );
+  expect(afterPos).toBe(lockedPos);
+});
+
+// --- 14. Edge polarity and delay in CLD ---
+
+test('CLD framework supports edge polarity and delay via context menu', async ({ page }) => {
+  // Switch to CLD
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByLabel('Framework').selectOption('cld');
+
+  await createNode(page, 200, 200);
+  await createNode(page, 200, 400);
+  await expect(page.locator('.entity-node')).toHaveCount(2);
+
+  const ids = await getNodeIds(page);
+  await addEdge(page, ids[0], ids[1]);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(1);
+
+  // Right-click edge for polarity
+  const edgePath = page.locator('.react-flow__edge-interaction').first();
+  const box1 = await edgePath.boundingBox();
+  await page.mouse.click(box1!.x + box1!.width / 2, box1!.y + box1!.height / 2, { button: 'right' });
+  await expect(page.locator('.context-menu')).toBeVisible();
+
+  // Change polarity to negative
+  await page.locator('.context-menu-item', { hasText: 'Negative' }).click();
+
+  // Verify polarity changed in store (wait for autosave)
+  await page.waitForFunction(() => {
+    const raw = sessionStorage.getItem('sketchy_diagram');
+    if (!raw) return false;
+    return JSON.parse(raw).edges?.[0]?.polarity === 'negative';
+  });
+
+  // Right-click edge again for delay (re-query bounding box)
+  const box2 = await page.locator('.react-flow__edge-interaction').first().boundingBox();
+  await page.mouse.click(box2!.x + box2!.width / 2, box2!.y + box2!.height / 2, { button: 'right' });
+  await expect(page.locator('.context-menu')).toBeVisible();
+  await page.locator('.context-menu-item', { hasText: 'Add Delay' }).click();
+
+  // Verify delay set in store
+  await page.waitForFunction(() => {
+    const raw = sessionStorage.getItem('sketchy_diagram');
+    if (!raw) return false;
+    return JSON.parse(raw).edges?.[0]?.delay === true;
+  });
+});
+
+// --- 15. AI not-configured state ---
+
+test('chat panel shows setup prompt when AI is not configured', async ({ page }) => {
+  // Clear any stored API key
+  await page.evaluate(() => {
+    localStorage.removeItem('sketchy-settings');
+  });
+  await page.reload();
+  await page.waitForSelector('[data-testid="diagram-flow"]');
+
+  await expect(page.getByText('AI not configured')).toBeVisible();
+  await expect(page.getByText('Open Settings')).toBeVisible();
+
+  // Click "Open Settings" should open settings popover
+  await page.getByText('Open Settings').click();
+  await expect(page.locator('.settings-popover')).toBeVisible();
+});

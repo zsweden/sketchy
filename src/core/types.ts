@@ -30,6 +30,7 @@ export interface DiagramNode {
     junctionType: 'and' | 'or';
     notes?: string;
     color?: string;
+    textColor?: string;
     locked?: boolean;
   };
 }

@@ -94,7 +94,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     const controller = new AbortController();
     abortController = controller;
 
-    set({ modelsLoading: true, modelsError: null });
+    set({ modelsLoading: true, modelsError: null, availableModels: [] });
 
     fetchAvailableModels(baseUrl, openaiApiKey, controller.signal, provider)
       .then((models) => {

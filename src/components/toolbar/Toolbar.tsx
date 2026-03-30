@@ -20,6 +20,50 @@ import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import FrameworkSelector from './FrameworkSelector';
 import SettingsPopover from './SettingsPopover';
 
+const iconSize = 16;
+
+function AlignHorizontalIcon() {
+  return (
+    <svg width={iconSize} height={iconSize} viewBox="0 0 16 16" fill="currentColor" stroke="none">
+      <rect x="0" y="7.25" width="16" height="1.5" />
+      <rect x="1.5" y="2" width="2" height="12" rx="0.5" />
+      <rect x="7" y="4" width="2" height="8" rx="0.5" />
+      <rect x="12.5" y="3" width="2" height="10" rx="0.5" />
+    </svg>
+  );
+}
+
+function AlignVerticalIcon() {
+  return (
+    <svg width={iconSize} height={iconSize} viewBox="0 0 16 16" fill="currentColor" stroke="none">
+      <rect x="7.25" y="0" width="1.5" height="16" />
+      <rect x="2" y="1.5" width="12" height="2" rx="0.5" />
+      <rect x="4" y="7" width="8" height="2" rx="0.5" />
+      <rect x="3" y="12.5" width="10" height="2" rx="0.5" />
+    </svg>
+  );
+}
+
+function DistributeHorizontalIcon() {
+  return (
+    <svg width={iconSize} height={iconSize} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="1" y="4" width="3" height="8" rx="0.5" />
+      <rect x="6.5" y="4" width="3" height="8" rx="0.5" />
+      <rect x="12" y="4" width="3" height="8" rx="0.5" />
+    </svg>
+  );
+}
+
+function DistributeVerticalIcon() {
+  return (
+    <svg width={iconSize} height={iconSize} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="4" y="1" width="8" height="3" rx="0.5" />
+      <rect x="4" y="6.5" width="8" height="3" rx="0.5" />
+      <rect x="4" y="12" width="8" height="3" rx="0.5" />
+    </svg>
+  );
+}
+
 export default function Toolbar() {
   const diagram = useDiagramStore((s) => s.diagram);
   const canUndo = useDiagramStore((s) => s.canUndo);
@@ -44,7 +88,41 @@ export default function Toolbar() {
   const interactionMode = useUIStore((s) => s.interactionMode);
   const setInteractionMode = useUIStore((s) => s.setInteractionMode);
 
+  const nodes = useDiagramStore((s) => s.diagram.nodes);
+  const selectedNodes = nodes.filter((n) => selectedNodeIds.includes(n.id));
   const hasSelection = selectedNodeIds.length > 0 || selectedEdgeIds.length > 0 || selectedLoopId !== null;
+  const canAlign = selectedNodes.length >= 2;
+  const canDistribute = selectedNodes.length >= 3;
+
+  const handleAlignH = useCallback(() => {
+    const avgY = selectedNodes.reduce((sum, n) => sum + n.position.y, 0) / selectedNodes.length;
+    commitToHistory();
+    moveNodesStore(selectedNodes.map((n) => ({ id: n.id, position: { x: n.position.x, y: avgY } })));
+  }, [selectedNodes, commitToHistory, moveNodesStore]);
+
+  const handleAlignV = useCallback(() => {
+    const avgX = selectedNodes.reduce((sum, n) => sum + n.position.x, 0) / selectedNodes.length;
+    commitToHistory();
+    moveNodesStore(selectedNodes.map((n) => ({ id: n.id, position: { x: avgX, y: n.position.y } })));
+  }, [selectedNodes, commitToHistory, moveNodesStore]);
+
+  const handleDistributeH = useCallback(() => {
+    const sorted = [...selectedNodes].sort((a, b) => a.position.x - b.position.x);
+    const minX = sorted[0].position.x;
+    const maxX = sorted[sorted.length - 1].position.x;
+    const step = (maxX - minX) / (sorted.length - 1);
+    commitToHistory();
+    moveNodesStore(sorted.map((n, i) => ({ id: n.id, position: { x: minX + step * i, y: n.position.y } })));
+  }, [selectedNodes, commitToHistory, moveNodesStore]);
+
+  const handleDistributeV = useCallback(() => {
+    const sorted = [...selectedNodes].sort((a, b) => a.position.y - b.position.y);
+    const minY = sorted[0].position.y;
+    const maxY = sorted[sorted.length - 1].position.y;
+    const step = (maxY - minY) / (sorted.length - 1);
+    commitToHistory();
+    moveNodesStore(sorted.map((n, i) => ({ id: n.id, position: { x: n.position.x, y: minY + step * i } })));
+  }, [selectedNodes, commitToHistory, moveNodesStore]);
 
   const handleClearSelection = useCallback(() => {
     setSelectedNodes([]);
@@ -170,6 +248,45 @@ export default function Toolbar() {
           aria-label="Clear selection"
         >
           <CircleOff size={16} />
+        </button>
+
+        <div className="toolbar-divider" />
+
+        <button
+          className="btn btn-secondary btn-icon"
+          onClick={handleAlignH}
+          disabled={!canAlign}
+          title="Align horizontally"
+          aria-label="Align horizontally"
+        >
+          <AlignHorizontalIcon />
+        </button>
+        <button
+          className="btn btn-secondary btn-icon"
+          onClick={handleAlignV}
+          disabled={!canAlign}
+          title="Align vertically"
+          aria-label="Align vertically"
+        >
+          <AlignVerticalIcon />
+        </button>
+        <button
+          className="btn btn-secondary btn-icon"
+          onClick={handleDistributeH}
+          disabled={!canDistribute}
+          title="Distribute horizontally"
+          aria-label="Distribute horizontally"
+        >
+          <DistributeHorizontalIcon />
+        </button>
+        <button
+          className="btn btn-secondary btn-icon"
+          onClick={handleDistributeV}
+          disabled={!canDistribute}
+          title="Distribute vertically"
+          aria-label="Distribute vertically"
+        >
+          <DistributeVerticalIcon />
         </button>
 
         <div className="toolbar-divider" />
