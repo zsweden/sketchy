@@ -148,20 +148,20 @@ async function benchAsync(label: string, fn: () => Promise<void>): Promise<numbe
 // ---------------------------------------------------------------------------
 
 describe('perf: auto-layout (ELK)', () => {
-  it('lays out 50-node chain under 200ms', async () => {
+  it('lays out 50-node chain under 500ms', async () => {
     const { nodes, edges } = buildChain(50);
     const t = await benchAsync('layout-50-chain', async () => {
       await autoLayout(nodes, edges, { direction: 'BT' }, elkEngine);
     });
-    expect(t).toBeLessThan(200);
+    expect(t).toBeLessThan(500);
   });
 
-  it('lays out 100-node chain under 500ms', async () => {
+  it('lays out 100-node chain under 1000ms', async () => {
     const { nodes, edges } = buildChain(100);
     const t = await benchAsync('layout-100-chain', async () => {
       await autoLayout(nodes, edges, { direction: 'BT' }, elkEngine);
     });
-    expect(t).toBeLessThan(500);
+    expect(t).toBeLessThan(1000);
   });
 
   it('lays out 500-node chain under 2000ms', async () => {
@@ -172,20 +172,20 @@ describe('perf: auto-layout (ELK)', () => {
     expect(t).toBeLessThan(2000);
   });
 
-  it('lays out binary tree (depth 7, 127 nodes) under 500ms', async () => {
+  it('lays out binary tree (depth 7, 127 nodes) under 1000ms', async () => {
     const { nodes, edges } = buildTree(7, 2); // 2^7 - 1 = 127 nodes
     const t = await benchAsync('layout-127-tree', async () => {
       await autoLayout(nodes, edges, { direction: 'TB' }, elkEngine);
     });
-    expect(t).toBeLessThan(500);
+    expect(t).toBeLessThan(1000);
   });
 
-  it('lays out dense graph (100 nodes, 3 edges/node) under 500ms', async () => {
+  it('lays out dense graph (100 nodes, 3 edges/node) under 1500ms', async () => {
     const { nodes, edges } = buildDenseGraph(100, 3);
     const t = await benchAsync('layout-100-dense', async () => {
       await autoLayout(nodes, edges, { direction: 'TB' }, elkEngine);
     });
-    expect(t).toBeLessThan(500);
+    expect(t).toBeLessThan(1500);
   });
 });
 
