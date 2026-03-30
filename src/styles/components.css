@@ -10,6 +10,11 @@
   z-index: 40;
 }
 
+.app-mascot {
+  height: 1.75rem;
+  width: auto;
+}
+
 .app-title {
   font-family: 'Playfair Display', serif;
   font-size: 1.5rem;
