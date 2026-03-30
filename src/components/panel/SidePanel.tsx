@@ -99,6 +99,7 @@ export default function SidePanel() {
                 <button
                   className="btn btn-secondary btn-xs"
                   title="Align to same row"
+                  aria-label="Align horizontally"
                   onClick={() => { commitToHistory(); moveNodes(alignHorizontal(selectedNodes)); }}
                 >
                   <AlignHorizontalIcon />
@@ -106,6 +107,7 @@ export default function SidePanel() {
                 <button
                   className="btn btn-secondary btn-xs"
                   title="Align to same column"
+                  aria-label="Align vertically"
                   onClick={() => { commitToHistory(); moveNodes(alignVertical(selectedNodes)); }}
                 >
                   <AlignVerticalIcon />
@@ -119,6 +121,7 @@ export default function SidePanel() {
                 <button
                   className="btn btn-secondary btn-xs"
                   title="Space out horizontally"
+                  aria-label="Distribute horizontally"
                   disabled={selectedNodes.length < 3}
                   onClick={() => { commitToHistory(); moveNodes(distributeHorizontal(selectedNodes)); }}
                 >
@@ -127,6 +130,7 @@ export default function SidePanel() {
                 <button
                   className="btn btn-secondary btn-xs"
                   title="Space out vertically"
+                  aria-label="Distribute vertically"
                   disabled={selectedNodes.length < 3}
                   onClick={() => { commitToHistory(); moveNodes(distributeVertical(selectedNodes)); }}
                 >

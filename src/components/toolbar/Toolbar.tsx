@@ -20,7 +20,7 @@ import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import FrameworkSelector from './FrameworkSelector';
 import SettingsPopover from './SettingsPopover';
 import { AlignHorizontalIcon, AlignVerticalIcon, DistributeHorizontalIcon, DistributeVerticalIcon } from '../icons/AlignDistributeIcons';
-
+import { alignHorizontal, alignVertical, distributeHorizontal, distributeVertical } from '../../utils/align-distribute';
 
 export default function Toolbar() {
   const diagram = useDiagramStore((s) => s.diagram);

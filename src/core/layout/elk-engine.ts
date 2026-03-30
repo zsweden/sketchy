@@ -1,7 +1,8 @@
 import type { LayoutEngine } from './layout-engine';
 import { RANK_SEP, NODE_SEP } from './layout-engine';
 
-let elkInstance: import('elkjs/lib/elk.bundled.js').default | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let elkInstance: any = null;
 
 async function getElk() {
   if (!elkInstance) {
@@ -56,6 +57,6 @@ export const elkEngine: LayoutEngine = async (nodes, edges, options) => {
   const laid = await elk.layout(graph);
 
   return (laid.children ?? [])
-    .filter((c) => c.x !== undefined && c.y !== undefined)
-    .map((c) => ({ id: c.id, x: c.x!, y: c.y! }));
+    .filter((c: { x?: number; y?: number }) => c.x !== undefined && c.y !== undefined)
+    .map((c: { id: string; x: number; y: number }) => ({ id: c.id, x: c.x, y: c.y }));
 };

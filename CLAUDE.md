@@ -46,8 +46,7 @@ npm run lint && npx tsc --noEmit && npm run test:all
 
 - React + TypeScript + Vite
 - React Flow (@xyflow/react) — diagram canvas, pan/zoom, node drag, edge connections
-- ELK (`elkjs`) — primary auto-layout engine
-- dagre — alternative/tested layout engine
+- ELK (`elkjs`) — auto-layout engine (lazy-loaded)
 - Zustand — state management (diagram-store, ui-store, settings-store, chat-store)
 - Tailwind CSS v4 plus project CSS
 - Lucide React — icons
@@ -60,7 +59,7 @@ npm run lint && npx tsc --noEmit && npm run test:all
 - `src/core/graph/validation.ts` — DAG enforcement (no cycles, self-loops, duplicate edges)
 - `src/core/graph/derived.ts` — Compute node indicators from graph topology (root cause = indegree 0, etc.)
 - `src/core/history/undo-redo.ts` — Generic undo/redo with snapshot stack
-- `src/core/layout/` — Auto-layout with pluggable engines. ELK is the primary engine used by the app; dagre remains available
+- `src/core/layout/` — Auto-layout with pluggable engine interface. ELK is lazy-loaded on first use
 - `src/core/persistence/` — session autosave, `.sky` file save/load, schema migrations, legacy format support
 
 ### Stores (Zustand)
