@@ -237,8 +237,8 @@
 /* Highlight subgraph: animate connected edges */
 .react-flow__edge.edge-highlighted .react-flow__edge-path {
   stroke-width: 2.5 !important;
-  stroke-dasharray: 8 4;
-  animation: edge-flow 0.6s linear infinite;
+  stroke-dasharray: 12 6;
+  animation: edge-flow 0.8s linear infinite;
 }
 
 .react-flow__edge.edge-highlighted.edge-loop-reinforcing .react-flow__edge-path {
@@ -255,7 +255,7 @@
 
 @keyframes edge-flow {
   to {
-    stroke-dashoffset: -12;
+    stroke-dashoffset: -18;
   }
 }
 

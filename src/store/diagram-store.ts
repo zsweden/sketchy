@@ -439,24 +439,26 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
     // Check for existing edge between the same source→target
     const existing = findExistingEdge(state.diagram.edges, source, target);
     if (existing) {
-      const newSides = state.diagram.settings.edgeRoutingMode === 'fixed'
-        ? resolveEdgeSides(source, target, state.diagram.nodes, state.diagram.settings, handles)
-        : {};
-      const sameAnchors =
-        existing.sourceSide === (newSides.sourceSide ?? existing.sourceSide) &&
-        existing.targetSide === (newSides.targetSide ?? existing.targetSide);
+      // Always resolve sides so we can compare handles regardless of routing mode
+      const newSides = resolveEdgeSides(source, target, state.diagram.nodes, state.diagram.settings, handles);
+      const existingSides = resolveEdgeSides(source, target, state.diagram.nodes, state.diagram.settings, {
+        sourceHandleId: existing.sourceSide ? `source-${existing.sourceSide}` : undefined,
+        targetHandleId: existing.targetSide ? `target-${existing.targetSide}` : undefined,
+      });
 
-      if (sameAnchors) {
+      if (newSides.sourceSide === existingSides.sourceSide &&
+          newSides.targetSide === existingSides.targetSide) {
         return { success: false, reason: 'Edge already exists' };
       }
 
       // Different anchors — replace the existing edge
       history.push(snapshot(state));
+      const storeSides = state.diagram.settings.edgeRoutingMode === 'fixed' ? newSides : {};
       set((s) => ({
         diagram: {
           ...s.diagram,
           edges: s.diagram.edges.map((e) =>
-            e.id === existing.id ? { ...e, ...newSides } : e,
+            e.id === existing.id ? { ...e, ...storeSides } : e,
           ),
         },
         canUndo: true,

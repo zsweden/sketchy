@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
 import { useSettingsStore, PROVIDERS } from '../../store/settings-store';
+import { useDiagramStore } from '../../store/diagram-store';
+import { useUIStore } from '../../store/ui-store';
+import { autoLayout, elkEngine } from '../../core/layout';
 
 export default function SettingsPopover() {
   const open = useSettingsStore((s) => s.settingsOpen);
@@ -18,8 +21,31 @@ export default function SettingsPopover() {
   const modelsError = useSettingsStore((s) => s.modelsError);
   const currentProvider = PROVIDERS.find((p) => p.id === provider) ?? PROVIDERS[0];
   const keyValid = apiKey.length > 0 && !modelsLoading && !modelsError && availableModels.length > 0;
+  const diagramSettings = useDiagramStore((s) => s.diagram.settings);
+  const updateDiagramSettings = useDiagramStore((s) => s.updateSettings);
+  const commitToHistory = useDiagramStore((s) => s.commitToHistory);
+  const moveNodes = useDiagramStore((s) => s.moveNodes);
+  const requestFitView = useUIStore((s) => s.requestFitView);
   const ref = useRef<HTMLDivElement>(null);
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
+
+  const handleDirectionChange = useCallback(
+    async (direction: 'TB' | 'BT') => {
+      updateDiagramSettings({ layoutDirection: direction });
+      const { nodes, edges } = useDiagramStore.getState().diagram;
+      const updates = await autoLayout(
+        nodes, edges,
+        { direction, cyclic: useDiagramStore.getState().framework.allowsCycles },
+        elkEngine,
+      );
+      if (updates.length > 0) {
+        commitToHistory();
+        moveNodes(updates);
+        requestFitView();
+      }
+    },
+    [updateDiagramSettings, commitToHistory, moveNodes, requestFitView],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -124,6 +150,47 @@ export default function SettingsPopover() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Layout Direction */}
+        <div className="section-stack" style={{ gap: '0.375rem' }}>
+          <p className="section-label">Layout Direction</p>
+          <select
+            className="input-text"
+            value={diagramSettings.layoutDirection}
+            onChange={(e) => handleDirectionChange(e.target.value as 'TB' | 'BT')}
+            aria-label="Layout direction"
+          >
+            <option value="TB">Top to Bottom</option>
+            <option value="BT">Bottom to Top</option>
+          </select>
+        </div>
+
+        {/* Arrow Routing */}
+        <div className="section-stack" style={{ gap: '0.375rem' }}>
+          <p className="section-label">Arrow Routing</p>
+          <select
+            className="input-text"
+            value={diagramSettings.edgeRoutingMode}
+            onChange={(e) => updateDiagramSettings({ edgeRoutingMode: e.target.value as 'dynamic' | 'fixed' })}
+            aria-label="Arrow routing"
+          >
+            <option value="dynamic">Optimize Continuously</option>
+            <option value="fixed">Keep Fixed</option>
+          </select>
+        </div>
+
+        {/* Show Grid */}
+        <div className="control-row split-row">
+          <p className="section-label">Show Grid</p>
+          <button
+            className="toggle-track"
+            data-active={diagramSettings.showGrid}
+            onClick={() => updateDiagramSettings({ showGrid: !diagramSettings.showGrid })}
+            aria-label="Toggle grid"
+          >
+            <div className="toggle-thumb" />
+          </button>
         </div>
 
         <p className="field-label" style={{ color: 'var(--text-soft)', fontSize: '0.7rem' }}>
