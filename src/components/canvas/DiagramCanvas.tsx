@@ -181,7 +181,7 @@ export default function DiagramCanvas() {
         addToast(
           'Edge anchors can\'t be changed while routing is set to "Optimize Continuously".',
           'warning',
-          { label: 'Keep Fixed', onClick: () => updateSettings({ edgeRoutingMode: 'fixed' }) },
+          { label: 'Switch to Fixed', onClick: () => updateSettings({ edgeRoutingMode: 'fixed' }) },
         );
       } else if (!result.success && result.reason) {
         addToast(result.reason, 'warning');
