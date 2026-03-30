@@ -746,4 +746,8 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
 // Expose store for dev/testing in development mode
 if (import.meta.env.DEV && typeof window !== 'undefined') {
   (window as unknown as Record<string, unknown>).__diagramStore = useDiagramStore;
+  (window as unknown as Record<string, unknown>).__sketchy_addEdge = (
+    source: string,
+    target: string,
+  ) => useDiagramStore.getState().addEdge(source, target);
 }
