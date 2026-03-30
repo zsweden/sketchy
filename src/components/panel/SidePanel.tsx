@@ -93,9 +93,9 @@ export default function SidePanel() {
               {selectedNodes.length} nodes selected
             </p>
 
-            <div className="section-stack" style={{ gap: '0.375rem' }}>
+            <div className="section-stack gap-field">
               <p className="section-label">Align</p>
-              <div className="control-row" style={{ gap: '0.25rem' }}>
+              <div className="control-row gap-tight">
                 <button
                   className="btn btn-secondary btn-xs"
                   title="Align to same row"
@@ -115,9 +115,9 @@ export default function SidePanel() {
               </div>
             </div>
 
-            <div className="section-stack" style={{ gap: '0.375rem' }}>
+            <div className="section-stack gap-field">
               <p className="section-label">Distribute</p>
-              <div className="control-row" style={{ gap: '0.25rem' }}>
+              <div className="control-row gap-tight">
                 <button
                   className="btn btn-secondary btn-xs"
                   title="Space out horizontally"
@@ -139,9 +139,9 @@ export default function SidePanel() {
               </div>
             </div>
 
-            <div className="section-stack" style={{ gap: '0.375rem' }}>
+            <div className="section-stack gap-field">
               <p className="section-label">Position</p>
-              <div className="control-row" style={{ gap: '0.25rem' }}>
+              <div className="control-row gap-tight">
                 <button
                   className="btn btn-secondary btn-xs"
                   style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}

@@ -25,7 +25,7 @@ export default function LoopCard({ loop, selected, onSelect, nodeLabels }: Props
       }}
       aria-pressed={selected}
     >
-      <div className="control-row" style={{ gap: '0.5rem' }}>
+      <div className="control-row gap-md">
         <span
           className="badge"
           style={{

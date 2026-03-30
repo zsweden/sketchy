@@ -7,7 +7,7 @@ interface Props {
 
 export default function FormField({ label, children }: Props) {
   return (
-    <div className="section-stack" style={{ gap: '0.375rem' }}>
+    <div className="section-stack gap-field">
       <p className="section-label">{label}</p>
       {children}
     </div>

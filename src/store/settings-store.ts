@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { fetchAvailableModels, type ModelInfo } from '../core/ai/model-fetcher';
+import { fetchAvailableModels, KNOWN_MODELS, type ModelInfo } from '../core/ai/model-fetcher';
 import { DEFAULT_THEME, type ThemeId } from '../styles/themes';
 
 const STORAGE_KEY = 'sketchy-settings';
@@ -107,7 +107,13 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       })
       .catch((err) => {
         if (!controller.signal.aborted) {
-          set({ availableModels: [], modelsLoading: false, modelsError: String(err) });
+          // Show known models for convenience, but keep the error so the checkmark reflects reality
+          const fallback = KNOWN_MODELS[get().provider] ?? [];
+          const currentModel = get().model;
+          const modelExists = fallback.some((m) => m.id === currentModel);
+          const nextModel = !currentModel || !modelExists ? (fallback[0]?.id ?? '') : currentModel;
+          set({ availableModels: fallback, modelsLoading: false, modelsError: String(err), model: nextModel });
+          if (nextModel !== currentModel) saveSettings({ model: nextModel });
         }
       });
   }

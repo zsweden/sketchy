@@ -30,7 +30,7 @@ export default function SettingsPanel() {
       <p className="section-heading">Diagram</p>
 
       {/* Diagram name */}
-      <div className="section-stack" style={{ gap: '0.375rem' }}>
+      <div className="section-stack gap-field">
         <p className="section-label">Name</p>
         <input
           className="input-text"
@@ -44,7 +44,7 @@ export default function SettingsPanel() {
 
 
       {framework.allowsCycles && (
-        <div className="section-stack" style={{ gap: '0.5rem' }}>
+        <div className="section-stack gap-section">
           <p className="section-label">Feedback Loops</p>
           <div className="control-row">
             <span className="badge" style={{ backgroundColor: 'color-mix(in srgb, var(--loop-info) 8%, transparent)', color: 'var(--loop-info)' }}>

@@ -65,7 +65,7 @@ export function formatModelDate(created: number | null): string {
 
 // --- Known models (fallback for providers that block CORS) ---
 
-const KNOWN_MODELS: Record<string, ModelInfo[]> = {
+export const KNOWN_MODELS: Record<string, ModelInfo[]> = {
   anthropic: [
     { id: 'claude-opus-4-latest', owned_by: 'anthropic', created: null },
     { id: 'claude-sonnet-4-5-latest', owned_by: 'anthropic', created: null },
@@ -106,36 +106,25 @@ export async function fetchAvailableModels(
     return cached.models;
   }
 
-  let chatModels: ModelInfo[];
+  const url = `${baseUrl.replace(/\/+$/, '')}/models`;
+  const headers = buildHeaders(apiKey, provider);
 
-  try {
-    const url = `${baseUrl.replace(/\/+$/, '')}/models`;
-    const headers = buildHeaders(apiKey, provider);
-
-    const res = await fetch(url, { headers, signal });
-    if (!res.ok) {
-      throw new Error(`Failed to fetch models (${res.status})`);
-    }
-
-    const json = await res.json();
-    const all: ModelInfo[] = (json.data ?? []).map(
-      (m: { id: string; owned_by?: string; created?: number; created_at?: string }) => ({
-        id: m.id,
-        owned_by: m.owned_by ?? 'unknown',
-        created: parseCreated(m),
-      }),
-    );
-
-    chatModels = all.filter((m) => !isNonChatModel(m.id));
-    chatModels.sort((a, b) => (b.created ?? 0) - (a.created ?? 0));
-  } catch (err) {
-    // Fall back to known models for providers that block CORS
-    if (KNOWN_MODELS[provider]) {
-      chatModels = KNOWN_MODELS[provider];
-    } else {
-      throw err;
-    }
+  const res = await fetch(url, { headers, signal });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch models (${res.status})`);
   }
+
+  const json = await res.json();
+  const all: ModelInfo[] = (json.data ?? []).map(
+    (m: { id: string; owned_by?: string; created?: number; created_at?: string }) => ({
+      id: m.id,
+      owned_by: m.owned_by ?? 'unknown',
+      created: parseCreated(m),
+    }),
+  );
+
+  const chatModels = all.filter((m) => !isNonChatModel(m.id));
+  chatModels.sort((a, b) => (b.created ?? 0) - (a.created ?? 0));
 
   cache.set(key, { models: chatModels, timestamp: Date.now() });
   return chatModels;

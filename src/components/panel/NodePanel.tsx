@@ -186,7 +186,7 @@ export default function NodePanel({ node }: Props) {
       {derived.length > 0 && (
         <FormField label="Derived Properties">
           {derived.map((ind) => (
-            <div key={ind.id} className="control-row" style={{ gap: '0.5rem' }}>
+            <div key={ind.id} className="control-row gap-md">
               <span
                 className="badge"
                 style={{
