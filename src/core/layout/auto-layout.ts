@@ -1,4 +1,5 @@
 import type { DiagramNode, DiagramEdge } from '../types';
+import type { LayoutDirection } from '../framework-types';
 import { findStronglyConnectedComponents } from '../graph/derived';
 import type { LayoutEngine } from './layout-engine';
 import { NODE_WIDTH, estimateHeight } from './layout-engine';
