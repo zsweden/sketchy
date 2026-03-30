@@ -107,7 +107,7 @@ export default function ChatPanel() {
   return (
     <div className="chat-panel">
       <div className="chat-header">
-        <p className="section-label">AI Chat</p>
+        <p className="section-heading">AI Chat</p>
         {messages.length > 0 && (
           <button
             className="btn btn-ghost btn-icon-sm"

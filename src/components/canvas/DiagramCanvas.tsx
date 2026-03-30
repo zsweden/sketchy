@@ -242,8 +242,27 @@ export default function DiagramCanvas() {
     };
   }, [fitViewTrigger, fitView]);
 
+  const GRID = 20;
+
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
+      // Snap center to grid: adjust position so node center aligns with grid
+      if (snapToGrid) {
+        for (const c of changes) {
+          if (c.type === 'position' && 'position' in c && c.position) {
+            const node = localNodes.find((n) => n.id === c.id);
+            const w = node?.measured?.width ?? 240;
+            const h = node?.measured?.height ?? 48;
+            const cx = c.position.x + w / 2;
+            const cy = c.position.y + h / 2;
+            c.position = {
+              x: Math.round(cx / GRID) * GRID - w / 2,
+              y: Math.round(cy / GRID) * GRID - h / 2,
+            };
+          }
+        }
+      }
+
       // Apply all changes to local state (selection, dimensions, etc.)
       setLocalNodes((nds) => applyNodeChanges(changes, nds));
 
@@ -280,7 +299,7 @@ export default function DiagramCanvas() {
         }
       }
     },
-    [moveNodes, deleteNodes, fitView],
+    [moveNodes, deleteNodes, fitView, snapToGrid, localNodes],
   );
 
   const onEdgesChange = useCallback(
@@ -398,7 +417,7 @@ export default function DiagramCanvas() {
         nodesDraggable={!isPanMode}
         nodesConnectable={!isPanMode}
         elementsSelectable={!isPanMode}
-        snapToGrid={snapToGrid}
+        snapToGrid={false}
         snapGrid={[20, 20]}
         proOptions={{ hideAttribution: true }}
         className={isPanMode ? 'pan-mode' : ''}

@@ -7,6 +7,7 @@ import {
   MousePointer2,
   Hand,
   Settings,
+  CircleOff,
 } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 import { useDiagramStore } from '../../store/diagram-store';
@@ -34,8 +35,22 @@ export default function Toolbar() {
   const sidePanelOpen = useUIStore((s) => s.sidePanelOpen);
   const toggleSidePanel = useUIStore((s) => s.toggleSidePanel);
   const requestFitView = useUIStore((s) => s.requestFitView);
+  const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
+  const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
+  const selectedLoopId = useUIStore((s) => s.selectedLoopId);
+  const setSelectedNodes = useUIStore((s) => s.setSelectedNodes);
+  const setSelectedEdges = useUIStore((s) => s.setSelectedEdges);
+  const setSelectedLoop = useUIStore((s) => s.setSelectedLoop);
   const interactionMode = useUIStore((s) => s.interactionMode);
   const setInteractionMode = useUIStore((s) => s.setInteractionMode);
+
+  const hasSelection = selectedNodeIds.length > 0 || selectedEdgeIds.length > 0 || selectedLoopId !== null;
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedNodes([]);
+    setSelectedEdges([]);
+    setSelectedLoop(null);
+  }, [setSelectedNodes, setSelectedEdges, setSelectedLoop]);
   const toggleSettings = useSettingsStore((s) => s.toggleSettings);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -144,6 +159,16 @@ export default function Toolbar() {
           aria-label="Pan tool"
         >
           <Hand size={16} />
+        </button>
+
+        <button
+          className="btn btn-secondary btn-icon"
+          onClick={handleClearSelection}
+          disabled={!hasSelection}
+          title="Clear selection (Esc)"
+          aria-label="Clear selection"
+        >
+          <CircleOff size={16} />
         </button>
 
         <div className="toolbar-divider" />

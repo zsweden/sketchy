@@ -253,9 +253,11 @@ export function findCausalLoops(edges: DiagramEdge[]): CausalLoop[] {
     }
   }
 
-  return Array.from(loops.values()).sort((a, b) =>
-    a.nodeIds.join('>').localeCompare(b.nodeIds.join('>')),
-  );
+  return Array.from(loops.values()).sort((a, b) => {
+    if (a.kind !== b.kind) return a.kind === 'reinforcing' ? -1 : 1;
+    if (a.nodeIds.length !== b.nodeIds.length) return a.nodeIds.length - b.nodeIds.length;
+    return a.nodeIds.join('>').localeCompare(b.nodeIds.join('>'));
+  });
 }
 
 export function summarizeCausalLoops(loops: CausalLoop[]): LoopSummary {

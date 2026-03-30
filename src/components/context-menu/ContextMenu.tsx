@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Plus, Trash2, Check } from 'lucide-react';
+import { Plus, Trash2, Check, Lock, Unlock } from 'lucide-react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { computeNodeDegrees } from '../../core/graph/derived';
@@ -29,6 +29,7 @@ export default function ContextMenu() {
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
   const updateNodeColor = useDiagramStore((s) => s.updateNodeColor);
   const setEdgeConfidence = useDiagramStore((s) => s.setEdgeConfidence);
+  const toggleNodeLocked = useDiagramStore((s) => s.toggleNodeLocked);
 
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -143,6 +144,16 @@ export default function ContextMenu() {
           )}
 
           <div className="context-menu-separator" />
+          <button
+            className="context-menu-item"
+            onClick={() => {
+              toggleNodeLocked([node.id], !node.data.locked);
+              closeContextMenu();
+            }}
+          >
+            {node.data.locked ? <Lock size={14} /> : <Unlock size={14} />}
+            {node.data.locked ? 'Locked' : 'Unlocked'}
+          </button>
           <button
             className="context-menu-item context-menu-item--danger"
             onClick={() => {

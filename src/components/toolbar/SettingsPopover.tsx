@@ -67,7 +67,7 @@ export default function SettingsPopover() {
     <div className="settings-popover" ref={ref}>
       {/* Appearance */}
       <div className="settings-section">
-        <p className="settings-section-title">Appearance</p>
+        <p className="section-heading">Appearance</p>
         <div className="settings-field">
           <p className="section-label">Theme</p>
           <select
@@ -109,7 +109,7 @@ export default function SettingsPopover() {
 
       {/* Layout */}
       <div className="settings-section">
-        <p className="settings-section-title">Layout</p>
+        <p className="section-heading">Layout</p>
         <div className="settings-field">
           <p className="section-label">Direction</p>
           <select
@@ -140,7 +140,7 @@ export default function SettingsPopover() {
 
       {/* AI Provider */}
       <div className="settings-section">
-        <p className="settings-section-title">AI Provider</p>
+        <p className="section-heading">AI Provider</p>
         <div className="settings-field">
           <p className="section-label">Provider</p>
           <select

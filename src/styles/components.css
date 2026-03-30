@@ -148,8 +148,11 @@
 }
 
 .section-heading {
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text);
   margin: 0;
 }
 
@@ -389,13 +392,6 @@
   gap: 0.5rem;
 }
 
-.settings-section-title {
-  font-size: 0.65rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-soft);
-}
 
 .settings-field {
   display: flex;
