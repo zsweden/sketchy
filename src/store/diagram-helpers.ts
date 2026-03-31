@@ -11,7 +11,7 @@ import { getFramework } from '../frameworks/registry';
 import { validateEdge } from '../core/graph/validation';
 import { getEdgeHandlePlacement, getSideFromHandleId } from '../core/graph/ports';
 import type { EdgeHandlePlacement } from '../core/graph/ports';
-import type { BatchMutations } from './diagram-store';
+import type { BatchMutations } from './diagram-store-types';
 import { DEFAULT_NODE_HEIGHT, DEFAULT_NODE_WIDTH } from '../constants/layout';
 
 // --- Framework helpers ---

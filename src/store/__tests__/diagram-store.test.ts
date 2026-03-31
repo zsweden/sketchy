@@ -158,6 +158,55 @@ describe('diagram store', () => {
       expect(useDiagramStore.getState().diagram.nodes).toHaveLength(2);
       expect(useDiagramStore.getState().diagram.edges).toHaveLength(1);
     });
+
+    it('does not enable undo until a dragged move is committed', () => {
+      const id = 'drag-node';
+      useDiagramStore.setState((state) => ({
+        diagram: {
+          ...state.diagram,
+          nodes: [
+            {
+              id,
+              type: 'entity',
+              position: { x: 0, y: 0 },
+              data: { label: '', tags: [], junctionType: 'or' },
+            },
+          ],
+        },
+      }));
+      const canUndoBefore = useDiagramStore.getState().canUndo;
+
+      useDiagramStore.getState().dragNodes([{ id, position: { x: 80, y: 120 } }]);
+
+      expect(useDiagramStore.getState().diagram.nodes[0]?.position).toEqual({ x: 80, y: 120 });
+      expect(useDiagramStore.getState().canUndo).toBe(canUndoBefore);
+    });
+
+    it('restores the previous node position when a dragged move is undone', () => {
+      const id = 'drag-node';
+      useDiagramStore.setState((state) => ({
+        diagram: {
+          ...state.diagram,
+          nodes: [
+            {
+              id,
+              type: 'entity',
+              position: { x: 0, y: 0 },
+              data: { label: '', tags: [], junctionType: 'or' },
+            },
+          ],
+        },
+      }));
+
+      useDiagramStore.getState().dragNodes([{ id, position: { x: 80, y: 120 } }]);
+      useDiagramStore.getState().commitDraggedNodes();
+
+      expect(useDiagramStore.getState().canUndo).toBe(true);
+
+      useDiagramStore.getState().undo();
+
+      expect(useDiagramStore.getState().diagram.nodes[0]?.position).toEqual({ x: 0, y: 0 });
+    });
   });
 
   describe('tags and junction', () => {

@@ -33,8 +33,8 @@ export default function DiagramCanvas() {
   const diagram = useDiagramStore((s) => s.diagram);
   const addNode = useDiagramStore((s) => s.addNode);
   const addEdgeStore = useDiagramStore((s) => s.addEdge);
-  const moveNodes = useDiagramStore((s) => s.moveNodes);
-  const commitToHistory = useDiagramStore((s) => s.commitToHistory);
+  const dragNodes = useDiagramStore((s) => s.dragNodes);
+  const commitDraggedNodes = useDiagramStore((s) => s.commitDraggedNodes);
   const deleteNodes = useDiagramStore((s) => s.deleteNodes);
   const deleteEdges = useDiagramStore((s) => s.deleteEdges);
   const framework = useDiagramStore((s) => s.framework);
@@ -49,7 +49,6 @@ export default function DiagramCanvas() {
   const interactionMode = useUIStore((s) => s.interactionMode);
 
   const isPanMode = interactionMode === 'pan';
-  const isDragging = useRef(false);
 
   // Highlighting logic (extracted hook)
   const { selectedLoop, highlightSets, degreesMap } = useCanvasHighlighting();
@@ -144,8 +143,7 @@ export default function DiagramCanvas() {
           c.type === 'position' && 'position' in c && c.position != null,
       );
       if (posChanges.length > 0) {
-        isDragging.current = true;
-        moveNodes(posChanges.map((c) => ({ id: c.id, position: c.position })));
+        dragNodes(posChanges.map((c) => ({ id: c.id, position: c.position })));
       }
 
       const removeChanges = changes.filter((c) => c.type === 'remove');
@@ -161,7 +159,7 @@ export default function DiagramCanvas() {
         }
       }
     },
-    [moveNodes, deleteNodes, fitView, snapToGrid, localNodes],
+    [dragNodes, deleteNodes, fitView, snapToGrid, localNodes],
   );
 
   const onEdgesChange = useCallback(
@@ -176,11 +174,8 @@ export default function DiagramCanvas() {
   );
 
   const onNodeDragStop = useCallback(() => {
-    if (isDragging.current) {
-      isDragging.current = false;
-      commitToHistory();
-    }
-  }, [commitToHistory]);
+    commitDraggedNodes();
+  }, [commitDraggedNodes]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
