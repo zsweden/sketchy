@@ -19,12 +19,17 @@ vi.mock('../EntityNode', () => ({
 }));
 
 vi.mock('@xyflow/react', () => ({
-  ReactFlow: ({ nodes, edges, onConnect }: { nodes: Array<{ id: string; selected?: boolean }>; edges: Array<{ id: string; selected?: boolean }>; onConnect: (connection: {
-    source: string;
-    target: string;
-    sourceHandle?: string;
-    targetHandle?: string;
-  }) => void }) => (
+  ReactFlow: ({ nodes, edges, onConnect, onSelectionChange }: {
+    nodes: Array<{ id: string; selected?: boolean }>;
+    edges: Array<{ id: string; selected?: boolean }>;
+    onConnect: (connection: {
+      source: string;
+      target: string;
+      sourceHandle?: string;
+      targetHandle?: string;
+    }) => void;
+    onSelectionChange?: (params: { nodes: Array<{ id: string }>; edges: Array<{ id: string }> }) => void;
+  }) => (
     <div>
       <div data-testid="selected-nodes">{nodes.filter((node) => node.selected).map((node) => node.id).join(',')}</div>
       <div data-testid="selected-edges">{edges.filter((edge) => edge.selected).map((edge) => edge.id).join(',')}</div>
@@ -38,6 +43,16 @@ vi.mock('@xyflow/react', () => ({
         })}
       >
         Trigger connect
+      </button>
+      <button
+        type="button"
+        data-testid="trigger-selection"
+        onClick={() => onSelectionChange?.({
+          nodes: nodes.filter((n) => n.id === 'n1').map((n) => ({ id: n.id })),
+          edges: [],
+        })}
+      >
+        Trigger selection
       </button>
     </div>
   ),
@@ -118,26 +133,21 @@ describe('DiagramCanvas', () => {
 
   it('clears RF selection when clearSelectionTrigger fires', async () => {
     mocks.rfNodes = [
-      { id: 'n1', position: { x: 0, y: 0 }, data: {}, selected: true } as never,
+      { id: 'n1', position: { x: 0, y: 0 }, data: {} } as never,
       { id: 'n2', position: { x: 0, y: 100 }, data: {} } as never,
     ];
     mocks.rfEdges = [
-      { id: 'e1', source: 'n1', target: 'n2', selected: true } as never,
+      { id: 'e1', source: 'n1', target: 'n2' } as never,
     ];
 
     render(<DiagramCanvas />);
 
-    // Store is the only source of truth, so initial RF selected flags are ignored.
-    expect(screen.getByTestId('selected-nodes')).toHaveTextContent('');
-    expect(screen.getByTestId('selected-edges')).toHaveTextContent('');
-
-    useUIStore.getState().setSelectedNodes(['n1']);
-    useUIStore.getState().setSelectedEdges(['e1']);
+    // Programmatically select via store trigger
+    useUIStore.getState().selectGraphObject({ kind: 'node', id: 'n1' });
 
     await waitFor(() => {
       expect(screen.getByTestId('selected-nodes')).toHaveTextContent('n1');
     });
-    expect(screen.getByTestId('selected-edges')).toHaveTextContent('e1');
 
     // Trigger clear selection
     useUIStore.getState().requestClearSelection();
@@ -146,6 +156,27 @@ describe('DiagramCanvas', () => {
       expect(screen.getByTestId('selected-nodes')).toHaveTextContent('');
     });
     expect(screen.getByTestId('selected-edges')).toHaveTextContent('');
+  });
+
+  it('does not infinite loop when onSelectionChange fires (regression)', async () => {
+    const user = userEvent.setup();
+    mocks.rfNodes = [
+      { id: 'n1', position: { x: 0, y: 0 }, data: {} } as never,
+      { id: 'n2', position: { x: 0, y: 100 }, data: {} } as never,
+    ];
+    mocks.rfEdges = [
+      { id: 'e1', source: 'n1', target: 'n2' } as never,
+    ];
+
+    render(<DiagramCanvas />);
+
+    // Simulate RF firing onSelectionChange (like a drag-select would)
+    // This previously caused "Maximum update depth exceeded"
+    await user.click(screen.getByTestId('trigger-selection'));
+
+    // If we get here without crashing, the loop is fixed.
+    // Verify the store received the selection.
+    expect(useUIStore.getState().selectedNodeIds).toEqual(['n1']);
   });
 
   it('syncs store-driven node and edge selections into React Flow state', async () => {

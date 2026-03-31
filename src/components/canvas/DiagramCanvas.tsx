@@ -41,8 +41,6 @@ export default function DiagramCanvas() {
   const snapToGrid = useDiagramStore((s) => s.diagram.settings.snapToGrid);
   const updateSettings = useDiagramStore((s) => s.updateSettings);
 
-  const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
-  const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
   const setSelectedNodes = useUIStore((s) => s.setSelectedNodes);
   const setSelectedEdges = useUIStore((s) => s.setSelectedEdges);
   const openContextMenu = useUIStore((s) => s.openContextMenu);
@@ -65,26 +63,40 @@ export default function DiagramCanvas() {
   const [localNodes, setLocalNodes] = useState<Node[]>(rfNodes);
   const [localEdges, setLocalEdges] = useState<Edge[]>(rfEdges);
 
-  // Sync store -> local when diagram data or store-backed selection changes
+  // Sync store -> local when diagram DATA changes (preserving RF selection)
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLocalNodes(
-      rfNodes.map((n) => ({
+    setLocalNodes((prev) => {
+      const selectionMap = new Map(prev.map((n) => [n.id, n.selected]));
+      return rfNodes.map((n) => ({
         ...n,
-        selected: selectedNodeIds.includes(n.id),
-      })),
-    );
-  }, [rfNodes, selectedNodeIds]);
+        selected: selectionMap.get(n.id) ?? false,
+      }));
+    });
+  }, [rfNodes]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLocalEdges(
-      rfEdges.map((e) => ({
+    setLocalEdges((prev) => {
+      const selectionMap = new Map(prev.map((e) => [e.id, e.selected]));
+      return rfEdges.map((e) => ({
         ...e,
-        selected: selectedEdgeIds.includes(e.id),
-      })),
-    );
-  }, [rfEdges, selectedEdgeIds]);
+        selected: selectionMap.get(e.id) ?? false,
+      }));
+    });
+  }, [rfEdges]);
+
+  // Sync programmatic selection from store -> RF (selectGraphObject)
+  const selectionSyncTrigger = useUIStore((s) => s.selectionSyncTrigger);
+  useEffect(() => {
+    if (selectionSyncTrigger === 0) return;
+    const { selectedNodeIds: nodeIds, selectedEdgeIds: edgeIds } = useUIStore.getState();
+    const nodeSet = new Set(nodeIds);
+    const edgeSet = new Set(edgeIds);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLocalNodes((nds) => nds.map((n) => ({ ...n, selected: nodeSet.has(n.id) })));
+    setLocalEdges((eds) => eds.map((e) => ({ ...e, selected: edgeSet.has(e.id) })));
+  }, [selectionSyncTrigger]);
 
   // Fit view when requested
   const fitViewTrigger = useUIStore((s) => s.fitViewTrigger);

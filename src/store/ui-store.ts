@@ -20,6 +20,7 @@ interface UIState {
   interactionMode: InteractionMode;
   fitViewTrigger: number;
   clearSelectionTrigger: number;
+  selectionSyncTrigger: number;
 
   setSelectedNodes: (ids: string[]) => void;
   setSelectedEdges: (ids: string[]) => void;
@@ -45,6 +46,7 @@ export const useUIStore = create<UIState>((set) => ({
   interactionMode: 'select',
   fitViewTrigger: 0,
   clearSelectionTrigger: 0,
+  selectionSyncTrigger: 0,
 
   setSelectedNodes: (ids) => set({ selectedNodeIds: ids }),
 
@@ -86,19 +88,20 @@ export const useUIStore = create<UIState>((set) => ({
     selectedEdgeIds: [],
     selectedLoopId: null,
     clearSelectionTrigger: s.clearSelectionTrigger + 1,
+    selectionSyncTrigger: s.selectionSyncTrigger + 1,
   })),
 
   selectGraphObject: ({ kind, id }) => {
     if (kind === 'node') {
-      set({ selectedNodeIds: [id], selectedEdgeIds: [], selectedLoopId: null });
+      set((s) => ({ selectedNodeIds: [id], selectedEdgeIds: [], selectedLoopId: null, selectionSyncTrigger: s.selectionSyncTrigger + 1 }));
       return;
     }
 
     if (kind === 'edge') {
-      set({ selectedNodeIds: [], selectedEdgeIds: [id], selectedLoopId: null });
+      set((s) => ({ selectedNodeIds: [], selectedEdgeIds: [id], selectedLoopId: null, selectionSyncTrigger: s.selectionSyncTrigger + 1 }));
       return;
     }
 
-    set({ selectedNodeIds: [], selectedEdgeIds: [], selectedLoopId: id });
+    set((s) => ({ selectedNodeIds: [], selectedEdgeIds: [], selectedLoopId: id, selectionSyncTrigger: s.selectionSyncTrigger + 1 }));
   },
 }));
