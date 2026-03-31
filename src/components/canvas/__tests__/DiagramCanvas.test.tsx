@@ -110,6 +110,40 @@ vi.mock('@xyflow/react', () => ({
       >
         Trigger edge context menu
       </button>
+      <button
+        type="button"
+        data-testid="trigger-pane-context-menu-over-node"
+        onClick={() => {
+          const target = document.createElement('div');
+          target.className = 'react-flow__node';
+          const event = {
+            clientX: 160,
+            clientY: 100,
+            preventDefault: vi.fn(),
+            target,
+          };
+          onPaneContextMenu?.(event);
+        }}
+      >
+        Trigger pane context menu over node
+      </button>
+      <button
+        type="button"
+        data-testid="trigger-pane-context-menu-over-edge"
+        onClick={() => {
+          const target = document.createElement('div');
+          target.className = 'react-flow__edge';
+          const event = {
+            clientX: 180,
+            clientY: 110,
+            preventDefault: vi.fn(),
+            target,
+          };
+          onPaneContextMenu?.(event);
+        }}
+      >
+        Trigger pane context menu over edge
+      </button>
     </div>
   ),
   Background: () => null,
@@ -293,5 +327,25 @@ describe('DiagramCanvas', () => {
       nodeId: undefined,
       edgeId: 'e1',
     });
+  });
+
+  it('does not open the canvas menu when the pane handler fires over a node', async () => {
+    const user = userEvent.setup();
+
+    render(<DiagramCanvas />);
+
+    await user.click(screen.getByTestId('trigger-pane-context-menu-over-node'));
+
+    expect(useUIStore.getState().contextMenu).toBeNull();
+  });
+
+  it('does not open the canvas menu when the pane handler fires over an edge', async () => {
+    const user = userEvent.setup();
+
+    render(<DiagramCanvas />);
+
+    await user.click(screen.getByTestId('trigger-pane-context-menu-over-edge'));
+
+    expect(useUIStore.getState().contextMenu).toBeNull();
   });
 });

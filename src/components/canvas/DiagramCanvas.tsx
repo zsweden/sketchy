@@ -227,6 +227,10 @@ export default function DiagramCanvas() {
   const onPaneContextMenu = useCallback(
     (event: React.MouseEvent | MouseEvent) => {
       event.preventDefault();
+      if (event.target instanceof Element
+        && event.target.closest('.react-flow__node, .react-flow__edge')) {
+        return;
+      }
       openContextMenu(event.clientX, event.clientY);
     },
     [openContextMenu],
