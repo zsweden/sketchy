@@ -116,20 +116,20 @@ describePerf('perf: auto-layout (ELK)', () => {
     expect(t).toBeLessThan(1500);
   });
 
-  it('lays out 8-node cyclic graph under 1000ms', async () => {
+  it('lays out 8-node cyclic graph under 50ms', async () => {
     const { nodes, edges } = buildCyclicGraph(8, 4);
     const t = await benchAsync('layout-8-cyclic', async () => {
       await autoLayout(nodes, edges, { direction: 'TB', cyclic: true }, elkEngine);
     });
-    expect(t).toBeLessThan(1000);
+    expect(t).toBeLessThan(50);
   }, 10_000);
 
-  it('lays out 12-node cyclic graph under 1500ms', async () => {
+  it('lays out 12-node cyclic graph under 50ms', async () => {
     const { nodes, edges } = buildCyclicGraph(12, 4);
     const t = await benchAsync('layout-12-cyclic', async () => {
       await autoLayout(nodes, edges, { direction: 'TB', cyclic: true }, elkEngine);
     });
-    expect(t).toBeLessThan(1500);
+    expect(t).toBeLessThan(50);
   }, 10_000);
 });
 
