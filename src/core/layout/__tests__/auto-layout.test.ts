@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { autoLayout, elkEngine } from '..';
+import { autoLayout } from '../auto-layout';
+import { elkEngine } from '../elk-engine';
 import type { DiagramEdge, DiagramNode } from '../../types';
 import { NODE_WIDTH, estimateHeight } from '../layout-engine';
 import { computeLayoutMetrics } from '../layout-metrics';

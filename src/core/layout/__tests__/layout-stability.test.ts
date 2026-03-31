@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { autoLayout, elkEngine } from '..';
+import { autoLayout } from '../auto-layout';
+import { elkEngine } from '../elk-engine';
 import type { DiagramNode, DiagramEdge } from '../../types';
 
 const fourBoxNodes: DiagramNode[] = [

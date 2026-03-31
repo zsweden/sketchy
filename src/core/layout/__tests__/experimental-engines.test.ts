@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeLayoutMetrics } from '../layout-metrics';
-import { experimentalLayoutEngines } from '..';
+import { experimentalLayoutEngines } from '../experimental-engines';
 import { prepareLayoutEdges, prepareLayoutNodes } from '../layout-inputs';
 import { buildChain, buildCyclicGraph } from '../../../test/layout-benchmark-fixtures';
 

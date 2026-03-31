@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { DiagramEdge, DiagramNode } from '../../types';
-import {
-  autoLayout,
-  elkEngine,
-  experimentalLayoutEngines,
-} from '..';
+import { autoLayout } from '../auto-layout';
+import { elkEngine } from '../elk-engine';
+import { experimentalLayoutEngines } from '../experimental-engines';
 import { prepareLayoutEdges, prepareLayoutNodes } from '../layout-inputs';
 import { computeLayoutMetrics, scoreLayoutMetrics } from '../layout-metrics';
 import { getLayoutPerfFixtures } from '../../../test/layout-benchmark-fixtures';

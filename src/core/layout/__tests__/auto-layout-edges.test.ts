@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { autoLayout, elkEngine } from '..';
+import { autoLayout } from '../auto-layout';
+import { elkEngine } from '../elk-engine';
 import type { DiagramEdge, DiagramNode } from '../../types';
 
 function node(id: string, overrides?: Partial<DiagramNode>): DiagramNode {
