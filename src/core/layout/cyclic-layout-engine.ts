@@ -2,8 +2,25 @@ import type { DiagramEdge } from '../types';
 import type { LayoutDirection } from '../framework-types';
 import { findStronglyConnectedComponents } from '../graph/derived';
 import { NODE_SEP, NODE_WIDTH } from './layout-engine';
-import type { LayoutEngine, LayoutInput, LayoutResult } from './layout-engine';
+import type { LayoutEngine, LayoutEdgeInput, LayoutInput, LayoutResult } from './layout-engine';
+import { computeLayoutMetrics, scoreLayoutMetrics } from './layout-metrics';
 import { elkLayeredEngine } from './elk-engine';
+
+type Point = { x: number; y: number };
+
+interface PositionedEntry {
+  nodeId: string;
+  node: LayoutInput;
+  position: LayoutResult;
+}
+
+interface ScoringContext {
+  componentIds: Set<string>;
+  allNodes: LayoutInput[];
+  allEdges: LayoutEdgeInput[];
+}
+
+type SeedVariant = 'elk' | 'anchor' | 'anchor-flipped' | 'axis';
 
 export const cyclicLayoutEngine: LayoutEngine = async (nodes, edges, options) => {
   const results = await elkLayeredEngine(nodes, edges, { ...options, cyclic: true });
@@ -38,18 +55,15 @@ function relaxCyclicComponents(
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 
     if (positioned.length < 2) continue;
-    applyForceRelaxation(positioned, edges, positions, direction);
+    optimizeCyclicComponent(positioned, nodes, edges, positions, direction);
   }
 
   return results.map((result) => positions.get(result.id) ?? result);
 }
 
-function applyForceRelaxation(
-  positioned: Array<{
-    nodeId: string;
-    node: LayoutInput;
-    position: LayoutResult;
-  }>,
+function optimizeCyclicComponent(
+  positioned: PositionedEntry[],
+  allNodes: LayoutInput[],
   edges: Array<{ source: string; target: string }>,
   positions: Map<string, LayoutResult>,
   direction: LayoutDirection,
@@ -65,26 +79,75 @@ function applyForceRelaxation(
       },
     ]),
   );
-  const points = new Map(originalCenters);
-  const componentCenter = averagePoint([...points.values()]);
+  const componentCenter = averagePoint([...originalCenters.values()]);
   const internalEdges = edges.filter(
     (edge) => componentIds.has(edge.source) && componentIds.has(edge.target),
   );
   const anchorMap = buildExternalAnchorMap(componentIds, edges, positions);
+  const connectionCounts = buildConnectionCounts(sorted, internalEdges);
+  const scoringContext = buildScoringContext(componentIds, allNodes, edges);
 
-  seedCollapsedLayouts(sorted, points, componentCenter, direction);
+  let bestScore = Number.POSITIVE_INFINITY;
+  let bestPoints: Map<string, Point> | null = null;
 
-  const connectionCounts = new Map<string, number>();
-  for (const entry of sorted) connectionCounts.set(entry.nodeId, 0);
-  for (const edge of internalEdges) {
-    connectionCounts.set(edge.source, (connectionCounts.get(edge.source) ?? 0) + 1);
-    connectionCounts.set(edge.target, (connectionCounts.get(edge.target) ?? 0) + 1);
+  const variants: SeedVariant[] = ['elk', 'anchor', 'anchor-flipped', 'axis'];
+
+  for (const variant of variants) {
+    const seeded = createSeedPoints(
+      variant,
+      sorted,
+      originalCenters,
+      componentCenter,
+      direction,
+      anchorMap,
+    );
+    const relaxed = runForceRelaxation(
+      sorted,
+      internalEdges,
+      seeded,
+      originalCenters,
+      componentCenter,
+      anchorMap,
+      connectionCounts,
+      direction,
+    );
+
+    for (const candidate of enumerateSymmetryCandidates(relaxed, componentCenter)) {
+      const score = scoreCandidate(scoringContext, sorted, positions, candidate);
+      if (score < bestScore) {
+        bestScore = score;
+        bestPoints = clonePoints(candidate);
+      }
+    }
   }
 
-  const avgWidth = sorted.reduce((sum, entry) => sum + entry.node.width, 0) / sorted.length;
+  const finalPoints = bestPoints ?? originalCenters;
+  for (const entry of sorted) {
+    const point = finalPoints.get(entry.nodeId);
+    if (!point) continue;
+    positions.set(entry.nodeId, {
+      id: entry.nodeId,
+      x: point.x - entry.node.width / 2,
+      y: point.y - entry.node.height / 2,
+    });
+  }
+}
+
+function runForceRelaxation(
+  positioned: Array<{ nodeId: string; node: LayoutInput }>,
+  internalEdges: Array<{ source: string; target: string }>,
+  initialPoints: Map<string, Point>,
+  originalCenters: Map<string, Point>,
+  componentCenter: Point,
+  anchorMap: Map<string, Point>,
+  connectionCounts: Map<string, number>,
+  direction: LayoutDirection,
+): Map<string, Point> {
+  const points = clonePoints(initialPoints);
+  const avgWidth = positioned.reduce((sum, entry) => sum + entry.node.width, 0) / positioned.length;
   const idealEdgeLength = Math.max(120, avgWidth * 0.55);
   const repulsion = Math.max(90, avgWidth * 0.45);
-  const iterations = Math.min(200, Math.max(96, sorted.length * 22));
+  const iterations = Math.min(200, Math.max(96, positioned.length * 22));
   const springStrength = 0.11;
   const anchorStrength = 0.05;
   const centerStrength = 0.035;
@@ -92,14 +155,14 @@ function applyForceRelaxation(
 
   for (let iteration = 0; iteration < iterations; iteration++) {
     const cooling = 1 - iteration / iterations;
-    const displacements = new Map(sorted.map((entry) => [entry.nodeId, { x: 0, y: 0 }]));
+    const displacements = new Map(positioned.map((entry) => [entry.nodeId, { x: 0, y: 0 }]));
 
-    for (let i = 0; i < sorted.length; i++) {
-      const a = sorted[i];
+    for (let i = 0; i < positioned.length; i++) {
+      const a = positioned[i];
       const pointA = points.get(a.nodeId)!;
 
-      for (let j = i + 1; j < sorted.length; j++) {
-        const b = sorted[j];
+      for (let j = i + 1; j < positioned.length; j++) {
+        const b = positioned[j];
         const pointB = points.get(b.nodeId)!;
         let dx = pointA.x - pointB.x;
         let dy = pointA.y - pointB.y;
@@ -131,8 +194,8 @@ function applyForceRelaxation(
       let dist = Math.hypot(dx, dy);
       if (dist < 1) {
         const bias = deterministicBias(
-          sorted.findIndex((entry) => entry.nodeId === edge.source),
-          sorted.findIndex((entry) => entry.nodeId === edge.target),
+          positioned.findIndex((entry) => entry.nodeId === edge.source),
+          positioned.findIndex((entry) => entry.nodeId === edge.target),
           direction,
         );
         dx = bias.x;
@@ -152,7 +215,7 @@ function applyForceRelaxation(
       dispTarget.y -= uy * force;
     }
 
-    for (const entry of sorted) {
+    for (const entry of positioned) {
       const displacement = displacements.get(entry.nodeId)!;
       const anchor = anchorMap.get(entry.nodeId);
       const current = points.get(entry.nodeId)!;
@@ -170,7 +233,7 @@ function applyForceRelaxation(
     }
 
     const maxStep = 12 * cooling + 2;
-    for (const entry of sorted) {
+    for (const entry of positioned) {
       if (entry.node.locked) continue;
       const displacement = displacements.get(entry.nodeId)!;
       const magnitude = Math.hypot(displacement.x, displacement.y);
@@ -181,35 +244,198 @@ function applyForceRelaxation(
       point.y += displacement.y * scale;
     }
 
-    resolveOverlaps(sorted, points);
+    resolveOverlaps(positioned, points);
   }
 
   for (let pass = 0; pass < 4; pass++) {
-    compactComponent(points, sorted, componentCenter, direction, 0.82, 0.58);
-    resolveOverlaps(sorted, points);
+    compactComponent(points, positioned, componentCenter, direction, 0.82, 0.58);
+    resolveOverlaps(positioned, points);
   }
 
   const finalCenter = averagePoint([...points.values()]);
   const recenterDx = componentCenter.x - finalCenter.x;
   const recenterDy = componentCenter.y - finalCenter.y;
-
-  for (const entry of sorted) {
+  for (const entry of positioned) {
     const point = points.get(entry.nodeId)!;
-    const centeredX = point.x + recenterDx;
-    const centeredY = point.y + recenterDy;
-    positions.set(entry.nodeId, {
-      id: entry.nodeId,
-      x: centeredX - entry.node.width / 2,
-      y: centeredY - entry.node.height / 2,
+    point.x += recenterDx;
+    point.y += recenterDy;
+  }
+
+  return points;
+}
+
+function buildConnectionCounts(
+  positioned: Array<{ nodeId: string }>,
+  internalEdges: Array<{ source: string; target: string }>,
+): Map<string, number> {
+  const connectionCounts = new Map<string, number>();
+  for (const entry of positioned) connectionCounts.set(entry.nodeId, 0);
+  for (const edge of internalEdges) {
+    connectionCounts.set(edge.source, (connectionCounts.get(edge.source) ?? 0) + 1);
+    connectionCounts.set(edge.target, (connectionCounts.get(edge.target) ?? 0) + 1);
+  }
+  return connectionCounts;
+}
+
+function buildScoringContext(
+  componentIds: Set<string>,
+  allNodes: LayoutInput[],
+  edges: Array<{ source: string; target: string }>,
+): ScoringContext {
+  return {
+    componentIds,
+    allNodes,
+    allEdges: edges,
+  };
+}
+
+function scoreCandidate(
+  scoringContext: ScoringContext,
+  positioned: Array<{ nodeId: string; node: LayoutInput }>,
+  positions: Map<string, LayoutResult>,
+  candidatePoints: Map<string, Point>,
+): number {
+  const candidatePositions = new Map<string, { x: number; y: number }>();
+
+  for (const node of scoringContext.allNodes) {
+    if (scoringContext.componentIds.has(node.id)) {
+      const point = candidatePoints.get(node.id);
+      if (!point) continue;
+      candidatePositions.set(node.id, {
+        x: point.x - node.width / 2,
+        y: point.y - node.height / 2,
+      });
+      continue;
+    }
+
+    const position = positions.get(node.id);
+    if (position) {
+      candidatePositions.set(node.id, position);
+    }
+  }
+
+  const metrics = computeLayoutMetrics(scoringContext.allNodes, scoringContext.allEdges, candidatePositions);
+  const maxDisplacement = positioned.reduce((max, entry) => {
+    const point = candidatePoints.get(entry.nodeId);
+    const current = positions.get(entry.nodeId);
+    if (!point || !current) return max;
+    const candidateTopLeft = { x: point.x - entry.node.width / 2, y: point.y - entry.node.height / 2 };
+    return Math.max(max, Math.hypot(candidateTopLeft.x - current.x, candidateTopLeft.y - current.y));
+  }, 0);
+
+  return scoreLayoutMetrics(metrics) + maxDisplacement * 0.25;
+}
+
+function createSeedPoints(
+  variant: SeedVariant,
+  positioned: Array<{ nodeId: string; node: LayoutInput }>,
+  originalCenters: Map<string, Point>,
+  center: Point,
+  direction: LayoutDirection,
+  anchorMap: Map<string, Point>,
+): Map<string, Point> {
+  const points = clonePoints(originalCenters);
+
+  if (variant === 'elk') {
+    seedCollapsedLayouts(positioned, points, center, direction);
+    return points;
+  }
+
+  if (variant === 'anchor' || variant === 'anchor-flipped') {
+    seedAnchorLayout(positioned, points, center, direction, anchorMap, variant === 'anchor-flipped');
+    return points;
+  }
+
+  seedAxisLayout(positioned, points, center, direction);
+  return points;
+}
+
+function seedAnchorLayout(
+  positioned: Array<{ nodeId: string; node: LayoutInput }>,
+  points: Map<string, Point>,
+  center: Point,
+  direction: LayoutDirection,
+  anchorMap: Map<string, Point>,
+  flip: boolean,
+): void {
+  const avgWidth = positioned.reduce((sum, entry) => sum + entry.node.width, 0) / positioned.length;
+  const avgHeight = positioned.reduce((sum, entry) => sum + entry.node.height, 0) / positioned.length;
+  const radiusX = Math.max(avgWidth * 0.95, (avgWidth + NODE_SEP * 1.05) * positioned.length / (Math.PI * 2));
+  const radiusY = Math.max(avgHeight * 1.1, (avgHeight + NODE_SEP * 0.8) * positioned.length / (Math.PI * 2));
+  const verticalScale = direction === 'BT' ? 0.92 : 1;
+
+  for (const entry of positioned) {
+    const anchor = anchorMap.get(entry.nodeId) ?? points.get(entry.nodeId)!;
+    let angle = Math.atan2(anchor.y - center.y, anchor.x - center.x);
+    if (flip) angle += Math.PI;
+
+    points.set(entry.nodeId, {
+      x: center.x + radiusX * Math.cos(angle),
+      y: center.y + radiusY * verticalScale * Math.sin(angle),
     });
   }
+}
+
+function seedAxisLayout(
+  positioned: Array<{ nodeId: string; node: LayoutInput }>,
+  points: Map<string, Point>,
+  center: Point,
+  direction: LayoutDirection,
+): void {
+  const ordered = [...positioned].sort((a, b) => {
+    const pointA = points.get(a.nodeId)!;
+    const pointB = points.get(b.nodeId)!;
+    return direction === 'BT'
+      ? pointB.x - pointA.x || pointA.y - pointB.y
+      : pointA.x - pointB.x || pointA.y - pointB.y;
+  });
+  const avgWidth = positioned.reduce((sum, entry) => sum + entry.node.width, 0) / positioned.length;
+  const avgHeight = positioned.reduce((sum, entry) => sum + entry.node.height, 0) / positioned.length;
+  const radiusX = Math.max(avgWidth * 0.9, (avgWidth + NODE_SEP) * ordered.length / (Math.PI * 2));
+  const radiusY = Math.max(avgHeight * 0.95, (avgHeight + NODE_SEP * 0.7) * ordered.length / (Math.PI * 2));
+  const angleStep = (Math.PI * 2) / ordered.length;
+
+  ordered.forEach((entry, index) => {
+    const angle = -Math.PI / 2 + index * angleStep;
+    points.set(entry.nodeId, {
+      x: center.x + radiusX * Math.cos(angle),
+      y: center.y + radiusY * Math.sin(angle),
+    });
+  });
+}
+
+function enumerateSymmetryCandidates(
+  points: Map<string, Point>,
+  center: Point,
+): Map<string, Point>[] {
+  return [
+    clonePoints(points),
+    transformPoints(points, center, (point) => ({ x: 2 * center.x - point.x, y: point.y })),
+    transformPoints(points, center, (point) => ({ x: point.x, y: 2 * center.y - point.y })),
+    transformPoints(points, center, (point) => ({
+      x: center.x - (point.x - center.x),
+      y: center.y - (point.y - center.y),
+    })),
+  ];
+}
+
+function transformPoints(
+  points: Map<string, Point>,
+  _center: Point,
+  transform: (point: Point) => Point,
+): Map<string, Point> {
+  const transformed = new Map<string, Point>();
+  for (const [nodeId, point] of points.entries()) {
+    transformed.set(nodeId, transform(point));
+  }
+  return transformed;
 }
 
 function buildExternalAnchorMap(
   componentIds: Set<string>,
   edges: Array<{ source: string; target: string }>,
   positions: Map<string, LayoutResult>,
-): Map<string, { x: number; y: number }> {
+): Map<string, Point> {
   const anchors = new Map<string, { sumX: number; sumY: number; count: number }>();
 
   for (const edge of edges) {
@@ -239,8 +465,8 @@ function buildExternalAnchorMap(
 
 function seedCollapsedLayouts(
   positioned: Array<{ nodeId: string; node: LayoutInput }>,
-  points: Map<string, { x: number; y: number }>,
-  center: { x: number; y: number },
+  points: Map<string, Point>,
+  center: Point,
   direction: LayoutDirection,
 ): void {
   const xs = [...points.values()].map((point) => point.x);
@@ -251,7 +477,6 @@ function seedCollapsedLayouts(
   if (!collapsed) return;
 
   const cols = Math.ceil(Math.sqrt(positioned.length));
-  const rows = Math.ceil(positioned.length / cols);
   const horizontalStep = NODE_WIDTH + NODE_SEP * 0.5;
   const averageHeight = positioned.reduce((sum, entry) => sum + entry.node.height, 0) / positioned.length;
   const verticalStep = averageHeight + NODE_SEP * 0.5;
@@ -260,7 +485,7 @@ function seedCollapsedLayouts(
     const row = Math.floor(index / cols);
     const col = index % cols;
     const xOffset = (col - (cols - 1) / 2) * horizontalStep;
-    const yOffset = (row - (rows - 1) / 2) * verticalStep;
+    const yOffset = (row - (Math.ceil(positioned.length / cols) - 1) / 2) * verticalStep;
     points.set(entry.nodeId, {
       x: center.x + (direction === 'TB' ? xOffset : xOffset * 0.9),
       y: center.y + yOffset,
@@ -270,7 +495,7 @@ function seedCollapsedLayouts(
 
 function resolveOverlaps(
   positioned: Array<{ nodeId: string; node: LayoutInput }>,
-  points: Map<string, { x: number; y: number }>,
+  points: Map<string, Point>,
 ): void {
   for (let pass = 0; pass < 4; pass++) {
     for (let i = 0; i < positioned.length; i++) {
@@ -309,9 +534,9 @@ function resolveOverlaps(
 }
 
 function compactComponent(
-  points: Map<string, { x: number; y: number }>,
+  points: Map<string, Point>,
   positioned: Array<{ nodeId: string; node: LayoutInput }>,
-  center: { x: number; y: number },
+  center: Point,
   direction: LayoutDirection,
   horizontalScale: number,
   verticalScale: number,
@@ -329,8 +554,8 @@ function compactComponent(
 }
 
 function distributeOverlap(
-  pointA: { x: number; y: number },
-  pointB: { x: number; y: number },
+  pointA: Point,
+  pointB: Point,
   amount: number,
   sign: number,
   lockedA: boolean | undefined,
@@ -353,17 +578,21 @@ function distributeOverlap(
   pointB[axis] += sign * shift;
 }
 
-function deterministicBias(i: number, j: number, direction: LayoutDirection): { x: number; y: number } {
+function deterministicBias(i: number, j: number, direction: LayoutDirection): Point {
   const base = (j - i + 1) * 7;
   return direction === 'BT'
     ? { x: base, y: -base * 0.6 }
     : { x: base, y: base * 0.6 };
 }
 
-function averagePoint(points: Array<{ x: number; y: number }>): { x: number; y: number } {
+function averagePoint(points: Point[]): Point {
   if (points.length === 0) return { x: 0, y: 0 };
   return {
     x: points.reduce((sum, point) => sum + point.x, 0) / points.length,
     y: points.reduce((sum, point) => sum + point.y, 0) / points.length,
   };
+}
+
+function clonePoints(points: Map<string, Point>): Map<string, Point> {
+  return new Map([...points.entries()].map(([nodeId, point]) => [nodeId, { ...point }]));
 }
