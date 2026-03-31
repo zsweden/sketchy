@@ -15,8 +15,9 @@ interface PositionedEntry {
 
 interface ScoringContext {
   componentIds: Set<string>;
-  allNodes: LayoutInput[];
-  allEdges: LayoutEdgeInput[];
+  nodes: LayoutInput[];
+  edges: LayoutEdgeInput[];
+  positions: ReadonlyMap<string, LayoutResult>;
 }
 
 interface ExternalInfluence {
@@ -354,7 +355,7 @@ function optimizeCyclicComponent(
   );
   const cycleOrder = buildCycleOrder(sorted, originalCenters, componentCenter, externalInfluence);
   const connectionCounts = buildConnectionCounts(sorted, internalEdges);
-  const scoringContext = buildScoringContext(componentIds, allNodes, edges);
+  const scoringContext = buildScoringContext(componentIds, allNodes, edges, positions);
 
   let bestScore = Number.POSITIVE_INFINITY;
   let bestPoints: Map<string, Point> | null = null;
@@ -385,7 +386,7 @@ function optimizeCyclicComponent(
     );
 
     for (const candidate of enumerateSymmetryCandidates(relaxed, componentCenter)) {
-      const score = scoreCandidate(scoringContext, sorted, positions, candidate);
+      const score = scoreCandidate(scoringContext, sorted, candidate);
       if (score < bestScore) {
         bestScore = score;
         bestPoints = clonePoints(candidate);
@@ -429,6 +430,8 @@ function runForceRelaxation(
   const centerStrength = 0.035;
   const memoryStrength = 0.08;
   const edgeRepulsionStrength = 0.28;
+  const lateRefinementStart = Math.floor(iterations * 0.8);
+  const edgeRepulsionInterval = 6;
 
   for (let iteration = 0; iteration < iterations; iteration++) {
     const cooling = 1 - iteration / iterations;
@@ -509,15 +512,19 @@ function runForceRelaxation(
       displacement.y += (original.y - current.y) * memoryStrength;
     }
 
-    applyEdgeRepulsion(
-      positioned,
-      obstacleEdges,
-      nodeLookup,
-      points,
-      settledPositions,
-      displacements,
-      edgeRepulsionStrength,
-    );
+    const shouldApplyEdgeRepulsion =
+      iteration >= lateRefinementStart || iteration % edgeRepulsionInterval === 0;
+    if (shouldApplyEdgeRepulsion) {
+      applyEdgeRepulsion(
+        positioned,
+        obstacleEdges,
+        nodeLookup,
+        points,
+        settledPositions,
+        displacements,
+        edgeRepulsionStrength,
+      );
+    }
 
     const maxStep = 12 * cooling + 2;
     for (const entry of positioned) {
@@ -568,49 +575,89 @@ function buildScoringContext(
   componentIds: Set<string>,
   allNodes: LayoutInput[],
   edges: Array<{ source: string; target: string }>,
+  positions: ReadonlyMap<string, LayoutResult>,
 ): ScoringContext {
+  const nodeLookup = new Map(allNodes.map((node) => [node.id, node]));
+  const includedNodeIds = new Set(componentIds);
+
+  for (const edge of edges) {
+    if (!componentIds.has(edge.source) && !componentIds.has(edge.target)) continue;
+    includedNodeIds.add(edge.source);
+    includedNodeIds.add(edge.target);
+  }
+
+  const componentNodes = allNodes.filter((node) => componentIds.has(node.id));
+  const componentBounds = measureBounds(componentNodes, positions);
+  const padding = NODE_WIDTH * 2 + NODE_SEP * 2;
+  const expandedBounds = {
+    left: componentBounds.minX - padding,
+    top: componentBounds.minY - padding,
+    right: componentBounds.maxX + padding,
+    bottom: componentBounds.maxY + padding,
+  };
+
+  for (const node of allNodes) {
+    if (includedNodeIds.has(node.id)) continue;
+    const position = positions.get(node.id);
+    if (!position) continue;
+    const box = {
+      left: position.x,
+      top: position.y,
+      right: position.x + node.width,
+      bottom: position.y + node.height,
+    };
+    if (boxesOverlap(box, expandedBounds)) {
+      includedNodeIds.add(node.id);
+    }
+  }
+
+  const relevantEdges = edges.filter((edge) =>
+    componentIds.has(edge.source)
+    || componentIds.has(edge.target)
+    || (includedNodeIds.has(edge.source) && includedNodeIds.has(edge.target)),
+  );
+
+  for (const edge of relevantEdges) {
+    includedNodeIds.add(edge.source);
+    includedNodeIds.add(edge.target);
+  }
+
   return {
     componentIds,
-    allNodes,
-    allEdges: edges,
+    nodes: allNodes.filter((node) => includedNodeIds.has(node.id)),
+    edges: relevantEdges,
+    positions,
   };
 }
 
 function scoreCandidate(
   scoringContext: ScoringContext,
   positioned: Array<{ nodeId: string; node: LayoutInput }>,
-  positions: Map<string, LayoutResult>,
   candidatePoints: Map<string, Point>,
 ): number {
-  const candidatePositions = new Map<string, { x: number; y: number }>();
+  const overrides = new Map<string, { x: number; y: number }>();
 
-  for (const node of scoringContext.allNodes) {
-    if (scoringContext.componentIds.has(node.id)) {
-      const point = candidatePoints.get(node.id);
-      if (!point) continue;
-      candidatePositions.set(node.id, {
-        x: point.x - node.width / 2,
-        y: point.y - node.height / 2,
-      });
-      continue;
-    }
-
-    const position = positions.get(node.id);
-    if (position) {
-      candidatePositions.set(node.id, position);
-    }
+  for (const node of scoringContext.nodes) {
+    if (!scoringContext.componentIds.has(node.id)) continue;
+    const point = candidatePoints.get(node.id);
+    if (!point) continue;
+    overrides.set(node.id, {
+      x: point.x - node.width / 2,
+      y: point.y - node.height / 2,
+    });
   }
 
-  const metrics = computeLayoutMetrics(scoringContext.allNodes, scoringContext.allEdges, candidatePositions);
+  const candidatePositions = createMergedPositions(scoringContext.positions, overrides);
+  const metrics = computeLayoutMetrics(scoringContext.nodes, scoringContext.edges, candidatePositions);
   const edgeProximityPenalty = computeEdgeProximityPenalty(
-    scoringContext.allNodes,
-    scoringContext.allEdges,
+    scoringContext.nodes,
+    scoringContext.edges,
     candidatePositions,
     scoringContext.componentIds,
   );
   const maxDisplacement = positioned.reduce((max, entry) => {
     const point = candidatePoints.get(entry.nodeId);
-    const current = positions.get(entry.nodeId);
+    const current = scoringContext.positions.get(entry.nodeId);
     if (!point || !current) return max;
     const candidateTopLeft = { x: point.x - entry.node.width / 2, y: point.y - entry.node.height / 2 };
     return Math.max(max, Math.hypot(candidateTopLeft.x - current.x, candidateTopLeft.y - current.y));
@@ -1269,4 +1316,22 @@ function round(value: number) {
 
 function clonePoints(points: Map<string, Point>): Map<string, Point> {
   return new Map([...points.entries()].map(([nodeId, point]) => [nodeId, { ...point }]));
+}
+
+function boxesOverlap(
+  a: { left: number; top: number; right: number; bottom: number },
+  b: { left: number; top: number; right: number; bottom: number },
+) {
+  return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+}
+
+function createMergedPositions(
+  base: ReadonlyMap<string, LayoutResult>,
+  overrides: ReadonlyMap<string, { x: number; y: number }>,
+): ReadonlyMap<string, { x: number; y: number }> {
+  return {
+    get(key: string) {
+      return overrides.get(key) ?? base.get(key);
+    },
+  } as ReadonlyMap<string, { x: number; y: number }>;
 }

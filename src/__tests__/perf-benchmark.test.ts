@@ -120,6 +120,16 @@ interface BenchResult {
 }
 
 const results: BenchResult[] = [];
+const SHOULD_LOG_BENCHES = process.env.RUN_PERF_TESTS === '1';
+
+function recordBenchResult(label: string, timeMs: number) {
+  const rounded = Math.round(timeMs * 100) / 100;
+  results.push({ label, timeMs: rounded });
+  if (SHOULD_LOG_BENCHES) {
+    console.log(`[perf] ${label}: ${rounded}ms`);
+  }
+  return rounded;
+}
 
 function bench(label: string, fn: () => void): number {
   // Warm up
@@ -129,7 +139,7 @@ function bench(label: string, fn: () => void): number {
   fn();
   const elapsed = performance.now() - before;
 
-  results.push({ label, timeMs: Math.round(elapsed * 100) / 100 });
+  recordBenchResult(label, elapsed);
   return elapsed;
 }
 
@@ -141,7 +151,7 @@ async function benchAsync(label: string, fn: () => Promise<void>): Promise<numbe
   await fn();
   const elapsed = performance.now() - before;
 
-  results.push({ label, timeMs: Math.round(elapsed * 100) / 100 });
+  recordBenchResult(label, elapsed);
   return elapsed;
 }
 
