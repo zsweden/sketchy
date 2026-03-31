@@ -322,6 +322,9 @@ describe('buildSystemPrompt framework-agnostic', () => {
     expect(systemContent).toContain('Current Reality Tree');
     expect(systemContent).toContain('ude (Undesirable Effect)');
     expect(systemContent).toContain('source causes target');
+    expect(systemContent).toContain('Label[node:<node-id>]');
+    expect(systemContent).toContain('Source -> Target[edge:<edge-id>]');
+    expect(systemContent).toContain('R1[loop:<loop-id>]');
     vi.unstubAllGlobals();
   });
 
@@ -423,7 +426,7 @@ describe('buildSystemPrompt framework-agnostic', () => {
     expect(systemContent).toContain('polarity=negative');
     expect(systemContent).toContain('delay=true');
     expect(systemContent).toContain('Detected feedback loops:');
-    expect(systemContent).toContain('B1: Demand');
+    expect(systemContent).toContain('B1[loop:n1>n2>n3]: Demand');
     expect(systemContent).toContain('refer to them by the provided R#/B# names');
     expect(systemContent).toContain('suggest flywheel rewrites or simplifications');
     vi.unstubAllGlobals();

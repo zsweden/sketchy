@@ -60,6 +60,12 @@ export function useKeyboardShortcuts() {
         useUIStore.getState().setInteractionMode('pan');
         return;
       }
+
+      // Escape to clear selection
+      if (e.key === 'Escape') {
+        useUIStore.getState().requestClearSelection();
+        return;
+      }
     };
 
     const onKeyUp = (e: KeyboardEvent) => {

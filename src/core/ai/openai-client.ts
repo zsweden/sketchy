@@ -152,7 +152,7 @@ function buildLoopAnalysis(diagram: Diagram): string {
     const cycle = loop.nodeIds
       .map((nodeId) => nodeLabels.get(nodeId) ?? nodeId)
       .join(' → ');
-    return `  - ${loopName}: ${cycle} → ${nodeLabels.get(loop.nodeIds[0]) ?? loop.nodeIds[0]} (${descriptors.join(', ')})`;
+    return `  - ${loopName}[loop:${loop.id}]: ${cycle} → ${nodeLabels.get(loop.nodeIds[0]) ?? loop.nodeIds[0]} (${descriptors.join(', ')})`;
   });
 
   return `Detected feedback loops:\n${lines.join('\n')}`;
@@ -230,6 +230,11 @@ Rules for modifications:
 - ${delayRule}
 - ${loopReasoningRule}
 - Edges can have notes — use them to explain the causal reasoning behind the connection.
+- When mentioning an existing node in prose, use Label[node:<node-id>] with the node's current label, or its ID if it has no label.
+- When mentioning an existing edge in prose, use Source -> Target[edge:<edge-id>] with the current source and target labels.
+- When mentioning an existing loop in prose, use R1[loop:<loop-id>] or B1[loop:<loop-id>] using the loop labels provided above.
+- Examples: Demand[node:n1], Demand -> Growth[edge:e1], R1[loop:n1>n2>n3].
+- If you cannot form a valid typed mention, fall back to plain text rather than inventing IDs.
 - Always explain your reasoning.`;
 }
 

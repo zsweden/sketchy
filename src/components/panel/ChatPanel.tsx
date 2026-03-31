@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Send, Square, Trash2, Copy, Check, Paperclip, X, Settings } from 'lucide-react';
 import { useChatStore } from '../../store/chat-store';
+import { findCausalLoops, labelCausalLoops } from '../../core/graph/derived';
+import { useDiagramStore } from '../../store/diagram-store';
 import { useSettingsStore, PROVIDERS } from '../../store/settings-store';
+import { useUIStore } from '../../store/ui-store';
 import { COPY_FEEDBACK_MS } from '../../constants/timing';
+import { parseChatMessageMentions, type ChatMentionTarget } from './chat-mentions';
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -26,6 +30,49 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
+function AssistantMessageText({
+  text,
+  onMentionClick,
+}: {
+  text: string;
+  onMentionClick: (mention: ChatMentionTarget) => void;
+}) {
+  const nodes = useDiagramStore((s) => s.diagram.nodes);
+  const edges = useDiagramStore((s) => s.diagram.edges);
+  const framework = useDiagramStore((s) => s.framework);
+  const loops = useMemo(
+    () => (framework.allowsCycles ? labelCausalLoops(findCausalLoops(edges)) : []),
+    [edges, framework.allowsCycles],
+  );
+  const segments = useMemo(
+    () => parseChatMessageMentions(text, nodes, edges, loops),
+    [text, nodes, edges, loops],
+  );
+
+  return (
+    <div className="chat-bubble-text">
+      {segments.map((segment, index) => {
+        if (segment.type === 'text') {
+          return <span key={`text-${index}`}>{segment.text}</span>;
+        }
+
+        return (
+          <button
+            key={`mention-${segment.mention.kind}-${segment.mention.id}-${index}`}
+            type="button"
+            className="chat-mention"
+            onClick={() => onMentionClick(segment.mention)}
+            data-kind={segment.mention.kind}
+            data-id={segment.mention.id}
+          >
+            {segment.mention.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function ChatPanel() {
   const messages = useChatStore((s) => s.messages);
   const loading = useChatStore((s) => s.loading);
@@ -33,6 +80,7 @@ export default function ChatPanel() {
   const sendMessage = useChatStore((s) => s.sendMessage);
   const cancelStream = useChatStore((s) => s.cancelStream);
   const clearMessages = useChatStore((s) => s.clearMessages);
+  const selectGraphObject = useUIStore((s) => s.selectGraphObject);
 
   const provider = useSettingsStore((s) => s.provider);
   const apiKey = useSettingsStore((s) => s.openaiApiKey);
@@ -117,6 +165,13 @@ export default function ChatPanel() {
     [handleSend, historyIndex],
   );
 
+  const handleMentionClick = useCallback(
+    (mention: ChatMentionTarget) => {
+      selectGraphObject({ kind: mention.kind, id: mention.id });
+    },
+    [selectGraphObject],
+  );
+
   return (
     <div className="chat-panel">
       <div className="chat-header">
@@ -162,7 +217,11 @@ export default function ChatPanel() {
         )}
         {messages.map((msg) => (
           <div key={msg.id} className={`chat-bubble chat-bubble--${msg.role}`}>
-            <p className="chat-bubble-text">{msg.content}</p>
+            {msg.role === 'assistant' ? (
+              <AssistantMessageText text={msg.content} onMentionClick={handleMentionClick} />
+            ) : (
+              <div className="chat-bubble-text">{msg.content}</div>
+            )}
             {msg.modifications && (
               <span className="chat-badge-modified">changes applied</span>
             )}
@@ -171,7 +230,7 @@ export default function ChatPanel() {
         ))}
         {loading && streamingContent && (
           <div className="chat-bubble chat-bubble--assistant">
-            <p className="chat-bubble-text">{streamingContent.trimStart()}</p>
+            <div className="chat-bubble-text">{streamingContent.trimStart()}</div>
           </div>
         )}
         {loading && !streamingContent && (
@@ -232,7 +291,7 @@ export default function ChatPanel() {
             <button
               className="btn btn-secondary btn-icon-sm"
               onClick={cancelStream}
-              title="Stop"
+              title="Stop generating"
               aria-label="Stop generating"
             >
               <Square size={11} />
@@ -242,7 +301,7 @@ export default function ChatPanel() {
               className="btn btn-secondary btn-icon-sm"
               onClick={handleSend}
               disabled={!input.trim() || !isConfigured}
-              title="Send"
+              title="Send message"
               aria-label="Send message"
             >
               <Send size={13} />

@@ -41,6 +41,8 @@ export default function DiagramCanvas() {
   const snapToGrid = useDiagramStore((s) => s.diagram.settings.snapToGrid);
   const updateSettings = useDiagramStore((s) => s.updateSettings);
 
+  const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
+  const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
   const setSelectedNodes = useUIStore((s) => s.setSelectedNodes);
   const setSelectedEdges = useUIStore((s) => s.setSelectedEdges);
   const openContextMenu = useUIStore((s) => s.openContextMenu);
@@ -63,28 +65,26 @@ export default function DiagramCanvas() {
   const [localNodes, setLocalNodes] = useState<Node[]>(rfNodes);
   const [localEdges, setLocalEdges] = useState<Edge[]>(rfEdges);
 
-  // Sync store -> local when diagram data changes, preserving selection state
+  // Sync store -> local when diagram data or store-backed selection changes
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLocalNodes((prev) => {
-      const selectionMap = new Map(prev.map((n) => [n.id, n.selected]));
-      return rfNodes.map((n) => ({
+    setLocalNodes(
+      rfNodes.map((n) => ({
         ...n,
-        selected: selectionMap.get(n.id) ?? false,
-      }));
-    });
-  }, [rfNodes]);
+        selected: selectedNodeIds.includes(n.id),
+      })),
+    );
+  }, [rfNodes, selectedNodeIds]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLocalEdges((prev) => {
-      const selectionMap = new Map(prev.map((e) => [e.id, e.selected]));
-      return rfEdges.map((e) => ({
+    setLocalEdges(
+      rfEdges.map((e) => ({
         ...e,
-        selected: selectionMap.get(e.id) ?? false,
-      }));
-    });
-  }, [rfEdges]);
+        selected: selectedEdgeIds.includes(e.id),
+      })),
+    );
+  }, [rfEdges, selectedEdgeIds]);
 
   // Fit view when requested
   const fitViewTrigger = useUIStore((s) => s.fitViewTrigger);

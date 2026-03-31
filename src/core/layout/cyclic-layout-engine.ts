@@ -534,7 +534,7 @@ function runForceRelaxation(
     resolveOverlaps(positioned, points);
   }
 
-  for (let pass = 0; pass < 4; pass++) {
+  for (let pass = 0; pass < 2; pass++) {
     compactComponent(points, positioned, componentCenter, direction, 0.82, 0.58);
     resolveOverlaps(positioned, points);
   }

@@ -8,6 +8,7 @@ export interface Toast {
 }
 
 export type InteractionMode = 'select' | 'pan';
+export type GraphObjectKind = 'node' | 'edge' | 'loop';
 
 interface UIState {
   selectedNodeIds: string[];
@@ -18,6 +19,7 @@ interface UIState {
   sidePanelOpen: boolean;
   interactionMode: InteractionMode;
   fitViewTrigger: number;
+  clearSelectionTrigger: number;
 
   setSelectedNodes: (ids: string[]) => void;
   setSelectedEdges: (ids: string[]) => void;
@@ -29,6 +31,8 @@ interface UIState {
   toggleSidePanel: () => void;
   setInteractionMode: (mode: InteractionMode) => void;
   requestFitView: () => void;
+  requestClearSelection: () => void;
+  selectGraphObject: (target: { kind: GraphObjectKind; id: string }) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -40,6 +44,7 @@ export const useUIStore = create<UIState>((set) => ({
   sidePanelOpen: true,
   interactionMode: 'select',
   fitViewTrigger: 0,
+  clearSelectionTrigger: 0,
 
   setSelectedNodes: (ids) => set({ selectedNodeIds: ids }),
 
@@ -75,4 +80,25 @@ export const useUIStore = create<UIState>((set) => ({
   setInteractionMode: (mode) => set({ interactionMode: mode }),
 
   requestFitView: () => set((s) => ({ fitViewTrigger: s.fitViewTrigger + 1 })),
+
+  requestClearSelection: () => set((s) => ({
+    selectedNodeIds: [],
+    selectedEdgeIds: [],
+    selectedLoopId: null,
+    clearSelectionTrigger: s.clearSelectionTrigger + 1,
+  })),
+
+  selectGraphObject: ({ kind, id }) => {
+    if (kind === 'node') {
+      set({ selectedNodeIds: [id], selectedEdgeIds: [], selectedLoopId: null });
+      return;
+    }
+
+    if (kind === 'edge') {
+      set({ selectedNodeIds: [], selectedEdgeIds: [id], selectedLoopId: null });
+      return;
+    }
+
+    set({ selectedNodeIds: [], selectedEdgeIds: [], selectedLoopId: id });
+  },
 }));

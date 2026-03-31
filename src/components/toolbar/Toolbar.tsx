@@ -42,9 +42,6 @@ export default function Toolbar() {
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
   const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
   const selectedLoopId = useUIStore((s) => s.selectedLoopId);
-  const setSelectedNodes = useUIStore((s) => s.setSelectedNodes);
-  const setSelectedEdges = useUIStore((s) => s.setSelectedEdges);
-  const setSelectedLoop = useUIStore((s) => s.setSelectedLoop);
   const interactionMode = useUIStore((s) => s.interactionMode);
   const setInteractionMode = useUIStore((s) => s.setInteractionMode);
 
@@ -75,11 +72,10 @@ export default function Toolbar() {
     moveNodesStore(distributeVertical(selectedNodes));
   }, [selectedNodes, commitToHistory, moveNodesStore]);
 
+  const requestClearSelection = useUIStore((s) => s.requestClearSelection);
   const handleClearSelection = useCallback(() => {
-    setSelectedNodes([]);
-    setSelectedEdges([]);
-    setSelectedLoop(null);
-  }, [setSelectedNodes, setSelectedEdges, setSelectedLoop]);
+    requestClearSelection();
+  }, [requestClearSelection]);
   const toggleSettings = useSettingsStore((s) => s.toggleSettings);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -196,7 +192,7 @@ export default function Toolbar() {
         </button>
 
         <button
-          className="btn btn-secondary btn-icon"
+          className={`btn btn-secondary btn-icon ${hasSelection ? 'btn-toggle-active' : ''}`}
           onClick={handleClearSelection}
           disabled={!hasSelection}
           title="Clear selection (Esc)"

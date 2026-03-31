@@ -5,11 +5,13 @@ function resetStore() {
   useUIStore.setState({
     selectedNodeIds: [],
     selectedEdgeIds: [],
+    selectedLoopId: null,
     contextMenu: null,
     toasts: [],
     sidePanelOpen: true,
     interactionMode: 'select',
     fitViewTrigger: 0,
+    clearSelectionTrigger: 0,
   });
 }
 
@@ -58,6 +60,33 @@ describe('ui store', () => {
       useUIStore.getState().setSelectedEdges(['e1']);
       expect(useUIStore.getState().selectedNodeIds).toEqual(['n1']);
       expect(useUIStore.getState().selectedEdgeIds).toEqual(['e1']);
+    });
+
+    it('selectGraphObject selects only the target node', () => {
+      useUIStore.getState().setSelectedEdges(['e1']);
+      useUIStore.getState().setSelectedLoop('loop-1');
+      useUIStore.getState().selectGraphObject({ kind: 'node', id: 'n1' });
+      expect(useUIStore.getState().selectedNodeIds).toEqual(['n1']);
+      expect(useUIStore.getState().selectedEdgeIds).toEqual([]);
+      expect(useUIStore.getState().selectedLoopId).toBeNull();
+    });
+
+    it('selectGraphObject selects only the target edge', () => {
+      useUIStore.getState().setSelectedNodes(['n1']);
+      useUIStore.getState().setSelectedLoop('loop-1');
+      useUIStore.getState().selectGraphObject({ kind: 'edge', id: 'e1' });
+      expect(useUIStore.getState().selectedNodeIds).toEqual([]);
+      expect(useUIStore.getState().selectedEdgeIds).toEqual(['e1']);
+      expect(useUIStore.getState().selectedLoopId).toBeNull();
+    });
+
+    it('selectGraphObject selects only the target loop', () => {
+      useUIStore.getState().setSelectedNodes(['n1']);
+      useUIStore.getState().setSelectedEdges(['e1']);
+      useUIStore.getState().selectGraphObject({ kind: 'loop', id: 'loop-1' });
+      expect(useUIStore.getState().selectedNodeIds).toEqual([]);
+      expect(useUIStore.getState().selectedEdgeIds).toEqual([]);
+      expect(useUIStore.getState().selectedLoopId).toBe('loop-1');
     });
   });
 

@@ -1,0 +1,70 @@
+import { describe, expect, it } from 'vitest';
+import type { NamedCausalLoop } from '../../../core/graph/derived';
+import type { DiagramEdge, DiagramNode } from '../../../core/types';
+import { parseChatMessageMentions } from '../chat-mentions';
+
+const nodes: DiagramNode[] = [
+  { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'Demand', tags: [], junctionType: 'or' } },
+  { id: 'n2', type: 'entity', position: { x: 0, y: 80 }, data: { label: 'Growth', tags: [], junctionType: 'or' } },
+];
+
+const edges: DiagramEdge[] = [
+  { id: 'e1', source: 'n1', target: 'n2' },
+];
+
+const loops: NamedCausalLoop[] = [
+  {
+    id: 'n1>n2',
+    label: 'R1',
+    nodeIds: ['n1', 'n2'],
+    edgeIds: ['e1'],
+    kind: 'reinforcing',
+    negativeEdgeCount: 0,
+    delayedEdgeCount: 0,
+  },
+];
+
+describe('parseChatMessageMentions', () => {
+  it('extracts node, edge, and loop mentions from mixed prose', () => {
+    const segments = parseChatMessageMentions(
+      'Demand[node:n1] strengthens Demand -> Growth[edge:e1] through R1[loop:n1>n2].',
+      nodes,
+      edges,
+      loops,
+    );
+
+    expect(segments).toEqual([
+      {
+        type: 'mention',
+        text: 'Demand[node:n1]',
+        mention: { kind: 'node', id: 'n1', label: 'Demand' },
+      },
+      { type: 'text', text: ' strengthens ' },
+      {
+        type: 'mention',
+        text: 'Demand -> Growth[edge:e1]',
+        mention: { kind: 'edge', id: 'e1', label: 'Demand -> Growth' },
+      },
+      { type: 'text', text: ' through ' },
+      {
+        type: 'mention',
+        text: 'R1[loop:n1>n2]',
+        mention: { kind: 'loop', id: 'n1>n2', label: 'R1' },
+      },
+      { type: 'text', text: '.' },
+    ]);
+  });
+
+  it('leaves malformed or stale mentions as plain text', () => {
+    const segments = parseChatMessageMentions(
+      'Demand[node:missing] and Growth[edge:e1] stay plain.',
+      nodes,
+      edges,
+      loops,
+    );
+
+    expect(segments).toEqual([
+      { type: 'text', text: 'Demand[node:missing] and Growth[edge:e1] stay plain.' },
+    ]);
+  });
+});

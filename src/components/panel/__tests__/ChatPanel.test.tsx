@@ -3,7 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ChatPanel from '../ChatPanel';
 import { useChatStore } from '../../../store/chat-store';
+import { useDiagramStore } from '../../../store/diagram-store';
 import { useSettingsStore } from '../../../store/settings-store';
+import { useUIStore } from '../../../store/ui-store';
 
 function resetStore() {
   useChatStore.setState({
@@ -19,6 +21,31 @@ function resetStore() {
   });
   // Set a dummy API key so ChatPanel shows the normal empty state
   useSettingsStore.setState({ openaiApiKey: 'sk-test', model: 'gpt-4.1-mini' });
+  useDiagramStore.getState().setFramework('cld');
+  useDiagramStore.setState((state) => ({
+    diagram: {
+      ...state.diagram,
+      nodes: [
+        { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'Demand', tags: [], junctionType: 'or' } },
+        { id: 'n2', type: 'entity', position: { x: 0, y: 100 }, data: { label: 'Growth', tags: [], junctionType: 'or' } },
+      ],
+      edges: [
+        { id: 'e1', source: 'n1', target: 'n2', polarity: 'positive' },
+        { id: 'e2', source: 'n2', target: 'n1', polarity: 'positive' },
+      ],
+    },
+  }));
+  useUIStore.setState({
+    selectedNodeIds: [],
+    selectedEdgeIds: [],
+    selectedLoopId: null,
+    contextMenu: null,
+    toasts: [],
+    sidePanelOpen: true,
+    interactionMode: 'select',
+    fitViewTrigger: 0,
+    clearSelectionTrigger: 0,
+  });
 }
 
 describe('ChatPanel', () => {
@@ -127,5 +154,36 @@ describe('ChatPanel', () => {
 
     await user.click(screen.getByRole('button', { name: 'Stop generating' }));
     expect(cancelStream).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders clickable node, edge, and loop mentions and selects them', async () => {
+    const user = userEvent.setup();
+
+    useChatStore.setState({
+      messages: [
+        {
+          id: 'a1',
+          role: 'assistant',
+          content: 'Demand[node:n1] reinforces Demand -> Growth[edge:e1] through R1[loop:n1>n2].',
+        },
+      ],
+    });
+
+    render(<ChatPanel />);
+
+    await user.click(screen.getByRole('button', { name: 'Demand' }));
+    expect(useUIStore.getState().selectedNodeIds).toEqual(['n1']);
+    expect(useUIStore.getState().selectedEdgeIds).toEqual([]);
+    expect(useUIStore.getState().selectedLoopId).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Demand -> Growth' }));
+    expect(useUIStore.getState().selectedNodeIds).toEqual([]);
+    expect(useUIStore.getState().selectedEdgeIds).toEqual(['e1']);
+    expect(useUIStore.getState().selectedLoopId).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'R1' }));
+    expect(useUIStore.getState().selectedNodeIds).toEqual([]);
+    expect(useUIStore.getState().selectedEdgeIds).toEqual([]);
+    expect(useUIStore.getState().selectedLoopId).toBe('n1>n2');
   });
 });
