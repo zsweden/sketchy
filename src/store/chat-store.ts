@@ -3,8 +3,6 @@ import type { ChatMessage, DiagramModification } from '../core/ai/openai-client'
 import { streamChatMessage } from '../core/ai/openai-client';
 import { useSettingsStore } from './settings-store';
 import { useDiagramStore } from './diagram-store';
-import { useUIStore } from './ui-store';
-import { autoLayout, elkEngine } from '../core/layout';
 import { reportError } from '../core/monitoring/error-logging';
 import { findCausalLoops, labelCausalLoops } from '../core/graph/derived';
 import { countMalformedCanonicalMentions, normalizeChatMessageMentions } from '../components/panel/chat-mentions';
@@ -261,17 +259,5 @@ function applyModifications(mods: DiagramModification) {
   }
   useChatStore.setState({ aiModifiedNodeIds: modifiedIds });
 
-  // Auto-layout after AI changes
-  const updated = useDiagramStore.getState().diagram;
-  const framework = useDiagramStore.getState().framework;
-  autoLayout(updated.nodes, updated.edges, {
-    direction: updated.settings.layoutDirection,
-    cyclic: framework.allowsCycles,
-  }, elkEngine).then((updates) => {
-    if (updates.length > 0) {
-      useDiagramStore.getState().moveNodes(updates);
-      useDiagramStore.getState().optimizeEdgesAfterLayout();
-      useUIStore.getState().requestFitView();
-    }
-  });
+  void useDiagramStore.getState().runAutoLayout({ fitView: true });
 }

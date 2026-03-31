@@ -7,9 +7,8 @@ import { useDiagramStore } from '../../../store/diagram-store';
 import { useUIStore } from '../../../store/ui-store';
 import { THEMES } from '../../../styles/themes';
 
-vi.mock('../../../core/layout', () => ({
-  autoLayout: vi.fn().mockResolvedValue([]),
-  elkEngine: {},
+vi.mock('../../../core/layout/run-elk-auto-layout', () => ({
+  runElkAutoLayout: vi.fn().mockResolvedValue([]),
 }));
 
 function resetStores() {

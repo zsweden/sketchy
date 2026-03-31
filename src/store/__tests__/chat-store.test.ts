@@ -22,9 +22,8 @@ vi.mock('../../core/monitoring/error-logging', () => ({
 }));
 
 // Mock auto-layout to avoid ELK dependency
-vi.mock('../../core/layout', () => ({
-  autoLayout: vi.fn().mockResolvedValue([]),
-  elkEngine: vi.fn(),
+vi.mock('../../core/layout/run-elk-auto-layout', () => ({
+  runElkAutoLayout: vi.fn().mockResolvedValue([]),
 }));
 
 function resetStores() {

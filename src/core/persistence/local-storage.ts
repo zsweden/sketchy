@@ -1,7 +1,5 @@
 import type { Diagram } from '../types';
-import { validateGraph } from '../graph/validation';
-import { getFramework } from '../../frameworks/registry';
-import { migrate, validateDiagramShape } from './schema';
+import { migrateDiagramShape, normalizeLoadedDiagram } from './load-helpers';
 
 const STORAGE_KEY = 'sketchy_diagram';
 
@@ -26,7 +24,8 @@ export function loadDiagram(): LoadResult {
   try {
     const parsed = JSON.parse(raw);
 
-    if (!validateDiagramShape(parsed)) {
+    const diagram = migrateDiagramShape(parsed);
+    if (!diagram) {
       backupCorrupted(raw);
       return {
         diagram: null,
@@ -34,23 +33,16 @@ export function loadDiagram(): LoadResult {
       };
     }
 
-    const diagram = migrate(parsed as unknown as Record<string, unknown>);
+    const normalized = normalizeLoadedDiagram(
+      diagram,
+      (droppedCount) =>
+        `Recovered session contained errors and was sanitized: removed ${droppedCount} invalid connection(s).`,
+    );
 
-    // Validate graph — sanitize dangling edges, cycles, duplicates
-    const warnings: string[] = [];
-    const graphResult = validateGraph(diagram.nodes, diagram.edges, {
-      allowCycles: getFramework(diagram.frameworkId)?.allowsCycles,
-    });
-    if (!graphResult.valid) {
-      diagram.edges = diagram.edges.filter(
-        (e) => !graphResult.droppedEdges.some((d) => d.id === e.id),
-      );
-      warnings.push(
-        `Recovered session contained errors and was sanitized: removed ${graphResult.droppedEdges.length} invalid connection(s).`,
-      );
-    }
-
-    return { diagram, ...(warnings.length > 0 ? { warnings } : {}) };
+    return {
+      diagram: normalized.diagram,
+      ...(normalized.warnings.length > 0 ? { warnings: normalized.warnings } : {}),
+    };
   } catch {
     backupCorrupted(raw);
     return {

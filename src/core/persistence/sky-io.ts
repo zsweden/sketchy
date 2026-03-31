@@ -1,8 +1,6 @@
 import type { Diagram } from '../types';
-import { getFramework } from '../../frameworks/registry';
-import { validateGraph } from '../graph/validation';
-import { migrate, validateDiagramShape } from './schema';
 import { isSkyJson, convertSkyJson, diagramToSkyJson } from './causal-json';
+import { migrateDiagramShape, normalizeLoadedDiagram } from './load-helpers';
 
 function defaultFilename(diagram: Diagram): string {
   const name = diagram.name?.trim() || 'diagram';
@@ -98,39 +96,30 @@ export async function loadSkyFile(file: File): Promise<LoadResult> {
     (parsed as Record<string, unknown>).format === 'sky'
   ) {
     const skyFile = parsed as Record<string, unknown>;
-    const inner = skyFile.diagram;
-    if (!validateDiagramShape(inner)) {
+    const legacyDiagram = migrateDiagramShape(skyFile.diagram);
+    if (!legacyDiagram) {
       throw new Error('Invalid .sky project. The diagram data is missing or malformed.');
     }
-    diagram = migrate(inner as unknown as Record<string, unknown>);
+    diagram = legacyDiagram;
   }
   // Legacy raw diagram JSON (has schemaVersion)
-  else if (validateDiagramShape(parsed)) {
-    diagram = migrate(parsed as unknown as Record<string, unknown>);
-  } else {
-    throw new Error('Unrecognized file format. Expected a .sky project file.');
+  else {
+    const legacyDiagram = migrateDiagramShape(parsed);
+    if (!legacyDiagram) {
+      throw new Error('Unrecognized file format. Expected a .sky project file.');
+    }
+    diagram = legacyDiagram;
   }
 
-  // Check framework
-  const framework = getFramework(diagram.frameworkId);
-  if (!framework) {
-    warnings.push(
-      `Unknown framework "${diagram.frameworkId}" — loading as generic diagram`,
-    );
-  }
+  const normalized = normalizeLoadedDiagram(
+    diagram,
+    (droppedCount) =>
+      `File contained errors and was sanitized: removed ${droppedCount} invalid connection(s) referencing non-existent nodes.`,
+  );
 
-  // Validate graph — sanitize dangling edges, cycles, duplicates
-  const graphResult = validateGraph(diagram.nodes, diagram.edges, {
-    allowCycles: framework?.allowsCycles,
-  });
-  if (!graphResult.valid) {
-    diagram.edges = diagram.edges.filter(
-      (e) => !graphResult.droppedEdges.some((d) => d.id === e.id),
-    );
-    warnings.push(
-      `File contained errors and was sanitized: removed ${graphResult.droppedEdges.length} invalid connection(s) referencing non-existent nodes.`,
-    );
-  }
-
-  return { diagram, warnings, needsLayout };
+  return {
+    diagram: normalized.diagram,
+    warnings: [...warnings, ...normalized.warnings],
+    needsLayout,
+  };
 }

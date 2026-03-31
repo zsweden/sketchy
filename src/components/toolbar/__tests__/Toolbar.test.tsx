@@ -9,15 +9,13 @@ import { useSettingsStore, PROVIDERS } from '../../../store/settings-store';
 import { useUIStore } from '../../../store/ui-store';
 
 const mocks = vi.hoisted(() => ({
-  autoLayout: vi.fn(),
+  runElkAutoLayout: vi.fn(),
   saveSkyFile: vi.fn(),
   loadSkyFile: vi.fn(),
-  elkEngine: vi.fn(),
 }));
 
-vi.mock('../../../core/layout', () => ({
-  autoLayout: mocks.autoLayout,
-  elkEngine: mocks.elkEngine,
+vi.mock('../../../core/layout/run-elk-auto-layout', () => ({
+  runElkAutoLayout: mocks.runElkAutoLayout,
 }));
 
 vi.mock('../../../core/persistence/sky-io', () => ({
@@ -61,7 +59,7 @@ describe('Toolbar', () => {
   beforeEach(() => {
     resetStores();
     vi.clearAllMocks();
-    mocks.autoLayout.mockResolvedValue([]);
+    mocks.runElkAutoLayout.mockResolvedValue([]);
     mocks.saveSkyFile.mockResolvedValue(undefined);
   });
 
@@ -101,7 +99,7 @@ describe('Toolbar', () => {
   it('runs auto-layout and stores the resulting node positions', async () => {
     const user = userEvent.setup();
     const nodeId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
-    mocks.autoLayout.mockResolvedValue([{ id: nodeId, position: { x: 200, y: 120 } }]);
+    mocks.runElkAutoLayout.mockResolvedValue([{ id: nodeId, position: { x: 200, y: 120 } }]);
 
     render(<Toolbar />);
     await user.click(screen.getByRole('button', { name: 'Auto-layout' }));

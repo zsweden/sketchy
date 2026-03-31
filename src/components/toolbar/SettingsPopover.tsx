@@ -5,8 +5,6 @@ import { formatModelDate } from '../../core/ai/model-fetcher';
 import { THEMES, type ThemeId } from '../../styles/themes';
 import { DROPDOWN_BLUR_DELAY_MS } from '../../constants/timing';
 import { useDiagramStore } from '../../store/diagram-store';
-import { useUIStore } from '../../store/ui-store';
-import { autoLayout, elkEngine } from '../../core/layout';
 
 export default function SettingsPopover() {
   const open = useSettingsStore((s) => s.settingsOpen);
@@ -28,28 +26,16 @@ export default function SettingsPopover() {
   const keyValid = apiKey.length > 0 && !modelsLoading && !modelsError && availableModels.length > 0;
   const diagramSettings = useDiagramStore((s) => s.diagram.settings);
   const updateDiagramSettings = useDiagramStore((s) => s.updateSettings);
-  const commitToHistory = useDiagramStore((s) => s.commitToHistory);
-  const moveNodes = useDiagramStore((s) => s.moveNodes);
-  const requestFitView = useUIStore((s) => s.requestFitView);
+  const runAutoLayout = useDiagramStore((s) => s.runAutoLayout);
   const ref = useRef<HTMLDivElement>(null);
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
 
   const handleDirectionChange = useCallback(
     async (direction: 'TB' | 'BT') => {
       updateDiagramSettings({ layoutDirection: direction });
-      const { nodes, edges } = useDiagramStore.getState().diagram;
-      const updates = await autoLayout(
-        nodes, edges,
-        { direction, cyclic: useDiagramStore.getState().framework.allowsCycles },
-        elkEngine,
-      );
-      if (updates.length > 0) {
-        commitToHistory();
-        moveNodes(updates);
-        requestFitView();
-      }
+      await runAutoLayout({ commitHistory: true, fitView: true });
     },
-    [updateDiagramSettings, commitToHistory, moveNodes, requestFitView],
+    [updateDiagramSettings, runAutoLayout],
   );
 
   useEffect(() => {

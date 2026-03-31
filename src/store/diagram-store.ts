@@ -11,6 +11,8 @@ import type { Framework } from '../core/framework-types';
 import { getFramework } from '../frameworks/registry';
 import { validateEdge, findExistingEdge } from '../core/graph/validation';
 import { UndoRedoManager } from '../core/history/undo-redo';
+import { runElkAutoLayout } from '../core/layout/run-elk-auto-layout';
+import { useUIStore } from './ui-store';
 import {
   getDefaultFramework,
   createDiagramForFramework,
@@ -55,6 +57,7 @@ interface DiagramSnapshot {
 }
 
 const history = new UndoRedoManager<DiagramSnapshot>();
+const UNDO_STATE = { canUndo: true, canRedo: false } as const;
 
 interface DiagramState {
   diagram: Diagram;
@@ -88,6 +91,7 @@ interface DiagramState {
   updateEdgeNotes: (id: string, notes: string) => void;
   optimizeEdges: () => boolean;
   optimizeEdgesAfterLayout: () => void;
+  runAutoLayout: (options?: { commitHistory?: boolean; fitView?: boolean }) => Promise<boolean>;
 
   // Diagram operations
   setFramework: (frameworkId: string) => void;
@@ -107,7 +111,52 @@ interface DiagramState {
   commitToHistory: () => void;
 }
 
-export const useDiagramStore = create<DiagramState>((set, get) => ({
+export const useDiagramStore = create<DiagramState>((set, get) => {
+  const setDiagram = (updater: (diagram: Diagram) => Diagram) => {
+    set((state) => ({ diagram: updater(state.diagram) }));
+  };
+
+  const applyDiagramChange = (
+    updater: (diagram: Diagram) => Diagram,
+    options: { trackHistory?: boolean } = {},
+  ) => {
+    if (options.trackHistory) {
+      history.push(snapshot(get()));
+    }
+
+    set((state) => ({
+      diagram: updater(state.diagram),
+      ...(options.trackHistory ? UNDO_STATE : {}),
+    }));
+  };
+
+  const updateNodes = (
+    mapper: (node: DiagramNode) => DiagramNode,
+    options: { trackHistory?: boolean } = {},
+  ) => {
+    applyDiagramChange(
+      (diagram) => ({
+        ...diagram,
+        nodes: diagram.nodes.map(mapper),
+      }),
+      options,
+    );
+  };
+
+  const updateEdges = (
+    mapper: (edge: DiagramEdge) => DiagramEdge,
+    options: { trackHistory?: boolean } = {},
+  ) => {
+    applyDiagramChange(
+      (diagram) => ({
+        ...diagram,
+        edges: diagram.edges.map(mapper),
+      }),
+      options,
+    );
+  };
+
+  return {
   diagram: createDiagramForFramework(getDefaultFramework()),
   framework: getDefaultFramework(),
 
@@ -124,148 +173,93 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       },
     };
 
-    const state = get();
-    history.push(snapshot(state));
-
-    set((s) => ({
-      diagram: { ...s.diagram, nodes: [...s.diagram.nodes, node] },
-      canUndo: true,
-      canRedo: false,
-    }));
+    applyDiagramChange(
+      (diagram) => ({ ...diagram, nodes: [...diagram.nodes, node] }),
+      { trackHistory: true },
+    );
 
     return id;
   },
 
   updateNodeText: (id, label) => {
-    set((s) => ({
-      diagram: {
-        ...s.diagram,
-        nodes: s.diagram.nodes.map((n) =>
-          n.id === id ? { ...n, data: { ...n.data, label } } : n,
-        ),
-      },
-    }));
+    updateNodes((node) =>
+      node.id === id ? { ...node, data: { ...node.data, label } } : node,
+    );
   },
 
   updateNodeTags: (id, tags) => {
-    const state = get();
-    history.push(snapshot(state));
-
-    set((s) => ({
-      diagram: {
-        ...s.diagram,
-        nodes: s.diagram.nodes.map((n) =>
-          n.id === id ? { ...n, data: { ...n.data, tags } } : n,
-        ),
-      },
-      canUndo: true,
-      canRedo: false,
-    }));
+    updateNodes(
+      (node) => (node.id === id ? { ...node, data: { ...node.data, tags } } : node),
+      { trackHistory: true },
+    );
   },
 
   updateNodeJunction: (id, type) => {
-    const state = get();
-    history.push(snapshot(state));
-
-    set((s) => ({
-      diagram: {
-        ...s.diagram,
-        nodes: s.diagram.nodes.map((n) =>
-          n.id === id ? { ...n, data: { ...n.data, junctionType: type } } : n,
-        ),
-      },
-      canUndo: true,
-      canRedo: false,
-    }));
+    updateNodes(
+      (node) => (
+        node.id === id ? { ...node, data: { ...node.data, junctionType: type } } : node
+      ),
+      { trackHistory: true },
+    );
   },
 
   updateNodeColor: (id, color) => {
-    const state = get();
-    history.push(snapshot(state));
-
-    set((s) => ({
-      diagram: {
-        ...s.diagram,
-        nodes: s.diagram.nodes.map((n) =>
-          n.id === id ? { ...n, data: { ...n.data, color } } : n,
-        ),
-      },
-      canUndo: true,
-      canRedo: false,
-    }));
+    updateNodes(
+      (node) => (node.id === id ? { ...node, data: { ...node.data, color } } : node),
+      { trackHistory: true },
+    );
   },
 
   updateNodeTextColor: (id, textColor) => {
-    const state = get();
-    history.push(snapshot(state));
-
-    set((s) => ({
-      diagram: {
-        ...s.diagram,
-        nodes: s.diagram.nodes.map((n) =>
-          n.id === id ? { ...n, data: { ...n.data, textColor } } : n,
-        ),
-      },
-      canUndo: true,
-      canRedo: false,
-    }));
+    updateNodes(
+      (node) => (
+        node.id === id ? { ...node, data: { ...node.data, textColor } } : node
+      ),
+      { trackHistory: true },
+    );
   },
 
   updateNodeNotes: (id, notes) => {
-    set((s) => ({
-      diagram: {
-        ...s.diagram,
-        nodes: s.diagram.nodes.map((n) =>
-          n.id === id ? { ...n, data: { ...n.data, notes: notes || undefined } } : n,
-        ),
-      },
-    }));
+    updateNodes((node) => (
+      node.id === id
+        ? { ...node, data: { ...node.data, notes: notes || undefined } }
+        : node
+    ));
   },
 
   toggleNodeLocked: (ids, locked) => {
-    const state = get();
-    history.push(snapshot(state));
     const idSet = new Set(ids);
-    set((s) => ({
-      diagram: {
-        ...s.diagram,
-        nodes: s.diagram.nodes.map((n) =>
-          idSet.has(n.id) ? { ...n, data: { ...n.data, locked: locked || undefined } } : n,
-        ),
-      },
-      canUndo: true,
-      canRedo: false,
-    }));
+    updateNodes(
+      (node) => (
+        idSet.has(node.id)
+          ? { ...node, data: { ...node.data, locked: locked || undefined } }
+          : node
+      ),
+      { trackHistory: true },
+    );
   },
 
   moveNodes: (changes) => {
-    set((s) => ({
-      diagram: {
-        ...s.diagram,
-        nodes: s.diagram.nodes.map((n) => {
-          const change = changes.find((c) => c.id === n.id);
-          return change ? { ...n, position: change.position } : n;
-        }),
-      },
+    const positions = new Map(changes.map((change) => [change.id, change.position]));
+    setDiagram((diagram) => ({
+      ...diagram,
+      nodes: diagram.nodes.map((node) => {
+        const position = positions.get(node.id);
+        return position ? { ...node, position } : node;
+      }),
     }));
   },
 
   deleteNodes: (ids) => {
-    const state = get();
-    history.push(snapshot(state));
-
     const idSet = new Set(ids);
-    set((s) => ({
-      diagram: {
-        ...s.diagram,
-        nodes: s.diagram.nodes.filter((n) => !idSet.has(n.id)),
-        edges: s.diagram.edges.filter(
-          (e) => !idSet.has(e.source) && !idSet.has(e.target),
-        ),
-      },
-      canUndo: true,
-      canRedo: false,
-    }));
+    applyDiagramChange(
+      (diagram) => ({
+        ...diagram,
+        nodes: diagram.nodes.filter((node) => !idSet.has(node.id)),
+        edges: diagram.edges.filter((edge) => !idSet.has(edge.source) && !idSet.has(edge.target)),
+      }),
+      { trackHistory: true },
+    );
   },
 
   addEdge: (source, target, handles) => {
@@ -298,8 +292,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
             e.id === existing.id ? { ...e, ...newSides } : e,
           ),
         },
-        canUndo: true,
-        canRedo: false,
+        ...UNDO_STATE,
       }));
       return { success: true, reason: 'Edge moved' };
     }
@@ -341,8 +334,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
           nodes,
           edges: [...s.diagram.edges, edge],
         },
-        canUndo: true,
-        canRedo: false,
+        ...UNDO_STATE,
       };
     });
 
@@ -350,18 +342,14 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
   },
 
   deleteEdges: (ids) => {
-    const state = get();
-    history.push(snapshot(state));
-
     const idSet = new Set(ids);
-    set((s) => ({
-      diagram: {
-        ...s.diagram,
-        edges: s.diagram.edges.filter((e) => !idSet.has(e.id)),
-      },
-      canUndo: true,
-      canRedo: false,
-    }));
+    applyDiagramChange(
+      (diagram) => ({
+        ...diagram,
+        edges: diagram.edges.filter((edge) => !idSet.has(edge.id)),
+      }),
+      { trackHistory: true },
+    );
   },
 
   batchApply: (mutations) => {
@@ -388,70 +376,37 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
 
     set({
       diagram: { ...state.diagram, nodes, edges },
-      canUndo: true,
-      canRedo: false,
+      ...UNDO_STATE,
     });
 
     return idMap;
   },
 
   setEdgeConfidence: (id, confidence) => {
-    const state = get();
-    history.push(snapshot(state));
-
-    set((s) => ({
-      diagram: {
-        ...s.diagram,
-        edges: s.diagram.edges.map((e) =>
-          e.id === id ? { ...e, confidence } : e,
-        ),
-      },
-      canUndo: true,
-      canRedo: false,
-    }));
+    updateEdges(
+      (edge) => (edge.id === id ? { ...edge, confidence } : edge),
+      { trackHistory: true },
+    );
   },
 
   setEdgePolarity: (id, polarity) => {
-    const state = get();
-    history.push(snapshot(state));
-
-    set((s) => ({
-      diagram: {
-        ...s.diagram,
-        edges: s.diagram.edges.map((e) =>
-          e.id === id ? { ...e, polarity } : e,
-        ),
-      },
-      canUndo: true,
-      canRedo: false,
-    }));
+    updateEdges(
+      (edge) => (edge.id === id ? { ...edge, polarity } : edge),
+      { trackHistory: true },
+    );
   },
 
   setEdgeDelay: (id, delay) => {
-    const state = get();
-    history.push(snapshot(state));
-
-    set((s) => ({
-      diagram: {
-        ...s.diagram,
-        edges: s.diagram.edges.map((e) =>
-          e.id === id ? { ...e, delay } : e,
-        ),
-      },
-      canUndo: true,
-      canRedo: false,
-    }));
+    updateEdges(
+      (edge) => (edge.id === id ? { ...edge, delay } : edge),
+      { trackHistory: true },
+    );
   },
 
   updateEdgeNotes: (id, notes) => {
-    set((s) => ({
-      diagram: {
-        ...s.diagram,
-        edges: s.diagram.edges.map((e) =>
-          e.id === id ? { ...e, notes: notes || undefined } : e,
-        ),
-      },
-    }));
+    updateEdges((edge) => (
+      edge.id === id ? { ...edge, notes: notes || undefined } : edge
+    ));
   },
 
   optimizeEdges: () => {
@@ -470,15 +425,13 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
 
     if (!changed) return false;
 
-    history.push(snapshot(state));
-    set((s) => ({
-      diagram: {
-        ...s.diagram,
+    applyDiagramChange(
+      (diagram) => ({
+        ...diagram,
         edges: optimizedEdges,
-      },
-      canUndo: true,
-      canRedo: false,
-    }));
+      }),
+      { trackHistory: true },
+    );
     return true;
   },
 
@@ -490,23 +443,47 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       state.diagram.nodes,
       state.diagram.settings,
     );
-    set((s) => ({
-      diagram: { ...s.diagram, edges: optimizedEdges },
-    }));
+    setDiagram((diagram) => ({ ...diagram, edges: optimizedEdges }));
+  },
+
+  runAutoLayout: async ({ commitHistory = false, fitView = true } = {}) => {
+    const state = get();
+    const updates = await runElkAutoLayout(state.diagram.nodes, state.diagram.edges, {
+      direction: state.diagram.settings.layoutDirection,
+      cyclic: state.framework.allowsCycles,
+    });
+
+    if (updates.length === 0) {
+      return false;
+    }
+
+    if (commitHistory) {
+      history.push(snapshot(get()));
+    }
+
+    get().moveNodes(updates);
+    get().optimizeEdgesAfterLayout();
+
+    if (commitHistory) {
+      set(UNDO_STATE);
+    }
+    if (fitView) {
+      useUIStore.getState().requestFitView();
+    }
+
+    return true;
   },
 
   setFramework: (frameworkId) => {
     const fw = getFramework(frameworkId);
     if (!fw) return;
 
-    const state = get();
-    history.push(snapshot(state));
+    history.push(snapshot(get()));
 
     set({
       diagram: createDiagramForFramework(fw),
       framework: fw,
-      canUndo: true,
-      canRedo: false,
+      ...UNDO_STATE,
     });
   },
 
@@ -549,19 +526,16 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
           : diagram.edges,
       },
       framework: fw,
-      canUndo: true,
-      canRedo: false,
+      ...UNDO_STATE,
     });
   },
 
   newDiagram: () => {
-    const state = get();
-    history.push(snapshot(state));
+    history.push(snapshot(get()));
 
-    set((s) => ({
-      diagram: createDiagramForFramework(s.framework),
-      canUndo: true,
-      canRedo: false,
+    set((state) => ({
+      diagram: createDiagramForFramework(state.framework),
+      ...UNDO_STATE,
     }));
   },
 
@@ -601,9 +575,10 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
   commitToHistory: () => {
     const state = get();
     history.push(snapshot(state));
-    set({ canUndo: true, canRedo: false });
+    set(UNDO_STATE);
   },
-}));
+  };
+});
 
 // Expose store for dev/testing in development mode
 if (import.meta.env.DEV && typeof window !== 'undefined') {

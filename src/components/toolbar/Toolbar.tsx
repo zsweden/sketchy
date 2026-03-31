@@ -16,7 +16,6 @@ import { useUIStore } from '../../store/ui-store';
 import { useSettingsStore } from '../../store/settings-store';
 import { useChatStore } from '../../store/chat-store';
 import { appVersion } from '../../core/app-version';
-import { autoLayout, elkEngine } from '../../core/layout';
 import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import FrameworkSelector from './FrameworkSelector';
 import SettingsPopover from './SettingsPopover';
@@ -34,8 +33,7 @@ export default function Toolbar() {
   const commitToHistory = useDiagramStore((s) => s.commitToHistory);
   const loadDiagram = useDiagramStore((s) => s.loadDiagram);
   const optimizeEdges = useDiagramStore((s) => s.optimizeEdges);
-  const optimizeEdgesAfterLayout = useDiagramStore((s) => s.optimizeEdgesAfterLayout);
-  const framework = useDiagramStore((s) => s.framework);
+  const runAutoLayout = useDiagramStore((s) => s.runAutoLayout);
   const addToast = useUIStore((s) => s.addToast);
   const sidePanelOpen = useUIStore((s) => s.sidePanelOpen);
   const toggleSidePanel = useUIStore((s) => s.toggleSidePanel);
@@ -95,17 +93,8 @@ export default function Toolbar() {
   }, [diagram.nodes.length, newDiagram, requestFitView]);
 
   const handleAutoLayout = useCallback(async () => {
-    const updates = await autoLayout(diagram.nodes, diagram.edges, {
-      direction: diagram.settings.layoutDirection,
-      cyclic: framework.allowsCycles,
-    }, elkEngine);
-    if (updates.length > 0) {
-      commitToHistory();
-      moveNodesStore(updates);
-      optimizeEdgesAfterLayout();
-      requestFitView();
-    }
-  }, [diagram, framework.allowsCycles, commitToHistory, moveNodesStore, optimizeEdgesAfterLayout, requestFitView]);
+    await runAutoLayout({ commitHistory: true, fitView: true });
+  }, [runAutoLayout]);
 
   const handleAutoEdges = useCallback(() => {
     optimizeEdges();
@@ -134,14 +123,7 @@ export default function Toolbar() {
         useChatStore.getState().clearAiModified();
 
         if (result.needsLayout) {
-          const loaded = useDiagramStore.getState().diagram;
-          const updates = await autoLayout(loaded.nodes, loaded.edges, {
-            direction: loaded.settings.layoutDirection,
-            cyclic: useDiagramStore.getState().framework.allowsCycles,
-          }, elkEngine);
-          if (updates.length > 0) {
-            moveNodesStore(updates);
-          }
+          await useDiagramStore.getState().runAutoLayout({ fitView: false });
         }
 
         requestFitView();
@@ -159,7 +141,7 @@ export default function Toolbar() {
       }
       e.target.value = '';
     },
-    [loadDiagram, addToast, requestFitView, moveNodesStore],
+    [loadDiagram, addToast, requestFitView],
   );
 
   const handlePrint = useCallback(() => {
