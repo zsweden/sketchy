@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LayoutInput, LayoutEdgeInput } from '../layout-engine';
-import { compareGraphMetrics } from '../cyclic-layout-engine';
-import { computeLayoutMetrics, scoreLayoutMetrics } from '../layout-metrics';
+import { compareGraphMetrics, computeLayoutMetrics, scoreLayoutMetrics } from '../layout-metrics';
 
 const nodes: LayoutInput[] = [
   { id: 'a', width: 120, height: 60 },

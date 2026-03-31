@@ -112,6 +112,28 @@ export function scoreLayoutMetrics(metrics: LayoutMetrics): number {
     + metrics.boundingArea * 0.0025;
 }
 
+export function compareGraphMetrics(a: LayoutMetrics, b: LayoutMetrics): number {
+  if (a.nodeOverlaps !== b.nodeOverlaps) {
+    return a.nodeOverlaps - b.nodeOverlaps;
+  }
+  if (a.edgeCrossings !== b.edgeCrossings) {
+    return a.edgeCrossings - b.edgeCrossings;
+  }
+  if (a.edgeNodeOverlaps !== b.edgeNodeOverlaps) {
+    return a.edgeNodeOverlaps - b.edgeNodeOverlaps;
+  }
+  if (a.connectorConflicts !== b.connectorConflicts) {
+    return a.connectorConflicts - b.connectorConflicts;
+  }
+  if (a.totalEdgeLength !== b.totalEdgeLength) {
+    return a.totalEdgeLength - b.totalEdgeLength;
+  }
+  if (a.boundingArea !== b.boundingArea) {
+    return a.boundingArea - b.boundingArea;
+  }
+  return scoreLayoutMetrics(a) - scoreLayoutMetrics(b);
+}
+
 export function computeRoutedEdgeGeometries(
   nodes: LayoutInput[],
   edges: LayoutEdgeInput[],
