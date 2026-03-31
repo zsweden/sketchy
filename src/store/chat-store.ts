@@ -32,6 +32,14 @@ interface ChatState {
 let activeController: AbortController | null = null;
 const EMPTY_RESPONSE_FALLBACK = 'The AI returned an empty response. Please try again.';
 
+function getEndpointHost(baseUrl: string): string {
+  try {
+    return new URL(baseUrl).host || 'unknown';
+  } catch {
+    return 'invalid_url';
+  }
+}
+
 export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   loading: false,
@@ -113,9 +121,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
               metadata: {
                 provider,
                 model,
-                baseUrl,
+                endpointHost: getEndpointHost(baseUrl),
                 frameworkId: framework.id,
-                diagramId: diagram.id,
                 historyCount: history.length,
                 malformedMentionCount,
                 resultTextLength: result.text.length,
@@ -131,9 +138,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
               metadata: {
                 provider,
                 model,
-                baseUrl,
+                endpointHost: getEndpointHost(baseUrl),
                 frameworkId: framework.id,
-                diagramId: diagram.id,
                 historyCount: history.length,
                 userMessageLength: text.length,
                 streamingLength: get().streamingContent.length,

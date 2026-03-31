@@ -102,6 +102,7 @@ describe('chat-store', () => {
           metadata: expect.objectContaining({
             provider: 'openai',
             model: 'gpt-4o',
+            endpointHost: 'api.test.com',
             userMessageLength: 5,
             resultTextLength: 3,
           }),

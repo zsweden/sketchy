@@ -84,7 +84,7 @@ function getCurrentRoute(): string {
     return 'unknown';
   }
 
-  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  return window.location.pathname || '/';
 }
 
 function shouldSkipFingerprint(fingerprint: string): boolean {

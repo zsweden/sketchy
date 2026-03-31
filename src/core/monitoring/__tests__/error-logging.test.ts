@@ -39,7 +39,7 @@ describe('error logging', () => {
         fatal: true,
         name: 'Error',
         message: 'Boom',
-        route: '/diagram?tab=chat',
+        route: '/diagram',
       }),
     );
   });
@@ -84,7 +84,7 @@ describe('error logging', () => {
         fatal: true,
         name: 'Error',
         message: 'Firestore test',
-        route: '/diagram?tab=chat',
+        route: '/diagram',
       }),
     );
   });
@@ -115,7 +115,7 @@ describe('error logging', () => {
     expect(description).toContain('Error: Boom');
     expect(description).toContain(`version=${appVersion}`);
     expect(description).toContain('source=window.unhandledrejection');
-    expect(description).toContain('route=/diagram?tab=chat');
+    expect(description).toContain('route=/diagram');
     expect(description).toContain('componentStack=at Toolbar');
     expect(description).toContain('provider=openai');
     expect(description).toContain('resultTextLength=0');
