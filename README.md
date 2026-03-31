@@ -6,6 +6,7 @@ Today the app supports:
 
 - Current Reality Tree (CRT)
 - Future Reality Tree (FRT)
+- Goal Tree
 - Prerequisite Tree (PRT)
 - Success Tree
 - Strategy & Tactics Tree (STT)
@@ -49,6 +50,14 @@ Use Success Tree to explain how multiple factors contributed to a positive outco
 - Edge semantics: `contributed to`
 - Tags: `Success Factor`, `Achievement`
 - Derived indicators: `Foundation`, `Contributor`, `Outcome`
+
+### Goal Tree
+
+Use Goal Tree to break a desired outcome into supporting conditions, sub-goals, and concrete actions.
+
+- Edge semantics: `supports`
+- Tags: `Goal`, `Necessary Condition`, `Action`
+- Derived indicators: `Foundation`, `Bridge`, `Target Goal`
 
 ## Recommended Next Frameworks
 

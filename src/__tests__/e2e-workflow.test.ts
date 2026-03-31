@@ -244,6 +244,48 @@ describe('end-to-end: STT workflow', () => {
   });
 });
 
+describe('end-to-end: Goal Tree workflow', () => {
+  beforeEach(() => {
+    useDiagramStore.getState().setFramework('goal-tree');
+  });
+
+  it('Goal Tree framework is registered and uses bottom-up default layout', () => {
+    const store = useDiagramStore.getState();
+    const goalTree = getFramework('goal-tree');
+    expect(goalTree).toBeDefined();
+    expect(goalTree!.nodeTags.map((t) => t.id)).toEqual(['goal', 'condition', 'action']);
+    expect(store.diagram.settings.layoutDirection).toBe('BT');
+  });
+
+  it('create Goal Tree diagram and preserve tags through .sky round-trip', () => {
+    const store = useDiagramStore.getState;
+
+    const n1 = store().addNode({ x: 0, y: 0 });
+    store().updateNodeText(n1, 'Publish weekly project updates');
+    store().updateNodeTags(n1, ['action']);
+
+    const n2 = store().addNode({ x: 0, y: 100 });
+    store().updateNodeText(n2, 'Stakeholders stay informed');
+    store().updateNodeTags(n2, ['condition']);
+
+    const n3 = store().addNode({ x: 0, y: 200 });
+    store().updateNodeText(n3, 'Build trust across the team');
+    store().updateNodeTags(n3, ['goal']);
+
+    store().addEdge(n1, n2);
+    store().addEdge(n2, n3);
+
+    const sky = diagramToSkyJson(store().diagram);
+    expect(sky.framework).toBe('goal-tree');
+    expect(sky.nodes.find((n) => n.id === n2)?.tags).toEqual(['condition']);
+
+    const { diagram: loaded } = convertSkyJson(sky);
+    expect(loaded.frameworkId).toBe('goal-tree');
+    expect(loaded.nodes.find((n) => n.id === n1)?.data.tags).toEqual(['action']);
+    expect(loaded.nodes.find((n) => n.id === n3)?.data.tags).toEqual(['goal']);
+  });
+});
+
 describe('end-to-end: framework switching', () => {
   beforeEach(resetStore);
 
@@ -252,6 +294,7 @@ describe('end-to-end: framework switching', () => {
     const ids = frameworks.map((f) => f.id);
     expect(ids).toContain('crt');
     expect(ids).toContain('frt');
+    expect(ids).toContain('goal-tree');
     expect(ids).toContain('prt');
     expect(ids).toContain('stt');
   });

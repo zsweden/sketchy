@@ -17,6 +17,7 @@ Sketchy currently supports these frameworks:
 
 - `CRT` — Current Reality Tree
 - `FRT` — Future Reality Tree
+- `Goal Tree`
 - `PRT` — Prerequisite Tree
 - `Success Tree`
 - `STT` — Strategy & Tactics Tree
@@ -79,6 +80,17 @@ Current semantics:
 - Edge label: `enables`
 - Tags: `Obstacle`, `Intermediate Objective`, `Goal`
 - Derived indicators: `Starting Point`, `Milestone`, `Target Outcome`
+
+### Goal Tree
+
+Purpose:
+Break a goal into the supporting conditions, sub-goals, and actions required to achieve it.
+
+Current semantics:
+
+- Edge label: `supports`
+- Tags: `Goal`, `Necessary Condition`, `Action`
+- Derived indicators: `Foundation`, `Bridge`, `Target Goal`
 
 ### Strategy & Tactics Tree
 

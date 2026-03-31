@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { crtFramework } from '../crt';
 import { frtFramework } from '../frt';
+import { goalTreeFramework } from '../goal-tree';
 import { prtFramework } from '../prt';
 import { successTreeFramework } from '../success-tree';
 import { sttFramework } from '../stt';
@@ -10,6 +11,7 @@ import type { Framework } from '../../core/framework-types';
 const ALL_FRAMEWORKS: Framework[] = [
   crtFramework,
   frtFramework,
+  goalTreeFramework,
   prtFramework,
   successTreeFramework,
   sttFramework,
@@ -92,6 +94,27 @@ describe('framework definitions', () => {
       expect(ids).toContain('starting-point');
       expect(ids).toContain('milestone');
       expect(ids).toContain('target');
+    });
+  });
+
+  describe('Goal Tree', () => {
+    it('has goal, condition, and action tags', () => {
+      expect(goalTreeFramework.nodeTags).toHaveLength(3);
+      const tagIds = goalTreeFramework.nodeTags.map((t) => t.id);
+      expect(tagIds).toContain('goal');
+      expect(tagIds).toContain('condition');
+      expect(tagIds).toContain('action');
+    });
+
+    it('has foundation, bridge, and target derived indicators', () => {
+      const ids = goalTreeFramework.derivedIndicators.map((d) => d.id);
+      expect(ids).toContain('foundation');
+      expect(ids).toContain('bridge');
+      expect(ids).toContain('target');
+    });
+
+    it('does not allow cycles', () => {
+      expect(goalTreeFramework.allowsCycles).toBeFalsy();
     });
   });
 
