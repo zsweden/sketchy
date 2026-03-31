@@ -70,7 +70,7 @@ Frameworks to defer for now:
 - React Flow (`@xyflow/react`)
 - Zustand
 - ELK (`elkjs`) for primary auto-layout
-- dagre retained as an alternative/tested layout engine
+- ELK variants and Graphology ForceAtlas2 available for layout benchmarking
 - Tailwind CSS v4 plus project CSS
 
 ## Local Development

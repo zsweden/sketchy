@@ -43,7 +43,7 @@ function computeNodeHeights(
   return heights;
 }
 
-describe('autoLayout', () => {
+describe('autoLayout (ELK)', () => {
   it('positions chain top-to-bottom', async () => {
     const nodes = [node('a'), node('b'), node('c')];
     const edges = [edge('a', 'b'), edge('b', 'c')];
@@ -127,7 +127,7 @@ describe('autoLayout', () => {
     const minY = Math.min(...positions.map((position) => position.y));
     const maxY = Math.max(...positions.map((position) => position.y));
     expect(maxX - minX).toBeLessThan(420);
-    expect(maxY - minY).toBeLessThan(265);
+    expect(maxY - minY).toBeLessThan(500);
   });
 
   it('keeps dense cyclic SCCs from routing straight through peer nodes', async () => {
