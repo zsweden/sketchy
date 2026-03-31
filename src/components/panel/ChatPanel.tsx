@@ -48,6 +48,14 @@ function AssistantMessageText({
     () => parseChatMessageMentions(text, nodes, edges, loops),
     [text, nodes, edges, loops],
   );
+  const handleMentionKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLSpanElement>, mention: ChatMentionTarget) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      onMentionClick(mention);
+    },
+    [onMentionClick],
+  );
 
   return (
     <div className="chat-bubble-text">
@@ -57,16 +65,18 @@ function AssistantMessageText({
         }
 
         return (
-          <button
+          <span
             key={`mention-${segment.mention.kind}-${segment.mention.id}-${index}`}
-            type="button"
             className="chat-mention"
+            role="button"
+            tabIndex={0}
             onClick={() => onMentionClick(segment.mention)}
+            onKeyDown={(event) => handleMentionKeyDown(event, segment.mention)}
             data-kind={segment.mention.kind}
             data-id={segment.mention.id}
           >
             {segment.mention.label}
-          </button>
+          </span>
         );
       })}
     </div>

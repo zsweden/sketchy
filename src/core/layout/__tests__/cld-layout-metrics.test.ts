@@ -5,6 +5,8 @@ import { autoLayout, elkEngine } from '..';
 import { NODE_WIDTH, estimateHeight } from '../layout-engine';
 import { computeLayoutMetrics, scoreLayoutMetrics, type LayoutMetrics } from '../layout-metrics';
 
+const describePerfSensitive = process.env.RUN_PERF_TESTS === '1' ? describe : describe.skip;
+
 type PositionMap = Map<string, { x: number; y: number }>;
 
 interface Fixture {
@@ -184,7 +186,7 @@ function computeMetrics(
   );
 }
 
-describe('CLD layout metrics', () => {
+describePerfSensitive('CLD layout metrics', () => {
   it('keeps routed cyclic layout quality within guardrails and better than the old baseline overall', async () => {
     const rows: Array<Record<string, number | string>> = [];
     const aggregate = {

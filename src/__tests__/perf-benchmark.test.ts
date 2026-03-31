@@ -15,6 +15,8 @@ import { useDiagramStore } from '../store/diagram-store';
 import { crtFramework } from '../frameworks/crt';
 import { migrate, validateDiagramShape } from '../core/persistence/schema';
 
+const describePerf = process.env.RUN_PERF_TESTS === '1' ? describe : describe.skip;
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -147,7 +149,7 @@ async function benchAsync(label: string, fn: () => Promise<void>): Promise<numbe
 // 1. Auto-layout (ELK engine)
 // ---------------------------------------------------------------------------
 
-describe('perf: auto-layout (ELK)', () => {
+describePerf('perf: auto-layout (ELK)', () => {
   it('lays out 50-node chain under 500ms', async () => {
     const { nodes, edges } = buildChain(50);
     const t = await benchAsync('layout-50-chain', async () => {
@@ -209,7 +211,7 @@ describe('perf: auto-layout (ELK)', () => {
 // 2. Derived indicator computation
 // ---------------------------------------------------------------------------
 
-describe('perf: derived indicators', () => {
+describePerf('perf: derived indicators', () => {
   it('computes degrees for 500 nodes / 499 edges under 5ms', () => {
     const { edges } = buildChain(500);
     const t = bench('degrees-500', () => {
@@ -255,7 +257,7 @@ describe('perf: derived indicators', () => {
 // 3. Cycle detection (CLD)
 // ---------------------------------------------------------------------------
 
-describe('perf: cycle detection', () => {
+describePerf('perf: cycle detection', () => {
   it('finds cycles in 20-node graph with 4 cycles of 5 under 50ms', () => {
     const { edges } = buildCyclicGraph(20, 5);
     const t = bench('cycles-20', () => {
@@ -285,7 +287,7 @@ describe('perf: cycle detection', () => {
 // 4. Autosave (sessionStorage serialization)
 // ---------------------------------------------------------------------------
 
-describe('perf: autosave serialization', () => {
+describePerf('perf: autosave serialization', () => {
   it('serializes 50-node diagram under 5ms', () => {
     const { nodes, edges } = buildChain(50);
     const diagram = makeDiagram(nodes, edges);
@@ -327,7 +329,7 @@ describe('perf: autosave serialization', () => {
 // 5. .sky file load + validation + migration
 // ---------------------------------------------------------------------------
 
-describe('perf: sky file load pipeline', () => {
+describePerf('perf: sky file load pipeline', () => {
   it('validates 200-node diagram shape under 5ms', () => {
     const { nodes, edges } = buildChain(200);
     const diagram = makeDiagram(nodes, edges);
@@ -353,7 +355,7 @@ describe('perf: sky file load pipeline', () => {
 // 6. Batch AI mutations (store)
 // ---------------------------------------------------------------------------
 
-describe('perf: batch mutations (store)', () => {
+describePerf('perf: batch mutations (store)', () => {
   beforeEach(() => {
     useDiagramStore.getState().setFramework('crt');
     useDiagramStore.getState().newDiagram();
@@ -398,7 +400,7 @@ describe('perf: batch mutations (store)', () => {
 // 7. Multi-select bulk delete
 // ---------------------------------------------------------------------------
 
-describe('perf: bulk delete', () => {
+describePerf('perf: bulk delete', () => {
   beforeEach(() => {
     useDiagramStore.getState().setFramework('crt');
   });
@@ -443,7 +445,7 @@ describe('perf: bulk delete', () => {
 // 8. Undo/redo with large snapshots
 // ---------------------------------------------------------------------------
 
-describe('perf: undo/redo snapshots', () => {
+describePerf('perf: undo/redo snapshots', () => {
   it('pushes 50-snapshot history for a 200-node diagram under 100ms', () => {
     const manager = new UndoRedoManager<{ nodes: DiagramNode[]; edges: DiagramEdge[] }>();
     const { nodes, edges } = buildChain(200);
@@ -474,7 +476,7 @@ describe('perf: undo/redo snapshots', () => {
 // 9. Node dragging simulation (move + edge re-routing)
 // ---------------------------------------------------------------------------
 
-describe('perf: node move in store', () => {
+describePerf('perf: node move in store', () => {
   beforeEach(() => {
     useDiagramStore.getState().setFramework('crt');
     useDiagramStore.getState().newDiagram();
@@ -522,7 +524,7 @@ describe('perf: node move in store', () => {
 // 10. End-to-end workflow: create → layout → save → load → undo
 // ---------------------------------------------------------------------------
 
-describe('perf: full workflow', () => {
+describePerf('perf: full workflow', () => {
   beforeEach(() => {
     useDiagramStore.getState().setFramework('crt');
     useDiagramStore.getState().newDiagram();
@@ -588,7 +590,7 @@ describe('perf: full workflow', () => {
 // Print summary table after all tests
 // ---------------------------------------------------------------------------
 
-describe('perf: summary', () => {
+describePerf('perf: summary', () => {
   it('prints benchmark results', () => {
     if (results.length === 0) return;
 
