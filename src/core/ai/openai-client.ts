@@ -152,7 +152,7 @@ function buildLoopAnalysis(diagram: Diagram): string {
     const cycle = loop.nodeIds
       .map((nodeId) => nodeLabels.get(nodeId) ?? nodeId)
       .join(' → ');
-    return `  - ${loopName}[loop:${loop.id}]: ${cycle} → ${nodeLabels.get(loop.nodeIds[0]) ?? loop.nodeIds[0]} (${descriptors.join(', ')})`;
+    return `  - [${loopName}][loop:${loop.id}]: ${cycle} → ${nodeLabels.get(loop.nodeIds[0]) ?? loop.nodeIds[0]} (${descriptors.join(', ')})`;
   });
 
   return `Detected feedback loops:\n${lines.join('\n')}`;
@@ -230,10 +230,12 @@ Rules for modifications:
 - ${delayRule}
 - ${loopReasoningRule}
 - Edges can have notes — use them to explain the causal reasoning behind the connection.
-- When mentioning an existing node in prose, replace "Label" with the node's actual current label: Current label[node:<node-id>]. Do not literally write the word "Label" unless the node is actually named "Label".
-- When mentioning an existing edge in prose, replace "Source -> Target" with the actual current source and target labels: Current Source -> Current Target[edge:<edge-id>]. Do not literally write "Source -> Target".
-- When mentioning an existing loop in prose, use R1[loop:<loop-id>] or B1[loop:<loop-id>] using the loop labels provided above.
-- Examples: Demand[node:n1], Demand -> Growth[edge:e1], R1[loop:n1>n2>n3].
+- When mentioning an existing node in prose, use exactly this format: [Current label][node:<node-id>].
+- When mentioning an existing edge in prose, use exactly this format: [Current Source -> Current Target][edge:<edge-id>].
+- When mentioning an existing loop in prose, use exactly this format: [R1][loop:<loop-id>] or [B1][loop:<loop-id>] using the loop labels provided above.
+- Examples: [Demand][node:n1], [Demand -> Growth][edge:e1], [R1][loop:n1>n2>n3].
+- Use only the exact two-bracket format above for typed mentions. Do not use legacy forms like Demand[node:n1] or R1[loop:n1>n2>n3].
+- Never put punctuation inside the kind:id bracket.
 - If you cannot form a valid typed mention, fall back to plain text rather than inventing IDs.
 - Reply in plain text only. Do not use Markdown formatting such as headings, bullet lists, tables, bold, or code fences.
 - Always explain your reasoning.`;

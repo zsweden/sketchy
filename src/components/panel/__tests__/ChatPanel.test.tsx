@@ -164,7 +164,7 @@ describe('ChatPanel', () => {
         {
           id: 'a1',
           role: 'assistant',
-          content: 'Demand[node:n1] reinforces Demand -> Growth[edge:e1] through R1[loop:n1>n2].',
+          content: '[Demand][node:n1] reinforces [Demand -> Growth][edge:e1] through [R1][loop:n1>n2].',
         },
       ],
     });
@@ -185,5 +185,22 @@ describe('ChatPanel', () => {
     expect(useUIStore.getState().selectedNodeIds).toEqual([]);
     expect(useUIStore.getState().selectedEdgeIds).toEqual([]);
     expect(useUIStore.getState().selectedLoopId).toBe('n1>n2');
+  });
+
+  it('renders legacy inline syntax as plain text instead of clickable mentions', () => {
+    useChatStore.setState({
+      messages: [
+        {
+          id: 'a1',
+          role: 'assistant',
+          content: 'Demand[node:n1] reinforces Demand -> Growth[edge:e1].',
+        },
+      ],
+    });
+
+    render(<ChatPanel />);
+
+    expect(screen.queryByRole('button', { name: 'Demand' })).not.toBeInTheDocument();
+    expect(screen.getByText('Demand[node:n1] reinforces Demand -> Growth[edge:e1].')).toBeInTheDocument();
   });
 });

@@ -6,6 +6,8 @@ import { useDiagramStore } from './diagram-store';
 import { useUIStore } from './ui-store';
 import { autoLayout, elkEngine } from '../core/layout';
 import { reportError } from '../core/monitoring/error-logging';
+import { findCausalLoops, labelCausalLoops } from '../core/graph/derived';
+import { countMalformedCanonicalMentions, normalizeChatMessageMentions } from '../components/panel/chat-mentions';
 
 export interface DisplayMessage {
   id: string;
@@ -88,8 +90,39 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         onDone: (result) => {
           activeController = null;
-          const trimmedText = result.text.trim();
+          const loops = framework.allowsCycles ? labelCausalLoops(findCausalLoops(diagram.edges)) : [];
+          const normalizedText = normalizeChatMessageMentions(
+            result.text,
+            diagram.nodes,
+            diagram.edges,
+            loops,
+          );
+          const malformedMentionCount = countMalformedCanonicalMentions(
+            result.text,
+            diagram.nodes,
+            diagram.edges,
+            loops,
+          );
+          const trimmedText = normalizedText.trim();
           const content = trimmedText || EMPTY_RESPONSE_FALLBACK;
+
+          if (malformedMentionCount > 0) {
+            void reportError(new Error('AI chat returned malformed canonical mentions'), {
+              source: 'chat.malformed_mention',
+              fatal: false,
+              metadata: {
+                provider,
+                model,
+                baseUrl,
+                frameworkId: framework.id,
+                diagramId: diagram.id,
+                historyCount: history.length,
+                malformedMentionCount,
+                resultTextLength: result.text.length,
+                normalizedTextLength: normalizedText.length,
+              },
+            });
+          }
 
           if (!trimmedText) {
             void reportError(new Error('AI chat returned empty assistant response'), {
@@ -105,6 +138,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 userMessageLength: text.length,
                 streamingLength: get().streamingContent.length,
                 resultTextLength: result.text.length,
+                normalizedTextLength: normalizedText.length,
                 hasModifications: Boolean(result.modifications),
                 addedNodes: result.modifications?.addNodes.length ?? 0,
                 updatedNodes: result.modifications?.updateNodes.length ?? 0,

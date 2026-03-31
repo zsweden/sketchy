@@ -5,7 +5,8 @@ export type ErrorSource =
   | 'react.error_boundary'
   | 'window.error'
   | 'window.unhandledrejection'
-  | 'chat.empty_response';
+  | 'chat.empty_response'
+  | 'chat.malformed_mention';
 
 interface ReportErrorOptions {
   source: ErrorSource;

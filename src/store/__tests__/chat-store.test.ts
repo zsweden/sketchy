@@ -109,6 +109,75 @@ describe('chat-store', () => {
       );
     });
 
+    it('stores canonical mention text unchanged', async () => {
+      const diagram = useDiagramStore.getState().diagram;
+      useDiagramStore.setState({
+        diagram: {
+          ...diagram,
+          nodes: [
+            { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'Demand', tags: [], junctionType: 'or' } },
+            { id: 'n2', type: 'entity', position: { x: 0, y: 100 }, data: { label: 'Growth', tags: [], junctionType: 'or' } },
+          ],
+          edges: [{ id: 'e1', source: 'n1', target: 'n2' }],
+        },
+      });
+
+      mockStreamChatMessage.mockImplementationOnce((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
+        setTimeout(() => {
+          callbacks.onDone({ text: '[Demand][node:n1] drives [Demand -> Growth][edge:e1].' });
+        }, 0);
+        return new AbortController();
+      });
+
+      useChatStore.getState().sendMessage('Hello');
+      await new Promise((r) => setTimeout(r, 50));
+
+      const msgs = useChatStore.getState().messages;
+      const assistant = msgs.find((m) => m.role === 'assistant');
+      expect(assistant).toBeDefined();
+      expect(assistant!.content).toBe('[Demand][node:n1] drives [Demand -> Growth][edge:e1].');
+    });
+
+    it('leaves malformed canonical mentions as plain text and logs them', async () => {
+      const diagram = useDiagramStore.getState().diagram;
+      useDiagramStore.setState({
+        diagram: {
+          ...diagram,
+          nodes: [
+            { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'Demand', tags: [], junctionType: 'or' } },
+          ],
+          edges: [],
+        },
+      });
+
+      mockStreamChatMessage.mockImplementationOnce((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
+        setTimeout(() => {
+          callbacks.onDone({ text: '[Demand][node:missing] still shows up.' });
+        }, 0);
+        return new AbortController();
+      });
+
+      useChatStore.getState().sendMessage('Hello');
+      await new Promise((r) => setTimeout(r, 50));
+
+      const msgs = useChatStore.getState().messages;
+      const assistant = msgs.find((m) => m.role === 'assistant');
+      expect(assistant).toBeDefined();
+      expect(assistant!.content).toBe('[Demand][node:missing] still shows up.');
+      expect(reportError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'AI chat returned malformed canonical mentions',
+        }),
+        expect.objectContaining({
+          source: 'chat.malformed_mention',
+          fatal: false,
+          metadata: expect.objectContaining({
+            malformedMentionCount: 1,
+          }),
+        }),
+      );
+    });
+
     it('shows config message when no baseUrl', () => {
       useSettingsStore.setState({ baseUrl: '', model: '' });
       useChatStore.getState().sendMessage('Hello');

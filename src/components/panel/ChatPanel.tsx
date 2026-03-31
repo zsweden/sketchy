@@ -75,7 +75,7 @@ function AssistantMessageText({
             data-kind={segment.mention.kind}
             data-id={segment.mention.id}
           >
-            {segment.mention.label}
+            {segment.mention.displayText}
           </span>
         );
       })}

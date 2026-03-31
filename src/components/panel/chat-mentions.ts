@@ -6,12 +6,14 @@ export type ChatMentionKind = 'node' | 'edge' | 'loop';
 export interface ChatMentionTarget {
   kind: ChatMentionKind;
   id: string;
-  label: string;
+  displayText: string;
+  rawText: string;
 }
 
 export interface ChatMentionSegment {
   type: 'mention';
-  text: string;
+  displayText: string;
+  rawText: string;
   mention: ChatMentionTarget;
 }
 
@@ -22,40 +24,69 @@ export interface ChatTextSegment {
 
 export type ParsedChatSegment = ChatMentionSegment | ChatTextSegment;
 
-const MENTION_PATTERN = /\[(node|edge|loop):([^\]]+)\]/g;
+const CANONICAL_MENTION_PATTERN = /\[([^\]]+)\]\[(node|edge|loop):([^\]]+)\]/g;
 
-function getNodeLabel(node: DiagramNode): string {
-  return node.data.label || node.id;
+interface ParsedChatSegmentsResult {
+  segments: ParsedChatSegment[];
+  malformedMentions: string[];
 }
 
-function getMentionLabelCandidates(
+function getMentionIds(
   nodes: DiagramNode[],
   edges: DiagramEdge[],
   loops: NamedCausalLoop[],
-): Map<string, string[]> {
-  const candidates = new Map<string, string[]>();
-  const nodeLabels = new Map(nodes.map((node) => [node.id, getNodeLabel(node)]));
+): Record<ChatMentionKind, Set<string>> {
+  return {
+    node: new Set(nodes.map((node) => node.id)),
+    edge: new Set(edges.map((edge) => edge.id)),
+    loop: new Set(loops.map((loop) => loop.id)),
+  };
+}
 
-  for (const node of nodes) {
-    candidates.set(`node:${node.id}`, [getNodeLabel(node), 'Label']);
+function parseChatMessageMentionsDetailed(
+  text: string,
+  nodes: DiagramNode[],
+  edges: DiagramEdge[],
+  loops: NamedCausalLoop[],
+): ParsedChatSegmentsResult {
+  const mentionIds = getMentionIds(nodes, edges, loops);
+  const segments: ParsedChatSegment[] = [];
+  const malformedMentions: string[] = [];
+  let cursor = 0;
+
+  for (const match of text.matchAll(CANONICAL_MENTION_PATTERN)) {
+    const matchIndex = match.index ?? 0;
+    const rawText = match[0];
+    const displayText = match[1];
+    const kind = match[2] as ChatMentionKind;
+    const id = match[3];
+
+    if (!mentionIds[kind].has(id)) {
+      malformedMentions.push(rawText);
+      continue;
+    }
+
+    if (matchIndex > cursor) {
+      segments.push({ type: 'text', text: text.slice(cursor, matchIndex) });
+    }
+
+    segments.push({
+      type: 'mention',
+      displayText,
+      rawText,
+      mention: { kind, id, displayText, rawText },
+    });
+    cursor = matchIndex + rawText.length;
   }
 
-  for (const edge of edges) {
-    const sourceLabel = nodeLabels.get(edge.source) ?? edge.source;
-    const targetLabel = nodeLabels.get(edge.target) ?? edge.target;
-    candidates.set(`edge:${edge.id}`, [
-      `${sourceLabel} -> ${targetLabel}`,
-      `${sourceLabel} → ${targetLabel}`,
-      'Source -> Target',
-      'Source → Target',
-    ]);
+  if (cursor < text.length) {
+    segments.push({ type: 'text', text: text.slice(cursor) });
   }
 
-  for (const loop of loops) {
-    candidates.set(`loop:${loop.id}`, [loop.label]);
-  }
-
-  return candidates;
+  return {
+    segments: segments.length > 0 ? segments : [{ type: 'text', text }],
+    malformedMentions,
+  };
 }
 
 export function parseChatMessageMentions(
@@ -64,46 +95,25 @@ export function parseChatMessageMentions(
   edges: DiagramEdge[],
   loops: NamedCausalLoop[],
 ): ParsedChatSegment[] {
-  const labelCandidates = getMentionLabelCandidates(nodes, edges, loops);
-  const segments: ParsedChatSegment[] = [];
-  let cursor = 0;
+  return parseChatMessageMentionsDetailed(text, nodes, edges, loops).segments;
+}
 
-  for (const match of text.matchAll(MENTION_PATTERN)) {
-    const kind = match[1] as ChatMentionKind;
-    const id = match[2];
-    const matchIndex = match.index ?? 0;
-    const bracketText = match[0];
-    const candidates = labelCandidates.get(`${kind}:${id}`) ?? [];
-    const displayLabel = candidates[0] ?? id;
+export function normalizeChatMessageMentions(
+  text: string,
+  nodes: DiagramNode[],
+  edges: DiagramEdge[],
+  loops: NamedCausalLoop[],
+): string {
+  return parseChatMessageMentionsDetailed(text, nodes, edges, loops).segments
+    .map((segment) => segment.type === 'mention' ? segment.rawText : segment.text)
+    .join('');
+}
 
-    let matchedLabel: string | null = null;
-    for (const candidate of [...candidates].sort((a, b) => b.length - a.length)) {
-      const labelStart = matchIndex - candidate.length;
-      if (labelStart < cursor) continue;
-      if (text.slice(labelStart, matchIndex) === candidate) {
-        matchedLabel = candidate;
-        break;
-      }
-    }
-
-    if (!matchedLabel) continue;
-
-    const labelStart = matchIndex - matchedLabel.length;
-    if (labelStart > cursor) {
-      segments.push({ type: 'text', text: text.slice(cursor, labelStart) });
-    }
-
-    segments.push({
-      type: 'mention',
-      text: `${displayLabel}${bracketText}`,
-      mention: { kind, id, label: displayLabel },
-    });
-    cursor = matchIndex + bracketText.length;
-  }
-
-  if (cursor < text.length) {
-    segments.push({ type: 'text', text: text.slice(cursor) });
-  }
-
-  return segments.length > 0 ? segments : [{ type: 'text', text }];
+export function countMalformedCanonicalMentions(
+  text: string,
+  nodes: DiagramNode[],
+  edges: DiagramEdge[],
+  loops: NamedCausalLoop[],
+): number {
+  return parseChatMessageMentionsDetailed(text, nodes, edges, loops).malformedMentions.length;
 }
