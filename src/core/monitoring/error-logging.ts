@@ -1,3 +1,4 @@
+import { appVersion } from '../app-version';
 import { logFirebaseException, logFirestoreError } from './firebase';
 
 export type ErrorSource =
@@ -105,6 +106,7 @@ export function buildErrorDescription(
   const normalized = normalizeUnknownError(error);
   const details = [
     `${normalized.name}: ${normalized.message}`,
+    `version=${appVersion}`,
     `source=${source}`,
     `route=${getCurrentRoute()}`,
   ];
@@ -131,6 +133,7 @@ export async function reportError(error: unknown, options: ReportErrorOptions): 
   }
 
   const payload = {
+    version: appVersion,
     source: options.source,
     fatal: options.fatal,
     name: normalized.name,

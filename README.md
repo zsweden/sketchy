@@ -81,7 +81,7 @@ npx vitest run
 
 ## Firebase Error Logging
 
-Sketchy can forward uncaught browser errors and React crash boundary failures to Firebase Analytics as `exception` events.
+Sketchy can forward uncaught browser errors and React crash boundary failures to Firebase Analytics as `exception` events and persist them to Firestore with the current app version attached.
 
 Add these Vite env vars before running the app:
 

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { appVersion } from '../../app-version';
 import {
   buildErrorDescription,
   installGlobalErrorLogging,
@@ -33,6 +34,7 @@ describe('error logging', () => {
 
     expect(logFirebaseException).toHaveBeenCalledWith(
       expect.objectContaining({
+        version: appVersion,
         source: 'react.error_boundary',
         fatal: true,
         name: 'Error',
@@ -62,6 +64,7 @@ describe('error logging', () => {
 
     expect(logFirebaseException).toHaveBeenCalledWith(
       expect.objectContaining({
+        version: appVersion,
         source: 'window.error',
         message: 'Window broke',
       }),
@@ -76,6 +79,7 @@ describe('error logging', () => {
 
     expect(logFirestoreError).toHaveBeenCalledWith(
       expect.objectContaining({
+        version: appVersion,
         source: 'window.error',
         fatal: true,
         name: 'Error',
@@ -105,6 +109,7 @@ describe('error logging', () => {
     });
 
     expect(description).toContain('Error: Boom');
+    expect(description).toContain(`version=${appVersion}`);
     expect(description).toContain('source=window.unhandledrejection');
     expect(description).toContain('route=/diagram?tab=chat');
     expect(description).toContain('componentStack=at Toolbar');

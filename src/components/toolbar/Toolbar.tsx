@@ -15,7 +15,7 @@ import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { useSettingsStore } from '../../store/settings-store';
 import { useChatStore } from '../../store/chat-store';
-import { version } from '../../../package.json';
+import { appVersion } from '../../core/app-version';
 import { autoLayout, elkEngine } from '../../core/layout';
 import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import FrameworkSelector from './FrameworkSelector';
@@ -168,7 +168,7 @@ export default function Toolbar() {
     <header className="app-header">
       <div className="toolbar-group">
         <img src="/mascot.svg" alt="" className="app-mascot" />
-        <h1 className="app-title">Sketchy <span className="app-version">v{version}</span></h1>
+        <h1 className="app-title">Sketchy <span className="app-version">v{appVersion}</span></h1>
         <div className="toolbar-divider" />
         <FrameworkSelector />
       </div>

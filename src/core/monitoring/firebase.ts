@@ -2,6 +2,7 @@ import type { Analytics } from 'firebase/analytics';
 import type { Firestore } from 'firebase/firestore';
 
 export interface FirebaseExceptionPayload {
+  version: string;
   source: string;
   fatal: boolean;
   name: string;
@@ -96,6 +97,7 @@ export async function logFirebaseException(payload: FirebaseExceptionPayload): P
   logEvent(analytics, 'exception', {
     description: payload.description,
     fatal: payload.fatal,
+    app_version: payload.version,
     source: payload.source,
     error_name: payload.name,
     route: payload.route,
@@ -112,6 +114,7 @@ export async function logFirestoreError(payload: FirebaseExceptionPayload): Prom
   const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
 
   await addDoc(collection(db, 'errors'), {
+    version: payload.version,
     source: payload.source,
     fatal: payload.fatal,
     name: payload.name,
