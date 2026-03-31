@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { autoLayout, elkEngine } from '..';
 import type { DiagramEdge, DiagramNode } from '../../types';
+import { NODE_WIDTH, estimateHeight } from '../layout-engine';
+import { computeLayoutMetrics } from '../layout-metrics';
 
 function node(id: string): DiagramNode {
   return {
@@ -13,6 +15,32 @@ function node(id: string): DiagramNode {
 
 function edge(source: string, target: string): DiagramEdge {
   return { id: `${source}-${target}`, source, target };
+}
+
+function computeNodeHeights(
+  nodes: DiagramNode[],
+  edges: DiagramEdge[],
+): Map<string, number> {
+  const degrees = new Map<string, { indegree: number; outdegree: number }>();
+  for (const current of nodes) {
+    degrees.set(current.id, { indegree: 0, outdegree: 0 });
+  }
+  for (const current of edges) {
+    const source = degrees.get(current.source);
+    const target = degrees.get(current.target);
+    if (source) source.outdegree++;
+    if (target) target.indegree++;
+  }
+
+  const heights = new Map<string, number>();
+  for (const current of nodes) {
+    const degree = degrees.get(current.id) ?? { indegree: 0, outdegree: 0 };
+    const hasBadges = current.data.tags.length > 0
+      || (degree.indegree === 0 && degree.outdegree > 0)
+      || (degree.indegree > 0 && degree.outdegree > 0);
+    heights.set(current.id, estimateHeight(current.data.label, hasBadges));
+  }
+  return heights;
 }
 
 describe('autoLayout', () => {
@@ -84,5 +112,39 @@ describe('autoLayout', () => {
     const maxY = Math.max(...positions.map((position) => position.y));
     expect(maxX - minX).toBeLessThan(420);
     expect(maxY - minY).toBeLessThan(265);
+  });
+
+  it('keeps dense cyclic SCCs from routing straight through peer nodes', async () => {
+    const nodes = ['a', 'b', 'c', 'd', 'e', 'f'].map(node);
+    const edges = [
+      edge('a', 'b'),
+      edge('b', 'c'),
+      edge('c', 'd'),
+      edge('d', 'e'),
+      edge('e', 'f'),
+      edge('f', 'a'),
+      edge('a', 'd'),
+      edge('b', 'e'),
+      edge('c', 'f'),
+      edge('f', 'c'),
+    ];
+
+    const updates = await autoLayout(nodes, edges, {
+      direction: 'TB',
+      cyclic: true,
+    }, elkEngine);
+
+    const heights = computeNodeHeights(nodes, edges);
+    const layoutNodes = nodes.map((current) => ({
+      id: current.id,
+      width: NODE_WIDTH,
+      height: heights.get(current.id) ?? 48,
+    }));
+    const layoutEdges = edges.map((current) => ({ source: current.source, target: current.target }));
+    const positions = new Map(updates.map((update) => [update.id, update.position]));
+    const metrics = computeLayoutMetrics(layoutNodes, layoutEdges, positions);
+
+    expect(metrics.nodeOverlaps).toBe(0);
+    expect(metrics.edgeNodeOverlaps).toBeLessThanOrEqual(4);
   });
 });

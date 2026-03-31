@@ -3,16 +3,9 @@ import type { DiagramEdge, DiagramNode } from '../../types';
 import { findStronglyConnectedComponents } from '../../graph/derived';
 import { autoLayout, elkEngine } from '..';
 import { NODE_WIDTH, estimateHeight } from '../layout-engine';
+import { computeLayoutMetrics, scoreLayoutMetrics, type LayoutMetrics } from '../layout-metrics';
 
 type PositionMap = Map<string, { x: number; y: number }>;
-
-interface LayoutMetrics {
-  nodeOverlaps: number;
-  edgeCrossings: number;
-  edgeNodeOverlaps: number;
-  totalEdgeLength: number;
-  boundingArea: number;
-}
 
 interface Fixture {
   name: string;
@@ -180,185 +173,26 @@ function computeMetrics(
   positions: PositionMap,
 ): LayoutMetrics {
   const heights = computeNodeHeights(nodes, edges);
-  const boxes = new Map(nodes.map((n) => [n.id, getBox(n.id, positions, heights)]));
-  const segments = edges.map((e) => ({
-    edge: e,
-    from: getCenter(e.source, boxes),
-    to: getCenter(e.target, boxes),
-  }));
-
-  let nodeOverlaps = 0;
-  for (let i = 0; i < nodes.length; i++) {
-    for (let j = i + 1; j < nodes.length; j++) {
-      if (boxesIntersect(boxes.get(nodes[i].id)!, boxes.get(nodes[j].id)!)) {
-        nodeOverlaps++;
-      }
-    }
-  }
-
-  let edgeCrossings = 0;
-  for (let i = 0; i < segments.length; i++) {
-    for (let j = i + 1; j < segments.length; j++) {
-      const a = segments[i];
-      const b = segments[j];
-      if (sharesEndpoint(a.edge, b.edge)) continue;
-      if (segmentsIntersect(a.from, a.to, b.from, b.to)) {
-        edgeCrossings++;
-      }
-    }
-  }
-
-  let edgeNodeOverlaps = 0;
-  for (const segment of segments) {
-    for (const n of nodes) {
-      if (n.id === segment.edge.source || n.id === segment.edge.target) continue;
-      if (segmentIntersectsBox(segment.from, segment.to, boxes.get(n.id)!)) {
-        edgeNodeOverlaps++;
-      }
-    }
-  }
-
-  let totalEdgeLength = 0;
-  for (const segment of segments) {
-    totalEdgeLength += Math.hypot(segment.to.x - segment.from.x, segment.to.y - segment.from.y);
-  }
-
-  const allBoxes = [...boxes.values()];
-  const minX = Math.min(...allBoxes.map((b) => b.left));
-  const minY = Math.min(...allBoxes.map((b) => b.top));
-  const maxX = Math.max(...allBoxes.map((b) => b.right));
-  const maxY = Math.max(...allBoxes.map((b) => b.bottom));
-
-  return {
-    nodeOverlaps,
-    edgeCrossings,
-    edgeNodeOverlaps,
-    totalEdgeLength: round(totalEdgeLength),
-    boundingArea: round((maxX - minX) * (maxY - minY)),
-  };
-}
-
-function getBox(
-  nodeId: string,
-  positions: PositionMap,
-  heights: Map<string, number>,
-) {
-  const position = positions.get(nodeId);
-  if (!position) {
-    throw new Error(`Missing position for ${nodeId}`);
-  }
-  const height = heights.get(nodeId) ?? 48;
-  return {
-    left: position.x,
-    top: position.y,
-    right: position.x + NODE_WIDTH,
-    bottom: position.y + height,
-  };
-}
-
-function getCenter(
-  nodeId: string,
-  boxes: Map<string, ReturnType<typeof getBox>>,
-) {
-  const box = boxes.get(nodeId);
-  if (!box) {
-    throw new Error(`Missing box for ${nodeId}`);
-  }
-  return {
-    x: (box.left + box.right) / 2,
-    y: (box.top + box.bottom) / 2,
-  };
-}
-
-function boxesIntersect(
-  a: ReturnType<typeof getBox>,
-  b: ReturnType<typeof getBox>,
-) {
-  return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
-}
-
-function sharesEndpoint(a: DiagramEdge, b: DiagramEdge) {
-  return a.source === b.source
-    || a.source === b.target
-    || a.target === b.source
-    || a.target === b.target;
-}
-
-function orientation(
-  p: { x: number; y: number },
-  q: { x: number; y: number },
-  r: { x: number; y: number },
-) {
-  return (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
-}
-
-function onSegment(
-  p: { x: number; y: number },
-  q: { x: number; y: number },
-  r: { x: number; y: number },
-) {
-  return q.x <= Math.max(p.x, r.x)
-    && q.x >= Math.min(p.x, r.x)
-    && q.y <= Math.max(p.y, r.y)
-    && q.y >= Math.min(p.y, r.y);
-}
-
-function segmentsIntersect(
-  p1: { x: number; y: number },
-  q1: { x: number; y: number },
-  p2: { x: number; y: number },
-  q2: { x: number; y: number },
-) {
-  const o1 = orientation(p1, q1, p2);
-  const o2 = orientation(p1, q1, q2);
-  const o3 = orientation(p2, q2, p1);
-  const o4 = orientation(p2, q2, q1);
-
-  if ((o1 > 0 && o2 < 0 || o1 < 0 && o2 > 0) && (o3 > 0 && o4 < 0 || o3 < 0 && o4 > 0)) {
-    return true;
-  }
-
-  if (o1 === 0 && onSegment(p1, p2, q1)) return true;
-  if (o2 === 0 && onSegment(p1, q2, q1)) return true;
-  if (o3 === 0 && onSegment(p2, p1, q2)) return true;
-  if (o4 === 0 && onSegment(p2, q1, q2)) return true;
-  return false;
-}
-
-function pointInBox(point: { x: number; y: number }, box: ReturnType<typeof getBox>) {
-  return point.x >= box.left && point.x <= box.right && point.y >= box.top && point.y <= box.bottom;
-}
-
-function segmentIntersectsBox(
-  from: { x: number; y: number },
-  to: { x: number; y: number },
-  box: ReturnType<typeof getBox>,
-) {
-  if (pointInBox(from, box) || pointInBox(to, box)) return true;
-
-  const topLeft = { x: box.left, y: box.top };
-  const topRight = { x: box.right, y: box.top };
-  const bottomLeft = { x: box.left, y: box.bottom };
-  const bottomRight = { x: box.right, y: box.bottom };
-
-  return segmentsIntersect(from, to, topLeft, topRight)
-    || segmentsIntersect(from, to, topRight, bottomRight)
-    || segmentsIntersect(from, to, bottomRight, bottomLeft)
-    || segmentsIntersect(from, to, bottomLeft, topLeft);
-}
-
-function round(value: number) {
-  return Math.round(value * 100) / 100;
+  return computeLayoutMetrics(
+    nodes.map((node) => ({
+      id: node.id,
+      width: NODE_WIDTH,
+      height: heights.get(node.id) ?? 48,
+    })),
+    edges.map((edge) => ({ source: edge.source, target: edge.target })),
+    positions,
+  );
 }
 
 describe('CLD layout metrics', () => {
-  it('compares the current cyclic layout against the old circular baseline', async () => {
+  it('keeps routed cyclic layout quality within guardrails and better than the old baseline overall', async () => {
     const rows: Array<Record<string, number | string>> = [];
     const aggregate = {
       baseline: {
         nodeOverlaps: 0,
         edgeCrossings: 0,
         edgeNodeOverlaps: 0,
+        connectorConflicts: 0,
         totalEdgeLength: 0,
         boundingArea: 0,
       },
@@ -366,6 +200,7 @@ describe('CLD layout metrics', () => {
         nodeOverlaps: 0,
         edgeCrossings: 0,
         edgeNodeOverlaps: 0,
+        connectorConflicts: 0,
         totalEdgeLength: 0,
         boundingArea: 0,
       },
@@ -383,6 +218,8 @@ describe('CLD layout metrics', () => {
         currentCrossings: current.edgeCrossings,
         baselineEdgeNode: baseline.edgeNodeOverlaps,
         currentEdgeNode: current.edgeNodeOverlaps,
+        baselineConnectorConflicts: baseline.connectorConflicts,
+        currentConnectorConflicts: current.connectorConflicts,
         baselineLength: baseline.totalEdgeLength,
         currentLength: current.totalEdgeLength,
         baselineArea: baseline.boundingArea,
@@ -392,30 +229,32 @@ describe('CLD layout metrics', () => {
       aggregate.baseline.nodeOverlaps += baseline.nodeOverlaps;
       aggregate.baseline.edgeCrossings += baseline.edgeCrossings;
       aggregate.baseline.edgeNodeOverlaps += baseline.edgeNodeOverlaps;
+      aggregate.baseline.connectorConflicts += baseline.connectorConflicts;
       aggregate.baseline.totalEdgeLength += baseline.totalEdgeLength;
       aggregate.baseline.boundingArea += baseline.boundingArea;
 
       aggregate.current.nodeOverlaps += current.nodeOverlaps;
       aggregate.current.edgeCrossings += current.edgeCrossings;
       aggregate.current.edgeNodeOverlaps += current.edgeNodeOverlaps;
+      aggregate.current.connectorConflicts += current.connectorConflicts;
       aggregate.current.totalEdgeLength += current.totalEdgeLength;
       aggregate.current.boundingArea += current.boundingArea;
+
+      expect(current.nodeOverlaps, `${fixture.name}: node overlaps`).toBe(0);
+      expect(current.boundingArea, `${fixture.name}: bounding area`).toBeLessThan(baseline.boundingArea);
+      expect(current.totalEdgeLength, `${fixture.name}: edge length`).toBeLessThan(baseline.totalEdgeLength);
     }
 
-    // eslint-disable-next-line no-console
-    console.table(rows);
-    // eslint-disable-next-line no-console
-    console.table([
-      {
-        layout: 'baseline',
-        ...aggregate.baseline,
-      },
-      {
-        layout: 'current',
-        ...aggregate.current,
-      },
-    ]);
+    const fixtureMetrics = new Map(rows.map((row) => [row.fixture as string, row]));
+    expect(fixtureMetrics.get('triangle')?.currentEdgeNode).toBe(0);
+    expect(fixtureMetrics.get('four-cycle-chord')?.currentEdgeNode).toBeLessThanOrEqual(4);
+    expect(fixtureMetrics.get('figure-eight')?.currentEdgeNode).toBeLessThanOrEqual(2);
+    expect(fixtureMetrics.get('two-scc-cascade')?.currentEdgeNode).toBe(0);
+    expect(fixtureMetrics.get('dense-six-node-scc')?.currentEdgeNode).toBeLessThanOrEqual(4);
 
-    expect(fixtures.length).toBeGreaterThan(0);
+    expect(scoreLayoutMetrics(aggregate.current)).toBeLessThan(scoreLayoutMetrics(aggregate.baseline));
+    expect(aggregate.current.edgeNodeOverlaps).toBeLessThanOrEqual(10);
+    expect(aggregate.current.totalEdgeLength).toBeLessThan(aggregate.baseline.totalEdgeLength);
+    expect(aggregate.current.boundingArea).toBeLessThan(aggregate.baseline.boundingArea);
   });
 });

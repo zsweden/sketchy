@@ -2,7 +2,7 @@ import type { LayoutDirection } from '../framework-types';
 import { findStronglyConnectedComponents } from '../graph/derived';
 import { NODE_SEP, NODE_WIDTH } from './layout-engine';
 import type { LayoutEngine, LayoutEdgeInput, LayoutInput, LayoutResult } from './layout-engine';
-import { computeLayoutMetrics, scoreLayoutMetrics } from './layout-metrics';
+import { computeLayoutMetrics, computeRoutedEdgeGeometries, scoreLayoutMetrics } from './layout-metrics';
 import { elkLayeredEngine } from './elk-engine';
 
 type Point = { x: number; y: number };
@@ -17,6 +17,22 @@ interface ScoringContext {
   componentIds: Set<string>;
   allNodes: LayoutInput[];
   allEdges: LayoutEdgeInput[];
+}
+
+interface ExternalInfluence {
+  inbound?: Point;
+  outbound?: Point;
+  combined?: Point;
+  inboundCount: number;
+  outboundCount: number;
+  weight: number;
+}
+
+interface CycleOrderEntry {
+  nodeId: string;
+  node: LayoutInput;
+  preferredAngle: number;
+  weight: number;
 }
 
 interface ComponentTemplate {
@@ -313,6 +329,7 @@ function optimizeCyclicComponent(
 ): void {
   const componentIds = new Set(positioned.map((entry) => entry.nodeId));
   const sorted = [...positioned].sort((a, b) => a.nodeId.localeCompare(b.nodeId));
+  const nodeLookup = new Map(allNodes.map((node) => [node.id, node]));
   const originalCenters = new Map(
     sorted.map((entry) => [
       entry.nodeId,
@@ -326,7 +343,16 @@ function optimizeCyclicComponent(
   const internalEdges = edges.filter(
     (edge) => componentIds.has(edge.source) && componentIds.has(edge.target),
   );
-  const anchorMap = buildExternalAnchorMap(componentIds, edges, positions);
+  const obstacleEdges = edges.filter(
+    (edge) => componentIds.has(edge.source) || componentIds.has(edge.target),
+  );
+  const externalInfluence = buildExternalInfluenceMap(componentIds, edges, positions, nodeLookup);
+  const anchorMap = new Map(
+    [...externalInfluence.entries()]
+      .filter(([, influence]) => influence.combined)
+      .map(([nodeId, influence]) => [nodeId, influence.combined!]),
+  );
+  const cycleOrder = buildCycleOrder(sorted, originalCenters, componentCenter, externalInfluence);
   const connectionCounts = buildConnectionCounts(sorted, internalEdges);
   const scoringContext = buildScoringContext(componentIds, allNodes, edges);
 
@@ -340,8 +366,9 @@ function optimizeCyclicComponent(
       sorted,
       originalCenters,
       componentCenter,
-      direction,
+      cycleOrder,
       anchorMap,
+      direction,
     );
     const relaxed = runForceRelaxation(
       sorted,
@@ -351,6 +378,9 @@ function optimizeCyclicComponent(
       componentCenter,
       anchorMap,
       connectionCounts,
+      allNodes,
+      obstacleEdges,
+      positions,
       direction,
     );
 
@@ -383,9 +413,13 @@ function runForceRelaxation(
   componentCenter: Point,
   anchorMap: Map<string, Point>,
   connectionCounts: Map<string, number>,
+  allNodes: LayoutInput[],
+  obstacleEdges: Array<{ source: string; target: string }>,
+  settledPositions: Map<string, LayoutResult>,
   direction: LayoutDirection,
 ): Map<string, Point> {
   const points = clonePoints(initialPoints);
+  const nodeLookup = new Map(allNodes.map((node) => [node.id, node]));
   const avgWidth = positioned.reduce((sum, entry) => sum + entry.node.width, 0) / positioned.length;
   const idealEdgeLength = Math.max(120, avgWidth * 0.55);
   const repulsion = Math.max(90, avgWidth * 0.45);
@@ -394,6 +428,7 @@ function runForceRelaxation(
   const anchorStrength = 0.05;
   const centerStrength = 0.035;
   const memoryStrength = 0.08;
+  const edgeRepulsionStrength = 0.28;
 
   for (let iteration = 0; iteration < iterations; iteration++) {
     const cooling = 1 - iteration / iterations;
@@ -473,6 +508,16 @@ function runForceRelaxation(
       displacement.x += (original.x - current.x) * memoryStrength;
       displacement.y += (original.y - current.y) * memoryStrength;
     }
+
+    applyEdgeRepulsion(
+      positioned,
+      obstacleEdges,
+      nodeLookup,
+      points,
+      settledPositions,
+      displacements,
+      edgeRepulsionStrength,
+    );
 
     const maxStep = 12 * cooling + 2;
     for (const entry of positioned) {
@@ -557,6 +602,12 @@ function scoreCandidate(
   }
 
   const metrics = computeLayoutMetrics(scoringContext.allNodes, scoringContext.allEdges, candidatePositions);
+  const edgeProximityPenalty = computeEdgeProximityPenalty(
+    scoringContext.allNodes,
+    scoringContext.allEdges,
+    candidatePositions,
+    scoringContext.componentIds,
+  );
   const maxDisplacement = positioned.reduce((max, entry) => {
     const point = candidatePoints.get(entry.nodeId);
     const current = positions.get(entry.nodeId);
@@ -565,7 +616,7 @@ function scoreCandidate(
     return Math.max(max, Math.hypot(candidateTopLeft.x - current.x, candidateTopLeft.y - current.y));
   }, 0);
 
-  return scoreLayoutMetrics(metrics) + maxDisplacement * 0.25;
+  return scoreLayoutMetrics(metrics) + edgeProximityPenalty * 9_000 + maxDisplacement * 0.25;
 }
 
 function createSeedPoints(
@@ -573,8 +624,9 @@ function createSeedPoints(
   positioned: Array<{ nodeId: string; node: LayoutInput }>,
   originalCenters: Map<string, Point>,
   center: Point,
-  direction: LayoutDirection,
+  cycleOrder: CycleOrderEntry[],
   anchorMap: Map<string, Point>,
+  direction: LayoutDirection,
 ): Map<string, Point> {
   const points = clonePoints(originalCenters);
 
@@ -584,20 +636,23 @@ function createSeedPoints(
   }
 
   if (variant === 'anchor' || variant === 'anchor-flipped') {
-    seedAnchorLayout(positioned, points, center, direction, anchorMap, variant === 'anchor-flipped');
+    if (anchorMap.size === 0) {
+      seedOriginalAngleLayout(positioned, points, center, direction, variant === 'anchor-flipped');
+      return points;
+    }
+    seedAnchorLayout(positioned, points, center, cycleOrder, direction, anchorMap, variant === 'anchor-flipped');
     return points;
   }
 
-  seedAxisLayout(positioned, points, center, direction);
+  seedAxisLayout(positioned, points, center, cycleOrder);
   return points;
 }
 
-function seedAnchorLayout(
+function seedOriginalAngleLayout(
   positioned: Array<{ nodeId: string; node: LayoutInput }>,
   points: Map<string, Point>,
   center: Point,
   direction: LayoutDirection,
-  anchorMap: Map<string, Point>,
   flip: boolean,
 ): void {
   const avgWidth = positioned.reduce((sum, entry) => sum + entry.node.width, 0) / positioned.length;
@@ -607,8 +662,8 @@ function seedAnchorLayout(
   const verticalScale = direction === 'BT' ? 0.92 : 1;
 
   for (const entry of positioned) {
-    const anchor = anchorMap.get(entry.nodeId) ?? points.get(entry.nodeId)!;
-    let angle = Math.atan2(anchor.y - center.y, anchor.x - center.x);
+    const original = points.get(entry.nodeId) ?? center;
+    let angle = Math.atan2(original.y - center.y, original.x - center.x);
     if (flip) angle += Math.PI;
 
     points.set(entry.nodeId, {
@@ -618,32 +673,56 @@ function seedAnchorLayout(
   }
 }
 
+function seedAnchorLayout(
+  positioned: Array<{ nodeId: string; node: LayoutInput }>,
+  points: Map<string, Point>,
+  center: Point,
+  cycleOrder: CycleOrderEntry[],
+  direction: LayoutDirection,
+  anchorMap: Map<string, Point>,
+  flip: boolean,
+): void {
+  const avgWidth = positioned.reduce((sum, entry) => sum + entry.node.width, 0) / positioned.length;
+  const avgHeight = positioned.reduce((sum, entry) => sum + entry.node.height, 0) / positioned.length;
+  const radiusX = Math.max(avgWidth * 0.95, (avgWidth + NODE_SEP * 1.05) * positioned.length / (Math.PI * 2));
+  const radiusY = Math.max(avgHeight * 1.1, (avgHeight + NODE_SEP * 0.8) * positioned.length / (Math.PI * 2));
+  const verticalScale = direction === 'BT' ? 0.92 : 1;
+  const adjustedOrder = cycleOrder.map((entry) => {
+    const anchor = anchorMap.get(entry.nodeId);
+    return {
+      ...entry,
+      preferredAngle: anchor
+        ? Math.atan2(anchor.y - center.y, anchor.x - center.x)
+        : entry.preferredAngle,
+    };
+  });
+  placeCycleEntriesOnEllipse(points, adjustedOrder, center, radiusX, radiusY * verticalScale, flip);
+}
+
 function seedAxisLayout(
   positioned: Array<{ nodeId: string; node: LayoutInput }>,
   points: Map<string, Point>,
   center: Point,
-  direction: LayoutDirection,
+  cycleOrder: CycleOrderEntry[],
 ): void {
   const ordered = [...positioned].sort((a, b) => {
     const pointA = points.get(a.nodeId)!;
     const pointB = points.get(b.nodeId)!;
-    return direction === 'BT'
-      ? pointB.x - pointA.x || pointA.y - pointB.y
-      : pointA.x - pointB.x || pointA.y - pointB.y;
+    return pointA.x - pointB.x || pointA.y - pointB.y;
   });
   const avgWidth = positioned.reduce((sum, entry) => sum + entry.node.width, 0) / positioned.length;
   const avgHeight = positioned.reduce((sum, entry) => sum + entry.node.height, 0) / positioned.length;
-  const radiusX = Math.max(avgWidth * 0.9, (avgWidth + NODE_SEP) * ordered.length / (Math.PI * 2));
-  const radiusY = Math.max(avgHeight * 0.95, (avgHeight + NODE_SEP * 0.7) * ordered.length / (Math.PI * 2));
-  const angleStep = (Math.PI * 2) / ordered.length;
-
-  ordered.forEach((entry, index) => {
-    const angle = -Math.PI / 2 + index * angleStep;
-    points.set(entry.nodeId, {
-      x: center.x + radiusX * Math.cos(angle),
-      y: center.y + radiusY * Math.sin(angle),
-    });
-  });
+  const effectiveOrder = cycleOrder.length === positioned.length
+    ? cycleOrder
+    : ordered.map((entry) => ({
+      nodeId: entry.nodeId,
+      node: entry.node,
+      preferredAngle: Math.atan2(points.get(entry.nodeId)!.y - center.y, points.get(entry.nodeId)!.x - center.x),
+      weight: 1,
+    }));
+  const radiusX = Math.max(avgWidth * 0.9, (avgWidth + NODE_SEP) * effectiveOrder.length / (Math.PI * 2));
+  const radiusY = Math.max(avgHeight * 0.95, (avgHeight + NODE_SEP * 0.7) * effectiveOrder.length / (Math.PI * 2));
+  placeCycleEntriesOnEllipse(points, effectiveOrder, center, radiusX, radiusY, false);
 }
 
 function enumerateSymmetryCandidates(
@@ -673,12 +752,20 @@ function transformPoints(
   return transformed;
 }
 
-function buildExternalAnchorMap(
+function buildExternalInfluenceMap(
   componentIds: Set<string>,
   edges: Array<{ source: string; target: string }>,
   positions: Map<string, LayoutResult>,
-): Map<string, Point> {
-  const anchors = new Map<string, { sumX: number; sumY: number; count: number }>();
+  nodeLookup: ReadonlyMap<string, LayoutInput>,
+): Map<string, ExternalInfluence> {
+  const anchors = new Map<string, {
+    inboundSumX: number;
+    inboundSumY: number;
+    inboundCount: number;
+    outboundSumX: number;
+    outboundSumY: number;
+    outboundCount: number;
+  }>();
 
   for (const edge of edges) {
     const sourceInside = componentIds.has(edge.source);
@@ -687,22 +774,300 @@ function buildExternalAnchorMap(
 
     const insideId = sourceInside ? edge.source : edge.target;
     const outsideId = sourceInside ? edge.target : edge.source;
-    const outside = positions.get(outsideId);
+    const outside = resolveNodeCenter(outsideId, positions, nodeLookup);
     if (!outside) continue;
 
-    const anchor = anchors.get(insideId) ?? { sumX: 0, sumY: 0, count: 0 };
-    anchor.sumX += outside.x;
-    anchor.sumY += outside.y;
-    anchor.count += 1;
+    const anchor = anchors.get(insideId) ?? {
+      inboundSumX: 0,
+      inboundSumY: 0,
+      inboundCount: 0,
+      outboundSumX: 0,
+      outboundSumY: 0,
+      outboundCount: 0,
+    };
+    if (sourceInside) {
+      anchor.outboundSumX += outside.x;
+      anchor.outboundSumY += outside.y;
+      anchor.outboundCount += 1;
+    } else {
+      anchor.inboundSumX += outside.x;
+      anchor.inboundSumY += outside.y;
+      anchor.inboundCount += 1;
+    }
     anchors.set(insideId, anchor);
   }
 
   return new Map(
     [...anchors.entries()].map(([nodeId, anchor]) => [
       nodeId,
-      { x: anchor.sumX / anchor.count, y: anchor.sumY / anchor.count },
+      {
+        inbound: anchor.inboundCount > 0
+          ? { x: anchor.inboundSumX / anchor.inboundCount, y: anchor.inboundSumY / anchor.inboundCount }
+          : undefined,
+        outbound: anchor.outboundCount > 0
+          ? { x: anchor.outboundSumX / anchor.outboundCount, y: anchor.outboundSumY / anchor.outboundCount }
+          : undefined,
+        combined: combineInfluenceAnchors(anchor),
+        inboundCount: anchor.inboundCount,
+        outboundCount: anchor.outboundCount,
+        weight: anchor.inboundCount + anchor.outboundCount,
+      } satisfies ExternalInfluence,
     ]),
   );
+}
+
+function combineInfluenceAnchors(anchor: {
+  inboundSumX: number;
+  inboundSumY: number;
+  inboundCount: number;
+  outboundSumX: number;
+  outboundSumY: number;
+  outboundCount: number;
+}): Point | undefined {
+  const total = anchor.inboundCount + anchor.outboundCount;
+  if (total === 0) return undefined;
+  return {
+    x: (anchor.inboundSumX + anchor.outboundSumX) / total,
+    y: (anchor.inboundSumY + anchor.outboundSumY) / total,
+  };
+}
+
+function buildCycleOrder(
+  positioned: Array<{ nodeId: string; node: LayoutInput }>,
+  originalCenters: ReadonlyMap<string, Point>,
+  center: Point,
+  externalInfluence: ReadonlyMap<string, ExternalInfluence>,
+): CycleOrderEntry[] {
+  return positioned
+    .map((entry) => {
+      const original = originalCenters.get(entry.nodeId) ?? center;
+      const influence = externalInfluence.get(entry.nodeId);
+      const anchor = influence?.combined ?? original;
+      const preferredAngle = Math.atan2(anchor.y - center.y, anchor.x - center.x);
+      const bridgeBias = Math.abs((influence?.outboundCount ?? 0) - (influence?.inboundCount ?? 0));
+      const weight = 1 + (influence?.weight ?? 0) * 0.65 + bridgeBias * 0.25;
+
+      return {
+        nodeId: entry.nodeId,
+        node: entry.node,
+        preferredAngle,
+        weight,
+        sortAngle: normalizeAngle(preferredAngle),
+        externalWeight: influence?.weight ?? 0,
+        bridgeBias,
+      };
+    })
+    .sort((a, b) =>
+      a.sortAngle - b.sortAngle
+      || b.externalWeight - a.externalWeight
+      || b.bridgeBias - a.bridgeBias
+      || a.nodeId.localeCompare(b.nodeId))
+    .map(({ nodeId, node, preferredAngle, weight }) => ({ nodeId, node, preferredAngle, weight }));
+}
+
+function placeCycleEntriesOnEllipse(
+  points: Map<string, Point>,
+  cycleOrder: CycleOrderEntry[],
+  center: Point,
+  radiusX: number,
+  radiusY: number,
+  flip: boolean,
+): void {
+  if (cycleOrder.length === 0) return;
+
+  const step = (Math.PI * 2) / cycleOrder.length;
+  const baseAngle = -Math.PI / 2;
+  const targetAngles = cycleOrder.map((entry) => normalizeAngle(entry.preferredAngle + (flip ? Math.PI : 0)));
+  const offsets = targetAngles.map((angle, index) => normalizeAngle(angle - (baseAngle + index * step)));
+  offsets.push(0);
+
+  let bestOffset = 0;
+  let bestCost = Number.POSITIVE_INFINITY;
+  for (const offset of offsets) {
+    const cost = cycleOrder.reduce((sum, entry, index) => {
+      const candidateAngle = baseAngle + offset + index * step;
+      return sum + angularDistance(candidateAngle, targetAngles[index]) * entry.weight;
+    }, 0);
+    if (cost < bestCost) {
+      bestCost = cost;
+      bestOffset = offset;
+    }
+  }
+
+  cycleOrder.forEach((entry, index) => {
+    const angle = baseAngle + bestOffset + index * step;
+    points.set(entry.nodeId, {
+      x: center.x + radiusX * Math.cos(angle),
+      y: center.y + radiusY * Math.sin(angle),
+    });
+  });
+}
+
+function resolveNodeCenter(
+  nodeId: string,
+  positions: ReadonlyMap<string, LayoutResult>,
+  nodeLookup: ReadonlyMap<string, LayoutInput>,
+): Point | undefined {
+  const position = positions.get(nodeId);
+  const node = nodeLookup.get(nodeId);
+  if (!position || !node) return undefined;
+  return {
+    x: position.x + node.width / 2,
+    y: position.y + node.height / 2,
+  };
+}
+
+function applyEdgeRepulsion(
+  positioned: Array<{ nodeId: string; node: LayoutInput }>,
+  obstacleEdges: Array<{ source: string; target: string }>,
+  nodeLookup: ReadonlyMap<string, LayoutInput>,
+  points: ReadonlyMap<string, Point>,
+  settledPositions: ReadonlyMap<string, LayoutResult>,
+  displacements: Map<string, Point>,
+  strength: number,
+): void {
+  const currentPositions = new Map<string, { x: number; y: number }>();
+  for (const [nodeId, position] of settledPositions.entries()) {
+    currentPositions.set(nodeId, { x: position.x, y: position.y });
+  }
+  for (const [nodeId, point] of points.entries()) {
+    const node = nodeLookup.get(nodeId);
+    if (!node) continue;
+    currentPositions.set(nodeId, {
+      x: point.x - node.width / 2,
+      y: point.y - node.height / 2,
+    });
+  }
+
+  const geometries = computeRoutedEdgeGeometries(
+    [...nodeLookup.values()],
+    obstacleEdges,
+    currentPositions,
+  );
+
+  for (const entry of positioned) {
+    if (entry.node.locked) continue;
+    const point = points.get(entry.nodeId);
+    const displacement = displacements.get(entry.nodeId);
+    if (!point || !displacement) continue;
+
+    const clearance = Math.max(entry.node.width, entry.node.height) * 0.6 + NODE_SEP * 0.35;
+
+    for (const geometry of geometries) {
+      if (geometry.edge.source === entry.nodeId || geometry.edge.target === entry.nodeId) continue;
+
+      for (let index = 0; index < geometry.points.length - 1; index++) {
+        const segmentFrom = geometry.points[index];
+        const segmentTo = geometry.points[index + 1];
+        const closest = getClosestPointOnSegment(point, segmentFrom, segmentTo);
+        if (closest.distance >= clearance) continue;
+
+        let dx = point.x - closest.point.x;
+        let dy = point.y - closest.point.y;
+        let distance = closest.distance;
+        if (distance < 0.001) {
+          const fallback = perpendicularUnit(segmentFrom, segmentTo)
+            ?? deterministicBias(0, 1, 'TB');
+          dx = fallback.x;
+          dy = fallback.y;
+          distance = Math.hypot(dx, dy);
+        }
+
+        const scale = (clearance - distance) * strength;
+        const interiorBias = closest.t > 0.08 && closest.t < 0.92 ? 1.25 : 0.6;
+        displacement.x += (dx / distance) * scale * interiorBias;
+        displacement.y += (dy / distance) * scale * interiorBias;
+      }
+    }
+  }
+}
+
+function computeEdgeProximityPenalty(
+  nodes: LayoutInput[],
+  edges: LayoutEdgeInput[],
+  positions: ReadonlyMap<string, { x: number; y: number }>,
+  targetIds: ReadonlySet<string>,
+): number {
+  const nodeLookup = new Map(nodes.map((node) => [node.id, node]));
+  const centers = new Map<string, Point>();
+  for (const node of nodes) {
+    const position = positions.get(node.id);
+    if (!position) continue;
+    centers.set(node.id, { x: position.x + node.width / 2, y: position.y + node.height / 2 });
+  }
+  const geometries = computeRoutedEdgeGeometries(nodes, edges, positions);
+
+  let penalty = 0;
+  for (const geometry of geometries) {
+    if (!nodeLookup.has(geometry.edge.source) || !nodeLookup.has(geometry.edge.target)) continue;
+
+    for (const node of nodes) {
+      if (!targetIds.has(node.id)) continue;
+      if (node.id === geometry.edge.source || node.id === geometry.edge.target) continue;
+      const point = centers.get(node.id);
+      if (!point) continue;
+
+      const clearance = Math.max(node.width, node.height) * 0.6 + NODE_SEP * 0.35;
+      for (let index = 0; index < geometry.points.length - 1; index++) {
+        const closest = getClosestPointOnSegment(point, geometry.points[index], geometry.points[index + 1]);
+        if (closest.distance >= clearance) continue;
+        const interiorBias = closest.t > 0.08 && closest.t < 0.92 ? 1 : 0.35;
+        penalty += ((clearance - closest.distance) / clearance) * interiorBias;
+      }
+    }
+  }
+
+  return penalty;
+}
+
+function getClosestPointOnSegment(
+  point: Point,
+  from: Point,
+  to: Point,
+): { point: Point; distance: number; t: number } {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const lengthSquared = dx * dx + dy * dy;
+
+  if (lengthSquared < 0.001) {
+    return {
+      point: from,
+      distance: Math.hypot(point.x - from.x, point.y - from.y),
+      t: 0,
+    };
+  }
+
+  const rawT = ((point.x - from.x) * dx + (point.y - from.y) * dy) / lengthSquared;
+  const t = Math.min(1, Math.max(0, rawT));
+  const closest = {
+    x: from.x + dx * t,
+    y: from.y + dy * t,
+  };
+
+  return {
+    point: closest,
+    distance: Math.hypot(point.x - closest.x, point.y - closest.y),
+    t,
+  };
+}
+
+function perpendicularUnit(from: Point, to: Point): Point | null {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = Math.hypot(dx, dy);
+  if (length < 0.001) return null;
+  return { x: -dy / length, y: dx / length };
+}
+
+function normalizeAngle(angle: number): number {
+  let normalized = angle % (Math.PI * 2);
+  if (normalized < 0) normalized += Math.PI * 2;
+  return normalized;
+}
+
+function angularDistance(a: number, b: number): number {
+  const diff = Math.abs(normalizeAngle(a) - normalizeAngle(b));
+  return Math.min(diff, Math.PI * 2 - diff);
 }
 
 function seedCollapsedLayouts(
@@ -873,15 +1238,21 @@ function measureBounds(
   };
 }
 
-function compareGraphMetrics(
+export function compareGraphMetrics(
   a: ReturnType<typeof computeLayoutMetrics>,
   b: ReturnType<typeof computeLayoutMetrics>,
 ) {
+  if (a.nodeOverlaps !== b.nodeOverlaps) {
+    return a.nodeOverlaps - b.nodeOverlaps;
+  }
   if (a.edgeCrossings !== b.edgeCrossings) {
     return a.edgeCrossings - b.edgeCrossings;
   }
   if (a.edgeNodeOverlaps !== b.edgeNodeOverlaps) {
     return a.edgeNodeOverlaps - b.edgeNodeOverlaps;
+  }
+  if (a.connectorConflicts !== b.connectorConflicts) {
+    return a.connectorConflicts - b.connectorConflicts;
   }
   if (a.totalEdgeLength !== b.totalEdgeLength) {
     return a.totalEdgeLength - b.totalEdgeLength;

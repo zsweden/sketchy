@@ -187,6 +187,22 @@ describe('perf: auto-layout (ELK)', () => {
     });
     expect(t).toBeLessThan(1500);
   });
+
+  it('lays out 8-node cyclic graph under 1000ms', async () => {
+    const { nodes, edges } = buildCyclicGraph(8, 4);
+    const t = await benchAsync('layout-8-cyclic', async () => {
+      await autoLayout(nodes, edges, { direction: 'TB', cyclic: true }, elkEngine);
+    });
+    expect(t).toBeLessThan(1000);
+  }, 10_000);
+
+  it('lays out 12-node cyclic graph under 1500ms', async () => {
+    const { nodes, edges } = buildCyclicGraph(12, 4);
+    const t = await benchAsync('layout-12-cyclic', async () => {
+      await autoLayout(nodes, edges, { direction: 'TB', cyclic: true }, elkEngine);
+    });
+    expect(t).toBeLessThan(1500);
+  }, 10_000);
 });
 
 // ---------------------------------------------------------------------------
