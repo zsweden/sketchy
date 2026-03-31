@@ -7,6 +7,7 @@ export type ThemeId =
   | 'nord'
   | 'ocean'
   | 'rose'
+  | 'sky-light'
   | 'solarized-light'
   | 'warm-light';
 
@@ -219,6 +220,39 @@ export const THEMES: ThemeDefinition[] = [
       arrowColorSelected: '#1F1215',
       edgeLabelBg: 'rgba(255, 245, 245, 0.92)',
       minimapFallback: '#FECACA',
+    },
+  },
+  {
+    id: 'sky-light',
+    name: 'Sky Light',
+    vars: {
+      '--app-bg-top': '#F3FAFF',
+      '--app-bg-bottom': '#DCEFFF',
+      '--surface': '#FFFFFF',
+      '--surface-muted': '#EDF6FF',
+      '--border': '#C7DDF3',
+      '--border-strong': '#A9C7E8',
+      '--text': '#16324A',
+      '--text-muted': '#4C6882',
+      '--text-soft': '#7290AA',
+      '--accent': '#4A9DFF',
+      '--accent-hover': '#2E8AF5',
+      '--accent-shadow': 'rgba(74, 157, 255, 0.2)',
+      '--secondary': '#E0EEFB',
+      '--secondary-hover': '#CFE4F8',
+      '--shadow': '0 20px 45px rgba(22, 50, 74, 0.08)',
+      '--header-bg': 'rgba(243, 250, 255, 0.88)',
+      '--loop-reinforcing': '#4CAF50',
+      '--loop-balancing': '#FB8C00',
+      '--loop-info': '#5C8DB5',
+      '--loop-muted': '#8A8A7A',
+      '--toggle-thumb': '#ffffff',
+    },
+    js: {
+      arrowColor: '#7290AA',
+      arrowColorSelected: '#16324A',
+      edgeLabelBg: 'rgba(255, 255, 255, 0.92)',
+      minimapFallback: '#A9C7E8',
     },
   },
   {

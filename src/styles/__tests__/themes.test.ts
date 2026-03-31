@@ -76,7 +76,7 @@ describe('themes', () => {
   it('every theme id matches the ThemeId union type', () => {
     const validIds: ThemeId[] = [
       'forest', 'figma-dark', 'midnight', 'nord',
-      'ocean', 'rose', 'solarized-light', 'warm-light',
+      'ocean', 'rose', 'sky-light', 'solarized-light', 'warm-light',
     ];
     for (const theme of THEMES) {
       expect(validIds).toContain(theme.id);
