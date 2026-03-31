@@ -15,6 +15,8 @@ export interface NodePositionUpdate {
   position: { x: number; y: number };
 }
 
+const TOP_SPINE_GAP = 48;
+
 export async function autoLayout(
   nodes: DiagramNode[],
   edges: DiagramEdge[],
@@ -39,8 +41,11 @@ export async function autoLayout(
     direction: options.direction,
     cyclic: useCyclicEngine,
   });
+  const tightenedResults = useCyclicEngine
+    ? results
+    : tightenTopSpine(inputs, edgeInputs, results, options.direction);
 
-  return results.map((r) => {
+  return tightenedResults.map((r) => {
     // Locked nodes keep their current position
     if (lockedIds.has(r.id)) {
       const node = nodes.find((n) => n.id === r.id)!;
@@ -77,4 +82,115 @@ function computeDegrees(
     if (t) t.indegree++;
   }
   return deg;
+}
+
+function tightenTopSpine(
+  nodes: { id: string; height: number }[],
+  edges: { source: string; target: string }[],
+  results: { id: string; x: number; y: number }[],
+  direction: LayoutDirection,
+): { id: string; x: number; y: number }[] {
+  const chain = findTopSpine(edges, direction);
+  if (chain.length < 3) return results;
+
+  const positions = new Map(results.map((result) => [result.id, { ...result }]));
+  const heights = new Map(nodes.map((node) => [node.id, node.height]));
+  const visualAdjacency = buildVisualAdjacency(edges, direction);
+
+  for (let i = 0; i < chain.length - 1; i++) {
+    const current = positions.get(chain[i]);
+    const next = positions.get(chain[i + 1]);
+    const currentHeight = heights.get(chain[i]);
+    if (!current || !next || currentHeight === undefined) continue;
+
+    const currentGap = next.y - (current.y + currentHeight);
+    if (currentGap <= TOP_SPINE_GAP) continue;
+
+    const shift = currentGap - TOP_SPINE_GAP;
+    for (const id of collectReachable(chain[i + 1], visualAdjacency)) {
+      const position = positions.get(id);
+      if (position) position.y -= shift;
+    }
+  }
+
+  return results.map((result) => positions.get(result.id) ?? result);
+}
+
+function findTopSpine(
+  edges: { source: string; target: string }[],
+  direction: LayoutDirection,
+): string[] {
+  const indegree = new Map<string, number>();
+  const outdegree = new Map<string, number>();
+  const incoming = new Map<string, string[]>();
+  const outgoing = new Map<string, string[]>();
+
+  function ensure(id: string) {
+    if (!indegree.has(id)) indegree.set(id, 0);
+    if (!outdegree.has(id)) outdegree.set(id, 0);
+  }
+
+  for (const edge of edges) {
+    ensure(edge.source);
+    ensure(edge.target);
+    outdegree.set(edge.source, (outdegree.get(edge.source) ?? 0) + 1);
+    indegree.set(edge.target, (indegree.get(edge.target) ?? 0) + 1);
+    outgoing.set(edge.source, [...(outgoing.get(edge.source) ?? []), edge.target]);
+    incoming.set(edge.target, [...(incoming.get(edge.target) ?? []), edge.source]);
+  }
+
+  const topNodes = [...(direction === 'TB' ? indegree : outdegree).entries()]
+    .filter(([, degree]) => degree === 0)
+    .map(([id]) => id);
+  if (topNodes.length !== 1) return [];
+
+  const chain = [topNodes[0]];
+  let current = topNodes[0];
+
+  while (true) {
+    const nextCandidates = direction === 'TB'
+      ? (outgoing.get(current) ?? [])
+      : (incoming.get(current) ?? []);
+    if (nextCandidates.length !== 1) break;
+
+    const next = nextCandidates[0];
+    const sharedDegree = direction === 'TB'
+      ? indegree.get(next) ?? 0
+      : outdegree.get(next) ?? 0;
+    if (sharedDegree !== 1) break;
+
+    chain.push(next);
+    current = next;
+  }
+
+  return chain;
+}
+
+function buildVisualAdjacency(
+  edges: { source: string; target: string }[],
+  direction: LayoutDirection,
+): Map<string, string[]> {
+  const adjacency = new Map<string, string[]>();
+  for (const edge of edges) {
+    const from = direction === 'TB' ? edge.source : edge.target;
+    const to = direction === 'TB' ? edge.target : edge.source;
+    adjacency.set(from, [...(adjacency.get(from) ?? []), to]);
+  }
+  return adjacency;
+}
+
+function collectReachable(start: string, adjacency: Map<string, string[]>): Set<string> {
+  const seen = new Set<string>();
+  const stack = [start];
+
+  while (stack.length > 0) {
+    const current = stack.pop()!;
+    if (seen.has(current)) continue;
+    seen.add(current);
+    for (const next of adjacency.get(current) ?? []) {
+      stack.push(next);
+    }
+  }
+
+  return seen;
 }

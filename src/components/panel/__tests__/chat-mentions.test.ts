@@ -67,4 +67,28 @@ describe('parseChatMessageMentions', () => {
       { type: 'text', text: 'Demand[node:missing] and Growth[edge:e1] stay plain.' },
     ]);
   });
+
+  it('resolves placeholder labels into clickable mentions', () => {
+    const segments = parseChatMessageMentions(
+      'Label[node:n1] drives Source -> Target[edge:e1].',
+      nodes,
+      edges,
+      loops,
+    );
+
+    expect(segments).toEqual([
+      {
+        type: 'mention',
+        text: 'Demand[node:n1]',
+        mention: { kind: 'node', id: 'n1', label: 'Demand' },
+      },
+      { type: 'text', text: ' drives ' },
+      {
+        type: 'mention',
+        text: 'Demand -> Growth[edge:e1]',
+        mention: { kind: 'edge', id: 'e1', label: 'Demand -> Growth' },
+      },
+      { type: 'text', text: '.' },
+    ]);
+  });
 });

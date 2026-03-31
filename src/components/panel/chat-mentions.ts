@@ -37,7 +37,7 @@ function getMentionLabelCandidates(
   const nodeLabels = new Map(nodes.map((node) => [node.id, getNodeLabel(node)]));
 
   for (const node of nodes) {
-    candidates.set(`node:${node.id}`, [getNodeLabel(node)]);
+    candidates.set(`node:${node.id}`, [getNodeLabel(node), 'Label']);
   }
 
   for (const edge of edges) {
@@ -46,6 +46,8 @@ function getMentionLabelCandidates(
     candidates.set(`edge:${edge.id}`, [
       `${sourceLabel} -> ${targetLabel}`,
       `${sourceLabel} → ${targetLabel}`,
+      'Source -> Target',
+      'Source → Target',
     ]);
   }
 
@@ -72,6 +74,7 @@ export function parseChatMessageMentions(
     const matchIndex = match.index ?? 0;
     const bracketText = match[0];
     const candidates = labelCandidates.get(`${kind}:${id}`) ?? [];
+    const displayLabel = candidates[0] ?? id;
 
     let matchedLabel: string | null = null;
     for (const candidate of [...candidates].sort((a, b) => b.length - a.length)) {
@@ -92,8 +95,8 @@ export function parseChatMessageMentions(
 
     segments.push({
       type: 'mention',
-      text: `${matchedLabel}${bracketText}`,
-      mention: { kind, id, label: matchedLabel },
+      text: `${displayLabel}${bracketText}`,
+      mention: { kind, id, label: displayLabel },
     });
     cursor = matchIndex + bracketText.length;
   }

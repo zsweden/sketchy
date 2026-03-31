@@ -34,6 +34,7 @@ export default function Toolbar() {
   const commitToHistory = useDiagramStore((s) => s.commitToHistory);
   const loadDiagram = useDiagramStore((s) => s.loadDiagram);
   const optimizeEdges = useDiagramStore((s) => s.optimizeEdges);
+  const optimizeEdgesAfterLayout = useDiagramStore((s) => s.optimizeEdgesAfterLayout);
   const framework = useDiagramStore((s) => s.framework);
   const addToast = useUIStore((s) => s.addToast);
   const sidePanelOpen = useUIStore((s) => s.sidePanelOpen);
@@ -101,9 +102,10 @@ export default function Toolbar() {
     if (updates.length > 0) {
       commitToHistory();
       moveNodesStore(updates);
+      optimizeEdgesAfterLayout();
       requestFitView();
     }
-  }, [diagram, framework.allowsCycles, commitToHistory, moveNodesStore, requestFitView]);
+  }, [diagram, framework.allowsCycles, commitToHistory, moveNodesStore, optimizeEdgesAfterLayout, requestFitView]);
 
   const handleAutoEdges = useCallback(() => {
     optimizeEdges();

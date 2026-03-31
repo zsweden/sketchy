@@ -1,6 +1,6 @@
 # Sketchy
 
-A web-based thinking-frameworks diagram editor focused on structured reasoning. The architecture is framework-agnostic, and the app currently ships with Current Reality Tree (CRT), Future Reality Tree (FRT), Prerequisite Tree (PRT), and Strategy & Tactics Tree (STT).
+A web-based thinking-frameworks diagram editor focused on structured reasoning. The architecture is framework-agnostic, and the app currently ships with Current Reality Tree (CRT), Future Reality Tree (FRT), Prerequisite Tree (PRT), Success Tree, Strategy & Tactics Tree (STT), and Causal Loop Diagram (CLD).
 
 ## Working Principles
 

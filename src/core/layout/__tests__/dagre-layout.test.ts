@@ -68,6 +68,22 @@ describe('autoLayout', () => {
     expect(posMap['b'].y).toBeGreaterThan(posMap['c'].y);
   });
 
+  it('tightens the unique top spine before the first branch in BT trees', async () => {
+    const nodes = [node('a'), node('b'), node('c'), node('d'), node('e')];
+    const edges = [edge('a', 'b'), edge('b', 'c'), edge('d', 'a'), edge('e', 'a')];
+    const heights = computeNodeHeights(nodes, edges);
+    const updates = await autoLayout(nodes, edges, {
+      direction: 'BT',
+    }, elkEngine);
+
+    const posMap = Object.fromEntries(updates.map((u) => [u.id, u.position]));
+    const gap = (upper: string, lower: string) =>
+      posMap[lower].y - (posMap[upper].y + (heights.get(upper) ?? 48));
+
+    expect(gap('c', 'b')).toBe(gap('b', 'a'));
+    expect(gap('b', 'a')).toBeLessThan(gap('a', 'd'));
+  });
+
   it('handles diamond shape without overlap', async () => {
     const nodes = [node('a'), node('b'), node('c'), node('d')];
     const edges = [edge('a', 'b'), edge('a', 'c'), edge('b', 'd'), edge('c', 'd')];

@@ -87,6 +87,7 @@ interface DiagramState {
   setEdgeDelay: (id: string, delay: boolean) => void;
   updateEdgeNotes: (id: string, notes: string) => void;
   optimizeEdges: () => boolean;
+  optimizeEdgesAfterLayout: () => void;
 
   // Diagram operations
   setFramework: (frameworkId: string) => void;
@@ -479,6 +480,19 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       canRedo: false,
     }));
     return true;
+  },
+
+  optimizeEdgesAfterLayout: () => {
+    const state = get();
+    if (state.diagram.settings.edgeRoutingMode !== 'fixed') return;
+    const optimizedEdges = captureOptimizedEdgeSides(
+      state.diagram.edges,
+      state.diagram.nodes,
+      state.diagram.settings,
+    );
+    set((s) => ({
+      diagram: { ...s.diagram, edges: optimizedEdges },
+    }));
   },
 
   setFramework: (frameworkId) => {

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { crtFramework } from '../crt';
 import { frtFramework } from '../frt';
 import { prtFramework } from '../prt';
+import { successTreeFramework } from '../success-tree';
 import { sttFramework } from '../stt';
 import { cldFramework } from '../cld';
 import type { Framework } from '../../core/framework-types';
@@ -10,6 +11,7 @@ const ALL_FRAMEWORKS: Framework[] = [
   crtFramework,
   frtFramework,
   prtFramework,
+  successTreeFramework,
   sttFramework,
   cldFramework,
 ];
@@ -103,6 +105,30 @@ describe('framework definitions', () => {
       expect(tagIds).toContain('objective');
       expect(tagIds).toContain('strategy');
       expect(tagIds).toContain('tactic');
+    });
+  });
+
+  describe('Success Tree', () => {
+    it('has bottom-to-top direction', () => {
+      expect(successTreeFramework.defaultLayoutDirection).toBe('BT');
+    });
+
+    it('has success-factor and achievement tags', () => {
+      expect(successTreeFramework.nodeTags).toHaveLength(2);
+      const tagIds = successTreeFramework.nodeTags.map((t) => t.id);
+      expect(tagIds).toContain('factor');
+      expect(tagIds).toContain('achievement');
+    });
+
+    it('has foundation, contributor, and outcome derived indicators', () => {
+      const ids = successTreeFramework.derivedIndicators.map((d) => d.id);
+      expect(ids).toContain('foundation');
+      expect(ids).toContain('contributor');
+      expect(ids).toContain('outcome');
+    });
+
+    it('does not allow cycles', () => {
+      expect(successTreeFramework.allowsCycles).toBeFalsy();
     });
   });
 

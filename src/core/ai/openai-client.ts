@@ -230,8 +230,8 @@ Rules for modifications:
 - ${delayRule}
 - ${loopReasoningRule}
 - Edges can have notes — use them to explain the causal reasoning behind the connection.
-- When mentioning an existing node in prose, use Label[node:<node-id>] with the node's current label, or its ID if it has no label.
-- When mentioning an existing edge in prose, use Source -> Target[edge:<edge-id>] with the current source and target labels.
+- When mentioning an existing node in prose, replace "Label" with the node's actual current label: Current label[node:<node-id>]. Do not literally write the word "Label" unless the node is actually named "Label".
+- When mentioning an existing edge in prose, replace "Source -> Target" with the actual current source and target labels: Current Source -> Current Target[edge:<edge-id>]. Do not literally write "Source -> Target".
 - When mentioning an existing loop in prose, use R1[loop:<loop-id>] or B1[loop:<loop-id>] using the loop labels provided above.
 - Examples: Demand[node:n1], Demand -> Growth[edge:e1], R1[loop:n1>n2>n3].
 - If you cannot form a valid typed mention, fall back to plain text rather than inventing IDs.

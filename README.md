@@ -7,7 +7,9 @@ Today the app supports:
 - Current Reality Tree (CRT)
 - Future Reality Tree (FRT)
 - Prerequisite Tree (PRT)
+- Success Tree
 - Strategy & Tactics Tree (STT)
+- Causal Loop Diagram (CLD)
 - AI-assisted diagram analysis and modification through a configurable OpenAI-compatible endpoint
 - `.sky` project save/load, plus in-session autosave
 - Auto-layout, undo/redo, edge confidence, notes, and framework-specific tags
@@ -39,6 +41,14 @@ Use FRT to test whether proposed injections lead to desirable effects.
 - Edge semantics: `leads to`
 - Tags: `Injection`, `Desirable Effect`
 - Derived indicators: `Foundation`, `Intermediate Effect`
+
+### Success Tree
+
+Use Success Tree to explain how multiple factors contributed to a positive outcome.
+
+- Edge semantics: `contributed to`
+- Tags: `Success Factor`, `Achievement`
+- Derived indicators: `Foundation`, `Contributor`, `Outcome`
 
 ## Recommended Next Frameworks
 

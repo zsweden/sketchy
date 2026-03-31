@@ -13,12 +13,14 @@ The current product center is Theory of Constraints style reasoning.
 
 ## Current State
 
-Sketchy currently supports two frameworks:
+Sketchy currently supports these frameworks:
 
 - `CRT` — Current Reality Tree
 - `FRT` — Future Reality Tree
 - `PRT` — Prerequisite Tree
+- `Success Tree`
 - `STT` — Strategy & Tactics Tree
+- `CLD` — Causal Loop Diagram
 
 The public docs and product planning should treat Sketchy as a multi-framework app now, not a CRT-only prototype.
 
@@ -88,6 +90,17 @@ Current semantics:
 - Edge label: `is achieved through`
 - Tags: `Objective`, `Strategy`, `Tactic`
 - Derived indicators: `Top-Level Aim`, `Bridge`, `Execution Point`
+
+### Success Tree
+
+Purpose:
+Explain how multiple contributing factors led to a successful outcome.
+
+Current semantics:
+
+- Edge label: `contributed to`
+- Tags: `Success Factor`, `Achievement`
+- Derived indicators: `Foundation`, `Contributor`, `Outcome`
 
 ## Current Feature Set
 
