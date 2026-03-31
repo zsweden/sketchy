@@ -325,6 +325,7 @@ describe('buildSystemPrompt framework-agnostic', () => {
     expect(systemContent).toContain('Label[node:<node-id>]');
     expect(systemContent).toContain('Source -> Target[edge:<edge-id>]');
     expect(systemContent).toContain('R1[loop:<loop-id>]');
+    expect(systemContent).toContain('Reply in plain text only. Do not use Markdown formatting');
     vi.unstubAllGlobals();
   });
 

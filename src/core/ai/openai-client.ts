@@ -235,6 +235,7 @@ Rules for modifications:
 - When mentioning an existing loop in prose, use R1[loop:<loop-id>] or B1[loop:<loop-id>] using the loop labels provided above.
 - Examples: Demand[node:n1], Demand -> Growth[edge:e1], R1[loop:n1>n2>n3].
 - If you cannot form a valid typed mention, fall back to plain text rather than inventing IDs.
+- Reply in plain text only. Do not use Markdown formatting such as headings, bullet lists, tables, bold, or code fences.
 - Always explain your reasoning.`;
 }
 
