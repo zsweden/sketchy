@@ -218,6 +218,7 @@ function applyModifications(mods: DiagramModification) {
   }, elkEngine).then((updates) => {
     if (updates.length > 0) {
       useDiagramStore.getState().moveNodes(updates);
+      useDiagramStore.getState().optimizeEdgesAfterLayout();
       useUIStore.getState().requestFitView();
     }
   });

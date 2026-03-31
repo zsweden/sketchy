@@ -437,5 +437,41 @@ describe('diagram store', () => {
 
       expect(getPlacementSnapshot()).toEqual(fixedPlacements);
     });
+
+    it('optimizeEdgesAfterLayout updates edges without pushing history', () => {
+      useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });
+      const sourceId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const targetId = useDiagramStore.getState().addNode({ x: 200, y: 0 });
+      useDiagramStore.getState().addEdge(sourceId, targetId);
+      useDiagramStore.getState().moveNodes([{ id: targetId, position: { x: 0, y: 200 } }]);
+
+      // Snapshot history length before
+      useDiagramStore.getState().commitToHistory();
+      const canUndoBefore = useDiagramStore.getState().canUndo;
+
+      useDiagramStore.getState().optimizeEdgesAfterLayout();
+
+      // canUndo should not have changed (no extra history push)
+      expect(useDiagramStore.getState().canUndo).toBe(canUndoBefore);
+
+      // Edges should be optimized
+      const edge = useDiagramStore.getState().diagram.edges[0];
+      expect(edge.sourceSide).toBe('bottom');
+      expect(edge.targetSide).toBe('top');
+    });
+
+    it('optimizeEdgesAfterLayout is a no-op in dynamic mode', () => {
+      const sourceId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const targetId = useDiagramStore.getState().addNode({ x: 0, y: 200 });
+      useDiagramStore.getState().addEdge(sourceId, targetId);
+
+      const edgeBefore = useDiagramStore.getState().diagram.edges[0];
+
+      useDiagramStore.getState().optimizeEdgesAfterLayout();
+
+      const edgeAfter = useDiagramStore.getState().diagram.edges[0];
+      expect(edgeAfter.sourceSide).toBe(edgeBefore.sourceSide);
+      expect(edgeAfter.targetSide).toBe(edgeBefore.targetSide);
+    });
   });
 });
