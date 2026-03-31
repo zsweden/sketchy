@@ -2,16 +2,23 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useChatStore } from '../chat-store';
 import { useDiagramStore } from '../diagram-store';
 import { useSettingsStore } from '../settings-store';
+import { reportError } from '../../core/monitoring/error-logging';
 
 // Mock the streaming function to avoid real API calls
+const mockStreamChatMessage = vi.fn((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
+  // Simulate immediate response
+  setTimeout(() => {
+    callbacks.onDone({ text: 'Mock response' });
+  }, 0);
+  return new AbortController();
+});
+
 vi.mock('../../core/ai/openai-client', () => ({
-  streamChatMessage: vi.fn((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
-    // Simulate immediate response
-    setTimeout(() => {
-      callbacks.onDone({ text: 'Mock response' });
-    }, 0);
-    return new AbortController();
-  }),
+  streamChatMessage: (...args: Parameters<typeof mockStreamChatMessage>) => mockStreamChatMessage(...args),
+}));
+
+vi.mock('../../core/monitoring/error-logging', () => ({
+  reportError: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock auto-layout to avoid ELK dependency
@@ -28,6 +35,14 @@ function resetStores() {
 describe('chat-store', () => {
   beforeEach(() => {
     resetStores();
+    mockStreamChatMessage.mockImplementation((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
+    // Simulate immediate response
+      setTimeout(() => {
+        callbacks.onDone({ text: 'Mock response' });
+      }, 0);
+      return new AbortController();
+    });
+    vi.mocked(reportError).mockClear();
     // Ensure settings are configured
     useSettingsStore.setState({
       openaiApiKey: 'test-key',
@@ -60,6 +75,38 @@ describe('chat-store', () => {
       expect(assistant).toBeDefined();
       expect(assistant!.content).toBe('Mock response');
       expect(useChatStore.getState().loading).toBe(false);
+    });
+
+    it('logs and replaces empty assistant responses', async () => {
+      mockStreamChatMessage.mockImplementationOnce((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
+        setTimeout(() => {
+          callbacks.onDone({ text: '   ' });
+        }, 0);
+        return new AbortController();
+      });
+
+      useChatStore.getState().sendMessage('Hello');
+      await new Promise((r) => setTimeout(r, 50));
+
+      const msgs = useChatStore.getState().messages;
+      const assistant = msgs.find((m) => m.role === 'assistant');
+      expect(assistant).toBeDefined();
+      expect(assistant!.content).toBe('The AI returned an empty response. Please try again.');
+      expect(reportError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'AI chat returned empty assistant response',
+        }),
+        expect.objectContaining({
+          source: 'chat.empty_response',
+          fatal: false,
+          metadata: expect.objectContaining({
+            provider: 'openai',
+            model: 'gpt-4o',
+            userMessageLength: 5,
+            resultTextLength: 3,
+          }),
+        }),
+      );
     });
 
     it('shows config message when no baseUrl', () => {

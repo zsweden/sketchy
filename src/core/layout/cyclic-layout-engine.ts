@@ -577,7 +577,6 @@ function buildScoringContext(
   edges: Array<{ source: string; target: string }>,
   positions: ReadonlyMap<string, LayoutResult>,
 ): ScoringContext {
-  const nodeLookup = new Map(allNodes.map((node) => [node.id, node]));
   const includedNodeIds = new Set(componentIds);
 
   for (const edge of edges) {
@@ -1258,7 +1257,7 @@ function averageNodePosition(nodes: LayoutInput[]): Point | undefined {
 
 function measureBounds(
   nodes: LayoutInput[],
-  positions: Map<string, LayoutResult>,
+  positions: ReadonlyMap<string, LayoutResult>,
 ) {
   const boxes = nodes.map((node) => {
     const position = positions.get(node.id) ?? { x: 0, y: 0 };

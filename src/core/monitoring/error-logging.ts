@@ -4,12 +4,14 @@ import { logFirebaseException, logFirestoreError } from './firebase';
 export type ErrorSource =
   | 'react.error_boundary'
   | 'window.error'
-  | 'window.unhandledrejection';
+  | 'window.unhandledrejection'
+  | 'chat.empty_response';
 
 interface ReportErrorOptions {
   source: ErrorSource;
   fatal: boolean;
   componentStack?: string;
+  metadata?: Record<string, string | number | boolean | undefined>;
 }
 
 interface NormalizedError {
@@ -101,7 +103,7 @@ function shouldSkipFingerprint(fingerprint: string): boolean {
 
 export function buildErrorDescription(
   error: unknown,
-  { source, componentStack }: Pick<ReportErrorOptions, 'source' | 'componentStack'>,
+  { source, componentStack, metadata }: Pick<ReportErrorOptions, 'source' | 'componentStack' | 'metadata'>,
 ): string {
   const normalized = normalizeUnknownError(error);
   const details = [
@@ -118,6 +120,13 @@ export function buildErrorDescription(
   if (normalized.stack) {
     const firstStackLine = normalized.stack.split('\n').slice(0, 2).join(' | ');
     details.push(`stack=${firstStackLine}`);
+  }
+
+  if (metadata) {
+    for (const [key, value] of Object.entries(metadata)) {
+      if (value === undefined) continue;
+      details.push(`${key}=${String(value)}`);
+    }
   }
 
   return truncate(details.join(' | '), MAX_DESCRIPTION_LENGTH);

@@ -5,6 +5,7 @@ import { useSettingsStore } from './settings-store';
 import { useDiagramStore } from './diagram-store';
 import { useUIStore } from './ui-store';
 import { autoLayout, elkEngine } from '../core/layout';
+import { reportError } from '../core/monitoring/error-logging';
 
 export interface DisplayMessage {
   id: string;
@@ -27,6 +28,7 @@ interface ChatState {
 }
 
 let activeController: AbortController | null = null;
+const EMPTY_RESPONSE_FALLBACK = 'The AI returned an empty response. Please try again.';
 
 export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
@@ -86,10 +88,38 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         onDone: (result) => {
           activeController = null;
+          const trimmedText = result.text.trim();
+          const content = trimmedText || EMPTY_RESPONSE_FALLBACK;
+
+          if (!trimmedText) {
+            void reportError(new Error('AI chat returned empty assistant response'), {
+              source: 'chat.empty_response',
+              fatal: false,
+              metadata: {
+                provider,
+                model,
+                baseUrl,
+                frameworkId: framework.id,
+                diagramId: diagram.id,
+                historyCount: history.length,
+                userMessageLength: text.length,
+                streamingLength: get().streamingContent.length,
+                resultTextLength: result.text.length,
+                hasModifications: Boolean(result.modifications),
+                addedNodes: result.modifications?.addNodes.length ?? 0,
+                updatedNodes: result.modifications?.updateNodes.length ?? 0,
+                removedNodes: result.modifications?.removeNodeIds.length ?? 0,
+                addedEdges: result.modifications?.addEdges.length ?? 0,
+                updatedEdges: result.modifications?.updateEdges.length ?? 0,
+                removedEdges: result.modifications?.removeEdgeIds.length ?? 0,
+              },
+            });
+          }
+
           const assistantMsg: DisplayMessage = {
             id: crypto.randomUUID(),
             role: 'assistant',
-            content: result.text.trim(),
+            content,
             modifications: result.modifications,
           };
 

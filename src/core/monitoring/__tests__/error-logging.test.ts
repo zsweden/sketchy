@@ -106,6 +106,10 @@ describe('error logging', () => {
     const description = buildErrorDescription(new Error('Boom'), {
       source: 'window.unhandledrejection',
       componentStack: '\n    at Toolbar',
+      metadata: {
+        provider: 'openai',
+        resultTextLength: 0,
+      },
     });
 
     expect(description).toContain('Error: Boom');
@@ -113,5 +117,7 @@ describe('error logging', () => {
     expect(description).toContain('source=window.unhandledrejection');
     expect(description).toContain('route=/diagram?tab=chat');
     expect(description).toContain('componentStack=at Toolbar');
+    expect(description).toContain('provider=openai');
+    expect(description).toContain('resultTextLength=0');
   });
 });
