@@ -5,16 +5,18 @@ import {
   reportError,
   resetErrorLoggingForTests,
 } from '../error-logging';
-import { logFirebaseException } from '../firebase';
+import { logFirebaseException, logFirestoreError } from '../firebase';
 
 vi.mock('../firebase', () => ({
   logFirebaseException: vi.fn().mockResolvedValue(undefined),
+  logFirestoreError: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe('error logging', () => {
   beforeEach(() => {
     resetErrorLoggingForTests();
     vi.mocked(logFirebaseException).mockClear();
+    vi.mocked(logFirestoreError).mockClear();
     window.history.replaceState({}, '', '/diagram?tab=chat');
   });
 
@@ -64,6 +66,36 @@ describe('error logging', () => {
         message: 'Window broke',
       }),
     );
+  });
+
+  it('writes errors to Firestore alongside Analytics', async () => {
+    await reportError(new Error('Firestore test'), {
+      source: 'window.error',
+      fatal: true,
+    });
+
+    expect(logFirestoreError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'window.error',
+        fatal: true,
+        name: 'Error',
+        message: 'Firestore test',
+        route: '/diagram?tab=chat',
+      }),
+    );
+  });
+
+  it('dedupes Firestore writes along with Analytics', async () => {
+    await reportError(new Error('Boom'), {
+      source: 'window.error',
+      fatal: true,
+    });
+    await reportError(new Error('Boom'), {
+      source: 'window.error',
+      fatal: true,
+    });
+
+    expect(logFirestoreError).toHaveBeenCalledTimes(1);
   });
 
   it('builds a compact error description', () => {

@@ -1,4 +1,5 @@
 import type { Analytics } from 'firebase/analytics';
+import type { Firestore } from 'firebase/firestore';
 
 export interface FirebaseExceptionPayload {
   source: string;
@@ -27,9 +28,15 @@ const hasFirebaseConfig = Boolean(
 );
 
 let analyticsPromise: Promise<Analytics | null> | null = null;
+let firestorePromise: Promise<Firestore | null> | null = null;
 
 async function importAnalyticsModule() {
   return import('firebase/analytics');
+}
+
+async function getOrInitApp() {
+  const { getApp, getApps, initializeApp } = await import('firebase/app');
+  return getApps().length ? getApp() : initializeApp(firebaseConfig);
 }
 
 async function getFirebaseAnalytics(): Promise<Analytics | null> {
@@ -39,8 +46,8 @@ async function getFirebaseAnalytics(): Promise<Analytics | null> {
 
   if (!analyticsPromise) {
     analyticsPromise = (async () => {
-      const [{ getApp, getApps, initializeApp }, analyticsModule] = await Promise.all([
-        import('firebase/app'),
+      const [app, analyticsModule] = await Promise.all([
+        getOrInitApp(),
         importAnalyticsModule(),
       ]);
 
@@ -48,12 +55,29 @@ async function getFirebaseAnalytics(): Promise<Analytics | null> {
         return null;
       }
 
-      const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
       return analyticsModule.getAnalytics(app);
     })();
   }
 
   return analyticsPromise;
+}
+
+async function getFirebaseFirestore(): Promise<Firestore | null> {
+  if (typeof window === 'undefined' || !hasFirebaseConfig) {
+    return null;
+  }
+
+  if (!firestorePromise) {
+    firestorePromise = (async () => {
+      const [app, { getFirestore }] = await Promise.all([
+        getOrInitApp(),
+        import('firebase/firestore'),
+      ]);
+      return getFirestore(app);
+    })();
+  }
+
+  return firestorePromise;
 }
 
 export function isFirebaseErrorLoggingEnabled(): boolean {
@@ -75,5 +99,25 @@ export async function logFirebaseException(payload: FirebaseExceptionPayload): P
     source: payload.source,
     error_name: payload.name,
     route: payload.route,
+  });
+}
+
+export async function logFirestoreError(payload: FirebaseExceptionPayload): Promise<void> {
+  const db = await getFirebaseFirestore();
+
+  if (!db) {
+    return;
+  }
+
+  const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
+
+  await addDoc(collection(db, 'errors'), {
+    source: payload.source,
+    fatal: payload.fatal,
+    name: payload.name,
+    message: payload.message,
+    route: payload.route,
+    description: payload.description,
+    timestamp: serverTimestamp(),
   });
 }

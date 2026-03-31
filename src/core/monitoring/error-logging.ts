@@ -1,4 +1,4 @@
-import { logFirebaseException } from './firebase';
+import { logFirebaseException, logFirestoreError } from './firebase';
 
 export type ErrorSource =
   | 'react.error_boundary'
@@ -130,14 +130,19 @@ export async function reportError(error: unknown, options: ReportErrorOptions): 
     return;
   }
 
-  await logFirebaseException({
+  const payload = {
     source: options.source,
     fatal: options.fatal,
     name: normalized.name,
     message: normalized.message,
     route,
     description: buildErrorDescription(error, options),
-  });
+  };
+
+  await Promise.all([
+    logFirebaseException(payload),
+    logFirestoreError(payload),
+  ]);
 }
 
 export function installGlobalErrorLogging(): void {
