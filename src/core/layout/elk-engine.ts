@@ -87,5 +87,3 @@ export const elkRadialEngine = createElkEngine('radial');
 
 export const elkEngine: LayoutEngine = async (nodes, edges, options) =>
   elkLayeredEngine(nodes, edges, options);
-
-export { createElkEngine };

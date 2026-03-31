@@ -30,9 +30,8 @@ function EntityNode({ id, data, selected }: NodeProps) {
   const [text, setText] = useState(nodeData.label);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const updateNodeText = useDiagramStore((s) => s.updateNodeText);
+  const commitNodeText = useDiagramStore((s) => s.commitNodeText);
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
-  const commitToHistory = useDiagramStore((s) => s.commitToHistory);
   const framework = useDiagramStore((s) => s.framework);
   const isAiModified = useChatStore((s) => s.aiModifiedNodeIds.has(id));
 
@@ -62,19 +61,17 @@ function EntityNode({ id, data, selected }: NodeProps) {
   const handleJunctionToggle = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      commitToHistory();
       updateNodeJunction(id, nodeData.junctionType === 'and' ? 'or' : 'and');
     },
-    [id, nodeData.junctionType, updateNodeJunction, commitToHistory],
+    [id, nodeData.junctionType, updateNodeJunction],
   );
 
   const handleBlur = useCallback(() => {
     setEditing(false);
     if (text !== nodeData.label) {
-      commitToHistory();
-      updateNodeText(id, text);
+      commitNodeText(id, text);
     }
-  }, [text, nodeData.label, id, updateNodeText, commitToHistory]);
+  }, [text, nodeData.label, id, commitNodeText]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

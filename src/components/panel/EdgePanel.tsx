@@ -27,8 +27,7 @@ export default function EdgePanel({ edge }: Props) {
   const setEdgeConfidence = useDiagramStore((s) => s.setEdgeConfidence);
   const setEdgePolarity = useDiagramStore((s) => s.setEdgePolarity);
   const setEdgeDelay = useDiagramStore((s) => s.setEdgeDelay);
-  const updateEdgeNotes = useDiagramStore((s) => s.updateEdgeNotes);
-  const commitToHistory = useDiagramStore((s) => s.commitToHistory);
+  const commitEdgeNotes = useDiagramStore((s) => s.commitEdgeNotes);
 
   useEffect(() => {
     // Keep the notes draft aligned when the selected edge changes externally.
@@ -39,10 +38,9 @@ export default function EdgePanel({ edge }: Props) {
   const handleNotesBlur = useCallback(() => {
     const current = edge.notes ?? '';
     if (notes !== current) {
-      commitToHistory();
-      updateEdgeNotes(edge.id, notes);
+      commitEdgeNotes(edge.id, notes);
     }
-  }, [notes, edge.notes, edge.id, updateEdgeNotes, commitToHistory]);
+  }, [notes, edge.notes, edge.id, commitEdgeNotes]);
 
   const sourceNode = nodes.find((n) => n.id === edge.source);
   const targetNode = nodes.find((n) => n.id === edge.target);

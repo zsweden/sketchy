@@ -3,7 +3,7 @@ interface PositionedItem {
   position: { x: number; y: number };
 }
 
-export interface PositionUpdate {
+interface PositionUpdate {
   id: string;
   position: { x: number; y: number };
 }

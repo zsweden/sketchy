@@ -25,12 +25,11 @@ export default function NodePanel({ node }: Props) {
   const framework = useDiagramStore((s) => s.framework);
   const nodes = useDiagramStore((s) => s.diagram.nodes);
   const edges = useDiagramStore((s) => s.diagram.edges);
-  const updateNodeText = useDiagramStore((s) => s.updateNodeText);
+  const commitNodeText = useDiagramStore((s) => s.commitNodeText);
   const updateNodeTags = useDiagramStore((s) => s.updateNodeTags);
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
-  const updateNodeNotes = useDiagramStore((s) => s.updateNodeNotes);
+  const commitNodeNotes = useDiagramStore((s) => s.commitNodeNotes);
   const toggleNodeLocked = useDiagramStore((s) => s.toggleNodeLocked);
-  const commitToHistory = useDiagramStore((s) => s.commitToHistory);
   const removeAiModified = useChatStore((s) => s.removeAiModified);
   const selectedLoopId = useUIStore((s) => s.selectedLoopId);
   const setSelectedLoop = useUIStore((s) => s.setSelectedLoop);
@@ -62,17 +61,15 @@ export default function NodePanel({ node }: Props) {
   const handleNotesBlur = useCallback(() => {
     const current = node.data.notes ?? '';
     if (notes !== current) {
-      commitToHistory();
-      updateNodeNotes(node.id, notes);
+      commitNodeNotes(node.id, notes);
     }
-  }, [notes, node.data.notes, node.id, updateNodeNotes, commitToHistory]);
+  }, [notes, node.data.notes, node.id, commitNodeNotes]);
 
   const handleTextBlur = useCallback(() => {
     if (text !== node.data.label) {
-      commitToHistory();
-      updateNodeText(node.id, text);
+      commitNodeText(node.id, text);
     }
-  }, [text, node.data.label, node.id, updateNodeText, commitToHistory]);
+  }, [text, node.data.label, node.id, commitNodeText]);
 
   const handleTextKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

@@ -20,7 +20,6 @@ import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import FrameworkSelector from './FrameworkSelector';
 import SettingsPopover from './SettingsPopover';
 import { AlignHorizontalIcon, AlignVerticalIcon, DistributeHorizontalIcon, DistributeVerticalIcon } from '../icons/AlignDistributeIcons';
-import { alignHorizontal, alignVertical, distributeHorizontal, distributeVertical } from '../../utils/align-distribute';
 
 export default function Toolbar() {
   const diagram = useDiagramStore((s) => s.diagram);
@@ -29,8 +28,10 @@ export default function Toolbar() {
   const undo = useDiagramStore((s) => s.undo);
   const redo = useDiagramStore((s) => s.redo);
   const newDiagram = useDiagramStore((s) => s.newDiagram);
-  const moveNodesStore = useDiagramStore((s) => s.moveNodes);
-  const commitToHistory = useDiagramStore((s) => s.commitToHistory);
+  const alignNodesHorizontally = useDiagramStore((s) => s.alignNodesHorizontally);
+  const alignNodesVertically = useDiagramStore((s) => s.alignNodesVertically);
+  const distributeNodesHorizontally = useDiagramStore((s) => s.distributeNodesHorizontally);
+  const distributeNodesVertically = useDiagramStore((s) => s.distributeNodesVertically);
   const loadDiagram = useDiagramStore((s) => s.loadDiagram);
   const optimizeEdges = useDiagramStore((s) => s.optimizeEdges);
   const runAutoLayout = useDiagramStore((s) => s.runAutoLayout);
@@ -52,24 +53,20 @@ export default function Toolbar() {
   const canOptimizeEdges = diagram.settings.edgeRoutingMode === 'fixed';
 
   const handleAlignH = useCallback(() => {
-    commitToHistory();
-    moveNodesStore(alignHorizontal(selectedNodes));
-  }, [selectedNodes, commitToHistory, moveNodesStore]);
+    alignNodesHorizontally(selectedNodeIds);
+  }, [alignNodesHorizontally, selectedNodeIds]);
 
   const handleAlignV = useCallback(() => {
-    commitToHistory();
-    moveNodesStore(alignVertical(selectedNodes));
-  }, [selectedNodes, commitToHistory, moveNodesStore]);
+    alignNodesVertically(selectedNodeIds);
+  }, [alignNodesVertically, selectedNodeIds]);
 
   const handleDistributeH = useCallback(() => {
-    commitToHistory();
-    moveNodesStore(distributeHorizontal(selectedNodes));
-  }, [selectedNodes, commitToHistory, moveNodesStore]);
+    distributeNodesHorizontally(selectedNodeIds);
+  }, [distributeNodesHorizontally, selectedNodeIds]);
 
   const handleDistributeV = useCallback(() => {
-    commitToHistory();
-    moveNodesStore(distributeVertical(selectedNodes));
-  }, [selectedNodes, commitToHistory, moveNodesStore]);
+    distributeNodesVertically(selectedNodeIds);
+  }, [distributeNodesVertically, selectedNodeIds]);
 
   const requestClearSelection = useUIStore((s) => s.requestClearSelection);
   const handleClearSelection = useCallback(() => {

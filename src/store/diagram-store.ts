@@ -14,6 +14,12 @@ import { UndoRedoManager } from '../core/history/undo-redo';
 import { runElkAutoLayout } from '../core/layout/run-elk-auto-layout';
 import { useUIStore } from './ui-store';
 import {
+  alignHorizontal,
+  alignVertical,
+  distributeHorizontal,
+  distributeVertical,
+} from '../utils/align-distribute';
+import {
   getDefaultFramework,
   createDiagramForFramework,
   getDefaultEdgeFields,
@@ -71,9 +77,15 @@ interface DiagramState {
   updateNodeColor: (id: string, color: string | undefined) => void;
   updateNodeTextColor: (id: string, textColor: string | undefined) => void;
   updateNodeNotes: (id: string, notes: string) => void;
+  commitNodeText: (id: string, label: string) => void;
+  commitNodeNotes: (id: string, notes: string) => void;
   toggleNodeLocked: (ids: string[], locked: boolean) => void;
   moveNodes: (changes: { id: string; position: { x: number; y: number } }[]) => void;
   deleteNodes: (ids: string[]) => void;
+  alignNodesHorizontally: (ids: string[]) => void;
+  alignNodesVertically: (ids: string[]) => void;
+  distributeNodesHorizontally: (ids: string[]) => void;
+  distributeNodesVertically: (ids: string[]) => void;
 
   // Edge operations
   addEdge: (
@@ -89,6 +101,7 @@ interface DiagramState {
   setEdgePolarity: (id: string, polarity: EdgePolarity) => void;
   setEdgeDelay: (id: string, delay: boolean) => void;
   updateEdgeNotes: (id: string, notes: string) => void;
+  commitEdgeNotes: (id: string, notes: string) => void;
   optimizeEdges: () => boolean;
   optimizeEdgesAfterLayout: () => void;
   runAutoLayout: (options?: { commitHistory?: boolean; fitView?: boolean }) => Promise<boolean>;
@@ -153,6 +166,32 @@ export const useDiagramStore = create<DiagramState>((set, get) => {
         edges: diagram.edges.map(mapper),
       }),
       options,
+    );
+  };
+
+  const getNodesByIds = (ids: string[]) => {
+    const idSet = new Set(ids);
+    return get().diagram.nodes.filter((node) => idSet.has(node.id));
+  };
+
+  const applyNodePositionTransform = (
+    ids: string[],
+    transform: (nodes: DiagramNode[]) => { id: string; position: { x: number; y: number } }[],
+  ) => {
+    const selectedNodes = getNodesByIds(ids);
+    if (selectedNodes.length < 2) return;
+    applyDiagramChange(
+      (diagram) => {
+        const positions = new Map(transform(selectedNodes).map((change) => [change.id, change.position]));
+        return {
+          ...diagram,
+          nodes: diagram.nodes.map((node) => {
+            const position = positions.get(node.id);
+            return position ? { ...node, position } : node;
+          }),
+        };
+      },
+      { trackHistory: true },
     );
   };
 
@@ -227,6 +266,24 @@ export const useDiagramStore = create<DiagramState>((set, get) => {
     ));
   },
 
+  commitNodeText: (id, label) => {
+    updateNodes(
+      (node) => (node.id === id ? { ...node, data: { ...node.data, label } } : node),
+      { trackHistory: true },
+    );
+  },
+
+  commitNodeNotes: (id, notes) => {
+    updateNodes(
+      (node) => (
+        node.id === id
+          ? { ...node, data: { ...node.data, notes: notes || undefined } }
+          : node
+      ),
+      { trackHistory: true },
+    );
+  },
+
   toggleNodeLocked: (ids, locked) => {
     const idSet = new Set(ids);
     updateNodes(
@@ -260,6 +317,22 @@ export const useDiagramStore = create<DiagramState>((set, get) => {
       }),
       { trackHistory: true },
     );
+  },
+
+  alignNodesHorizontally: (ids) => {
+    applyNodePositionTransform(ids, alignHorizontal);
+  },
+
+  alignNodesVertically: (ids) => {
+    applyNodePositionTransform(ids, alignVertical);
+  },
+
+  distributeNodesHorizontally: (ids) => {
+    applyNodePositionTransform(ids, distributeHorizontal);
+  },
+
+  distributeNodesVertically: (ids) => {
+    applyNodePositionTransform(ids, distributeVertical);
   },
 
   addEdge: (source, target, handles) => {
@@ -407,6 +480,13 @@ export const useDiagramStore = create<DiagramState>((set, get) => {
     updateEdges((edge) => (
       edge.id === id ? { ...edge, notes: notes || undefined } : edge
     ));
+  },
+
+  commitEdgeNotes: (id, notes) => {
+    updateEdges(
+      (edge) => (edge.id === id ? { ...edge, notes: notes || undefined } : edge),
+      { trackHistory: true },
+    );
   },
 
   optimizeEdges: () => {

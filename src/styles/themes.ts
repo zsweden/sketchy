@@ -11,7 +11,7 @@ export type ThemeId =
   | 'solarized-light'
   | 'warm-light';
 
-export interface ThemeDefinition {
+interface ThemeDefinition {
   id: ThemeId;
   name: string;
   vars: Record<string, string>;

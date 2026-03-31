@@ -7,7 +7,6 @@ import EdgePanel from './EdgePanel';
 import SettingsPanel from './SettingsPanel';
 import ChatPanel from './ChatPanel';
 import { AlignHorizontalIcon, AlignVerticalIcon, DistributeHorizontalIcon, DistributeVerticalIcon } from '../icons/AlignDistributeIcons';
-import { alignHorizontal, alignVertical, distributeHorizontal, distributeVertical } from '../../utils/align-distribute';
 
 export default function SidePanel() {
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
@@ -17,8 +16,10 @@ export default function SidePanel() {
   const edges = useDiagramStore((s) => s.diagram.edges);
   const deleteNodes = useDiagramStore((s) => s.deleteNodes);
   const toggleNodeLocked = useDiagramStore((s) => s.toggleNodeLocked);
-  const moveNodes = useDiagramStore((s) => s.moveNodes);
-  const commitToHistory = useDiagramStore((s) => s.commitToHistory);
+  const alignNodesHorizontally = useDiagramStore((s) => s.alignNodesHorizontally);
+  const alignNodesVertically = useDiagramStore((s) => s.alignNodesVertically);
+  const distributeNodesHorizontally = useDiagramStore((s) => s.distributeNodesHorizontally);
+  const distributeNodesVertically = useDiagramStore((s) => s.distributeNodesVertically);
 
   const [width, setWidth] = useState(320);
   const [dragging, setDragging] = useState(false);
@@ -100,7 +101,7 @@ export default function SidePanel() {
                   className="btn btn-secondary btn-xs"
                   title="Align to same row"
                   aria-label="Align horizontally"
-                  onClick={() => { commitToHistory(); moveNodes(alignHorizontal(selectedNodes)); }}
+                  onClick={() => alignNodesHorizontally(selectedNodeIds)}
                 >
                   <AlignHorizontalIcon />
                 </button>
@@ -108,7 +109,7 @@ export default function SidePanel() {
                   className="btn btn-secondary btn-xs"
                   title="Align to same column"
                   aria-label="Align vertically"
-                  onClick={() => { commitToHistory(); moveNodes(alignVertical(selectedNodes)); }}
+                  onClick={() => alignNodesVertically(selectedNodeIds)}
                 >
                   <AlignVerticalIcon />
                 </button>
@@ -123,7 +124,7 @@ export default function SidePanel() {
                   title="Space out horizontally"
                   aria-label="Distribute horizontally"
                   disabled={selectedNodes.length < 3}
-                  onClick={() => { commitToHistory(); moveNodes(distributeHorizontal(selectedNodes)); }}
+                  onClick={() => distributeNodesHorizontally(selectedNodeIds)}
                 >
                   <DistributeHorizontalIcon />
                 </button>
@@ -132,7 +133,7 @@ export default function SidePanel() {
                   title="Space out vertically"
                   aria-label="Distribute vertically"
                   disabled={selectedNodes.length < 3}
-                  onClick={() => { commitToHistory(); moveNodes(distributeVertical(selectedNodes)); }}
+                  onClick={() => distributeNodesVertically(selectedNodeIds)}
                 >
                   <DistributeVerticalIcon />
                 </button>

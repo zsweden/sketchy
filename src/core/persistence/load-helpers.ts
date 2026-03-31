@@ -12,7 +12,7 @@ export function migrateDiagramShape(raw: unknown): Diagram | null {
   return migrate(raw as unknown as Record<string, unknown>);
 }
 
-export interface NormalizedDiagramResult {
+interface NormalizedDiagramResult {
   diagram: Diagram;
   framework: Framework | null;
   warnings: string[];

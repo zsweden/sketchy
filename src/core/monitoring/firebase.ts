@@ -81,10 +81,6 @@ async function getFirebaseFirestore(): Promise<Firestore | null> {
   return firestorePromise;
 }
 
-export function isFirebaseErrorLoggingEnabled(): boolean {
-  return hasFirebaseConfig;
-}
-
 export async function logFirebaseException(payload: FirebaseExceptionPayload): Promise<void> {
   const analytics = await getFirebaseAnalytics();
 

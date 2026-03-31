@@ -196,9 +196,8 @@ describe('EntityNode', () => {
     });
 
     it('commits text on blur', async () => {
-      const updateNodeText = vi.fn();
-      const commitToHistory = vi.fn();
-      useDiagramStore.setState({ updateNodeText, commitToHistory });
+      const commitNodeText = vi.fn();
+      useDiagramStore.setState({ commitNodeText });
 
       renderNode({ label: 'Old' });
       fireEvent.doubleClick(document.querySelector('.entity-node')!);
@@ -207,25 +206,23 @@ describe('EntityNode', () => {
       fireEvent.change(textarea, { target: { value: 'New' } });
       fireEvent.blur(textarea);
 
-      expect(commitToHistory).toHaveBeenCalled();
-      expect(updateNodeText).toHaveBeenCalledWith('n1', 'New');
+      expect(commitNodeText).toHaveBeenCalledWith('n1', 'New');
     });
 
     it('does not commit if text unchanged', () => {
-      const updateNodeText = vi.fn();
-      useDiagramStore.setState({ updateNodeText });
+      const commitNodeText = vi.fn();
+      useDiagramStore.setState({ commitNodeText });
 
       renderNode({ label: 'Same' });
       fireEvent.doubleClick(document.querySelector('.entity-node')!);
       fireEvent.blur(screen.getByRole('textbox'));
 
-      expect(updateNodeText).not.toHaveBeenCalled();
+      expect(commitNodeText).not.toHaveBeenCalled();
     });
 
     it('commits on Enter key', () => {
-      const updateNodeText = vi.fn();
-      const commitToHistory = vi.fn();
-      useDiagramStore.setState({ updateNodeText, commitToHistory });
+      const commitNodeText = vi.fn();
+      useDiagramStore.setState({ commitNodeText });
 
       renderNode({ label: 'Before' });
       fireEvent.doubleClick(document.querySelector('.entity-node')!);
@@ -235,8 +232,7 @@ describe('EntityNode', () => {
       fireEvent.keyDown(textarea, { key: 'Enter' });
 
       // Enter triggers blur, which commits
-      expect(commitToHistory).toHaveBeenCalled();
-      expect(updateNodeText).toHaveBeenCalledWith('n1', 'After');
+      expect(commitNodeText).toHaveBeenCalledWith('n1', 'After');
     });
   });
 
@@ -277,14 +273,12 @@ describe('EntityNode', () => {
 
     it('toggles junction type on handle click', () => {
       const updateNodeJunction = vi.fn();
-      const commitToHistory = vi.fn();
-      useDiagramStore.setState({ updateNodeJunction, commitToHistory });
+      useDiagramStore.setState({ updateNodeJunction });
 
       const degreesMap = new Map([['n1', { indegree: 2, outdegree: 0 }]]);
       renderNode({ junctionType: 'or', degreesMap });
 
       fireEvent.click(screen.getByTestId('target-top'));
-      expect(commitToHistory).toHaveBeenCalled();
       expect(updateNodeJunction).toHaveBeenCalledWith('n1', 'and');
     });
   });
