@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react';
+import { reportError } from '../core/monitoring/error-logging';
 
 interface Props {
   children: ReactNode;
@@ -13,6 +14,14 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   static getDerivedStateFromError(error: Error): State {
     return { error };
+  }
+
+  componentDidCatch(error: Error, info: { componentStack: string }) {
+    void reportError(error, {
+      source: 'react.error_boundary',
+      fatal: true,
+      componentStack: info.componentStack,
+    });
   }
 
   render() {

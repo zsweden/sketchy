@@ -79,6 +79,24 @@ npx tsc --noEmit
 npx vitest run
 ```
 
+## Firebase Error Logging
+
+Sketchy can forward uncaught browser errors and React crash boundary failures to Firebase Analytics as `exception` events.
+
+Add these Vite env vars before running the app:
+
+```bash
+VITE_FIREBASE_API_KEY=...
+VITE_FIREBASE_AUTH_DOMAIN=...
+VITE_FIREBASE_PROJECT_ID=...
+VITE_FIREBASE_APP_ID=...
+VITE_FIREBASE_STORAGE_BUCKET=...
+VITE_FIREBASE_MESSAGING_SENDER_ID=...
+VITE_FIREBASE_MEASUREMENT_ID=...
+```
+
+If the Firebase config is missing, the logger stays disabled and the app behaves normally.
+
 ## Persistence Model
 
 - Session autosave uses `sessionStorage`
