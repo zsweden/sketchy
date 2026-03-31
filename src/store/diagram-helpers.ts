@@ -65,10 +65,6 @@ interface RoutedEdgeGeometry {
   points: Point[];
 }
 
-interface EdgeOptimizationOptions {
-  preferStored: boolean;
-}
-
 const SIDE_VECTORS = {
   top: { x: 0, y: -1 },
   right: { x: 1, y: 0 },
@@ -80,7 +76,6 @@ const EDGE_STUB = 28;
 const EDGE_INTERSECTION_PENALTY = 10_000;
 const EDGE_NODE_OVERLAP_PENALTY = 2_000;
 const EDGE_LENGTH_PENALTY = 1;
-const EDGE_STABILITY_PENALTY = 150;
 const HANDLE_SIDES = ['top', 'right', 'bottom', 'left'] as const;
 
 function getNodeBoxes(nodes: DiagramNode[]): Map<string, NodeBox> {
@@ -261,17 +256,13 @@ function sharesEndpoint(
     || a.target === b.target;
 }
 
-function createStablePlacementCandidates(
-  edge: Pick<DiagramEdge, 'source' | 'target' | 'sourceSide' | 'targetSide'>,
+function createPlacementCandidates(
+  edge: Pick<DiagramEdge, 'source' | 'target'>,
   nodes: DiagramNode[],
   settings: DiagramSettings,
-  options: EdgeOptimizationOptions,
 ): EdgeHandlePlacement[] {
   const positions = getNodePositionMap(nodes);
   const automatic = getAutomaticEdgeSides(edge.source, edge.target, nodes, settings);
-  const current = options.preferStored && edge.sourceSide && edge.targetSide
-    ? { sourceSide: edge.sourceSide, targetSide: edge.targetSide }
-    : null;
   const sourcePosition = positions.get(edge.source);
   const targetPosition = positions.get(edge.target);
 
@@ -297,8 +288,7 @@ function createStablePlacementCandidates(
   const allPlacements = HANDLE_SIDES.flatMap((sourceSide) =>
     HANDLE_SIDES.map((targetSide) => ({ sourceSide, targetSide })),
   );
-  const candidates = [current, automatic, baseHorizontal, baseVertical, ...allPlacements]
-    .filter(Boolean) as EdgeHandlePlacement[];
+  const candidates = [automatic, baseHorizontal, baseVertical, ...allPlacements];
 
   return candidates.filter((placement) => {
     const key = `${placement.sourceSide}-${placement.targetSide}`;
@@ -308,42 +298,28 @@ function createStablePlacementCandidates(
   });
 }
 
-function getPlacementChangePenalty(
-  current: Pick<DiagramEdge, 'sourceSide' | 'targetSide'>,
-  candidate: EdgeHandlePlacement,
-  options: EdgeOptimizationOptions,
-): number {
-  if (!options.preferStored) return 0;
-  if (!current.sourceSide || !current.targetSide) return 0;
-  const sideChanges = Number(current.sourceSide !== candidate.sourceSide)
-    + Number(current.targetSide !== candidate.targetSide);
-  return sideChanges * EDGE_STABILITY_PENALTY;
-}
-
 export function getOptimizedEdgePlacements(
   edges: DiagramEdge[],
   nodes: DiagramNode[],
   settings: DiagramSettings,
-  options: EdgeOptimizationOptions = { preferStored: false },
 ): Map<string, EdgeHandlePlacement> {
   const nodeBoxes = getNodeBoxes(nodes);
   const placements = new Map<string, EdgeHandlePlacement>();
 
   for (const edge of edges) {
-    placements.set(edge.id, createStablePlacementCandidates(edge, nodes, settings, options)[0]);
+    placements.set(edge.id, createPlacementCandidates(edge, nodes, settings)[0]);
   }
 
   const passes = 2;
   for (let pass = 0; pass < passes; pass++) {
     for (const edge of edges) {
-      const candidates = createStablePlacementCandidates(edge, nodes, settings, options);
+      const candidates = createPlacementCandidates(edge, nodes, settings);
       let bestPlacement = placements.get(edge.id) ?? candidates[0];
       let bestScore = Number.POSITIVE_INFINITY;
 
       for (const candidate of candidates) {
         const geometry = buildEdgePolyline(edge, candidate, nodeBoxes);
         let score = getPolylineLength(geometry.points) * EDGE_LENGTH_PENALTY;
-        score += getPlacementChangePenalty(edge, candidate, options);
 
         for (const [nodeId, box] of nodeBoxes.entries()) {
           if (nodeId === edge.source || nodeId === edge.target) continue;
@@ -426,24 +402,12 @@ export function getStoredOrAutomaticEdgeSides(
   };
 }
 
-export function captureCurrentEdgeSides(
+export function captureOptimizedEdgeSides(
   edges: DiagramEdge[],
   nodes: DiagramNode[],
   settings: DiagramSettings,
 ): DiagramEdge[] {
-  const placements = getOptimizedEdgePlacements(edges, nodes, settings, { preferStored: false });
-  return edges.map((edge) => ({
-    ...edge,
-    ...(placements.get(edge.id) ?? getAutomaticEdgeSides(edge.source, edge.target, nodes, settings)),
-  }));
-}
-
-export function captureOptimizedStoredEdgeSides(
-  edges: DiagramEdge[],
-  nodes: DiagramNode[],
-  settings: DiagramSettings,
-): DiagramEdge[] {
-  const placements = getOptimizedEdgePlacements(edges, nodes, settings, { preferStored: true });
+  const placements = getOptimizedEdgePlacements(edges, nodes, settings);
   return edges.map((edge) => ({
     ...edge,
     ...(placements.get(edge.id) ?? getAutomaticEdgeSides(edge.source, edge.target, nodes, settings)),

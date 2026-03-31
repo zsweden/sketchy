@@ -16,8 +16,7 @@ import {
   createDiagramForFramework,
   getDefaultEdgeFields,
   resolveEdgeSides,
-  captureCurrentEdgeSides,
-  captureOptimizedStoredEdgeSides,
+  captureOptimizedEdgeSides,
   ensureFixedEdgeSides,
   snapshot,
   batchAddNodes,
@@ -458,7 +457,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
     const state = get();
     if (state.diagram.settings.edgeRoutingMode !== 'fixed') return false;
 
-    const optimizedEdges = captureOptimizedStoredEdgeSides(
+    const optimizedEdges = captureOptimizedEdgeSides(
       state.diagram.edges,
       state.diagram.nodes,
       state.diagram.settings,
@@ -509,7 +508,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
             ...s.diagram,
             settings: nextSettings,
             edges: edgeRoutingModeChanged && nextSettings.edgeRoutingMode === 'fixed'
-            ? captureCurrentEdgeSides(s.diagram.edges, s.diagram.nodes, nextSettings)
+            ? captureOptimizedEdgeSides(s.diagram.edges, s.diagram.nodes, nextSettings)
             : s.diagram.edges,
           },
         };

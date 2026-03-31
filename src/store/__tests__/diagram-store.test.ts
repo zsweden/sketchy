@@ -1,10 +1,29 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useDiagramStore } from '../diagram-store';
+import { getOptimizedEdgePlacements } from '../diagram-helpers';
 
 function resetStore() {
   useDiagramStore.getState().setFramework('crt');
   useDiagramStore.getState().newDiagram();
   // Clear undo history by making a fresh start
+}
+
+function getPlacementSnapshot() {
+  const { diagram } = useDiagramStore.getState();
+  const placements = getOptimizedEdgePlacements(diagram.edges, diagram.nodes, diagram.settings);
+  return new Map(
+    diagram.edges.map((edge) => {
+      const placement = placements.get(edge.id);
+      return [edge.id, placement ? `${placement.sourceSide}:${placement.targetSide}` : null];
+    }),
+  );
+}
+
+function getStoredSnapshot() {
+  const { diagram } = useDiagramStore.getState();
+  return new Map(
+    diagram.edges.map((edge) => [edge.id, `${edge.sourceSide}:${edge.targetSide}`]),
+  );
 }
 
 describe('diagram store', () => {
@@ -345,19 +364,19 @@ describe('diagram store', () => {
       expect(edge.targetSide).toBe('bottom');
     });
 
-    it('keeps the current fixed routing when there is no better edge-set arrangement', () => {
+    it('auto edges persists the canonical fresh routing result', () => {
       useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });
       const sourceId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
       const targetId = useDiagramStore.getState().addNode({ x: 200, y: 0 });
       useDiagramStore.getState().addEdge(sourceId, targetId);
       useDiagramStore.getState().moveNodes([{ id: targetId, position: { x: 0, y: 200 } }]);
 
+      const expectedPlacements = getPlacementSnapshot();
+
       const optimized = useDiagramStore.getState().optimizeEdges();
 
       expect(optimized).toBe(true);
-      const edge = useDiagramStore.getState().diagram.edges[0];
-      expect(edge.sourceSide).toBe('right');
-      expect(edge.targetSide).toBe('right');
+      expect(getStoredSnapshot()).toEqual(expectedPlacements);
     });
 
     it('does not optimize edges while routing is set to dynamic', () => {
@@ -376,7 +395,24 @@ describe('diagram store', () => {
       expect(edge.targetSide).toBe('left');
     });
 
-    it('re-optimizes against the current edge set when new edges are added', () => {
+    it('auto edges overwrites manual anchors with the fresh solver result', () => {
+      useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });
+      const sourceId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const targetId = useDiagramStore.getState().addNode({ x: 0, y: 200 });
+      useDiagramStore.getState().addEdge(sourceId, targetId, {
+        sourceHandleId: 'source-left',
+        targetHandleId: 'target-right',
+      });
+
+      const optimized = useDiagramStore.getState().optimizeEdges();
+
+      expect(optimized).toBe(true);
+      const edge = useDiagramStore.getState().diagram.edges[0];
+      expect(edge.sourceSide).toBe('bottom');
+      expect(edge.targetSide).toBe('top');
+    });
+
+    it('switching to dynamic after auto edges keeps the same placements', () => {
       useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });
 
       const edge1Source = useDiagramStore.getState().addNode({ x: 0, y: 0 });
@@ -386,12 +422,6 @@ describe('diagram store', () => {
         targetHandleId: 'target-top',
       });
 
-      const initialOptimize = useDiagramStore.getState().optimizeEdges();
-      expect(initialOptimize).toBe(true);
-      let edge = useDiagramStore.getState().diagram.edges[0];
-      expect(edge.sourceSide).toBe('bottom');
-      expect(edge.targetSide).toBe('right');
-
       const edge2Source = useDiagramStore.getState().addNode({ x: -200, y: 0 });
       const edge2Target = useDiagramStore.getState().addNode({ x: 0, y: -200 });
       useDiagramStore.getState().addEdge(edge2Source, edge2Target, {
@@ -399,12 +429,13 @@ describe('diagram store', () => {
         targetHandleId: 'target-bottom',
       });
 
-      const reoptimized = useDiagramStore.getState().optimizeEdges();
+      const optimized = useDiagramStore.getState().optimizeEdges();
+      expect(optimized).toBe(true);
+      const fixedPlacements = getStoredSnapshot();
 
-      expect(reoptimized).toBe(true);
-      edge = useDiagramStore.getState().diagram.edges[0];
-      expect(edge.sourceSide).toBe('right');
-      expect(edge.targetSide).toBe('right');
+      useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'dynamic' });
+
+      expect(getPlacementSnapshot()).toEqual(fixedPlacements);
     });
   });
 });

@@ -1,4 +1,3 @@
-import type { DiagramEdge } from '../types';
 import type { LayoutDirection } from '../framework-types';
 import { findStronglyConnectedComponents } from '../graph/derived';
 import { NODE_SEP, NODE_WIDTH } from './layout-engine';
@@ -20,21 +19,26 @@ interface ScoringContext {
   allEdges: LayoutEdgeInput[];
 }
 
+interface ComponentTemplate {
+  width: number;
+  height: number;
+  relativePositions: Map<string, { x: number; y: number }>;
+}
+
+interface CondensedGroup {
+  id: string;
+  nodeIds: string[];
+  nodes: LayoutInput[];
+  internalEdges: LayoutEdgeInput[];
+  width: number;
+  height: number;
+  positionHint?: { x: number; y: number };
+  template?: ComponentTemplate;
+}
+
 type SeedVariant = 'elk' | 'anchor' | 'anchor-flipped' | 'axis';
 
 export const cyclicLayoutEngine: LayoutEngine = async (nodes, edges, options) => {
-  const results = await elkLayeredEngine(nodes, edges, { ...options, cyclic: true });
-  return relaxCyclicComponents(nodes, edges, results, options.direction);
-};
-
-function relaxCyclicComponents(
-  nodes: LayoutInput[],
-  edges: DiagramEdge[] | Array<{ source: string; target: string }>,
-  results: LayoutResult[],
-  direction: LayoutDirection,
-): LayoutResult[] {
-  const positions = new Map(results.map((result) => [result.id, result]));
-  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
   const components = findStronglyConnectedComponents(
     nodes.map((node) => node.id),
     edges.map((edge, index) => ({
@@ -42,8 +46,86 @@ function relaxCyclicComponents(
       source: edge.source,
       target: edge.target,
     })),
-  ).filter((component) => component.length >= 2);
+  );
+  const cyclicComponents = components.filter((component) => component.length >= 2);
+  const directPositions = await layoutDirectCyclic(nodes, edges, options.direction, cyclicComponents);
+  const shouldTryCondensed = cyclicComponents.length > 1 || nodes.length <= 12;
 
+  if (!shouldTryCondensed) {
+    return nodes.map((node) => directPositions.get(node.id) ?? {
+      id: node.id,
+      x: node.position?.x ?? 0,
+      y: node.position?.y ?? 0,
+    });
+  }
+
+  const condensedPositions = await layoutCondensedCyclic(
+    nodes,
+    edges,
+    options.direction,
+    components,
+  );
+  const directMetrics = computeLayoutMetrics(nodes, edges, directPositions);
+  const condensedMetrics = computeLayoutMetrics(nodes, edges, condensedPositions);
+  const bestPositions = compareGraphMetrics(condensedMetrics, directMetrics) < 0
+    ? condensedPositions
+    : directPositions;
+
+  return nodes.map((node) => bestPositions.get(node.id) ?? {
+    id: node.id,
+    x: node.position?.x ?? 0,
+    y: node.position?.y ?? 0,
+  });
+};
+
+async function layoutCondensedCyclic(
+  nodes: LayoutInput[],
+  edges: LayoutEdgeInput[],
+  direction: LayoutDirection,
+  components: string[][],
+): Promise<Map<string, LayoutResult>> {
+  const condensed = await buildCondensedGraph(nodes, edges, components, direction);
+  const condensedResults = await elkLayeredEngine(
+    condensed.nodes,
+    condensed.edges,
+    { direction, cyclic: false },
+  );
+
+  const positions = seedExpandedPositions(condensed.groups, condensedResults);
+  const condensedPositions = new Map(condensedResults.map((result) => [result.id, result]));
+  const cyclicGroups = [...condensed.groups]
+    .filter((group) => group.nodeIds.length >= 2)
+    .sort((a, b) => {
+      const positionA = condensedPositions.get(a.id) ?? a.positionHint ?? { x: 0, y: 0 };
+      const positionB = condensedPositions.get(b.id) ?? b.positionHint ?? { x: 0, y: 0 };
+      return positionA.y - positionB.y || positionA.x - positionB.x || a.id.localeCompare(b.id);
+    });
+
+  for (const group of cyclicGroups) {
+    const positioned = group.nodes
+      .map((node) => {
+        const position = positions.get(node.id);
+        if (!position) return null;
+        return { nodeId: node.id, node, position };
+      })
+      .filter((entry): entry is PositionedEntry => entry !== null);
+
+    if (positioned.length < 2) continue;
+    optimizeCyclicComponent(positioned, nodes, edges, positions, direction);
+  }
+
+  return positions;
+}
+
+async function layoutDirectCyclic(
+  nodes: LayoutInput[],
+  edges: LayoutEdgeInput[],
+  direction: LayoutDirection,
+  components: string[][],
+): Promise<Map<string, LayoutResult>> {
+  const results = await elkLayeredEngine(nodes, edges, { direction, cyclic: true });
+  const positions = new Map(results.map((result) => [result.id, result]));
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
   for (const component of components) {
     const positioned = component
       .map((nodeId) => {
@@ -52,13 +134,174 @@ function relaxCyclicComponents(
         if (!node || !position) return null;
         return { nodeId, node, position };
       })
-      .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+      .filter((entry): entry is PositionedEntry => entry !== null);
 
     if (positioned.length < 2) continue;
     optimizeCyclicComponent(positioned, nodes, edges, positions, direction);
   }
 
-  return results.map((result) => positions.get(result.id) ?? result);
+  return positions;
+}
+
+async function buildCondensedGraph(
+  nodes: LayoutInput[],
+  edges: LayoutEdgeInput[],
+  components: string[][],
+  direction: LayoutDirection,
+): Promise<{
+  groups: CondensedGroup[];
+  nodes: LayoutInput[];
+  edges: LayoutEdgeInput[];
+}> {
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+  const nodeToGroupId = new Map<string, string>();
+
+  const groups = await Promise.all(
+    components.map(async (component, index) => {
+      const groupNodes = component
+        .map((nodeId) => nodeMap.get(nodeId))
+        .filter((node): node is LayoutInput => node !== undefined);
+      const componentIds = new Set(component);
+      const internalEdges = edges.filter(
+        (edge) => componentIds.has(edge.source) && componentIds.has(edge.target),
+      );
+      const positionHint = averageNodePosition(groupNodes);
+      const groupId = component.length >= 2 ? `scc:${index}` : component[0];
+
+      for (const nodeId of component) {
+        nodeToGroupId.set(nodeId, groupId);
+      }
+
+      if (component.length < 2) {
+        const node = groupNodes[0];
+        return {
+          id: groupId,
+          nodeIds: component,
+          nodes: groupNodes,
+          internalEdges,
+          width: node?.width ?? NODE_WIDTH,
+          height: node?.height ?? 48,
+          positionHint,
+        };
+      }
+
+      const template = await buildComponentTemplate(groupNodes, internalEdges, direction);
+      return {
+        id: groupId,
+        nodeIds: component,
+        nodes: groupNodes,
+        internalEdges,
+        width: template.width,
+        height: template.height,
+        positionHint,
+        template,
+      };
+    }),
+  );
+
+  const condensedEdges = new Map<string, LayoutEdgeInput>();
+  for (const edge of edges) {
+    const sourceGroup = nodeToGroupId.get(edge.source);
+    const targetGroup = nodeToGroupId.get(edge.target);
+    if (!sourceGroup || !targetGroup || sourceGroup === targetGroup) continue;
+    const key = `${sourceGroup}->${targetGroup}`;
+    if (!condensedEdges.has(key)) {
+      condensedEdges.set(key, { source: sourceGroup, target: targetGroup });
+    }
+  }
+
+  return {
+    groups,
+    nodes: groups.map((group) => ({
+      id: group.id,
+      width: group.width,
+      height: group.height,
+      position: group.positionHint,
+    })),
+    edges: [...condensedEdges.values()],
+  };
+}
+
+async function buildComponentTemplate(
+  nodes: LayoutInput[],
+  edges: LayoutEdgeInput[],
+  direction: LayoutDirection,
+): Promise<ComponentTemplate> {
+  const results = await elkLayeredEngine(nodes, edges, { direction, cyclic: true });
+  const positions = new Map(results.map((result) => [result.id, result]));
+  const positioned = nodes
+    .map((node) => {
+      const position = positions.get(node.id) ?? {
+        id: node.id,
+        x: node.position?.x ?? 0,
+        y: node.position?.y ?? 0,
+      };
+      positions.set(node.id, position);
+      return { nodeId: node.id, node, position };
+    })
+    .filter((entry): entry is PositionedEntry => entry !== null);
+
+  optimizeCyclicComponent(positioned, nodes, edges, positions, direction);
+
+  const bounds = measureBounds(nodes, positions);
+  const center = {
+    x: (bounds.minX + bounds.maxX) / 2,
+    y: (bounds.minY + bounds.maxY) / 2,
+  };
+  const padding = NODE_SEP * 0.5;
+
+  return {
+    width: round(bounds.width + padding),
+    height: round(bounds.height + padding),
+    relativePositions: new Map(nodes.map((node) => {
+      const position = positions.get(node.id) ?? { x: 0, y: 0 };
+      return [node.id, {
+        x: position.x - center.x,
+        y: position.y - center.y,
+      }];
+    })),
+  };
+}
+
+function seedExpandedPositions(
+  groups: CondensedGroup[],
+  condensedResults: LayoutResult[],
+): Map<string, LayoutResult> {
+  const groupPositions = new Map(condensedResults.map((result) => [result.id, result]));
+  const positions = new Map<string, LayoutResult>();
+
+  for (const group of groups) {
+    const groupPosition = groupPositions.get(group.id) ?? {
+      id: group.id,
+      x: group.positionHint?.x ?? 0,
+      y: group.positionHint?.y ?? 0,
+    };
+
+    if (group.nodeIds.length < 2 || !group.template) {
+      const node = group.nodes[0];
+      if (node) {
+        positions.set(node.id, {
+          id: node.id,
+          x: groupPosition.x,
+          y: groupPosition.y,
+        });
+      }
+      continue;
+    }
+
+    const centerX = groupPosition.x + group.width / 2;
+    const centerY = groupPosition.y + group.height / 2;
+    for (const node of group.nodes) {
+      const relative = group.template.relativePositions.get(node.id) ?? { x: 0, y: 0 };
+      positions.set(node.id, {
+        id: node.id,
+        x: centerX + relative.x,
+        y: centerY + relative.y,
+      });
+    }
+  }
+
+  return positions;
 }
 
 function optimizeCyclicComponent(
@@ -89,7 +332,6 @@ function optimizeCyclicComponent(
 
   let bestScore = Number.POSITIVE_INFINITY;
   let bestPoints: Map<string, Point> | null = null;
-
   const variants: SeedVariant[] = ['elk', 'anchor', 'anchor-flipped', 'axis'];
 
   for (const variant of variants) {
@@ -591,6 +833,67 @@ function averagePoint(points: Point[]): Point {
     x: points.reduce((sum, point) => sum + point.x, 0) / points.length,
     y: points.reduce((sum, point) => sum + point.y, 0) / points.length,
   };
+}
+
+function averageNodePosition(nodes: LayoutInput[]): Point | undefined {
+  const positioned = nodes.filter((node) => node.position);
+  if (positioned.length === 0) return undefined;
+  return {
+    x: positioned.reduce((sum, node) => sum + (node.position?.x ?? 0), 0) / positioned.length,
+    y: positioned.reduce((sum, node) => sum + (node.position?.y ?? 0), 0) / positioned.length,
+  };
+}
+
+function measureBounds(
+  nodes: LayoutInput[],
+  positions: Map<string, LayoutResult>,
+) {
+  const boxes = nodes.map((node) => {
+    const position = positions.get(node.id) ?? { x: 0, y: 0 };
+    return {
+      left: position.x,
+      top: position.y,
+      right: position.x + node.width,
+      bottom: position.y + node.height,
+    };
+  });
+
+  const minX = Math.min(...boxes.map((box) => box.left));
+  const minY = Math.min(...boxes.map((box) => box.top));
+  const maxX = Math.max(...boxes.map((box) => box.right));
+  const maxY = Math.max(...boxes.map((box) => box.bottom));
+
+  return {
+    minX,
+    minY,
+    maxX,
+    maxY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
+}
+
+function compareGraphMetrics(
+  a: ReturnType<typeof computeLayoutMetrics>,
+  b: ReturnType<typeof computeLayoutMetrics>,
+) {
+  if (a.edgeCrossings !== b.edgeCrossings) {
+    return a.edgeCrossings - b.edgeCrossings;
+  }
+  if (a.edgeNodeOverlaps !== b.edgeNodeOverlaps) {
+    return a.edgeNodeOverlaps - b.edgeNodeOverlaps;
+  }
+  if (a.totalEdgeLength !== b.totalEdgeLength) {
+    return a.totalEdgeLength - b.totalEdgeLength;
+  }
+  if (a.boundingArea !== b.boundingArea) {
+    return a.boundingArea - b.boundingArea;
+  }
+  return scoreLayoutMetrics(a) - scoreLayoutMetrics(b);
+}
+
+function round(value: number) {
+  return Math.round(value * 100) / 100;
 }
 
 function clonePoints(points: Map<string, Point>): Map<string, Point> {

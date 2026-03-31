@@ -35,7 +35,7 @@ export function useRFNodeEdgeBuilder(
   }), [activeTheme]);
 
   const optimizedPlacements = useMemo(
-    () => getOptimizedEdgePlacements(diagram.edges, diagram.nodes, diagram.settings, { preferStored: false }),
+    () => getOptimizedEdgePlacements(diagram.edges, diagram.nodes, diagram.settings),
     [diagram.edges, diagram.nodes, diagram.settings],
   );
 
