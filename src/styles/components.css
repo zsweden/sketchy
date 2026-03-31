@@ -291,11 +291,12 @@
   pointer-events: auto;
   padding: 0.625rem 1rem;
   border-radius: 0.75rem;
-  background: var(--text);
-  color: white;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
   font-size: 0.8rem;
   font-weight: 500;
-  box-shadow: 0 8px 24px rgba(33, 33, 33, 0.2);
+  box-shadow: var(--shadow);
   animation: toast-in 0.2s ease-out;
   cursor: pointer;
 }
@@ -320,11 +321,13 @@
 }
 
 .toast-action:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: color-mix(in srgb, currentColor 12%, transparent);
 }
 
 .toast--error {
   background: var(--ude-color);
+  border-color: var(--ude-color);
+  color: white;
 }
 
 @keyframes toast-in {
