@@ -176,6 +176,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         onError: (error) => {
           activeController = null;
+          void reportError(error, {
+            source: 'chat.stream_error',
+            fatal: false,
+            metadata: {
+              provider,
+              model,
+              endpointHost: getEndpointHost(baseUrl),
+              frameworkId: framework.id,
+              historyCount: history.length,
+              userMessageLength: text.length,
+            },
+          });
           const errorMsg: DisplayMessage = {
             id: crypto.randomUUID(),
             role: 'assistant',

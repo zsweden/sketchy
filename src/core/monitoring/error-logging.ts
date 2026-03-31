@@ -6,7 +6,8 @@ export type ErrorSource =
   | 'window.error'
   | 'window.unhandledrejection'
   | 'chat.empty_response'
-  | 'chat.malformed_mention';
+  | 'chat.malformed_mention'
+  | 'chat.stream_error';
 
 interface ReportErrorOptions {
   source: ErrorSource;

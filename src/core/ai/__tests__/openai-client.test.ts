@@ -294,6 +294,84 @@ describe('streamChatMessage', () => {
   });
 });
 
+// Helper: create a mock Anthropic SSE response from an array of data lines
+function mockAnthropicSSEResponse(lines: string[]): Response {
+  const body = lines.map((l) => `data: ${l}`).join('\n') + '\n';
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(body));
+      controller.close();
+    },
+  });
+  return new Response(stream, { status: 200 });
+}
+
+describe('Anthropic streaming', () => {
+  it('surfaces stream error events to onError', async () => {
+    const { streamChatMessage } = await import('../openai-client');
+
+    let caughtError: Error | null = null;
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      mockAnthropicSSEResponse([
+        JSON.stringify({ type: 'message_start', message: { id: 'msg_1', model: 'claude-sonnet-4-6' } }),
+        JSON.stringify({ type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } }),
+      ]),
+    ));
+
+    await new Promise<void>((resolve) => {
+      streamChatMessage('key', 'https://api.anthropic.com/v1', 'claude-sonnet-4-6', makeDiagram(), mockFrameworkCRT, [], {
+        onToken: () => {},
+        onDone: () => resolve(),
+        onError: (err) => { caughtError = err; resolve(); },
+      }, 'anthropic');
+    });
+
+    expect(caughtError).not.toBeNull();
+    expect(caughtError!.message).toContain('overloaded_error');
+    expect(caughtError!.message).toContain('Overloaded');
+    vi.unstubAllGlobals();
+  });
+
+  it('parses text and tool calls from Anthropic stream', async () => {
+    const { streamChatMessage } = await import('../openai-client');
+
+    const tokens: string[] = [];
+    let result: { text: string; modifications?: unknown } | null = null;
+
+    const args = JSON.stringify({ explanation: 'Added node', addNodes: [{ id: 'new_1', label: 'Test' }] });
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      mockAnthropicSSEResponse([
+        JSON.stringify({ type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } }),
+        JSON.stringify({ type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: 'Here is ' } }),
+        JSON.stringify({ type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: 'my analysis.' } }),
+        JSON.stringify({ type: 'content_block_stop', index: 0 }),
+        JSON.stringify({ type: 'content_block_start', index: 1, content_block: { type: 'tool_use', id: 'tu_1', name: 'modify_diagram' } }),
+        JSON.stringify({ type: 'content_block_delta', index: 1, delta: { type: 'input_json_delta', partial_json: args } }),
+        JSON.stringify({ type: 'content_block_stop', index: 1 }),
+        JSON.stringify({ type: 'message_stop' }),
+      ]),
+    ));
+
+    await new Promise<void>((resolve) => {
+      streamChatMessage('key', 'https://api.anthropic.com/v1', 'claude-sonnet-4-6', makeDiagram(), mockFrameworkCRT, [], {
+        onToken: (t) => tokens.push(t),
+        onDone: (r) => { result = r; resolve(); },
+        onError: () => resolve(),
+      }, 'anthropic');
+    });
+
+    expect(tokens).toEqual(['Here is ', 'my analysis.']);
+    expect(result!.text).toBe('Added node');
+    const mods = result!.modifications as { addNodes: { id: string; label: string }[] };
+    expect(mods.addNodes).toHaveLength(1);
+    expect(mods.addNodes[0].label).toBe('Test');
+    vi.unstubAllGlobals();
+  });
+});
+
 describe('buildSystemPrompt framework-agnostic', () => {
   // We test that the system prompt includes framework-specific tags by
   // intercepting the fetch call and inspecting the system message body.

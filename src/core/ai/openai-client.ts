@@ -360,6 +360,12 @@ function processAnthropicLine(
   try {
     const parsed = JSON.parse(data);
 
+    if (parsed.type === 'error') {
+      const msg = parsed.error?.message ?? 'Unknown stream error';
+      const type = parsed.error?.type ?? 'unknown';
+      throw new Error(`Anthropic stream error (${type}): ${msg}`);
+    }
+
     if (parsed.type === 'content_block_start' && parsed.content_block?.type === 'tool_use') {
       state.toolCalls.push({ name: parsed.content_block.name ?? '', args: '' });
     }
@@ -374,7 +380,8 @@ function processAnthropicLine(
         if (lastTool) lastTool.args += parsed.delta.partial_json;
       }
     }
-  } catch {
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith('Anthropic stream error')) throw e;
     // Skip malformed SSE chunks
   }
 }
