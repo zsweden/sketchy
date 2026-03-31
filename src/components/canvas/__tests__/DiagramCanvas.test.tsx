@@ -19,7 +19,7 @@ vi.mock('../EntityNode', () => ({
 }));
 
 vi.mock('@xyflow/react', () => ({
-  ReactFlow: ({ nodes, edges, onConnect, onSelectionChange }: {
+  ReactFlow: ({ nodes, edges, onConnect, onSelectionChange, onPaneContextMenu, onNodeContextMenu, onEdgeContextMenu }: {
     nodes: Array<{ id: string; selected?: boolean }>;
     edges: Array<{ id: string; selected?: boolean }>;
     onConnect: (connection: {
@@ -29,6 +29,30 @@ vi.mock('@xyflow/react', () => ({
       targetHandle?: string;
     }) => void;
     onSelectionChange?: (params: { nodes: Array<{ id: string }>; edges: Array<{ id: string }> }) => void;
+    onPaneContextMenu?: (event: {
+      clientX: number;
+      clientY: number;
+      preventDefault: () => void;
+      stopPropagation?: () => void;
+    }) => void;
+    onNodeContextMenu?: (
+      event: {
+        clientX: number;
+        clientY: number;
+        preventDefault: () => void;
+        stopPropagation: () => void;
+      },
+      node: { id: string },
+    ) => void;
+    onEdgeContextMenu?: (
+      event: {
+        clientX: number;
+        clientY: number;
+        preventDefault: () => void;
+        stopPropagation: () => void;
+      },
+      edge: { id: string },
+    ) => void;
   }) => (
     <div>
       <div data-testid="selected-nodes">{nodes.filter((node) => node.selected).map((node) => node.id).join(',')}</div>
@@ -53,6 +77,38 @@ vi.mock('@xyflow/react', () => ({
         })}
       >
         Trigger selection
+      </button>
+      <button
+        type="button"
+        data-testid="trigger-node-context-menu"
+        onClick={() => {
+          const event = {
+            clientX: 120,
+            clientY: 80,
+            preventDefault: vi.fn(),
+            stopPropagation: vi.fn(),
+          };
+          onNodeContextMenu?.(event, { id: 'n1' });
+          if (!event.stopPropagation.mock.calls.length) onPaneContextMenu?.(event);
+        }}
+      >
+        Trigger node context menu
+      </button>
+      <button
+        type="button"
+        data-testid="trigger-edge-context-menu"
+        onClick={() => {
+          const event = {
+            clientX: 140,
+            clientY: 90,
+            preventDefault: vi.fn(),
+            stopPropagation: vi.fn(),
+          };
+          onEdgeContextMenu?.(event, { id: 'e1' });
+          if (!event.stopPropagation.mock.calls.length) onPaneContextMenu?.(event);
+        }}
+      >
+        Trigger edge context menu
       </button>
     </div>
   ),
@@ -201,5 +257,41 @@ describe('DiagramCanvas', () => {
       expect(screen.getByTestId('selected-edges')).toHaveTextContent('e1');
     });
     expect(screen.getByTestId('selected-nodes')).toHaveTextContent('');
+  });
+
+  it('keeps a node context menu targeted to the node when pane fallback would also run', async () => {
+    const user = userEvent.setup();
+    mocks.rfNodes = [
+      { id: 'n1', position: { x: 0, y: 0 }, data: {} } as never,
+    ];
+
+    render(<DiagramCanvas />);
+
+    await user.click(screen.getByTestId('trigger-node-context-menu'));
+
+    expect(useUIStore.getState().contextMenu).toEqual({
+      x: 120,
+      y: 80,
+      nodeId: 'n1',
+      edgeId: undefined,
+    });
+  });
+
+  it('keeps an edge context menu targeted to the edge when pane fallback would also run', async () => {
+    const user = userEvent.setup();
+    mocks.rfEdges = [
+      { id: 'e1', source: 'n1', target: 'n2' } as never,
+    ];
+
+    render(<DiagramCanvas />);
+
+    await user.click(screen.getByTestId('trigger-edge-context-menu'));
+
+    expect(useUIStore.getState().contextMenu).toEqual({
+      x: 140,
+      y: 90,
+      nodeId: undefined,
+      edgeId: 'e1',
+    });
   });
 });

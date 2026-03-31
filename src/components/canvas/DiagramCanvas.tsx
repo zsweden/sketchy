@@ -235,6 +235,7 @@ export default function DiagramCanvas() {
   const onNodeContextMenu = useCallback(
     (event: React.MouseEvent, node: Node) => {
       event.preventDefault();
+      event.stopPropagation();
       openContextMenu(event.clientX, event.clientY, node.id);
     },
     [openContextMenu],
@@ -243,6 +244,7 @@ export default function DiagramCanvas() {
   const onEdgeContextMenu = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
       event.preventDefault();
+      event.stopPropagation();
       openContextMenu(event.clientX, event.clientY, undefined, edge.id);
     },
     [openContextMenu],
