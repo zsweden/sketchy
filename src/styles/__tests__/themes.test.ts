@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { THEMES, getTheme, DEFAULT_THEME, type ThemeId } from '../themes';
+import { THEMES, applyThemeToRoot, getTheme, DEFAULT_THEME, type ThemeId } from '../themes';
 
 const REQUIRED_CSS_VARS = [
   '--app-bg-top',
@@ -71,6 +71,18 @@ describe('themes', () => {
   it('DEFAULT_THEME is a valid theme id', () => {
     const theme = getTheme(DEFAULT_THEME);
     expect(theme.id).toBe(DEFAULT_THEME);
+  });
+
+  it('applyThemeToRoot writes theme variables to the document root', () => {
+    const root = document.documentElement;
+    root.style.cssText = '';
+
+    applyThemeToRoot('rose');
+
+    const theme = getTheme('rose');
+    expect(root.style.getPropertyValue('--accent')).toBe(theme.vars['--accent']);
+    expect(root.style.getPropertyValue('--text')).toBe(theme.vars['--text']);
+    expect(root.style.background).toBeTruthy();
   });
 
   it('every theme id matches the ThemeId union type', () => {

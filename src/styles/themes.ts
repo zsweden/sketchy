@@ -329,4 +329,15 @@ export function getTheme(id: string): ThemeDefinition {
   return THEMES.find((t) => t.id === id) ?? THEMES[0];
 }
 
+export function applyThemeToRoot(id: string, root: HTMLElement = document.documentElement): void {
+  const theme = getTheme(id);
+
+  for (const [prop, value] of Object.entries(theme.vars)) {
+    root.style.setProperty(prop, value);
+  }
+
+  root.style.color = theme.vars['--text'];
+  root.style.background = theme.vars['--app-bg-top'];
+}
+
 export { DEFAULT_THEME };
