@@ -25,6 +25,7 @@ export interface ChatTextSegment {
 export type ParsedChatSegment = ChatMentionSegment | ChatTextSegment;
 
 const CANONICAL_MENTION_PATTERN = /\[([^\]]+)\]\[(node|edge|loop):([^\]]+)\]/g;
+const STREAMING_CANONICAL_MENTION_PREFIX_PATTERN = /^\[([^\]]+)\]\[/;
 
 interface ParsedChatSegmentsResult {
   segments: ParsedChatSegment[];
@@ -170,4 +171,57 @@ export function remapCanonicalMentionIds(text: string, idMap: Map<string, string
     if (!mappedId) return rawText;
     return `[${displayText}][${kind}:${mappedId}]`;
   });
+}
+
+function isPossibleCanonicalMentionKindPrefix(value: string): boolean {
+  return ['node', 'edge', 'loop'].some((kind) => kind.startsWith(value));
+}
+
+function isIncompleteCanonicalMention(text: string): boolean {
+  const match = text.match(STREAMING_CANONICAL_MENTION_PREFIX_PATTERN);
+  if (!match) return false;
+
+  const tagStart = match[0].length;
+  const tagContent = text.slice(tagStart);
+  if (tagContent.includes(']')) return false;
+
+  const colonIndex = tagContent.indexOf(':');
+  if (colonIndex === -1) {
+    return isPossibleCanonicalMentionKindPrefix(tagContent);
+  }
+
+  const kind = tagContent.slice(0, colonIndex);
+  const id = tagContent.slice(colonIndex + 1);
+  return isPossibleCanonicalMentionKindPrefix(kind) && !id.includes(']');
+}
+
+export function getStreamingChatMessageDisplayText(text: string): string {
+  let displayText = '';
+  let cursor = 0;
+
+  while (cursor < text.length) {
+    const nextMentionStart = text.indexOf('[', cursor);
+    if (nextMentionStart === -1) {
+      displayText += text.slice(cursor);
+      break;
+    }
+
+    displayText += text.slice(cursor, nextMentionStart);
+    const remainder = text.slice(nextMentionStart);
+    const mentionMatch = remainder.match(/^\[([^\]]+)\]\[(node|edge|loop):([^\]]+)\]/);
+    if (mentionMatch) {
+      displayText += mentionMatch[1];
+      cursor = nextMentionStart + mentionMatch[0].length;
+      continue;
+    }
+
+    if (isIncompleteCanonicalMention(remainder)) {
+      break;
+    }
+
+    displayText += '[';
+    cursor = nextMentionStart + 1;
+  }
+
+  return displayText;
 }

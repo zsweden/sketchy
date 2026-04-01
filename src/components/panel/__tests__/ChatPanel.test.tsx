@@ -270,4 +270,16 @@ describe('ChatPanel', () => {
     expect(screen.getByRole('button', { name: 'Demand' })).toBeInTheDocument();
     expect(screen.queryByText('[Demand][node:n1] matters here.')).not.toBeInTheDocument();
   });
+
+  it('renders streaming assistant content without raw canonical mention syntax', () => {
+    useChatStore.setState({
+      loading: true,
+      streamingContent: 'Added [Demand][node:n1] through [R1][loop:n1>n2].',
+    });
+
+    render(<ChatPanel />);
+
+    expect(screen.getByText('Added Demand through R1.')).toBeInTheDocument();
+    expect(screen.queryByText('Added [Demand][node:n1] through [R1][loop:n1>n2].')).not.toBeInTheDocument();
+  });
 });

@@ -3,6 +3,7 @@ import type { NamedCausalLoop } from '../../../core/graph/derived';
 import type { DiagramEdge, DiagramNode } from '../../../core/types';
 import {
   getChatMessageDisplayText,
+  getStreamingChatMessageDisplayText,
   normalizeChatMessageMentions,
   parseChatMessageMentions,
 } from '../chat-mentions';
@@ -108,5 +109,21 @@ describe('parseChatMessageMentions', () => {
     );
 
     expect(displayText).toBe('Demand drives Demand -> Growth in R1.');
+  });
+
+  it('renders completed canonical mentions during streaming without raw IDs', () => {
+    const displayText = getStreamingChatMessageDisplayText(
+      'Added [Demand][node:n1] through [R1][loop:n1>n2].',
+    );
+
+    expect(displayText).toBe('Added Demand through R1.');
+  });
+
+  it('hides trailing partial canonical mentions during streaming', () => {
+    const displayText = getStreamingChatMessageDisplayText(
+      'Added [Demand][node:n',
+    );
+
+    expect(displayText).toBe('Added ');
   });
 });

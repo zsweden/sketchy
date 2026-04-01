@@ -1,7 +1,7 @@
 import { Settings } from 'lucide-react';
 import type { RefObject } from 'react';
 import type { DisplayMessage } from '../../../store/chat-store';
-import type { ChatMentionTarget } from '../chat-mentions';
+import { getStreamingChatMessageDisplayText, type ChatMentionTarget } from '../chat-mentions';
 import { AssistantMessageText } from './AssistantMessageText';
 import { ChatCopyButton } from './ChatCopyButton';
 
@@ -22,6 +22,8 @@ export function ChatMessageList({
   onOpenSettings: () => void;
   streamingContent: string;
 }) {
+  const streamingDisplayText = getStreamingChatMessageDisplayText(streamingContent).trimStart();
+
   return (
     <div className="chat-messages">
       {messages.length === 0 && !loading && (
@@ -64,12 +66,12 @@ export function ChatMessageList({
           )}
         </div>
       ))}
-      {loading && streamingContent && (
+      {loading && streamingDisplayText && (
         <div className="chat-bubble chat-bubble--assistant">
-          <div className="chat-bubble-text">{streamingContent.trimStart()}</div>
+          <div className="chat-bubble-text">{streamingDisplayText}</div>
         </div>
       )}
-      {loading && !streamingContent && (
+      {loading && !streamingDisplayText && (
         <div className="chat-bubble chat-bubble--assistant">
           <span className="chat-typing">
             <span className="chat-typing-dot" />
