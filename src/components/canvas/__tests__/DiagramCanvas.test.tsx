@@ -347,8 +347,8 @@ describe('DiagramCanvas', () => {
 
     await waitFor(() => {
       expect(mocks.setCenter).toHaveBeenCalledWith(
-        1400 + 240 / 2,
-        900 + 48 / 2,
+        1400 + 160 / 2,
+        900 + 60 / 2,
         { zoom: 1.75 },
       );
     });
@@ -403,7 +403,7 @@ describe('DiagramCanvas', () => {
     useUIStore.getState().focusGraphObject({ kind: 'loop', id: 'n1>n2' });
 
     await waitFor(() => {
-      expect(mocks.setCenter).toHaveBeenCalledWith(1170, 124, { zoom: 1 });
+      expect(mocks.setCenter).toHaveBeenCalledWith(1130, 130, { zoom: 1 });
     });
   });
 

@@ -2,14 +2,14 @@ import { describe, it, expect } from 'vitest';
 import { estimateHeight, MIN_NODE_HEIGHT } from '../layout-engine';
 
 describe('estimateHeight', () => {
-  it('returns MIN_NODE_HEIGHT (48) for empty label', () => {
+  it('returns MIN_NODE_HEIGHT (60) for empty label', () => {
     expect(estimateHeight('')).toBe(MIN_NODE_HEIGHT);
   });
 
   it('returns 1-line height for short label (under 30 chars)', () => {
     const label = 'Short label'; // 11 chars, 1 line
-    // 1 line * 24 lineHeight + 24 padding = 48 = MIN_NODE_HEIGHT
-    expect(estimateHeight(label)).toBe(48);
+    // 1 line * 24 lineHeight + 24 padding = 48, but MIN_NODE_HEIGHT now floors this to 60
+    expect(estimateHeight(label)).toBe(60);
   });
 
   it('returns multi-line height for long label (60+ chars)', () => {

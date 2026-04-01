@@ -167,8 +167,8 @@ describe('Toolbar', () => {
         {
           left: node.position.x,
           top: node.position.y,
-          right: node.position.x + 240,
-          bottom: node.position.y + 48,
+          right: node.position.x + 160,
+          bottom: node.position.y + 60,
         },
       ])),
       layoutDirection: diagram.settings.layoutDirection,

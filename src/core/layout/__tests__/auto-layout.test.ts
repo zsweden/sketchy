@@ -128,7 +128,7 @@ describe('autoLayout (ELK)', () => {
     const minY = Math.min(...positions.map((position) => position.y));
     const maxY = Math.max(...positions.map((position) => position.y));
     expect(maxX - minX).toBeLessThan(420);
-    expect(maxY - minY).toBeLessThan(500);
+    expect(maxY - minY).toBeLessThan(620);
   });
 
   it('keeps dense cyclic SCCs from routing straight through peer nodes', async () => {

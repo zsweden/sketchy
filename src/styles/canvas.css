@@ -3,8 +3,8 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 0.625rem;
-  width: 240px;
-  min-height: 48px;
+  width: 160px;
+  min-height: 60px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   transition: box-shadow 0.2s ease;
   overflow: visible;

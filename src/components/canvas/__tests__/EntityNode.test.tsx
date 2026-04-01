@@ -100,8 +100,8 @@ function renderNode(overrides: {
       parentId=""
       sourcePosition={undefined}
       targetPosition={undefined}
-      width={240}
-      height={48}
+      width={160}
+      height={60}
       deletable
       selectable
     />,

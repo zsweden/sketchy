@@ -1,8 +1,8 @@
 import type { LayoutDirection } from '../framework-types';
 import type { EdgeHandleSide } from '../types';
 
-export const NODE_WIDTH = 240;
-export const MIN_NODE_HEIGHT = 48;
+export const NODE_WIDTH = 160;
+export const MIN_NODE_HEIGHT = 60;
 export const RANK_SEP = 80;
 export const NODE_SEP = 40;
 
