@@ -41,6 +41,7 @@ function resetStores() {
     contextMenu: null,
     toasts: [],
     sidePanelOpen: true,
+    chatPanelMode: 'shared',
     interactionMode: 'select',
     fitViewTrigger: 0,
   });

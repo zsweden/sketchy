@@ -183,11 +183,37 @@
   border-bottom: 1px solid var(--border);
 }
 
+.chat-panel--minimized {
+  flex: none;
+}
+
+.chat-panel--minimized .chat-header {
+  border-bottom: none;
+}
+
 .chat-header-title {
   display: flex;
   align-items: center;
   gap: 0.375rem;
   min-width: 0;
+}
+
+.chat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.chat-layout-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.chat-layout-btn.is-active {
+  color: var(--text);
+  background: var(--secondary);
 }
 
 .chat-model-name {

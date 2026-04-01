@@ -24,6 +24,7 @@ function resetStores() {
     contextMenu: null,
     toasts: [],
     sidePanelOpen: true,
+    chatPanelMode: 'shared',
     interactionMode: 'select',
     fitViewTrigger: 0,
   });
@@ -148,5 +149,30 @@ describe('SidePanel', () => {
 
     expect(panel.style.width).toBe('420px');
     expect(panel.style.minWidth).toBe('420px');
+  });
+
+  it('switches between max, min, and shared chat layouts', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<SidePanel />);
+    const topPanel = container.querySelector('.side-panel-top') as HTMLElement;
+
+    await user.click(screen.getByRole('button', { name: 'Maximize chat' }));
+    expect(useUIStore.getState().chatPanelMode).toBe('max');
+    expect(topPanel).toHaveStyle({ display: 'none' });
+    expect(screen.getByLabelText('Chat input')).toBeInTheDocument();
+    expect(container.querySelector('.side-panel-v-resize')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Minimize chat' }));
+    expect(useUIStore.getState().chatPanelMode).toBe('min');
+    expect(topPanel.style.display).toBe('');
+    expect(topPanel.style.flex).toBe('1 1 0%');
+    expect(screen.queryByLabelText('Chat input')).not.toBeInTheDocument();
+    expect(container.querySelector('.side-panel-v-resize')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Share chat and info panel' }));
+    expect(useUIStore.getState().chatPanelMode).toBe('shared');
+    expect(screen.getByLabelText('Chat input')).toBeInTheDocument();
+    expect(topPanel.style.height).toBe('40%');
+    expect(container.querySelector('.side-panel-v-resize')).not.toBeNull();
   });
 });

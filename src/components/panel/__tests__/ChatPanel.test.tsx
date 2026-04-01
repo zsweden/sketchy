@@ -44,6 +44,7 @@ function resetStore() {
     contextMenu: null,
     toasts: [],
     sidePanelOpen: true,
+    chatPanelMode: 'shared',
     interactionMode: 'select',
     fitViewTrigger: 0,
     clearSelectionTrigger: 0,
@@ -81,6 +82,32 @@ describe('ChatPanel', () => {
     expect(
       screen.getByText('Ask questions about your diagram or request changes.'),
     ).toBeInTheDocument();
+  });
+
+  it('updates the chat panel mode from the header controls', async () => {
+    const user = userEvent.setup();
+    render(<ChatPanel />);
+
+    await user.click(screen.getByRole('button', { name: 'Maximize chat' }));
+    expect(useUIStore.getState().chatPanelMode).toBe('max');
+
+    await user.click(screen.getByRole('button', { name: 'Minimize chat' }));
+    expect(useUIStore.getState().chatPanelMode).toBe('min');
+
+    await user.click(screen.getByRole('button', { name: 'Share chat and info panel' }));
+    expect(useUIStore.getState().chatPanelMode).toBe('shared');
+  });
+
+  it('collapses chat content when minimized', async () => {
+    const user = userEvent.setup();
+    render(<ChatPanel />);
+
+    await user.click(screen.getByRole('button', { name: 'Minimize chat' }));
+
+    expect(screen.queryByLabelText('Chat input')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Ask questions about your diagram or request changes.'),
+    ).not.toBeInTheDocument();
   });
 
   it('sends the current prompt on Enter', async () => {

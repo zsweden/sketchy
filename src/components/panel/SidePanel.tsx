@@ -12,6 +12,7 @@ export default function SidePanel() {
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
   const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
   const sidePanelOpen = useUIStore((s) => s.sidePanelOpen);
+  const chatPanelMode = useUIStore((s) => s.chatPanelMode);
   const nodes = useDiagramStore((s) => s.diagram.nodes);
   const edges = useDiagramStore((s) => s.diagram.edges);
   const deleteNodes = useDiagramStore((s) => s.deleteNodes);
@@ -122,6 +123,14 @@ export default function SidePanel() {
 
   const selectedNodes = nodes.filter((n) => selectedNodeIds.includes(n.id));
   const selectedEdges = edges.filter((e) => selectedEdgeIds.includes(e.id));
+  const isSharedLayout = chatPanelMode === 'shared';
+  const isMaxChatLayout = chatPanelMode === 'max';
+
+  const topSectionStyle = isSharedLayout
+    ? { height: `${topPercent}%` }
+    : isMaxChatLayout
+      ? { display: 'none' as const }
+      : { flex: 1, height: 'auto' };
 
   return (
     <div className="side-panel" style={{ width, minWidth: width }} ref={panelRef}>
@@ -129,7 +138,7 @@ export default function SidePanel() {
         className={`side-panel-resize ${dragging ? 'dragging' : ''}`}
         onPointerDown={onPointerDown}
       />
-      <div className="side-panel-top" style={{ height: `${topPercent}%` }}>
+      <div className="side-panel-top" style={topSectionStyle}>
         {selectedNodes.length === 1 ? (
           <NodePanel node={selectedNodes[0]} />
         ) : selectedNodes.length > 1 ? (
@@ -217,10 +226,12 @@ export default function SidePanel() {
           <SettingsPanel />
         )}
       </div>
-      <div
-        className={`side-panel-v-resize ${vDragging ? 'dragging' : ''}`}
-        onPointerDown={onVPointerDown}
-      />
+      {isSharedLayout && (
+        <div
+          className={`side-panel-v-resize ${vDragging ? 'dragging' : ''}`}
+          onPointerDown={onVPointerDown}
+        />
+      )}
       <ChatPanel />
     </div>
   );

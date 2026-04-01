@@ -9,6 +9,7 @@ export interface Toast {
 
 export type InteractionMode = 'select' | 'pan';
 export type GraphObjectKind = 'node' | 'edge' | 'loop';
+export type ChatPanelMode = 'min' | 'shared' | 'max';
 export interface GraphObjectTarget {
   kind: GraphObjectKind;
   id: string;
@@ -21,6 +22,7 @@ interface UIState {
   contextMenu: { x: number; y: number; nodeId?: string; edgeId?: string } | null;
   toasts: Toast[];
   sidePanelOpen: boolean;
+  chatPanelMode: ChatPanelMode;
   interactionMode: InteractionMode;
   fitViewTrigger: number;
   clearSelectionTrigger: number;
@@ -36,6 +38,7 @@ interface UIState {
   addToast: (message: string, type?: 'info' | 'warning' | 'error', action?: { label: string; onClick: () => void }) => void;
   dismissToast: (id: string) => void;
   toggleSidePanel: () => void;
+  setChatPanelMode: (mode: ChatPanelMode) => void;
   setInteractionMode: (mode: InteractionMode) => void;
   requestFitView: () => void;
   requestClearSelection: () => void;
@@ -50,6 +53,7 @@ export const useUIStore = create<UIState>((set) => ({
   contextMenu: null,
   toasts: [],
   sidePanelOpen: true,
+  chatPanelMode: 'shared',
   interactionMode: 'select',
   fitViewTrigger: 0,
   clearSelectionTrigger: 0,
@@ -87,6 +91,8 @@ export const useUIStore = create<UIState>((set) => ({
 
   toggleSidePanel: () =>
     set((s) => ({ sidePanelOpen: !s.sidePanelOpen })),
+
+  setChatPanelMode: (mode) => set({ chatPanelMode: mode }),
 
   setInteractionMode: (mode) => set({ interactionMode: mode }),
 

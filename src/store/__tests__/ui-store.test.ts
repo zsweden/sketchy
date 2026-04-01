@@ -9,6 +9,7 @@ function resetStore() {
     contextMenu: null,
     toasts: [],
     sidePanelOpen: true,
+    chatPanelMode: 'shared',
     interactionMode: 'select',
     fitViewTrigger: 0,
     clearSelectionTrigger: 0,
@@ -214,6 +215,10 @@ describe('ui store', () => {
       expect(useUIStore.getState().sidePanelOpen).toBe(true);
     });
 
+    it('defaults chat panel mode to shared', () => {
+      expect(useUIStore.getState().chatPanelMode).toBe('shared');
+    });
+
     it('toggles from open to closed', () => {
       useUIStore.getState().toggleSidePanel();
       expect(useUIStore.getState().sidePanelOpen).toBe(false);
@@ -223,6 +228,11 @@ describe('ui store', () => {
       useUIStore.getState().toggleSidePanel();
       useUIStore.getState().toggleSidePanel();
       expect(useUIStore.getState().sidePanelOpen).toBe(true);
+    });
+
+    it('sets chat panel mode explicitly', () => {
+      useUIStore.getState().setChatPanelMode('max');
+      expect(useUIStore.getState().chatPanelMode).toBe('max');
     });
   });
 
