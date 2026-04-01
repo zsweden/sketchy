@@ -1,5 +1,7 @@
 {
-  "projects": {},
+  "projects": {
+    "default": "sketchy-6687f"
+  },
   "targets": {},
   "etags": {}
 }
