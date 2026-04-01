@@ -84,6 +84,40 @@ test('supports local chat fallback and framework switching in the browser', asyn
   await expect(page.getByLabel('Framework')).toHaveValue('frt');
 });
 
+test('retains chat messages after browser refresh', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem(
+      'sketchy-settings',
+      JSON.stringify({ apiKey: '', baseUrl: '', model: '', provider: 'custom' }),
+    );
+  });
+  await page.reload();
+  await page.waitForSelector('[data-testid="diagram-flow"]');
+
+  await page.getByLabel('Chat input').fill('Persist this chat');
+  await page.getByRole('button', { name: 'Send message' }).click();
+
+  await expect(page.getByText('Persist this chat')).toBeVisible();
+  await expect(
+    page.getByText('Please configure your API endpoint and model in settings (cog icon in the toolbar).'),
+  ).toBeVisible();
+
+  await page.waitForFunction(() => {
+    const raw = sessionStorage.getItem('sketchy_chat');
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    return parsed.messages?.length === 2;
+  });
+
+  await page.reload();
+  await page.waitForSelector('[data-testid="diagram-flow"]');
+
+  await expect(page.getByText('Persist this chat')).toBeVisible();
+  await expect(
+    page.getByText('Please configure your API endpoint and model in settings (cog icon in the toolbar).'),
+  ).toBeVisible();
+});
+
 // --- 1. Edge creation & confidence ---
 
 test('connects two nodes and changes edge confidence via context menu', async ({ page }) => {

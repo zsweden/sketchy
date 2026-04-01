@@ -27,7 +27,9 @@ vi.mock('../../core/layout/run-elk-auto-layout', () => ({
 }));
 
 function resetStores() {
+  window.sessionStorage?.removeItem?.('sketchy_chat');
   useChatStore.getState().clearMessages();
+  useChatStore.getState().clearAiModified();
   useDiagramStore.getState().newDiagram();
 }
 

@@ -34,6 +34,59 @@ interface ChatState {
 
 let activeController: AbortController | null = null;
 const EMPTY_RESPONSE_FALLBACK = 'The AI returned an empty response. Please try again.';
+const CHAT_STORAGE_KEY = 'sketchy_chat';
+
+interface PersistedChatState {
+  messages: DisplayMessage[];
+  aiModifiedNodeIds: string[];
+}
+
+function getInitialChatState(): Pick<ChatState, 'messages' | 'aiModifiedNodeIds'> {
+  if (typeof window === 'undefined') {
+    return { messages: [], aiModifiedNodeIds: new Set() };
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(CHAT_STORAGE_KEY);
+    if (!raw) {
+      return { messages: [], aiModifiedNodeIds: new Set() };
+    }
+
+    const parsed = JSON.parse(raw) as Partial<PersistedChatState>;
+    return {
+      messages: Array.isArray(parsed.messages) ? parsed.messages : [],
+      aiModifiedNodeIds: new Set(
+        Array.isArray(parsed.aiModifiedNodeIds)
+          ? parsed.aiModifiedNodeIds.filter((id): id is string => typeof id === 'string')
+          : [],
+      ),
+    };
+  } catch {
+    try {
+      window.sessionStorage.removeItem(CHAT_STORAGE_KEY);
+    } catch {
+      // Ignore storage cleanup failures
+    }
+    return { messages: [], aiModifiedNodeIds: new Set() };
+  }
+}
+
+function serializeChatState(state: Pick<ChatState, 'messages' | 'aiModifiedNodeIds'>): string {
+  return JSON.stringify({
+    messages: state.messages,
+    aiModifiedNodeIds: Array.from(state.aiModifiedNodeIds),
+  } satisfies PersistedChatState);
+}
+
+function persistChatState(state: Pick<ChatState, 'messages' | 'aiModifiedNodeIds'>): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.sessionStorage.setItem(CHAT_STORAGE_KEY, serializeChatState(state));
+  } catch {
+    // Ignore storage quota / availability issues
+  }
+}
 
 function getLoopsForDiagram(diagram: Diagram, framework: Framework) {
   return framework.allowsCycles ? labelCausalLoops(findCausalLoops(diagram.edges)) : [];
@@ -88,10 +141,9 @@ function getEndpointHost(baseUrl: string): string {
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
-  messages: [],
+  ...getInitialChatState(),
   loading: false,
   streamingContent: '',
-  aiModifiedNodeIds: new Set(),
 
   sendMessage: (text) => {
     const { openaiApiKey, baseUrl, model, provider } = useSettingsStore.getState();
@@ -271,6 +323,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
       return { aiModifiedNodeIds: next };
     }),
 }));
+
+let lastPersistedChatState = serializeChatState(useChatStore.getState());
+
+if (typeof window !== 'undefined') {
+  useChatStore.subscribe((state) => {
+    const nextSerialized = serializeChatState(state);
+    if (nextSerialized === lastPersistedChatState) return;
+    lastPersistedChatState = nextSerialized;
+    persistChatState(state);
+  });
+}
 
 // --- Apply AI modifications to the diagram ---
 

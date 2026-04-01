@@ -47,6 +47,7 @@ import App from '../App';
 function resetStores() {
   window.localStorage?.removeItem?.('sketchy-settings');
   window.sessionStorage?.removeItem?.('sketchy_diagram');
+  window.sessionStorage?.removeItem?.('sketchy_chat');
   useDiagramStore.getState().setFramework('crt');
   useDiagramStore.getState().newDiagram();
   useUIStore.setState({
