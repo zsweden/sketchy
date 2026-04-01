@@ -1,5 +1,4 @@
 import {
-  DEFAULT_EDGE_ROUTING_ALGORITHM,
   buildEdgeRoutingGeometry,
   computeEdgeRoutingPlacements,
   polylineIntersectsBox,
@@ -147,7 +146,7 @@ export function computeRoutedEdgeGeometries(
         { sourceSide: edge.sourceSide!, targetSide: edge.targetSide! },
       ]),
     )
-    : computeEdgeRoutingPlacements(DEFAULT_EDGE_ROUTING_ALGORITHM, {
+    : computeEdgeRoutingPlacements({
       edges: preparedEdges,
       nodeBoxes: boxes,
       layoutDirection: 'TB',

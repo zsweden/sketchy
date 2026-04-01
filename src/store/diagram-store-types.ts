@@ -9,7 +9,6 @@ import type {
 } from '../core/types';
 import type { Framework } from '../core/framework-types';
 import type { UndoRedoManager } from '../core/history/undo-redo';
-import type { EdgeRoutingAlgorithmId } from '../core/edge-routing';
 
 export interface BatchMutations {
   addNodes?: { id: string; label: string; tags?: string[]; notes?: string }[];
@@ -80,7 +79,7 @@ export interface DiagramState {
   setEdgeDelay: (id: string, delay: boolean) => void;
   updateEdgeNotes: (id: string, notes: string) => void;
   commitEdgeNotes: (id: string, notes: string) => void;
-  optimizeEdges: (algorithm?: EdgeRoutingAlgorithmId) => boolean;
+  optimizeEdges: () => boolean;
   optimizeEdgesAfterLayout: () => void;
   runAutoLayout: (options?: { commitHistory?: boolean; fitView?: boolean }) => Promise<boolean>;
   deriveNextDiagram: () => Promise<boolean>;

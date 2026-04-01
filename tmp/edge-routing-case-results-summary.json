@@ -10,7 +10,7 @@
       "nodeCount": 17,
       "edgeCount": 19,
       "iterations": 10,
-      "timeMs": 42.942,
+      "timeMs": 48.807,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -41,7 +41,7 @@
       "nodeCount": 17,
       "edgeCount": 19,
       "iterations": 10,
-      "timeMs": 44.906,
+      "timeMs": 46.77,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -72,7 +72,7 @@
       "nodeCount": 7,
       "edgeCount": 7,
       "iterations": 50,
-      "timeMs": 4.517,
+      "timeMs": 4.769,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -103,7 +103,7 @@
       "nodeCount": 7,
       "edgeCount": 7,
       "iterations": 50,
-      "timeMs": 5.108,
+      "timeMs": 5.148,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -134,7 +134,7 @@
       "nodeCount": 7,
       "edgeCount": 7,
       "iterations": 50,
-      "timeMs": 4.777,
+      "timeMs": 5.011,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -165,7 +165,7 @@
       "nodeCount": 7,
       "edgeCount": 7,
       "iterations": 50,
-      "timeMs": 6.908,
+      "timeMs": 5.079,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -196,7 +196,7 @@
       "nodeCount": 9,
       "edgeCount": 11,
       "iterations": 10,
-      "timeMs": 12.952,
+      "timeMs": 13.66,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -227,7 +227,7 @@
       "nodeCount": 9,
       "edgeCount": 11,
       "iterations": 10,
-      "timeMs": 13.374,
+      "timeMs": 13.475,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -242,8 +242,8 @@
         "edgeNodeOverlaps": 0,
         "mixedHandleConflicts": 0,
         "totalLength": 2356.813438581258,
-        "sameDirectionSharing": 3,
-        "cornerHandleCount": 14
+        "sameDirectionSharing": 1,
+        "cornerHandleCount": 10
       }
     }
   },
@@ -258,7 +258,7 @@
       "nodeCount": 7,
       "edgeCount": 7,
       "iterations": 50,
-      "timeMs": 5.883,
+      "timeMs": 6.138,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -289,7 +289,7 @@
       "nodeCount": 7,
       "edgeCount": 7,
       "iterations": 50,
-      "timeMs": 6.295,
+      "timeMs": 5.997,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -320,7 +320,7 @@
       "nodeCount": 10,
       "edgeCount": 15,
       "iterations": 10,
-      "timeMs": 20.379,
+      "timeMs": 22.697,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -351,7 +351,7 @@
       "nodeCount": 10,
       "edgeCount": 15,
       "iterations": 10,
-      "timeMs": 24.029,
+      "timeMs": 23.591,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -366,8 +366,8 @@
         "edgeNodeOverlaps": 1,
         "mixedHandleConflicts": 2,
         "totalLength": 3079,
-        "sameDirectionSharing": 2,
-        "cornerHandleCount": 24
+        "sameDirectionSharing": 1,
+        "cornerHandleCount": 22
       }
     }
   },
@@ -382,7 +382,7 @@
       "nodeCount": 8,
       "edgeCount": 10,
       "iterations": 10,
-      "timeMs": 11.472,
+      "timeMs": 12.062,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -413,7 +413,7 @@
       "nodeCount": 8,
       "edgeCount": 10,
       "iterations": 10,
-      "timeMs": 11.605,
+      "timeMs": 11.794,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -428,8 +428,8 @@
         "edgeNodeOverlaps": 0,
         "mixedHandleConflicts": 0,
         "totalLength": 3102.0514910415764,
-        "sameDirectionSharing": 2,
-        "cornerHandleCount": 18
+        "sameDirectionSharing": 1,
+        "cornerHandleCount": 16
       }
     }
   },
@@ -444,7 +444,7 @@
       "nodeCount": 15,
       "edgeCount": 14,
       "iterations": 10,
-      "timeMs": 24.509,
+      "timeMs": 27.134,
       "evalMetrics": {
         "nodeOverlaps": 2,
         "edgeCrossings": 0,
@@ -475,7 +475,7 @@
       "nodeCount": 15,
       "edgeCount": 14,
       "iterations": 10,
-      "timeMs": 25.789,
+      "timeMs": 30.585,
       "evalMetrics": {
         "nodeOverlaps": 2,
         "edgeCrossings": 0,
@@ -506,7 +506,7 @@
       "nodeCount": 16,
       "edgeCount": 18,
       "iterations": 10,
-      "timeMs": 36.581,
+      "timeMs": 39.153,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -537,7 +537,7 @@
       "nodeCount": 16,
       "edgeCount": 18,
       "iterations": 10,
-      "timeMs": 38.795,
+      "timeMs": 40.598,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -552,8 +552,8 @@
         "edgeNodeOverlaps": 0,
         "mixedHandleConflicts": 0,
         "totalLength": 4565.328852577817,
-        "sameDirectionSharing": 7,
-        "cornerHandleCount": 31
+        "sameDirectionSharing": 3,
+        "cornerHandleCount": 23
       }
     }
   },
@@ -568,7 +568,7 @@
       "nodeCount": 31,
       "edgeCount": 32,
       "iterations": 10,
-      "timeMs": 121.834,
+      "timeMs": 160.354,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -599,7 +599,7 @@
       "nodeCount": 31,
       "edgeCount": 32,
       "iterations": 10,
-      "timeMs": 130.248,
+      "timeMs": 126.684,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -630,7 +630,7 @@
       "nodeCount": 85,
       "edgeCount": 94,
       "iterations": 3,
-      "timeMs": 1114.257,
+      "timeMs": 1291.072,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 1,
@@ -661,7 +661,7 @@
       "nodeCount": 85,
       "edgeCount": 94,
       "iterations": 3,
-      "timeMs": 1107.325,
+      "timeMs": 1110.416,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 1,
@@ -692,7 +692,7 @@
       "nodeCount": 85,
       "edgeCount": 94,
       "iterations": 3,
-      "timeMs": 1046.916,
+      "timeMs": 1042.752,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 1,
@@ -723,7 +723,7 @@
       "nodeCount": 85,
       "edgeCount": 94,
       "iterations": 3,
-      "timeMs": 1049.367,
+      "timeMs": 1035.331,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 1,
@@ -754,7 +754,7 @@
       "nodeCount": 30,
       "edgeCount": 33,
       "iterations": 10,
-      "timeMs": 135.538,
+      "timeMs": 132.619,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -785,7 +785,7 @@
       "nodeCount": 30,
       "edgeCount": 33,
       "iterations": 10,
-      "timeMs": 130.346,
+      "timeMs": 128.671,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -800,8 +800,8 @@
         "edgeNodeOverlaps": 0,
         "mixedHandleConflicts": 0,
         "totalLength": 8217.714285714286,
-        "sameDirectionSharing": 8,
-        "cornerHandleCount": 40
+        "sameDirectionSharing": 6,
+        "cornerHandleCount": 38
       }
     }
   },
@@ -816,7 +816,7 @@
       "nodeCount": 37,
       "edgeCount": 40,
       "iterations": 10,
-      "timeMs": 201.703,
+      "timeMs": 187.608,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -847,7 +847,7 @@
       "nodeCount": 37,
       "edgeCount": 40,
       "iterations": 10,
-      "timeMs": 195.428,
+      "timeMs": 200.95,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -862,8 +862,8 @@
         "edgeNodeOverlaps": 0,
         "mixedHandleConflicts": 0,
         "totalLength": 9068,
-        "sameDirectionSharing": 3,
-        "cornerHandleCount": 43
+        "sameDirectionSharing": 2,
+        "cornerHandleCount": 41
       }
     }
   },
@@ -878,7 +878,7 @@
       "nodeCount": 25,
       "edgeCount": 24,
       "iterations": 10,
-      "timeMs": 74.29,
+      "timeMs": 75.886,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -909,7 +909,7 @@
       "nodeCount": 25,
       "edgeCount": 24,
       "iterations": 10,
-      "timeMs": 76.577,
+      "timeMs": 76.474,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -940,7 +940,7 @@
       "nodeCount": 9,
       "edgeCount": 8,
       "iterations": 50,
-      "timeMs": 6.607,
+      "timeMs": 6.755,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -971,7 +971,7 @@
       "nodeCount": 9,
       "edgeCount": 8,
       "iterations": 50,
-      "timeMs": 7.138,
+      "timeMs": 7.1,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -1002,7 +1002,7 @@
       "nodeCount": 27,
       "edgeCount": 33,
       "iterations": 10,
-      "timeMs": 126.756,
+      "timeMs": 129.067,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -1033,7 +1033,7 @@
       "nodeCount": 27,
       "edgeCount": 33,
       "iterations": 10,
-      "timeMs": 135.559,
+      "timeMs": 132.779,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -1048,8 +1048,8 @@
         "edgeNodeOverlaps": 0,
         "mixedHandleConflicts": 0,
         "totalLength": 9531.714285714286,
-        "sameDirectionSharing": 10,
-        "cornerHandleCount": 49
+        "sameDirectionSharing": 6,
+        "cornerHandleCount": 43
       }
     }
   },
@@ -1064,7 +1064,7 @@
       "nodeCount": 20,
       "edgeCount": 27,
       "iterations": 10,
-      "timeMs": 78.338,
+      "timeMs": 79.311,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 1,
@@ -1095,7 +1095,7 @@
       "nodeCount": 20,
       "edgeCount": 27,
       "iterations": 10,
-      "timeMs": 80.624,
+      "timeMs": 79.637,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 1,
@@ -1110,8 +1110,8 @@
         "edgeNodeOverlaps": 4,
         "mixedHandleConflicts": 0,
         "totalLength": 9296,
-        "sameDirectionSharing": 11,
-        "cornerHandleCount": 39
+        "sameDirectionSharing": 10,
+        "cornerHandleCount": 35
       }
     }
   },
@@ -1126,7 +1126,7 @@
       "nodeCount": 29,
       "edgeCount": 28,
       "iterations": 10,
-      "timeMs": 96.922,
+      "timeMs": 97.369,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -1157,7 +1157,7 @@
       "nodeCount": 29,
       "edgeCount": 28,
       "iterations": 10,
-      "timeMs": 98.405,
+      "timeMs": 98.716,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 0,
@@ -1188,7 +1188,7 @@
       "nodeCount": 33,
       "edgeCount": 42,
       "iterations": 10,
-      "timeMs": 238.931,
+      "timeMs": 197.823,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 1,
@@ -1219,7 +1219,7 @@
       "nodeCount": 33,
       "edgeCount": 42,
       "iterations": 10,
-      "timeMs": 240.508,
+      "timeMs": 202.929,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 1,
@@ -1234,8 +1234,8 @@
         "edgeNodeOverlaps": 7,
         "mixedHandleConflicts": 0,
         "totalLength": 13012,
-        "sameDirectionSharing": 11,
-        "cornerHandleCount": 60
+        "sameDirectionSharing": 8,
+        "cornerHandleCount": 54
       }
     }
   },
@@ -1250,7 +1250,7 @@
       "nodeCount": 14,
       "edgeCount": 25,
       "iterations": 10,
-      "timeMs": 59.306,
+      "timeMs": 57.603,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 2,
@@ -1281,23 +1281,23 @@
       "nodeCount": 14,
       "edgeCount": 25,
       "iterations": 10,
-      "timeMs": 64.959,
+      "timeMs": 59.675,
       "evalMetrics": {
         "nodeOverlaps": 0,
         "edgeCrossings": 2,
         "edgeNodeOverlaps": 12,
         "connectorConflicts": 0,
-        "totalEdgeLength": 8337,
+        "totalEdgeLength": 8265,
         "boundingArea": 1355200
       },
-      "evalScore": 231725,
+      "evalScore": 231653,
       "scoreMetrics": {
         "crossings": 2,
         "edgeNodeOverlaps": 12,
         "mixedHandleConflicts": 0,
-        "totalLength": 8337,
-        "sameDirectionSharing": 8,
-        "cornerHandleCount": 38
+        "totalLength": 8265,
+        "sameDirectionSharing": 5,
+        "cornerHandleCount": 35
       }
     }
   }

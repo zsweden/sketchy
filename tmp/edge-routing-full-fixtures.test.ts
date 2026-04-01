@@ -7,7 +7,6 @@ import { elkEngine } from '../src/core/layout/elk-engine';
 import { loadSkyFile } from '../src/core/persistence/sky-io';
 import { getFramework } from '../src/frameworks/registry';
 import {
-  compareGraphMetrics,
   computeLayoutMetrics,
   scoreLayoutMetrics,
   type LayoutMetrics,
@@ -15,16 +14,14 @@ import {
 import { prepareLayoutNodes } from '../src/core/layout/layout-inputs';
 import { getLayoutPerfFixtures } from '../src/test/layout-benchmark-fixtures';
 import {
-  compareEdgeRoutingObjectiveScores,
+  DEFAULT_EDGE_ROUTING_ALGORITHM,
   computeEdgeRoutingPlacements,
   scoreObjectiveEdgeRouting,
-  type EdgeRoutingAlgorithmId,
   type EdgeRoutingObjectiveScore,
 } from '../src/core/edge-routing';
 
 const describePerf = process.env.RUN_PERF_TESTS === '1' ? describe : describe.skip;
 const SELECTED_FIXTURE_ID = process.env.EDGE_ROUTING_FIXTURE_ID;
-const SELECTED_ALGORITHM = process.env.EDGE_ROUTING_ALGORITHM as EdgeRoutingAlgorithmId | undefined;
 const RESULT_PATH = process.env.EDGE_ROUTING_RESULT_PATH;
 const SKY_FIXTURE_DIR = 'src/core/persistence/__tests__/fixtures/desktop-sky-samples';
 
@@ -38,7 +35,7 @@ interface RoutingFixture {
 
 interface ComparisonRow {
   fixture: string;
-  algorithm: EdgeRoutingAlgorithmId;
+  algorithm: typeof DEFAULT_EDGE_ROUTING_ALGORITHM;
   nodeCount: number;
   edgeCount: number;
   iterations: number;
@@ -228,7 +225,6 @@ function getNodeBoxes(nodes: DiagramNode[], edges: DiagramEdge[]) {
 
 function computeMetricsForAlgorithm(
   fixture: RoutingFixture,
-  algorithm: EdgeRoutingAlgorithmId,
 ) {
   const layoutNodes = prepareLayoutNodes(fixture.nodes, fixture.edges);
   const positions = toPositionMap(fixture.nodes);
@@ -238,7 +234,7 @@ function computeMetricsForAlgorithm(
     target: currentEdge.target,
   }));
   const nodeBoxes = getNodeBoxes(fixture.nodes, fixture.edges);
-  const placements = computeEdgeRoutingPlacements(algorithm, {
+  const placements = computeEdgeRoutingPlacements({
     edges,
     nodeBoxes,
     layoutDirection: fixture.direction,
@@ -274,20 +270,19 @@ function getIterations(fixture: RoutingFixture): number {
 
 function measure(
   fixture: RoutingFixture,
-  algorithm: EdgeRoutingAlgorithmId,
 ): ComparisonRow {
   const iterations = getIterations(fixture);
-  computeMetricsForAlgorithm(fixture, algorithm);
+  computeMetricsForAlgorithm(fixture);
   const started = performance.now();
-  let metrics = computeMetricsForAlgorithm(fixture, algorithm);
+  let metrics = computeMetricsForAlgorithm(fixture);
   for (let index = 1; index < iterations; index++) {
-    metrics = computeMetricsForAlgorithm(fixture, algorithm);
+    metrics = computeMetricsForAlgorithm(fixture);
   }
   const elapsed = (performance.now() - started) / iterations;
 
   return {
     fixture: fixture.id,
-    algorithm,
+    algorithm: DEFAULT_EDGE_ROUTING_ALGORITHM,
     nodeCount: fixture.nodes.length,
     edgeCount: fixture.edges.length,
     iterations,
@@ -299,7 +294,6 @@ function measure(
 }
 
 function summarize(rows: ComparisonRow[]) {
-  const fixtures = [...new Set(rows.map((row) => row.fixture))];
   const aggregates = {
     byAlgorithm: {} as Record<string, {
       fixtureCount: number;
@@ -312,89 +306,35 @@ function summarize(rows: ComparisonRow[]) {
       totalEdgeLength: number;
       boundingArea: number;
       score: EdgeRoutingObjectiveScore;
-      winsVsLegacy: number;
-      tiesVsLegacy: number;
-      lossesVsLegacy: number;
-    }>,
-    deltasVsLegacy: {} as Record<string, {
-      betterOnEval: number;
-      equalOnEval: number;
-      worseOnEval: number;
-      faster: number;
-      slower: number;
-      timeDeltaMs: number;
-      evalScoreDelta: number;
     }>,
   };
 
-  for (const algorithm of ['legacy', 'legacy-plus'] as const) {
-    const algorithmRows = rows.filter((row) => row.algorithm === algorithm);
-    aggregates.byAlgorithm[algorithm] = {
-      fixtureCount: algorithmRows.length,
-      timeMs: round(algorithmRows.reduce((sum, row) => sum + row.timeMs, 0)),
-      evalScore: round(algorithmRows.reduce((sum, row) => sum + row.evalScore, 0)),
-      nodeOverlaps: algorithmRows.reduce((sum, row) => sum + row.evalMetrics.nodeOverlaps, 0),
-      edgeCrossings: algorithmRows.reduce((sum, row) => sum + row.evalMetrics.edgeCrossings, 0),
-      edgeNodeOverlaps: algorithmRows.reduce((sum, row) => sum + row.evalMetrics.edgeNodeOverlaps, 0),
-      connectorConflicts: algorithmRows.reduce((sum, row) => sum + row.evalMetrics.connectorConflicts, 0),
-      totalEdgeLength: round(algorithmRows.reduce((sum, row) => sum + row.evalMetrics.totalEdgeLength, 0)),
-      boundingArea: round(algorithmRows.reduce((sum, row) => sum + row.evalMetrics.boundingArea, 0)),
-      score: algorithmRows.reduce<EdgeRoutingObjectiveScore>((acc, row) => ({
-        crossings: acc.crossings + row.scoreMetrics.crossings,
-        edgeNodeOverlaps: acc.edgeNodeOverlaps + row.scoreMetrics.edgeNodeOverlaps,
-        mixedHandleConflicts: acc.mixedHandleConflicts + row.scoreMetrics.mixedHandleConflicts,
-        totalLength: round(acc.totalLength + row.scoreMetrics.totalLength),
-        sameDirectionSharing: acc.sameDirectionSharing + row.scoreMetrics.sameDirectionSharing,
-        cornerHandleCount: acc.cornerHandleCount + row.scoreMetrics.cornerHandleCount,
-      }), {
-        crossings: 0,
-        edgeNodeOverlaps: 0,
-        mixedHandleConflicts: 0,
-        totalLength: 0,
-        sameDirectionSharing: 0,
-        cornerHandleCount: 0,
-      }),
-      winsVsLegacy: 0,
-      tiesVsLegacy: 0,
-      lossesVsLegacy: 0,
-    };
-  }
-
-  const delta = {
-    betterOnEval: 0,
-    equalOnEval: 0,
-    worseOnEval: 0,
-    faster: 0,
-    slower: 0,
-    timeDeltaMs: 0,
-    evalScoreDelta: 0,
+  aggregates.byAlgorithm[DEFAULT_EDGE_ROUTING_ALGORITHM] = {
+    fixtureCount: rows.length,
+    timeMs: round(rows.reduce((sum, row) => sum + row.timeMs, 0)),
+    evalScore: round(rows.reduce((sum, row) => sum + row.evalScore, 0)),
+    nodeOverlaps: rows.reduce((sum, row) => sum + row.evalMetrics.nodeOverlaps, 0),
+    edgeCrossings: rows.reduce((sum, row) => sum + row.evalMetrics.edgeCrossings, 0),
+    edgeNodeOverlaps: rows.reduce((sum, row) => sum + row.evalMetrics.edgeNodeOverlaps, 0),
+    connectorConflicts: rows.reduce((sum, row) => sum + row.evalMetrics.connectorConflicts, 0),
+    totalEdgeLength: round(rows.reduce((sum, row) => sum + row.evalMetrics.totalEdgeLength, 0)),
+    boundingArea: round(rows.reduce((sum, row) => sum + row.evalMetrics.boundingArea, 0)),
+    score: rows.reduce<EdgeRoutingObjectiveScore>((acc, row) => ({
+      crossings: acc.crossings + row.scoreMetrics.crossings,
+      edgeNodeOverlaps: acc.edgeNodeOverlaps + row.scoreMetrics.edgeNodeOverlaps,
+      mixedHandleConflicts: acc.mixedHandleConflicts + row.scoreMetrics.mixedHandleConflicts,
+      totalLength: round(acc.totalLength + row.scoreMetrics.totalLength),
+      sameDirectionSharing: acc.sameDirectionSharing + row.scoreMetrics.sameDirectionSharing,
+      cornerHandleCount: acc.cornerHandleCount + row.scoreMetrics.cornerHandleCount,
+    }), {
+      crossings: 0,
+      edgeNodeOverlaps: 0,
+      mixedHandleConflicts: 0,
+      totalLength: 0,
+      sameDirectionSharing: 0,
+      cornerHandleCount: 0,
+    }),
   };
-
-  for (const fixture of fixtures) {
-    const baseline = rows.find((row) => row.fixture === fixture && row.algorithm === 'legacy');
-    const candidate = rows.find((row) => row.fixture === fixture && row.algorithm === 'legacy-plus');
-    if (!baseline || !candidate) continue;
-
-    const evalCompare = compareGraphMetrics(candidate.evalMetrics, baseline.evalMetrics);
-    if (evalCompare < 0) delta.betterOnEval += 1;
-    else if (evalCompare > 0) delta.worseOnEval += 1;
-    else delta.equalOnEval += 1;
-
-    if (candidate.timeMs < baseline.timeMs) delta.faster += 1;
-    else if (candidate.timeMs > baseline.timeMs) delta.slower += 1;
-
-    delta.timeDeltaMs += candidate.timeMs - baseline.timeMs;
-    delta.evalScoreDelta += candidate.evalScore - baseline.evalScore;
-
-    const aggregateRow = aggregates.byAlgorithm['legacy-plus'];
-    if (evalCompare < 0) aggregateRow.winsVsLegacy += 1;
-    else if (evalCompare > 0) aggregateRow.lossesVsLegacy += 1;
-    else aggregateRow.tiesVsLegacy += 1;
-  }
-
-  delta.timeDeltaMs = round(delta.timeDeltaMs);
-  delta.evalScoreDelta = round(delta.evalScoreDelta);
-  aggregates.deltasVsLegacy['legacy-plus'] = delta;
 
   return aggregates;
 }
@@ -404,20 +344,15 @@ function round(value: number) {
 }
 
 describePerf('perf: edge routing comparison on full fixture set', () => {
-  it('compares supported routing algorithms across all available fixtures', async () => {
+  it('measures the primary routing algorithm across all available fixtures', async () => {
     const allFixtures = await buildFixtureSet();
     const fixtures = SELECTED_FIXTURE_ID
       ? allFixtures.filter((fixture) => fixture.id === SELECTED_FIXTURE_ID)
       : allFixtures;
-    const algorithms = SELECTED_ALGORITHM
-      ? [SELECTED_ALGORITHM]
-      : (['legacy', 'legacy-plus'] as const);
     const rows: ComparisonRow[] = [];
 
     for (const fixture of fixtures) {
-      for (const algorithm of algorithms) {
-        rows.push(measure(fixture, algorithm));
-      }
+      rows.push(measure(fixture));
     }
 
     const output = {
@@ -432,6 +367,6 @@ describePerf('perf: edge routing comparison on full fixture set', () => {
       : path.resolve(process.cwd(), 'tmp/edge-routing-full-fixtures-results.json');
     await fs.writeFile(outputPath, JSON.stringify(output, null, 2));
 
-    expect(rows).toHaveLength(fixtures.length * algorithms.length);
+    expect(rows).toHaveLength(fixtures.length);
   }, 120_000);
 });

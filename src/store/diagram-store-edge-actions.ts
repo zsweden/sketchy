@@ -4,7 +4,6 @@ import {
   resolveEdgeSides,
   captureOptimizedEdgeSides,
 } from './diagram-helpers';
-import { DEFAULT_EDGE_ROUTING_ALGORITHM, type EdgeRoutingAlgorithmId } from '../core/edge-routing';
 import type { DiagramEdge } from '../core/types';
 import type { DiagramState, DiagramStoreContext } from './diagram-store-types';
 
@@ -146,7 +145,7 @@ export function createDiagramEdgeActions(
       );
     },
 
-    optimizeEdges: (algorithm: EdgeRoutingAlgorithmId = DEFAULT_EDGE_ROUTING_ALGORITHM) => {
+    optimizeEdges: () => {
       const state = get();
       if (state.diagram.settings.edgeRoutingMode !== 'fixed') return false;
 
@@ -154,7 +153,6 @@ export function createDiagramEdgeActions(
         state.diagram.edges,
         state.diagram.nodes,
         state.diagram.settings,
-        algorithm,
       );
       const changed = optimizedEdges.some((edge, index) => {
         const current = state.diagram.edges[index];

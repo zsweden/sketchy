@@ -2,10 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compareTieBreakScores } from '../legacy-plus-algorithm';
 import {
   buildEdgeRoutingGeometry,
-  compareEdgeRoutingObjectiveScores,
   computeEdgeRoutingPlacements,
-  scoreObjectiveEdgeRouting,
-  type EdgeRoutingAlgorithmId,
   type EdgeRoutingEdge,
   type EdgeRoutingNodeBox,
 } from '../index';
@@ -18,18 +15,17 @@ function boxes(entries: Array<[string, number, number, number, number]>): Map<st
 }
 
 function route(
-  algorithm: EdgeRoutingAlgorithmId,
   nodeBoxes: ReadonlyMap<string, EdgeRoutingNodeBox>,
   edges: EdgeRoutingEdge[],
 ) {
-  return computeEdgeRoutingPlacements(algorithm, {
+  return computeEdgeRoutingPlacements({
     edges,
     nodeBoxes,
     layoutDirection: 'TB',
   });
 }
 
-describe('edge routing algorithms', () => {
+describe('edge routing', () => {
   it('returns a placement for every edge', () => {
     const nodeBoxes = boxes([
       ['a', 0, 0, 240, 48],
@@ -41,36 +37,10 @@ describe('edge routing algorithms', () => {
       { id: 'bc', source: 'b', target: 'c' },
     ];
 
-    for (const algorithm of ['legacy', 'legacy-plus'] as const) {
-      const placements = route(algorithm, nodeBoxes, edges);
-      expect(placements.size).toBe(edges.length);
-      expect(placements.get('ab')).toBeDefined();
-      expect(placements.get('bc')).toBeDefined();
-    }
-  });
-
-  it('legacy plus is never worse than legacy on its own score', () => {
-    const nodeBoxes = boxes([
-      ['a', 0, 0, 240, 48],
-      ['b', 220, 220, 460, 268],
-      ['c', 440, 0, 680, 48],
-      ['d', 220, -220, 460, -172],
-      ['e', 660, 220, 900, 268],
-    ]);
-    const edges = [
-      { id: 'ab', source: 'a', target: 'b' },
-      { id: 'cb', source: 'c', target: 'b' },
-      { id: 'bd', source: 'b', target: 'd' },
-      { id: 'be', source: 'b', target: 'e' },
-      { id: 'ad', source: 'a', target: 'd' },
-    ];
-
-    const legacyPlacements = route('legacy', nodeBoxes, edges);
-    const legacyPlusPlacements = route('legacy-plus', nodeBoxes, edges);
-    const legacyScore = scoreObjectiveEdgeRouting(edges, nodeBoxes, legacyPlacements);
-    const legacyPlusScore = scoreObjectiveEdgeRouting(edges, nodeBoxes, legacyPlusPlacements);
-
-    expect(compareEdgeRoutingObjectiveScores(legacyPlusScore, legacyScore)).toBeLessThanOrEqual(0);
+    const placements = route(nodeBoxes, edges);
+    expect(placements.size).toBe(edges.length);
+    expect(placements.get('ab')).toBeDefined();
+    expect(placements.get('bc')).toBeDefined();
   });
 
   it('legacy plus prefers middle handles before same-side sharing on score ties', () => {
@@ -93,7 +63,7 @@ describe('edge routing algorithms', () => {
       ['a', 0, 100, 240, 148],
       ['b', 320, 0, 560, 48],
     ]);
-    const placements = route('legacy', nodeBoxes, [{ id: 'ab', source: 'a', target: 'b' }]);
+    const placements = route(nodeBoxes, [{ id: 'ab', source: 'a', target: 'b' }]);
 
     expect(placements.get('ab')).toEqual({
       sourceSide: 'topright-right',

@@ -14,10 +14,8 @@ import {
 } from '../core/graph/ports';
 import type { EdgeHandlePlacement } from '../core/graph/ports';
 import {
-  DEFAULT_EDGE_ROUTING_ALGORITHM,
   computeEdgeRoutingPlacements,
   getAutomaticEdgeRoutingPlacement,
-  type EdgeRoutingAlgorithmId,
   type EdgeRoutingNodeBox,
 } from '../core/edge-routing';
 import type { BatchMutations } from './diagram-store-types';
@@ -67,9 +65,8 @@ export function getOptimizedEdgePlacements(
   edges: DiagramEdge[],
   nodes: DiagramNode[],
   settings: DiagramSettings,
-  algorithm: EdgeRoutingAlgorithmId = DEFAULT_EDGE_ROUTING_ALGORITHM,
 ): Map<string, EdgeHandlePlacement> {
-  return computeEdgeRoutingPlacements(algorithm, {
+  return computeEdgeRoutingPlacements({
     edges: edges.map((edge) => ({ id: edge.id, source: edge.source, target: edge.target })),
     nodeBoxes: getNodeBoxes(nodes),
     layoutDirection: settings.layoutDirection,
@@ -129,9 +126,8 @@ export function captureOptimizedEdgeSides(
   edges: DiagramEdge[],
   nodes: DiagramNode[],
   settings: DiagramSettings,
-  algorithm: EdgeRoutingAlgorithmId = DEFAULT_EDGE_ROUTING_ALGORITHM,
 ): DiagramEdge[] {
-  const placements = getOptimizedEdgePlacements(edges, nodes, settings, algorithm);
+  const placements = getOptimizedEdgePlacements(edges, nodes, settings);
   return edges.map((edge) => ({
     ...edge,
     ...(placements.get(edge.id) ?? getAutomaticEdgeSides(edge.source, edge.target, nodes, settings)),

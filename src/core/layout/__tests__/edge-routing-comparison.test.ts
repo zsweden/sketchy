@@ -2,15 +2,13 @@ import { describe, expect, it } from 'vitest';
 import type { DiagramEdge, DiagramNode } from '../../types';
 import { DEFAULT_NODE_HEIGHT, DEFAULT_NODE_WIDTH } from '../../../constants/layout';
 import {
-  compareGraphMetrics,
   computeLayoutMetrics,
 } from '../layout-metrics';
 import { buildChain, buildCyclicGraph, buildDenseGraph, buildTree } from '../../../test/layout-benchmark-fixtures';
 import {
-  compareEdgeRoutingObjectiveScores,
+  DEFAULT_EDGE_ROUTING_ALGORITHM,
   computeEdgeRoutingPlacements,
   scoreObjectiveEdgeRouting,
-  type EdgeRoutingAlgorithmId,
 } from '../../edge-routing';
 
 const describePerf = process.env.RUN_PERF_TESTS === '1' ? describe : describe.skip;
@@ -25,7 +23,7 @@ interface RoutingFixture {
 
 interface ComparisonRow {
   fixture: string;
-  algorithm: EdgeRoutingAlgorithmId;
+  algorithm: typeof DEFAULT_EDGE_ROUTING_ALGORITHM;
   timeMs: number;
   evalMetrics: ReturnType<typeof computeMetricsForAlgorithm>['evalMetrics'];
   objectiveMetrics: ReturnType<typeof computeMetricsForAlgorithm>['objectiveMetrics'];
@@ -59,9 +57,8 @@ function toPositionMap(nodes: DiagramNode[]) {
 
 function computeMetricsForAlgorithm(
   fixture: RoutingFixture,
-  algorithm: EdgeRoutingAlgorithmId,
 ) {
-  const placements = computeEdgeRoutingPlacements(algorithm, {
+  const placements = computeEdgeRoutingPlacements({
     edges: fixture.edges.map((edge) => ({ id: edge.id, source: edge.source, target: edge.target })),
     nodeBoxes: new Map(fixture.nodes.map((node) => [
       node.id,
@@ -112,19 +109,18 @@ function computeMetricsForAlgorithm(
 
 function measure(
   fixture: RoutingFixture,
-  algorithm: EdgeRoutingAlgorithmId,
   iterations = 1,
 ) {
   const started = performance.now();
-  let metrics = computeMetricsForAlgorithm(fixture, algorithm);
+  let metrics = computeMetricsForAlgorithm(fixture);
   for (let index = 1; index < iterations; index++) {
-    metrics = computeMetricsForAlgorithm(fixture, algorithm);
+    metrics = computeMetricsForAlgorithm(fixture);
   }
   const elapsed = (performance.now() - started) / iterations;
 
   return {
     fixture: fixture.id,
-    algorithm,
+    algorithm: DEFAULT_EDGE_ROUTING_ALGORITHM,
     timeMs: Math.round(elapsed * 100) / 100,
     evalMetrics: metrics.evalMetrics,
     objectiveMetrics: metrics.objectiveMetrics,
@@ -154,13 +150,11 @@ function formatObjectiveMetrics(row: ComparisonRow): string {
 }
 
 describePerf('perf: edge routing comparison', () => {
-  it('prints comparative speed and evaluator scores for supported routing algorithms', () => {
+  it('prints speed and evaluator scores for the primary routing algorithm', () => {
     const rows: ComparisonRow[] = [];
 
     for (const fixture of getRoutingFixtures()) {
-      for (const algorithm of ['legacy', 'legacy-plus'] as const) {
-        rows.push(measure(fixture, algorithm));
-      }
+      rows.push(measure(fixture));
     }
 
     if (SHOULD_LOG) {
@@ -169,20 +163,9 @@ describePerf('perf: edge routing comparison', () => {
         console.log(`[edge-routing]   eval      ${formatEvalMetrics(row)}`);
         console.log(`[edge-routing]   score     ${formatObjectiveMetrics(row)}`);
       }
-
-      for (const fixture of getRoutingFixtures()) {
-        const legacy = rows.find((row) => row.fixture === fixture.id && row.algorithm === 'legacy')!;
-        const legacyPlus = rows.find((row) => row.fixture === fixture.id && row.algorithm === 'legacy-plus')!;
-        console.log(
-          `[edge-routing] delta ${fixture.id} legacy-plus:`
-          + ` evalCompare=${compareGraphMetrics(legacyPlus.evalMetrics, legacy.evalMetrics)}`
-          + ` objectiveCompare=${compareEdgeRoutingObjectiveScores(legacyPlus.objectiveMetrics, legacy.objectiveMetrics)}`
-          + ` timeDelta=${Math.round((legacyPlus.timeMs - legacy.timeMs) * 100) / 100}ms`,
-        );
-      }
     }
 
-    expect(rows).toHaveLength(getRoutingFixtures().length * 2);
+    expect(rows).toHaveLength(getRoutingFixtures().length);
     for (const row of rows) {
       expect(Number.isFinite(row.timeMs)).toBe(true);
       expect(Number.isFinite(row.evalMetrics.totalEdgeLength)).toBe(true);

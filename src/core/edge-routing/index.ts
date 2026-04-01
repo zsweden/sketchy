@@ -1,24 +1,13 @@
-import { computeLegacyEdgeRoutingPlacements } from './legacy-algorithm';
 import { computeLegacyPlusEdgeRoutingPlacements } from './legacy-plus-algorithm';
 import type { EdgeRoutingInput, EdgeRoutingPlacement } from './shared';
 
-export type EdgeRoutingAlgorithmId = 'legacy' | 'legacy-plus';
-
-export const DEFAULT_EDGE_ROUTING_ALGORITHM: EdgeRoutingAlgorithmId = 'legacy';
-
-const edgeRoutingAlgorithms: Record<
-  EdgeRoutingAlgorithmId,
-  (input: EdgeRoutingInput) => Map<string, EdgeRoutingPlacement>
-> = {
-  legacy: computeLegacyEdgeRoutingPlacements,
-  'legacy-plus': computeLegacyPlusEdgeRoutingPlacements,
-};
+export const DEFAULT_EDGE_ROUTING_ALGORITHM = 'legacy-plus';
+export type EdgeRoutingAlgorithmId = typeof DEFAULT_EDGE_ROUTING_ALGORITHM;
 
 export function computeEdgeRoutingPlacements(
-  algorithm: EdgeRoutingAlgorithmId,
   input: EdgeRoutingInput,
 ): Map<string, EdgeRoutingPlacement> {
-  return edgeRoutingAlgorithms[algorithm](input);
+  return computeLegacyPlusEdgeRoutingPlacements(input);
 }
 
 export {

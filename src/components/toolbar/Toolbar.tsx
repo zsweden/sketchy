@@ -17,7 +17,6 @@ import { useSettingsStore } from '../../store/settings-store';
 import { useChatStore } from '../../store/chat-store';
 import { appVersion } from '../../core/app-version';
 import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
-import type { EdgeRoutingAlgorithmId } from '../../core/edge-routing';
 import { getFrameworkSuffix, getNextDiagramTransition } from '../../transitions/registry';
 import FrameworkSelector from './FrameworkSelector';
 import SettingsPopover from './SettingsPopover';
@@ -100,8 +99,8 @@ export default function Toolbar() {
     await runAutoLayout({ commitHistory: true, fitView: true });
   }, [runAutoLayout]);
 
-  const handleAutoEdges = useCallback((algorithm: EdgeRoutingAlgorithmId) => {
-    optimizeEdges(algorithm);
+  const handleAutoEdges = useCallback(() => {
+    optimizeEdges();
   }, [optimizeEdges]);
 
   const handleSave = useCallback(async () => {
@@ -259,30 +258,12 @@ export default function Toolbar() {
         </button>
         <button
           className="btn btn-secondary btn-icon"
-          onClick={() => handleAutoEdges('legacy')}
+          onClick={handleAutoEdges}
           disabled={!canOptimizeEdges}
           title="Auto edges"
           aria-label="Auto edges"
         >
           <Route size={16} />
-        </button>
-        <button
-          className="btn btn-secondary"
-          onClick={() => handleAutoEdges('legacy')}
-          disabled={!canOptimizeEdges}
-          title="Run legacy auto edges"
-          aria-label="Auto edges legacy"
-        >
-          1
-        </button>
-        <button
-          className="btn btn-secondary"
-          onClick={() => handleAutoEdges('legacy-plus')}
-          disabled={!canOptimizeEdges}
-          title="Run legacy plus auto edges"
-          aria-label="Auto edges legacy plus"
-        >
-          2
         </button>
 
         <div className="toolbar-divider" />
