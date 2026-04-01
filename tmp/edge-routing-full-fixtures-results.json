@@ -1,89 +1,853 @@
 {
-  "generatedAt": "2026-04-01T16:52:30.769Z",
-  "fixtureCount": 1,
+  "generatedAt": "2026-04-01T17:52:44.644Z",
+  "fixtureCount": 33,
   "rows": [
     {
+      "fixture": "layout-50-chain",
+      "algorithm": "legacy-plus",
+      "nodeCount": 50,
+      "edgeCount": 49,
+      "iterations": 10,
+      "timeMs": 257.537,
+      "evalMetrics": {
+        "nodeOverlaps": 144,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 90,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 3822,
+        "boundingArea": 208800
+      },
+      "evalScore": 144000904344,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 90,
+        "mixedHandleConflicts": 0,
+        "totalLength": 3822,
+        "sameDirectionSharing": 0,
+        "cornerHandleCount": 49
+      }
+    },
+    {
+      "fixture": "layout-100-chain",
+      "algorithm": "legacy-plus",
+      "nodeCount": 100,
+      "edgeCount": 99,
+      "iterations": 3,
+      "timeMs": 1037.205,
+      "evalMetrics": {
+        "nodeOverlaps": 294,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 190,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 7722,
+        "boundingArea": 408800
+      },
+      "evalScore": 294001908744,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 190,
+        "mixedHandleConflicts": 0,
+        "totalLength": 7722,
+        "sameDirectionSharing": 0,
+        "cornerHandleCount": 99
+      }
+    },
+    {
+      "fixture": "layout-500-chain",
+      "algorithm": "legacy-plus",
+      "nodeCount": 500,
+      "edgeCount": 499,
+      "iterations": 1,
+      "timeMs": 28958.343,
+      "evalMetrics": {
+        "nodeOverlaps": 1494,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 990,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 38922,
+        "boundingArea": 2008800
+      },
+      "evalScore": 1494009943944,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 990,
+        "mixedHandleConflicts": 0,
+        "totalLength": 38922,
+        "sameDirectionSharing": 0,
+        "cornerHandleCount": 499
+      }
+    },
+    {
+      "fixture": "layout-127-tree",
+      "algorithm": "legacy-plus",
+      "nodeCount": 127,
+      "edgeCount": 126,
+      "iterations": 3,
+      "timeMs": 2207.106,
+      "evalMetrics": {
+        "nodeOverlaps": 170,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 109,
+        "connectorConflicts": 16,
+        "totalEdgeLength": 18554,
+        "boundingArea": 2620200
+      },
+      "evalScore": 170001235104.5,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 109,
+        "mixedHandleConflicts": 12,
+        "totalLength": 18554,
+        "sameDirectionSharing": 38,
+        "cornerHandleCount": 126
+      }
+    },
+    {
+      "fixture": "layout-100-dense",
+      "algorithm": "legacy-plus",
+      "nodeCount": 100,
+      "edgeCount": 300,
+      "iterations": 1,
+      "timeMs": 7831.582,
+      "evalMetrics": {
+        "nodeOverlaps": 170,
+        "edgeCrossings": 62,
+        "edgeNodeOverlaps": 1276,
+        "connectorConflicts": 104,
+        "totalEdgeLength": 54240,
+        "boundingArea": 560000
+      },
+      "evalScore": 170016695640,
+      "scoreMetrics": {
+        "crossings": 62,
+        "edgeNodeOverlaps": 1276,
+        "mixedHandleConflicts": 46,
+        "totalLength": 54240,
+        "sameDirectionSharing": 196,
+        "cornerHandleCount": 359
+      }
+    },
+    {
+      "fixture": "layout-8-cyclic",
+      "algorithm": "legacy-plus",
+      "nodeCount": 8,
+      "edgeCount": 8,
+      "iterations": 50,
+      "timeMs": 3.765,
+      "evalMetrics": {
+        "nodeOverlaps": 28,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 48,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 448,
+        "boundingArea": 12800
+      },
+      "evalScore": 28000480480,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 48,
+        "mixedHandleConflicts": 0,
+        "totalLength": 448,
+        "sameDirectionSharing": 0,
+        "cornerHandleCount": 8
+      }
+    },
+    {
+      "fixture": "layout-12-cyclic",
+      "algorithm": "legacy-plus",
+      "nodeCount": 12,
+      "edgeCount": 12,
+      "iterations": 10,
+      "timeMs": 9.352,
+      "evalMetrics": {
+        "nodeOverlaps": 66,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 120,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 672,
+        "boundingArea": 12800
+      },
+      "evalScore": 66001200704,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 120,
+        "mixedHandleConflicts": 0,
+        "totalLength": 672,
+        "sameDirectionSharing": 0,
+        "cornerHandleCount": 16
+      }
+    },
+    {
+      "fixture": "cld-triangle",
+      "algorithm": "legacy-plus",
+      "nodeCount": 3,
+      "edgeCount": 3,
+      "iterations": 50,
+      "timeMs": 0.574,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 472,
+        "boundingArea": 64000
+      },
+      "evalScore": 632,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 0,
+        "mixedHandleConflicts": 0,
+        "totalLength": 472,
+        "sameDirectionSharing": 0,
+        "cornerHandleCount": 2
+      }
+    },
+    {
+      "fixture": "cld-four-cycle-chord",
+      "algorithm": "legacy-plus",
+      "nodeCount": 4,
+      "edgeCount": 5,
+      "iterations": 50,
+      "timeMs": 1.69,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 1005.33,
+        "boundingArea": 104533.33
+      },
+      "evalScore": 1266.663325,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 0,
+        "mixedHandleConflicts": 0,
+        "totalLength": 1005.3333333333334,
+        "sameDirectionSharing": 0,
+        "cornerHandleCount": 4
+      }
+    },
+    {
+      "fixture": "cld-figure-eight",
+      "algorithm": "legacy-plus",
+      "nodeCount": 5,
+      "edgeCount": 6,
+      "iterations": 50,
+      "timeMs": 3.627,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 2,
+        "totalEdgeLength": 944,
+        "boundingArea": 144000
+      },
+      "evalScore": 16304,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 0,
+        "mixedHandleConflicts": 1,
+        "totalLength": 944,
+        "sameDirectionSharing": 1,
+        "cornerHandleCount": 6
+      }
+    },
+    {
+      "fixture": "cld-two-scc-cascade",
+      "algorithm": "legacy-plus",
+      "nodeCount": 6,
+      "edgeCount": 8,
+      "iterations": 50,
+      "timeMs": 5.899,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 2,
+        "totalEdgeLength": 1744,
+        "boundingArea": 164266.67
+      },
+      "evalScore": 17154.666675,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 0,
+        "mixedHandleConflicts": 2,
+        "totalLength": 1744,
+        "sameDirectionSharing": 0,
+        "cornerHandleCount": 6
+      }
+    },
+    {
+      "fixture": "cld-dense-six-node-scc",
+      "algorithm": "legacy-plus",
+      "nodeCount": 6,
+      "edgeCount": 10,
+      "iterations": 10,
+      "timeMs": 7.509,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 2,
+        "connectorConflicts": 2,
+        "totalEdgeLength": 3012,
+        "boundingArea": 300080
+      },
+      "evalScore": 38762.2,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 2,
+        "mixedHandleConflicts": 2,
+        "totalLength": 3012.0000000000005,
+        "sameDirectionSharing": 1,
+        "cornerHandleCount": 12
+      }
+    },
+    {
+      "fixture": "sky-1929Crash",
+      "algorithm": "legacy-plus",
+      "nodeCount": 17,
+      "edgeCount": 19,
+      "iterations": 10,
+      "timeMs": 45.805,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 1,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 4475,
+        "boundingArea": 1467032
+      },
+      "evalScore": 18142.58,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 1,
+        "mixedHandleConflicts": 0,
+        "totalLength": 4475,
+        "sameDirectionSharing": 1,
+        "cornerHandleCount": 24
+      }
+    },
+    {
+      "fixture": "sky-9BoxLayout",
+      "algorithm": "legacy-plus",
+      "nodeCount": 7,
+      "edgeCount": 7,
+      "iterations": 50,
+      "timeMs": 4.935,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 2,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 2050.79,
+        "boundingArea": 392675.73
+      },
+      "evalScore": 23032.479325,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 2,
+        "mixedHandleConflicts": 0,
+        "totalLength": 2050.7866831072747,
+        "sameDirectionSharing": 2,
+        "cornerHandleCount": 12
+      }
+    },
+    {
+      "fixture": "sky-9BoxLayoutv3",
+      "algorithm": "legacy-plus",
+      "nodeCount": 7,
+      "edgeCount": 7,
+      "iterations": 50,
+      "timeMs": 5.217,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 826.42,
+        "boundingArea": 212031.46
+      },
+      "evalScore": 1356.49865,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 0,
+        "mixedHandleConflicts": 0,
+        "totalLength": 826.421052631579,
+        "sameDirectionSharing": 0,
+        "cornerHandleCount": 8
+      }
+    },
+    {
+      "fixture": "sky-Apple",
+      "algorithm": "legacy-plus",
+      "nodeCount": 9,
+      "edgeCount": 11,
+      "iterations": 10,
+      "timeMs": 12.841,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 2356.81,
+        "boundingArea": 516341.83
+      },
+      "evalScore": 3647.664575,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 0,
+        "mixedHandleConflicts": 0,
+        "totalLength": 2356.813438581258,
+        "sameDirectionSharing": 1,
+        "cornerHandleCount": 10
+      }
+    },
+    {
+      "fixture": "sky-COVID19",
+      "algorithm": "legacy-plus",
+      "nodeCount": 7,
+      "edgeCount": 7,
+      "iterations": 50,
+      "timeMs": 5.407,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 1044,
+        "boundingArea": 334080
+      },
+      "evalScore": 1879.2,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 0,
+        "mixedHandleConflicts": 0,
+        "totalLength": 1044,
+        "sameDirectionSharing": 0,
+        "cornerHandleCount": 9
+      }
+    },
+    {
+      "fixture": "sky-Convoy",
+      "algorithm": "legacy-plus",
+      "nodeCount": 10,
+      "edgeCount": 15,
+      "iterations": 10,
+      "timeMs": 18.973,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 1,
+        "connectorConflicts": 3,
+        "totalEdgeLength": 3079,
+        "boundingArea": 556480
+      },
+      "evalScore": 36970.2,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 1,
+        "mixedHandleConflicts": 2,
+        "totalLength": 3079,
+        "sameDirectionSharing": 1,
+        "cornerHandleCount": 22
+      }
+    },
+    {
+      "fixture": "sky-ConvoyLoop",
+      "algorithm": "legacy-plus",
+      "nodeCount": 8,
+      "edgeCount": 10,
+      "iterations": 10,
+      "timeMs": 9.055,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 3102.05,
+        "boundingArea": 699721.81
+      },
+      "evalScore": 4851.354525000001,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 0,
+        "mixedHandleConflicts": 0,
+        "totalLength": 3102.0514910415764,
+        "sameDirectionSharing": 1,
+        "cornerHandleCount": 16
+      }
+    },
+    {
       "fixture": "sky-CovidError",
-      "algorithm": "legacy",
+      "algorithm": "legacy-plus",
       "nodeCount": 15,
       "edgeCount": 14,
       "iterations": 10,
-      "timeMs": 29.729,
+      "timeMs": 22.241,
       "evalMetrics": {
         "nodeOverlaps": 2,
         "edgeCrossings": 0,
         "edgeNodeOverlaps": 7,
-        "connectorConflicts": 1,
+        "connectorConflicts": 0,
         "totalEdgeLength": 5782.22,
         "boundingArea": 918569.91
       },
-      "evalScore": 2000085578.644775,
+      "evalScore": 2000078078.644775,
       "scoreMetrics": {
         "crossings": 0,
         "edgeNodeOverlaps": 7,
-        "mixedHandleConflicts": 1,
+        "mixedHandleConflicts": 0,
         "totalLength": 5782.221311398832,
         "sameDirectionSharing": 3,
         "cornerHandleCount": 19
+      }
+    },
+    {
+      "fixture": "sky-Covidv2",
+      "algorithm": "legacy-plus",
+      "nodeCount": 16,
+      "edgeCount": 18,
+      "iterations": 10,
+      "timeMs": 35.898,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 4565.33,
+        "boundingArea": 1242956.21
+      },
+      "evalScore": 7672.720525,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 0,
+        "mixedHandleConflicts": 0,
+        "totalLength": 4565.328852577817,
+        "sameDirectionSharing": 3,
+        "cornerHandleCount": 23
+      }
+    },
+    {
+      "fixture": "sky-Dinosaurs",
+      "algorithm": "legacy-plus",
+      "nodeCount": 31,
+      "edgeCount": 32,
+      "iterations": 10,
+      "timeMs": 122.774,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 6148,
+        "boundingArea": 2530432
+      },
+      "evalScore": 12474.08,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 0,
+        "mixedHandleConflicts": 0,
+        "totalLength": 6148,
+        "sameDirectionSharing": 2,
+        "cornerHandleCount": 26
+      }
+    },
+    {
+      "fixture": "sky-Exported1",
+      "algorithm": "legacy-plus",
+      "nodeCount": 85,
+      "edgeCount": 94,
+      "iterations": 3,
+      "timeMs": 1036.407,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 1,
+        "edgeNodeOverlaps": 8,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 22102.76,
+        "boundingArea": 12807520
+      },
+      "evalScore": 184121.56,
+      "scoreMetrics": {
+        "crossings": 1,
+        "edgeNodeOverlaps": 8,
+        "mixedHandleConflicts": 0,
+        "totalLength": 22102.76219086459,
+        "sameDirectionSharing": 4,
+        "cornerHandleCount": 93
+      }
+    },
+    {
+      "fixture": "sky-Exported1_annotated",
+      "algorithm": "legacy-plus",
+      "nodeCount": 85,
+      "edgeCount": 94,
+      "iterations": 3,
+      "timeMs": 1009.714,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 1,
+        "edgeNodeOverlaps": 8,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 22102.76,
+        "boundingArea": 12807520
+      },
+      "evalScore": 184121.56,
+      "scoreMetrics": {
+        "crossings": 1,
+        "edgeNodeOverlaps": 8,
+        "mixedHandleConflicts": 0,
+        "totalLength": 22102.76219086459,
+        "sameDirectionSharing": 4,
+        "cornerHandleCount": 93
+      }
+    },
+    {
+      "fixture": "sky-Hitler",
+      "algorithm": "legacy-plus",
+      "nodeCount": 30,
+      "edgeCount": 33,
+      "iterations": 10,
+      "timeMs": 122.896,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 8217.71,
+        "boundingArea": 4521200
+      },
+      "evalScore": 19520.71,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 0,
+        "mixedHandleConflicts": 0,
+        "totalLength": 8217.714285714286,
+        "sameDirectionSharing": 6,
+        "cornerHandleCount": 38
+      }
+    },
+    {
+      "fixture": "sky-Imported1",
+      "algorithm": "legacy-plus",
+      "nodeCount": 37,
+      "edgeCount": 40,
+      "iterations": 10,
+      "timeMs": 180.468,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 9068,
+        "boundingArea": 4036480
+      },
+      "evalScore": 19159.2,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 0,
+        "mixedHandleConflicts": 0,
+        "totalLength": 9068,
+        "sameDirectionSharing": 2,
+        "cornerHandleCount": 41
+      }
+    },
+    {
+      "fixture": "sky-JFK",
+      "algorithm": "legacy-plus",
+      "nodeCount": 25,
+      "edgeCount": 24,
+      "iterations": 10,
+      "timeMs": 67.612,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 7790.4,
+        "boundingArea": 2734560
+      },
+      "evalScore": 14626.8,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 0,
+        "mixedHandleConflicts": 0,
+        "totalLength": 7790.400000000001,
+        "sameDirectionSharing": 4,
+        "cornerHandleCount": 30
+      }
+    },
+    {
+      "fixture": "sky-Layout",
+      "algorithm": "legacy-plus",
+      "nodeCount": 9,
+      "edgeCount": 8,
+      "iterations": 50,
+      "timeMs": 7.065,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 2,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 1302.04,
+        "boundingArea": 377214.72
+      },
+      "evalScore": 22245.076800000003,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 2,
+        "mixedHandleConflicts": 0,
+        "totalLength": 1302.0372155034927,
+        "sameDirectionSharing": 0,
+        "cornerHandleCount": 15
+      }
+    },
+    {
+      "fixture": "sky-RomanEmpire",
+      "algorithm": "legacy-plus",
+      "nodeCount": 27,
+      "edgeCount": 33,
+      "iterations": 10,
+      "timeMs": 127.538,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 9531.71,
+        "boundingArea": 2801636
+      },
+      "evalScore": 16535.8,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 0,
+        "mixedHandleConflicts": 0,
+        "totalLength": 9531.714285714286,
+        "sameDirectionSharing": 6,
+        "cornerHandleCount": 43
+      }
+    },
+    {
+      "fixture": "sky-Succession",
+      "algorithm": "legacy-plus",
+      "nodeCount": 20,
+      "edgeCount": 27,
+      "iterations": 10,
+      "timeMs": 73.448,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 1,
+        "edgeNodeOverlaps": 4,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 9296,
+        "boundingArea": 2392594
+      },
+      "evalScore": 105277.485,
+      "scoreMetrics": {
+        "crossings": 1,
+        "edgeNodeOverlaps": 4,
+        "mixedHandleConflicts": 0,
+        "totalLength": 9296,
+        "sameDirectionSharing": 10,
+        "cornerHandleCount": 35
+      }
+    },
+    {
+      "fixture": "sky-VietnamWar",
+      "algorithm": "legacy-plus",
+      "nodeCount": 29,
+      "edgeCount": 28,
+      "iterations": 10,
+      "timeMs": 92.771,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 4616,
+        "boundingArea": 1857120
+      },
+      "evalScore": 9258.8,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 0,
+        "mixedHandleConflicts": 0,
+        "totalLength": 4616,
+        "sameDirectionSharing": 1,
+        "cornerHandleCount": 18
+      }
+    },
+    {
+      "fixture": "sky-WW2Start",
+      "algorithm": "legacy-plus",
+      "nodeCount": 33,
+      "edgeCount": 42,
+      "iterations": 10,
+      "timeMs": 200.996,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 1,
+        "edgeNodeOverlaps": 7,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 13012,
+        "boundingArea": 4261504
+      },
+      "evalScore": 143665.76,
+      "scoreMetrics": {
+        "crossings": 1,
+        "edgeNodeOverlaps": 7,
+        "mixedHandleConflicts": 0,
+        "totalLength": 13012,
+        "sameDirectionSharing": 8,
+        "cornerHandleCount": 54
+      }
+    },
+    {
+      "fixture": "sky-Zuora-Loop",
+      "algorithm": "legacy-plus",
+      "nodeCount": 14,
+      "edgeCount": 25,
+      "iterations": 10,
+      "timeMs": 55.767,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 2,
+        "edgeNodeOverlaps": 12,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 8265,
+        "boundingArea": 1355200
+      },
+      "evalScore": 231653,
+      "scoreMetrics": {
+        "crossings": 2,
+        "edgeNodeOverlaps": 12,
+        "mixedHandleConflicts": 0,
+        "totalLength": 8265,
+        "sameDirectionSharing": 5,
+        "cornerHandleCount": 35
       }
     }
   ],
   "summary": {
     "byAlgorithm": {
-      "legacy": {
-        "fixtureCount": 1,
-        "timeMs": 29.729,
-        "evalScore": 2000085578.645,
-        "nodeOverlaps": 2,
-        "edgeCrossings": 0,
-        "edgeNodeOverlaps": 7,
-        "connectorConflicts": 1,
-        "totalEdgeLength": 5782.22,
-        "boundingArea": 918569.91,
-        "score": {
-          "crossings": 0,
-          "edgeNodeOverlaps": 7,
-          "mixedHandleConflicts": 1,
-          "totalLength": 5782.221,
-          "sameDirectionSharing": 3,
-          "cornerHandleCount": 19
-        },
-        "winsVsLegacy": 0,
-        "tiesVsLegacy": 0,
-        "lossesVsLegacy": 0
-      },
       "legacy-plus": {
-        "fixtureCount": 0,
-        "timeMs": 0,
-        "evalScore": 0,
-        "nodeOverlaps": 0,
-        "edgeCrossings": 0,
-        "edgeNodeOverlaps": 0,
-        "connectorConflicts": 0,
-        "totalEdgeLength": 0,
-        "boundingArea": 0,
+        "fixtureCount": 33,
+        "timeMs": 43582.017,
+        "evalScore": 2368033581371.204,
+        "nodeOverlaps": 2368,
+        "edgeCrossings": 68,
+        "edgeNodeOverlaps": 2877,
+        "connectorConflicts": 129,
+        "totalEdgeLength": 280291.33,
+        "boundingArea": 65431949.67,
         "score": {
-          "crossings": 0,
-          "edgeNodeOverlaps": 0,
-          "mixedHandleConflicts": 0,
-          "totalLength": 0,
-          "sameDirectionSharing": 0,
-          "cornerHandleCount": 0
-        },
-        "winsVsLegacy": 0,
-        "tiesVsLegacy": 0,
-        "lossesVsLegacy": 0
-      }
-    },
-    "deltasVsLegacy": {
-      "legacy-plus": {
-        "betterOnEval": 0,
-        "equalOnEval": 0,
-        "worseOnEval": 0,
-        "faster": 0,
-        "slower": 0,
-        "timeDeltaMs": 0,
-        "evalScoreDelta": 0
+          "crossings": 68,
+          "edgeNodeOverlaps": 2877,
+          "mixedHandleConflicts": 65,
+          "totalLength": 280291.344,
+          "sameDirectionSharing": 300,
+          "cornerHandleCount": 1850
+        }
       }
     }
   }
