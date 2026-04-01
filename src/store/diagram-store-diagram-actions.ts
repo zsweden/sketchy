@@ -1,5 +1,6 @@
 import { getFramework } from '../frameworks/registry';
 import { runElkAutoLayout } from '../core/layout/run-elk-auto-layout';
+import { deriveDiagramFromTransition, getNextDiagramTransition } from '../transitions/registry';
 import { useUIStore } from './ui-store';
 import {
   getDefaultFramework,
@@ -23,6 +24,7 @@ export function createDiagramActions(
   DiagramState,
   | 'batchApply'
   | 'runAutoLayout'
+  | 'deriveNextDiagram'
   | 'setFramework'
   | 'updateSettings'
   | 'loadDiagram'
@@ -87,6 +89,36 @@ export function createDiagramActions(
         set(undoState);
       }
       if (fitView) {
+        useUIStore.getState().requestFitView();
+      }
+
+      return true;
+    },
+
+    deriveNextDiagram: async () => {
+      const state = get();
+      const transition = getNextDiagramTransition(state.framework.id);
+      if (!transition) {
+        return false;
+      }
+
+      const result = deriveDiagramFromTransition(state.diagram, transition.id);
+      const framework = getFramework(transition.targetFrameworkId);
+      if (!result || !framework) {
+        return false;
+      }
+
+      clearPendingNodeMove();
+      history.clear();
+      set({
+        diagram: result.diagram,
+        framework,
+        canUndo: false,
+        canRedo: false,
+      });
+
+      const laidOut = await get().runAutoLayout({ fitView: true });
+      if (!laidOut) {
         useUIStore.getState().requestFitView();
       }
 

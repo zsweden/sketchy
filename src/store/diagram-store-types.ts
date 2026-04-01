@@ -82,6 +82,7 @@ export interface DiagramState {
   optimizeEdges: () => boolean;
   optimizeEdgesAfterLayout: () => void;
   runAutoLayout: (options?: { commitHistory?: boolean; fitView?: boolean }) => Promise<boolean>;
+  deriveNextDiagram: () => Promise<boolean>;
 
   setFramework: (frameworkId: string) => void;
   updateSettings: (settings: Partial<DiagramSettings>) => void;

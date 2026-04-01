@@ -375,3 +375,36 @@ describe('end-to-end: complex graph operations', () => {
     expect(store().diagram.edges).toHaveLength(1);
   });
 });
+
+describe('end-to-end: document transitions', () => {
+  beforeEach(resetStore);
+
+  it('derives CRT -> FRT -> PRT -> STT through the canonical workflow', async () => {
+    const store = useDiagramStore.getState;
+
+    const n1 = store().addNode({ x: 0, y: 0 });
+    store().updateNodeText(n1, 'Weak onboarding');
+    const n2 = store().addNode({ x: 0, y: 120 });
+    store().updateNodeText(n2, 'High churn');
+    store().updateNodeTags(n2, ['ude']);
+    store().addEdge(n1, n2);
+
+    await store().deriveNextDiagram();
+    expect(store().diagram.frameworkId).toBe('frt');
+    expect(store().diagram.nodes.find((n) => n.id === n1)?.data.tags).toEqual(['injection']);
+    expect(store().diagram.nodes.find((n) => n.id === n2)?.data.tags).toEqual(['de']);
+
+    await store().deriveNextDiagram();
+    expect(store().diagram.frameworkId).toBe('prt');
+    expect(store().diagram.nodes.find((n) => n.id === n1)?.data.tags).toEqual(['io']);
+    expect(store().diagram.nodes.find((n) => n.id === n2)?.data.tags).toEqual(['goal']);
+
+    await store().deriveNextDiagram();
+    expect(store().diagram.frameworkId).toBe('stt');
+    expect(store().diagram.nodes.find((n) => n.id === n1)?.data.tags).toEqual(['tactic']);
+    expect(store().diagram.nodes.find((n) => n.id === n2)?.data.tags).toEqual(['objective']);
+    expect(store().diagram.edges[0]).toEqual(
+      expect.objectContaining({ source: n2, target: n1 }),
+    );
+  });
+});

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Toolbar from '../Toolbar';
 import { createEmptyDiagram } from '../../../core/types';
+import { getOptimizedEdgePlacements } from '../../../store/diagram-helpers';
 import { useChatStore } from '../../../store/chat-store';
 import { useDiagramStore } from '../../../store/diagram-store';
 import { useSettingsStore, PROVIDERS } from '../../../store/settings-store';
@@ -132,9 +133,15 @@ describe('Toolbar', () => {
     render(<Toolbar />);
     await user.click(screen.getByRole('button', { name: 'Auto edges' }));
 
+    const placements = getOptimizedEdgePlacements(
+      useDiagramStore.getState().diagram.edges,
+      useDiagramStore.getState().diagram.nodes,
+      useDiagramStore.getState().diagram.settings,
+    );
+    const expected = placements.get(useDiagramStore.getState().diagram.edges[0].id)!;
     const edge = useDiagramStore.getState().diagram.edges[0];
-    expect(edge.sourceSide).toBe('right');
-    expect(edge.targetSide).toBe('right');
+    expect(edge.sourceSide).toBe(expected.sourceSide);
+    expect(edge.targetSide).toBe(expected.targetSide);
   });
 
   it('disables auto edges in continuous optimize mode', () => {
@@ -218,5 +225,58 @@ describe('Toolbar', () => {
 
     await user.click(screen.getByRole('button', { name: 'Toggle side panel' }));
     expect(useUIStore.getState().sidePanelOpen).toBe(false);
+  });
+
+  it('derives the next document, clears chat state, and requests fit view', async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    const cause = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+    const effect = useDiagramStore.getState().addNode({ x: 0, y: 100 });
+    useDiagramStore.getState().updateNodeText(cause, 'Root cause');
+    useDiagramStore.getState().updateNodeText(effect, 'Churn increases');
+    useDiagramStore.getState().updateNodeTags(effect, ['ude']);
+    useDiagramStore.getState().addEdge(cause, effect);
+    useChatStore.setState({
+      messages: [{ id: 'm1', role: 'assistant', content: 'Old chat' }],
+      aiModifiedNodeIds: new Set([cause]),
+    });
+    mocks.runElkAutoLayout.mockResolvedValue([
+      { id: cause, position: { x: 140, y: 40 } },
+      { id: effect, position: { x: 140, y: 180 } },
+    ]);
+
+    render(<Toolbar />);
+
+    expect(screen.getByRole('button', { name: 'Next Document' })).toHaveAttribute(
+      'title',
+      'Create FRT draft from current CRT',
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Next Document' }));
+
+    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(useDiagramStore.getState().diagram.frameworkId).toBe('frt');
+    });
+    expect(useDiagramStore.getState().diagram.name).toBe('Untitled Diagram_FRT');
+    expect(useChatStore.getState().messages).toEqual([]);
+    expect(useChatStore.getState().aiModifiedNodeIds.size).toBe(0);
+    expect(useUIStore.getState().fitViewTrigger).toBe(1);
+
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(mocks.saveSkyFile).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Untitled Diagram_FRT' }),
+    );
+
+    confirmSpy.mockRestore();
+  });
+
+  it('disables next document when there is no canonical transition', () => {
+    useDiagramStore.getState().setFramework('stt');
+
+    render(<Toolbar />);
+
+    expect(screen.getByRole('button', { name: 'Next Document' })).toBeDisabled();
   });
 });

@@ -17,6 +17,7 @@ import { useSettingsStore } from '../../store/settings-store';
 import { useChatStore } from '../../store/chat-store';
 import { appVersion } from '../../core/app-version';
 import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
+import { getFrameworkSuffix, getNextDiagramTransition } from '../../transitions/registry';
 import FrameworkSelector from './FrameworkSelector';
 import SettingsPopover from './SettingsPopover';
 import { AlignHorizontalIcon, AlignVerticalIcon, DistributeHorizontalIcon, DistributeVerticalIcon } from '../icons/AlignDistributeIcons';
@@ -35,6 +36,7 @@ export default function Toolbar() {
   const loadDiagram = useDiagramStore((s) => s.loadDiagram);
   const optimizeEdges = useDiagramStore((s) => s.optimizeEdges);
   const runAutoLayout = useDiagramStore((s) => s.runAutoLayout);
+  const deriveNextDiagram = useDiagramStore((s) => s.deriveNextDiagram);
   const addToast = useUIStore((s) => s.addToast);
   const sidePanelOpen = useUIStore((s) => s.sidePanelOpen);
   const toggleSidePanel = useUIStore((s) => s.toggleSidePanel);
@@ -51,6 +53,10 @@ export default function Toolbar() {
   const canAlign = selectedNodes.length >= 2;
   const canDistribute = selectedNodes.length >= 3;
   const canOptimizeEdges = diagram.settings.edgeRoutingMode === 'fixed';
+  const nextTransition = getNextDiagramTransition(diagram.frameworkId);
+  const nextDocumentLabel = nextTransition
+    ? getFrameworkSuffix(nextTransition.targetFrameworkId)
+    : null;
 
   const handleAlignH = useCallback(() => {
     alignNodesHorizontally(selectedNodeIds);
@@ -144,6 +150,25 @@ export default function Toolbar() {
   const handlePrint = useCallback(() => {
     addToast('Print is coming soon', 'info');
   }, [addToast]);
+
+  const handleNextDocument = useCallback(async () => {
+    if (!nextTransition) return;
+
+    if (
+      diagram.nodes.length > 0 &&
+      !window.confirm(
+        `Create a ${getFrameworkSuffix(nextTransition.targetFrameworkId)} draft from this ${getFrameworkSuffix(diagram.frameworkId)}? The current in-memory session will be replaced.`,
+      )
+    ) {
+      return;
+    }
+
+    const derived = await deriveNextDiagram();
+    if (!derived) return;
+
+    useChatStore.getState().clearMessages();
+    useChatStore.getState().clearAiModified();
+  }, [deriveNextDiagram, diagram.frameworkId, diagram.nodes.length, nextTransition]);
 
   return (
     <header className="app-header">
@@ -291,6 +316,18 @@ export default function Toolbar() {
           title="Print project"
         >
           Print
+        </button>
+        <button
+          className="btn btn-secondary"
+          onClick={handleNextDocument}
+          disabled={!nextTransition}
+          title={
+            nextTransition && nextDocumentLabel
+              ? `Create ${nextDocumentLabel} draft from current ${getFrameworkSuffix(diagram.frameworkId)}`
+              : 'No next document transition available'
+          }
+        >
+          Next Document
         </button>
         <input
           ref={fileInputRef}

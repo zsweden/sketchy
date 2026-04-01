@@ -70,18 +70,18 @@ describe('computeLayoutMetrics', () => {
   });
 
   it('detects edge crossings between non-adjacent edges', () => {
-    // X-pattern: a→d and b→c cross each other
+    // Perpendicular orthogonal routes: a→b is horizontal, c→d is vertical.
     const nodes = [box('a'), box('b'), box('c'), box('d')];
     const edges: LayoutEdgeInput[] = [
-      { source: 'a', target: 'd' },
-      { source: 'b', target: 'c' },
+      { source: 'a', target: 'b' },
+      { source: 'c', target: 'd' },
     ];
-    // a top-left, b top-right, c bottom-left, d bottom-right
+    // The routed polylines intersect at the center without sharing endpoints.
     const positions = pos([
-      ['a', 0, 0],
-      ['b', 400, 0],
-      ['c', 0, 400],
-      ['d', 400, 400],
+      ['a', 0, 200],
+      ['b', 400, 200],
+      ['c', 200, 0],
+      ['d', 200, 400],
     ]);
     const metrics = computeLayoutMetrics(nodes, edges, positions);
     expect(metrics.edgeCrossings).toBeGreaterThanOrEqual(1);
