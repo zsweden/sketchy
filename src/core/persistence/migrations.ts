@@ -1,4 +1,8 @@
-import { normalizeLegacyHandleSide } from '../graph/ports';
+import {
+  isHandleSide,
+  isLegacyCornerHandleSide,
+  normalizeLegacyHandleSide,
+} from '../graph/ports';
 
 function getPosition(node: Record<string, unknown>): { x: number; y: number } {
   const position = typeof node.position === 'object' && node.position !== null
@@ -9,6 +13,11 @@ function getPosition(node: Record<string, unknown>): { x: number; y: number } {
     x: typeof position?.x === 'number' ? position.x : 0,
     y: typeof position?.y === 'number' ? position.y : 0,
   };
+}
+
+function getMigratableHandleSide(value: unknown) {
+  if (typeof value !== 'string') return undefined;
+  return isHandleSide(value) || isLegacyCornerHandleSide(value) ? value : undefined;
 }
 
 // Each key is a source version; the function migrates to version + 1.
@@ -49,12 +58,12 @@ export const migrations: Record<
         const sourcePosition = positions.get(sourceId) ?? { x: 0, y: 0 };
         const targetPosition = positions.get(targetId) ?? { x: 0, y: 0 };
         const sourceSide = normalizeLegacyHandleSide(
-          typeof edge.sourceSide === 'string' ? edge.sourceSide : undefined,
+          getMigratableHandleSide(edge.sourceSide),
           targetPosition.x - sourcePosition.x,
           targetPosition.y - sourcePosition.y,
         );
         const targetSide = normalizeLegacyHandleSide(
-          typeof edge.targetSide === 'string' ? edge.targetSide : undefined,
+          getMigratableHandleSide(edge.targetSide),
           sourcePosition.x - targetPosition.x,
           sourcePosition.y - targetPosition.y,
         );
