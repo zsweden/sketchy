@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compareTieBreakScores } from '../legacy-plus-algorithm';
+import { compareTieBreakScores } from '../edge-optimization-algorithm';
 import {
   buildEdgeRoutingGeometry,
   computeEdgeRoutingPlacements,

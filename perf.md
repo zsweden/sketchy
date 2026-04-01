@@ -124,7 +124,7 @@ Conclusion:
 
 ### 1. Edge routing candidate scoring
 
-In `src/core/edge-routing/legacy-plus-algorithm.ts`, each edge:
+In `src/core/edge-routing/edge-optimization-algorithm.ts`, each edge:
 
 - generates placement candidates
 - builds geometry for each candidate

@@ -1,4 +1,4 @@
-import { computeLegacyPlusEdgeRoutingPlacements } from './legacy-plus-algorithm';
+import { computeLegacyPlusEdgeRoutingPlacements } from './edge-optimization-algorithm';
 import type { EdgeRoutingInput, EdgeRoutingPlacement } from './shared';
 
 export const DEFAULT_EDGE_ROUTING_ALGORITHM = 'legacy-plus';

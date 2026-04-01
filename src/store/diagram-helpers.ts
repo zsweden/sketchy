@@ -37,6 +37,14 @@ export function createDiagramForFramework(framework: Framework): Diagram {
       ...diagram.settings,
       layoutDirection: framework.defaultLayoutDirection,
     },
+    nodes: [
+      {
+        id: crypto.randomUUID(),
+        type: 'entity' as const,
+        position: { x: 0, y: 0 },
+        data: { label: '', tags: [], junctionType: 'or' as const },
+      },
+    ],
   };
 }
 
