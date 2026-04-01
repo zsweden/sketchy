@@ -1,7 +1,13 @@
 export const SCHEMA_VERSION = 3;
 
 export type EdgeRoutingMode = 'dynamic' | 'fixed';
-export type EdgeHandleSide = 'top' | 'right' | 'bottom' | 'left';
+export type CardinalHandleSide = 'top' | 'right' | 'bottom' | 'left';
+export type EdgeHandleSide =
+  | CardinalHandleSide
+  | 'topleft'
+  | 'topright'
+  | 'bottomleft'
+  | 'bottomright';
 
 export interface Diagram {
   schemaVersion: number;

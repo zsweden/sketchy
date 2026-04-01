@@ -1,3 +1,12 @@
+import {
+  VISIBLE_HANDLE_SIDES,
+  getEffectiveHandleSide,
+  getEdgeHandlePlacement,
+  getHandlePoint,
+  isHorizontalCardinalSide,
+} from '../graph/ports';
+import type { CardinalHandleSide } from '../types';
+import type { EdgeHandleSide } from '../types';
 import type { LayoutEdgeInput, LayoutInput, LayoutResult } from './layout-engine';
 
 export interface LayoutMetrics {
@@ -10,7 +19,6 @@ export interface LayoutMetrics {
 }
 
 type PositionLike = Pick<LayoutResult, 'x' | 'y'>;
-type Side = 'left' | 'right' | 'top' | 'bottom';
 type Point = { x: number; y: number };
 type NodeBox = {
   left: number;
@@ -18,20 +26,21 @@ type NodeBox = {
   right: number;
   bottom: number;
 };
-type EdgePlacement = { sourceSide: Side; targetSide: Side };
+type EdgePlacement = { sourceSide: EdgeHandleSide; targetSide: EdgeHandleSide };
 
 interface RoutedEdgeGeometry {
   edge: LayoutEdgeInput;
   points: Point[];
   placement: EdgePlacement;
+  sourceExitSide: CardinalHandleSide;
+  targetExitSide: CardinalHandleSide;
 }
 
 const EDGE_STUB = 28;
 const EDGE_INTERSECTION_PENALTY = 10_000;
 const EDGE_NODE_OVERLAP_PENALTY = 2_000;
 const EDGE_LENGTH_PENALTY = 1;
-const HANDLE_SIDES: Side[] = ['top', 'right', 'bottom', 'left'];
-const SIDE_VECTORS: Record<Side, Point> = {
+const SIDE_VECTORS: Record<'top' | 'right' | 'bottom' | 'left', Point> = {
   top: { x: 0, y: -1 },
   right: { x: 1, y: 0 },
   bottom: { x: 0, y: 1 },
@@ -237,7 +246,7 @@ function computeConnectorConflicts(
   nodes: LayoutInput[],
   geometries: RoutedEdgeGeometry[],
 ) {
-  const usage = new Map<string, Record<Side, { incoming: number; outgoing: number }>>();
+  const usage = new Map<string, Record<'left' | 'right' | 'top' | 'bottom', { incoming: number; outgoing: number }>>();
 
   for (const node of nodes) {
     usage.set(node.id, {
@@ -251,8 +260,8 @@ function computeConnectorConflicts(
   for (const geometry of geometries) {
     const sourceUsage = usage.get(geometry.edge.source);
     const targetUsage = usage.get(geometry.edge.target);
-    if (sourceUsage) sourceUsage[geometry.placement.sourceSide].outgoing += 1;
-    if (targetUsage) targetUsage[geometry.placement.targetSide].incoming += 1;
+    if (sourceUsage) sourceUsage[geometry.sourceExitSide].outgoing += 1;
+    if (targetUsage) targetUsage[geometry.targetExitSide].incoming += 1;
   }
 
   let conflicts = 0;
@@ -364,8 +373,8 @@ function createPlacementCandidates(
     : { sourceSide: 'bottom' as const, targetSide: 'top' as const };
 
   const seen = new Set<string>();
-  return [automatic, baseHorizontal, baseVertical, ...HANDLE_SIDES.flatMap((sourceSide) =>
-    HANDLE_SIDES.map((targetSide) => ({ sourceSide, targetSide })),
+  return [automatic, baseHorizontal, baseVertical, ...VISIBLE_HANDLE_SIDES.flatMap((sourceSide) =>
+    VISIBLE_HANDLE_SIDES.map((targetSide) => ({ sourceSide, targetSide })),
   )].filter((placement) => {
     const key = `${placement.sourceSide}-${placement.targetSide}`;
     if (seen.has(key)) return false;
@@ -381,18 +390,7 @@ function getAutomaticPlacement(
   if (!sourceCenter || !targetCenter) {
     return { sourceSide: 'right', targetSide: 'left' };
   }
-
-  const dx = targetCenter.x - sourceCenter.x;
-  const dy = targetCenter.y - sourceCenter.y;
-  if (Math.abs(dx) >= Math.abs(dy)) {
-    return dx >= 0
-      ? { sourceSide: 'right', targetSide: 'left' }
-      : { sourceSide: 'left', targetSide: 'right' };
-  }
-
-  return dy >= 0
-    ? { sourceSide: 'bottom', targetSide: 'top' }
-    : { sourceSide: 'top', targetSide: 'bottom' };
+  return getEdgeHandlePlacement(sourceCenter, targetCenter, 'TB');
 }
 
 function buildEdgePolyline(
@@ -403,17 +401,27 @@ function buildEdgePolyline(
   const sourceBox = boxes.get(edge.source);
   const targetBox = boxes.get(edge.target);
   if (!sourceBox || !targetBox) {
-    return { edge, placement, points: [] };
+    return {
+      edge,
+      placement,
+      points: [],
+      sourceExitSide: 'right',
+      targetExitSide: 'left',
+    };
   }
 
   const start = getHandlePoint(sourceBox, placement.sourceSide);
   const end = getHandlePoint(targetBox, placement.targetSide);
-  const startStub = offsetPoint(start, placement.sourceSide, EDGE_STUB);
-  const endStub = offsetPoint(end, placement.targetSide, EDGE_STUB);
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const sourceExitSide = getEffectiveHandleSide(placement.sourceSide, dx, dy);
+  const targetExitSide = getEffectiveHandleSide(placement.targetSide, -dx, -dy);
+  const startStub = offsetPoint(start, sourceExitSide, EDGE_STUB);
+  const endStub = offsetPoint(end, targetExitSide, EDGE_STUB);
   const points: Point[] = [start, startStub];
 
-  const sourceHorizontal = placement.sourceSide === 'left' || placement.sourceSide === 'right';
-  const targetHorizontal = placement.targetSide === 'left' || placement.targetSide === 'right';
+  const sourceHorizontal = isHorizontalCardinalSide(sourceExitSide);
+  const targetHorizontal = isHorizontalCardinalSide(targetExitSide);
 
   if (sourceHorizontal && targetHorizontal) {
     const midX = (startStub.x + endStub.x) / 2;
@@ -431,24 +439,13 @@ function buildEdgePolyline(
   return {
     edge,
     placement,
+    sourceExitSide,
+    targetExitSide,
     points: dedupePoints(points),
   };
 }
 
-function getHandlePoint(box: NodeBox, side: Side): Point {
-  switch (side) {
-    case 'top':
-      return { x: (box.left + box.right) / 2, y: box.top };
-    case 'right':
-      return { x: box.right, y: (box.top + box.bottom) / 2 };
-    case 'bottom':
-      return { x: (box.left + box.right) / 2, y: box.bottom };
-    case 'left':
-      return { x: box.left, y: (box.top + box.bottom) / 2 };
-  }
-}
-
-function offsetPoint(point: Point, side: Side, distance: number): Point {
+function offsetPoint(point: Point, side: 'top' | 'right' | 'bottom' | 'left', distance: number): Point {
   const vector = SIDE_VECTORS[side];
   return {
     x: point.x + vector.x * distance,

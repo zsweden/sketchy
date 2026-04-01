@@ -343,9 +343,9 @@ describe('EntityNode', () => {
   });
 
   describe('handles', () => {
-    it('renders 4 target handles and 4 source handles', () => {
+    it('renders 8 target handles and 8 source handles', () => {
       renderNode();
-      for (const side of ['top', 'right', 'bottom', 'left']) {
+      for (const side of ['top', 'right', 'bottom', 'left', 'topleft', 'topright', 'bottomright', 'bottomleft']) {
         expect(screen.getByTestId(`target-${side}`)).toBeInTheDocument();
         expect(screen.getByTestId(`source-${side}`)).toBeInTheDocument();
       }

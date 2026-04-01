@@ -1,9 +1,13 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
 import { getDerivedIndicators } from '../../core/graph/derived';
-import type { EdgeHandleSide as HandleSide } from '../../core/types';
+import {
+  VISIBLE_HANDLE_SIDES,
+  getBaseHandleSide,
+} from '../../core/graph/ports';
+import type { CardinalHandleSide, EdgeHandleSide as HandleSide } from '../../core/types';
 
 interface EntityNodeData {
   label: string;
@@ -17,12 +21,33 @@ interface EntityNodeData {
   [key: string]: unknown;
 }
 
-const HANDLE_SIDES: { side: HandleSide; position: Position }[] = [
-  { side: 'top', position: Position.Top },
-  { side: 'right', position: Position.Right },
-  { side: 'bottom', position: Position.Bottom },
-  { side: 'left', position: Position.Left },
-];
+function getPositionForBaseSide(side: CardinalHandleSide): Position {
+  switch (side) {
+    case 'top':
+      return Position.Top;
+    case 'right':
+      return Position.Right;
+    case 'bottom':
+      return Position.Bottom;
+    case 'left':
+      return Position.Left;
+  }
+}
+
+function getVisibleHandleStyle(side: HandleSide): CSSProperties | undefined {
+  switch (side) {
+    case 'topleft':
+      return { left: 0 };
+    case 'topright':
+      return { left: '100%' };
+    case 'bottomright':
+      return { left: '100%' };
+    case 'bottomleft':
+      return { left: 0 };
+    default:
+      return undefined;
+  }
+}
 
 function EntityNode({ id, data, selected }: NodeProps) {
   const nodeData = data as unknown as EntityNodeData;
@@ -127,12 +152,13 @@ function EntityNode({ id, data, selected }: NodeProps) {
         </div>
       )}
 
-      {HANDLE_SIDES.map(({ side, position }) => (
+      {VISIBLE_HANDLE_SIDES.map((side) => (
         <Handle
           key={`target-${side}`}
           type="target"
-          position={position}
+          position={getPositionForBaseSide(getBaseHandleSide(side))}
           id={`target-${side}`}
+          style={getVisibleHandleStyle(side)}
           className={`handle-${side} ${framework.supportsJunctions && degrees.indegree >= 2 ? 'junction-handle nodrag' : ''}`}
           onClick={framework.supportsJunctions && degrees.indegree >= 2 ? handleJunctionToggle : undefined}
           title={framework.supportsJunctions && degrees.indegree >= 2 ? `Junction: ${nodeData.junctionType.toUpperCase()} — click to toggle` : undefined}
@@ -196,12 +222,13 @@ function EntityNode({ id, data, selected }: NodeProps) {
         )}
       </div>
 
-      {HANDLE_SIDES.map(({ side, position }) => (
+      {VISIBLE_HANDLE_SIDES.map((side) => (
         <Handle
           key={`source-${side}`}
           type="source"
-          position={position}
+          position={getPositionForBaseSide(getBaseHandleSide(side))}
           id={`source-${side}`}
+          style={getVisibleHandleStyle(side)}
           className={`handle-${side}`}
         />
       ))}

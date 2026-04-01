@@ -9,7 +9,14 @@ import { createEmptyDiagram } from '../core/types';
 import type { Framework } from '../core/framework-types';
 import { getFramework } from '../frameworks/registry';
 import { validateEdge } from '../core/graph/validation';
-import { getEdgeHandlePlacement, getSideFromHandleId } from '../core/graph/ports';
+import {
+  VISIBLE_HANDLE_SIDES,
+  getEffectiveHandleSide,
+  getEdgeHandlePlacement,
+  getHandlePoint,
+  getSideFromHandleId,
+  isHorizontalCardinalSide,
+} from '../core/graph/ports';
 import type { EdgeHandlePlacement } from '../core/graph/ports';
 import type { BatchMutations } from './diagram-store-types';
 import { DEFAULT_NODE_HEIGHT, DEFAULT_NODE_WIDTH } from '../constants/layout';
@@ -76,8 +83,6 @@ const EDGE_STUB = 28;
 const EDGE_INTERSECTION_PENALTY = 10_000;
 const EDGE_NODE_OVERLAP_PENALTY = 2_000;
 const EDGE_LENGTH_PENALTY = 1;
-const HANDLE_SIDES = ['top', 'right', 'bottom', 'left'] as const;
-
 function getNodeBoxes(nodes: DiagramNode[]): Map<string, NodeBox> {
   return new Map(nodes.map((node) => [
     node.id,
@@ -90,23 +95,7 @@ function getNodeBoxes(nodes: DiagramNode[]): Map<string, NodeBox> {
   ]));
 }
 
-function getHandlePoint(
-  box: NodeBox,
-  side: NonNullable<DiagramEdge['sourceSide']>,
-): Point {
-  switch (side) {
-    case 'top':
-      return { x: (box.left + box.right) / 2, y: box.top };
-    case 'right':
-      return { x: box.right, y: (box.top + box.bottom) / 2 };
-    case 'bottom':
-      return { x: (box.left + box.right) / 2, y: box.bottom };
-    case 'left':
-      return { x: box.left, y: (box.top + box.bottom) / 2 };
-  }
-}
-
-function offsetPoint(point: Point, side: keyof typeof SIDE_VECTORS, distance: number): Point {
+function offsetPoint(point: Point, side: 'top' | 'right' | 'bottom' | 'left', distance: number): Point {
   const vector = SIDE_VECTORS[side];
   return {
     x: point.x + vector.x * distance,
@@ -141,13 +130,17 @@ function buildEdgePolyline(
 
   const start = getHandlePoint(sourceBox, placement.sourceSide);
   const end = getHandlePoint(targetBox, placement.targetSide);
-  const startStub = offsetPoint(start, placement.sourceSide, EDGE_STUB);
-  const endStub = offsetPoint(end, placement.targetSide, EDGE_STUB);
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const sourceExitSide = getEffectiveHandleSide(placement.sourceSide, dx, dy);
+  const targetExitSide = getEffectiveHandleSide(placement.targetSide, -dx, -dy);
+  const startStub = offsetPoint(start, sourceExitSide, EDGE_STUB);
+  const endStub = offsetPoint(end, targetExitSide, EDGE_STUB);
 
   const points: Point[] = [start, startStub];
 
-  const sourceIsHorizontal = placement.sourceSide === 'left' || placement.sourceSide === 'right';
-  const targetIsHorizontal = placement.targetSide === 'left' || placement.targetSide === 'right';
+  const sourceIsHorizontal = isHorizontalCardinalSide(sourceExitSide);
+  const targetIsHorizontal = isHorizontalCardinalSide(targetExitSide);
 
   if (sourceIsHorizontal && targetIsHorizontal) {
     const midX = (startStub.x + endStub.x) / 2;
@@ -285,8 +278,8 @@ function createPlacementCandidates(
     };
 
   const seen = new Set<string>();
-  const allPlacements = HANDLE_SIDES.flatMap((sourceSide) =>
-    HANDLE_SIDES.map((targetSide) => ({ sourceSide, targetSide })),
+  const allPlacements = VISIBLE_HANDLE_SIDES.flatMap((sourceSide) =>
+    VISIBLE_HANDLE_SIDES.map((targetSide) => ({ sourceSide, targetSide })),
   );
   const candidates = [automatic, baseHorizontal, baseVertical, ...allPlacements];
 

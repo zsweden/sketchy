@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   getEdgeHandlePlacement,
+  getSideFromHandleId,
   getSourceHandleId,
   getTargetHandleId,
 } from '../ports';
@@ -10,8 +11,8 @@ describe('getEdgeHandlePlacement', () => {
     expect(
       getEdgeHandlePlacement({ x: 0, y: 0 }, { x: 200, y: 50 }, 'TB'),
     ).toEqual({
-      sourceSide: 'right',
-      targetSide: 'left',
+      sourceSide: 'bottomright',
+      targetSide: 'topleft',
     });
   });
 
@@ -19,8 +20,8 @@ describe('getEdgeHandlePlacement', () => {
     expect(
       getEdgeHandlePlacement({ x: 0, y: 0 }, { x: 40, y: 200 }, 'TB'),
     ).toEqual({
-      sourceSide: 'bottom',
-      targetSide: 'top',
+      sourceSide: 'bottomright',
+      targetSide: 'topleft',
     });
   });
 
@@ -44,6 +45,11 @@ describe('getEdgeHandlePlacement', () => {
 describe('handle ids', () => {
   it('builds source and target handle ids from sides', () => {
     expect(getSourceHandleId('left')).toBe('source-left');
-    expect(getTargetHandleId('right')).toBe('target-right');
+    expect(getTargetHandleId('bottomright')).toBe('target-bottomright');
+  });
+
+  it('parses legacy and expanded handle ids', () => {
+    expect(getSideFromHandleId('source-left', 'source')).toBe('left');
+    expect(getSideFromHandleId('target-topright', 'target')).toBe('topright');
   });
 });
