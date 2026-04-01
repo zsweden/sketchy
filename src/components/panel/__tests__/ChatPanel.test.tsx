@@ -203,4 +203,25 @@ describe('ChatPanel', () => {
     expect(screen.queryByRole('button', { name: 'Demand' })).not.toBeInTheDocument();
     expect(screen.getByText('Demand[node:n1] reinforces Demand -> Growth[edge:e1].')).toBeInTheDocument();
   });
+
+  it('copies rendered assistant text instead of canonical mention markup', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+
+    useChatStore.setState({
+      messages: [
+        {
+          id: 'a1',
+          role: 'assistant',
+          content: '[Demand][node:n1] reinforces [Demand -> Growth][edge:e1] through [R1][loop:n1>n2].',
+        },
+      ],
+    });
+
+    render(<ChatPanel />);
+
+    await user.click(screen.getByRole('button', { name: 'Copy response' }));
+
+    expect(writeText).toHaveBeenCalledWith('Demand reinforces Demand -> Growth through R1.');
+  });
 });

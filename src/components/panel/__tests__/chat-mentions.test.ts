@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { NamedCausalLoop } from '../../../core/graph/derived';
 import type { DiagramEdge, DiagramNode } from '../../../core/types';
-import { normalizeChatMessageMentions, parseChatMessageMentions } from '../chat-mentions';
+import {
+  getChatMessageDisplayText,
+  normalizeChatMessageMentions,
+  parseChatMessageMentions,
+} from '../chat-mentions';
 
 const nodes: DiagramNode[] = [
   { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'Demand', tags: [], junctionType: 'or' } },
@@ -93,5 +97,16 @@ describe('parseChatMessageMentions', () => {
     );
 
     expect(normalized).toBe('[Demand][node:n1] drives [Demand -> Growth][edge:e1].');
+  });
+
+  it('returns rendered display text for canonical mentions', () => {
+    const displayText = getChatMessageDisplayText(
+      '[Demand][node:n1] drives [Demand -> Growth][edge:e1] in [R1][loop:n1>n2].',
+      nodes,
+      edges,
+      loops,
+    );
+
+    expect(displayText).toBe('Demand drives Demand -> Growth in R1.');
   });
 });
