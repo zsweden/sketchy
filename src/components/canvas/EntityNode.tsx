@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { Handle, Position, useConnection, type NodeProps } from '@xyflow/react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
 import { getDerivedIndicators } from '../../core/graph/derived';
@@ -76,6 +76,9 @@ function EntityNode({ id, data, selected }: NodeProps) {
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
   const framework = useDiagramStore((s) => s.framework);
   const isAiModified = useChatStore((s) => s.aiModifiedNodeIds.has(id));
+  const connection = useConnection();
+  const isConnectionInProgress = connection.inProgress;
+  const isConnectionSourceNode = isConnectionInProgress && connection.fromHandle.nodeId === id;
 
   const degreesMap = nodeData.degreesMap as Map<string, { indegree: number; outdegree: number }> | undefined;
   const derived = degreesMap
@@ -225,6 +228,8 @@ function EntityNode({ id, data, selected }: NodeProps) {
         'entity-node',
         selected ? 'selected' : '',
         (handlesVisible || selected || editing) ? 'handles-visible' : '',
+        isConnectionInProgress ? 'connection-in-progress' : '',
+        isConnectionSourceNode ? 'connection-source-node' : '',
         nodeData.highlightState === 'dimmed' ? 'dimmed' : '',
         nodeData.highlightState === 'highlighted' && nodeData.loopKind
           ? `loop-focused loop-${nodeData.loopKind}`
@@ -263,7 +268,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
           position={getPositionForBaseSide(getBaseHandleSide(side))}
           id={`target-${side}`}
           style={getVisibleHandleStyle(side)}
-          className={`handle-${side} ${framework.supportsJunctions && degrees.indegree >= 2 ? 'junction-handle nodrag' : ''}`}
+          className={`handle-target handle-${side} ${framework.supportsJunctions && degrees.indegree >= 2 ? 'junction-handle nodrag' : ''}`}
           onClick={framework.supportsJunctions && degrees.indegree >= 2 ? handleJunctionToggle : undefined}
           title={framework.supportsJunctions && degrees.indegree >= 2 ? `Junction: ${nodeData.junctionType.toUpperCase()} — click to toggle` : undefined}
         >
@@ -333,7 +338,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
           position={getPositionForBaseSide(getBaseHandleSide(side))}
           id={`source-${side}`}
           style={getVisibleHandleStyle(side)}
-          className={`handle-${side}`}
+          className={`handle-source handle-${side}`}
         />
       ))}
     </div>

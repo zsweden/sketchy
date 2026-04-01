@@ -109,6 +109,16 @@
   pointer-events: auto;
 }
 
+.entity-node.connection-in-progress:not(.connection-source-node) .handle-source {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.entity-node.connection-in-progress.connection-source-node .handle-target {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .react-flow__handle:hover {
   border-color: var(--accent) !important;
   background: var(--accent) !important;

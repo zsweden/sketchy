@@ -4,6 +4,11 @@ import { useDiagramStore } from '../../../store/diagram-store';
 import { useChatStore } from '../../../store/chat-store';
 import type { Framework } from '../../../core/framework-types';
 
+let mockConnectionState = {
+  inProgress: false,
+  fromHandle: null,
+};
+
 // Mock @xyflow/react — EntityNode uses Handle and Position
 vi.mock('@xyflow/react', () => ({
   Handle: ({ children, id, className, onClick, title }: {
@@ -18,6 +23,7 @@ vi.mock('@xyflow/react', () => ({
     </div>
   ),
   Position: { Top: 'top', Right: 'right', Bottom: 'bottom', Left: 'left' },
+  useConnection: () => mockConnectionState,
 }));
 
 // Import after mocking
@@ -51,6 +57,10 @@ const noJunctionFramework: Framework = {
 };
 
 function resetStores() {
+  mockConnectionState = {
+    inProgress: false,
+    fromHandle: null,
+  };
   useDiagramStore.setState({
     framework: crtFramework,
   });
@@ -402,6 +412,20 @@ describe('EntityNode', () => {
 
       fireEvent.pointerMove(window, { pointerType: 'mouse', clientX: 20, clientY: 20 });
       expect(nodeEl.className).not.toContain('handles-visible');
+    });
+
+    it('hides overlapping source handles on non-source nodes while connecting', () => {
+      mockConnectionState = {
+        inProgress: true,
+        fromHandle: { nodeId: 'other-node' },
+      };
+
+      renderNode();
+
+      expect(screen.getByTestId('source-top').className).toContain('handle-source');
+      expect(screen.getByTestId('target-top').className).toContain('handle-target');
+      expect(document.querySelector('.entity-node')?.className).toContain('connection-in-progress');
+      expect(document.querySelector('.entity-node')?.className).not.toContain('connection-source-node');
     });
   });
 });
