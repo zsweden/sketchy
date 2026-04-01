@@ -16,6 +16,7 @@ export default function ChatPanel() {
   const cancelStream = useChatStore((state) => state.cancelStream);
   const clearMessages = useChatStore((state) => state.clearMessages);
   const selectGraphObject = useUIStore((state) => state.selectGraphObject);
+  const focusGraphObject = useUIStore((state) => state.focusGraphObject);
 
   const provider = useSettingsStore((state) => state.provider);
   const apiKey = useSettingsStore((state) => state.openaiApiKey);
@@ -53,8 +54,9 @@ export default function ChatPanel() {
   const handleMentionClick = useCallback(
     (mention: ChatMentionTarget) => {
       selectGraphObject({ kind: mention.kind, id: mention.id });
+      focusGraphObject({ kind: mention.kind, id: mention.id });
     },
-    [selectGraphObject],
+    [focusGraphObject, selectGraphObject],
   );
 
   return (

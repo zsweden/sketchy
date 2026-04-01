@@ -9,6 +9,10 @@ export interface Toast {
 
 export type InteractionMode = 'select' | 'pan';
 export type GraphObjectKind = 'node' | 'edge' | 'loop';
+export interface GraphObjectTarget {
+  kind: GraphObjectKind;
+  id: string;
+}
 
 interface UIState {
   selectedNodeIds: string[];
@@ -21,6 +25,8 @@ interface UIState {
   fitViewTrigger: number;
   clearSelectionTrigger: number;
   selectionSyncTrigger: number;
+  viewportFocusTarget: GraphObjectTarget | null;
+  viewportFocusTrigger: number;
 
   setSelectedNodes: (ids: string[]) => void;
   setSelectedEdges: (ids: string[]) => void;
@@ -33,7 +39,8 @@ interface UIState {
   setInteractionMode: (mode: InteractionMode) => void;
   requestFitView: () => void;
   requestClearSelection: () => void;
-  selectGraphObject: (target: { kind: GraphObjectKind; id: string }) => void;
+  selectGraphObject: (target: GraphObjectTarget) => void;
+  focusGraphObject: (target: GraphObjectTarget) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -47,6 +54,8 @@ export const useUIStore = create<UIState>((set) => ({
   fitViewTrigger: 0,
   clearSelectionTrigger: 0,
   selectionSyncTrigger: 0,
+  viewportFocusTarget: null,
+  viewportFocusTrigger: 0,
 
   setSelectedNodes: (ids) => set({ selectedNodeIds: ids }),
 
@@ -104,4 +113,9 @@ export const useUIStore = create<UIState>((set) => ({
 
     set((s) => ({ selectedNodeIds: [], selectedEdgeIds: [], selectedLoopId: id, selectionSyncTrigger: s.selectionSyncTrigger + 1 }));
   },
+
+  focusGraphObject: (target) => set((s) => ({
+    viewportFocusTarget: target,
+    viewportFocusTrigger: s.viewportFocusTrigger + 1,
+  })),
 }));

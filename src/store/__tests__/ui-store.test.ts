@@ -12,6 +12,9 @@ function resetStore() {
     interactionMode: 'select',
     fitViewTrigger: 0,
     clearSelectionTrigger: 0,
+    selectionSyncTrigger: 0,
+    viewportFocusTarget: null,
+    viewportFocusTrigger: 0,
   });
 }
 
@@ -255,6 +258,27 @@ describe('ui store', () => {
       useUIStore.getState().requestFitView();
       useUIStore.getState().requestFitView();
       expect(useUIStore.getState().fitViewTrigger).toBe(3);
+    });
+  });
+
+  describe('viewport focus trigger', () => {
+    it('starts cleared', () => {
+      expect(useUIStore.getState().viewportFocusTarget).toBeNull();
+      expect(useUIStore.getState().viewportFocusTrigger).toBe(0);
+    });
+
+    it('stores the target and increments on focusGraphObject', () => {
+      useUIStore.getState().focusGraphObject({ kind: 'node', id: 'n1' });
+
+      expect(useUIStore.getState().viewportFocusTarget).toEqual({ kind: 'node', id: 'n1' });
+      expect(useUIStore.getState().viewportFocusTrigger).toBe(1);
+    });
+
+    it('increments on repeated focusGraphObject calls', () => {
+      useUIStore.getState().focusGraphObject({ kind: 'edge', id: 'e1' });
+      useUIStore.getState().focusGraphObject({ kind: 'edge', id: 'e1' });
+
+      expect(useUIStore.getState().viewportFocusTrigger).toBe(2);
     });
   });
 });

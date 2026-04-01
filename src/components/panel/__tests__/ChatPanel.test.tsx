@@ -45,6 +45,9 @@ function resetStore() {
     interactionMode: 'select',
     fitViewTrigger: 0,
     clearSelectionTrigger: 0,
+    selectionSyncTrigger: 0,
+    viewportFocusTarget: null,
+    viewportFocusTrigger: 0,
   });
 }
 
@@ -175,16 +178,20 @@ describe('ChatPanel', () => {
     expect(useUIStore.getState().selectedNodeIds).toEqual(['n1']);
     expect(useUIStore.getState().selectedEdgeIds).toEqual([]);
     expect(useUIStore.getState().selectedLoopId).toBeNull();
+    expect(useUIStore.getState().viewportFocusTarget).toEqual({ kind: 'node', id: 'n1' });
 
     await user.click(screen.getByRole('button', { name: 'Demand -> Growth' }));
     expect(useUIStore.getState().selectedNodeIds).toEqual([]);
     expect(useUIStore.getState().selectedEdgeIds).toEqual(['e1']);
     expect(useUIStore.getState().selectedLoopId).toBeNull();
+    expect(useUIStore.getState().viewportFocusTarget).toEqual({ kind: 'edge', id: 'e1' });
 
     await user.click(screen.getByRole('button', { name: 'R1' }));
     expect(useUIStore.getState().selectedNodeIds).toEqual([]);
     expect(useUIStore.getState().selectedEdgeIds).toEqual([]);
     expect(useUIStore.getState().selectedLoopId).toBe('n1>n2');
+    expect(useUIStore.getState().viewportFocusTarget).toEqual({ kind: 'loop', id: 'n1>n2' });
+    expect(useUIStore.getState().viewportFocusTrigger).toBe(3);
   });
 
   it('renders legacy inline syntax as plain text instead of clickable mentions', () => {

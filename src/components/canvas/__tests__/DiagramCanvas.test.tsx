@@ -14,6 +14,9 @@ const mocks = vi.hoisted(() => ({
   activeTheme: { js: { minimapFallback: '#999' } },
   screenToFlowPosition: vi.fn(() => ({ x: 200, y: 100 })),
   fitView: vi.fn(),
+  getViewport: vi.fn(() => ({ x: 0, y: 0, zoom: 1 })),
+  getInternalNode: vi.fn(() => undefined),
+  setCenter: vi.fn(),
 }));
 
 vi.mock('../EntityNode', () => ({
@@ -172,6 +175,10 @@ vi.mock('@xyflow/react', () => ({
   useReactFlow: () => ({
     screenToFlowPosition: mocks.screenToFlowPosition,
     fitView: mocks.fitView,
+    getViewport: mocks.getViewport,
+    getInternalNode: mocks.getInternalNode,
+    setCenter: mocks.setCenter,
+    viewportInitialized: true,
   }),
   applyNodeChanges: vi.fn((changes, nodes) => nodes),
   applyEdgeChanges: vi.fn((changes, edges) => edges),
@@ -209,6 +216,9 @@ function resetStores() {
     interactionMode: 'select',
     fitViewTrigger: 0,
     clearSelectionTrigger: 0,
+    selectionSyncTrigger: 0,
+    viewportFocusTarget: null,
+    viewportFocusTrigger: 0,
   });
 }
 
@@ -217,6 +227,8 @@ describe('DiagramCanvas', () => {
     resetStores();
     vi.clearAllMocks();
     mocks.screenToFlowPosition.mockReturnValue({ x: 200, y: 100 });
+    mocks.getViewport.mockReturnValue({ x: 0, y: 0, zoom: 1 });
+    mocks.getInternalNode.mockReturnValue(undefined);
   });
 
   it('offers to switch routing to fixed when moving an edge anchor in continuous optimize mode', async () => {
@@ -311,6 +323,58 @@ describe('DiagramCanvas', () => {
       expect(screen.getByTestId('selected-edges')).toHaveTextContent('e1');
     });
     expect(screen.getByTestId('selected-nodes')).toHaveTextContent('');
+  });
+
+  it('recenters on a chat-focused node when it is off-screen and preserves zoom', async () => {
+    mocks.rfNodes = [
+      { id: 'n1', position: { x: 1400, y: 900 }, data: {} } as never,
+    ];
+    useDiagramStore.setState((state) => ({
+      diagram: {
+        ...state.diagram,
+        nodes: [
+          { id: 'n1', type: 'entity', position: { x: 1400, y: 900 }, data: { label: 'Far', tags: [], junctionType: 'or' } },
+        ],
+        edges: [],
+      },
+    }));
+    mocks.getViewport.mockReturnValue({ x: 0, y: 0, zoom: 1.75 });
+
+    render(<DiagramCanvas />);
+
+    useUIStore.getState().focusGraphObject({ kind: 'node', id: 'n1' });
+
+    await waitFor(() => {
+      expect(mocks.setCenter).toHaveBeenCalledWith(
+        1400 + 240 / 2,
+        900 + 48 / 2,
+        { zoom: 1.75 },
+      );
+    });
+  });
+
+  it('does not recenter on a chat-focused node that is already visible', async () => {
+    mocks.rfNodes = [
+      { id: 'n1', position: { x: 120, y: 80 }, data: {} } as never,
+    ];
+    useDiagramStore.setState((state) => ({
+      diagram: {
+        ...state.diagram,
+        nodes: [
+          { id: 'n1', type: 'entity', position: { x: 120, y: 80 }, data: { label: 'Near', tags: [], junctionType: 'or' } },
+        ],
+        edges: [],
+      },
+    }));
+
+    render(<DiagramCanvas />);
+
+    useUIStore.getState().focusGraphObject({ kind: 'node', id: 'n1' });
+
+    await waitFor(() => {
+      expect(useUIStore.getState().viewportFocusTrigger).toBe(1);
+    });
+    expect(mocks.setCenter).not.toHaveBeenCalled();
   });
 
   it('keeps a node context menu targeted to the node when pane fallback would also run', async () => {

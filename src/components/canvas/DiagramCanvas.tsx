@@ -14,21 +14,48 @@ import {
   type Node,
   applyNodeChanges,
   applyEdgeChanges,
+  type Rect,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import EntityNode from './EntityNode';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { FIT_VIEW_OPTIONS } from '../../core/layout/fit-view-options';
-import { getDerivedIndicators } from '../../core/graph/derived';
+import { findCausalLoops, getDerivedIndicators } from '../../core/graph/derived';
 import { GRID_SIZE, DEFAULT_NODE_WIDTH, DEFAULT_NODE_HEIGHT } from '../../constants/layout';
 import { useCanvasHighlighting } from '../../hooks/useCanvasHighlighting';
 import { useRFNodeEdgeBuilder } from '../../hooks/useRFNodeEdgeBuilder';
+import type { GraphObjectTarget } from '../../store/ui-store';
 
 const nodeTypes = { entity: EntityNode };
 
+function unionRects(rects: Rect[]): Rect | null {
+  if (rects.length === 0) return null;
+
+  const minX = Math.min(...rects.map((rect) => rect.x));
+  const minY = Math.min(...rects.map((rect) => rect.y));
+  const maxX = Math.max(...rects.map((rect) => rect.x + rect.width));
+  const maxY = Math.max(...rects.map((rect) => rect.y + rect.height));
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
+}
+
+function rectsIntersect(a: Rect, b: Rect): boolean {
+  return (
+    a.x < b.x + b.width
+    && a.x + a.width > b.x
+    && a.y < b.y + b.height
+    && a.y + a.height > b.y
+  );
+}
+
 export default function DiagramCanvas() {
-  const { screenToFlowPosition, fitView } = useReactFlow();
+  const { screenToFlowPosition, fitView, getViewport, getInternalNode, setCenter, viewportInitialized } = useReactFlow();
 
   const diagram = useDiagramStore((s) => s.diagram);
   const addNode = useDiagramStore((s) => s.addNode);
@@ -61,6 +88,7 @@ export default function DiagramCanvas() {
   // Local state for React Flow selection/interaction
   const [localNodes, setLocalNodes] = useState<Node[]>(rfNodes);
   const [localEdges, setLocalEdges] = useState<Edge[]>(rfEdges);
+  const canvasRef = useRef<HTMLDivElement>(null);
 
   // Sync store -> local when diagram DATA changes (preserving RF selection)
   useEffect(() => {
@@ -96,6 +124,77 @@ export default function DiagramCanvas() {
     setLocalNodes((nds) => nds.map((n) => ({ ...n, selected: nodeSet.has(n.id) })));
     setLocalEdges((eds) => eds.map((e) => ({ ...e, selected: edgeSet.has(e.id) })));
   }, [selectionSyncTrigger]);
+
+  const viewportFocusTrigger = useUIStore((s) => s.viewportFocusTrigger);
+  useEffect(() => {
+    if (viewportFocusTrigger === 0 || !viewportInitialized) return;
+
+    const target = useUIStore.getState().viewportFocusTarget;
+    if (!target) return;
+
+    const currentDiagram = useDiagramStore.getState().diagram;
+    const getNodeRect = (nodeId: string): Rect | null => {
+      const node = currentDiagram.nodes.find((candidate) => candidate.id === nodeId);
+      if (!node) return null;
+
+      const internalNode = getInternalNode(nodeId);
+      const width = internalNode?.measured?.width ?? internalNode?.width ?? DEFAULT_NODE_WIDTH;
+      const height = internalNode?.measured?.height ?? internalNode?.height ?? DEFAULT_NODE_HEIGHT;
+
+      return {
+        x: node.position.x,
+        y: node.position.y,
+        width,
+        height,
+      };
+    };
+
+    const getObjectRect = (focusTarget: GraphObjectTarget): Rect | null => {
+      if (focusTarget.kind === 'node') {
+        return getNodeRect(focusTarget.id);
+      }
+
+      if (focusTarget.kind === 'edge') {
+        const edge = currentDiagram.edges.find((candidate) => candidate.id === focusTarget.id);
+        if (!edge) return null;
+
+        const rects = [getNodeRect(edge.source), getNodeRect(edge.target)]
+          .filter((rect): rect is Rect => rect != null);
+        return unionRects(rects);
+      }
+
+      const loop = findCausalLoops(currentDiagram.edges)
+        .find((candidate) => candidate.id === focusTarget.id);
+      if (!loop) return null;
+
+      const rects = loop.nodeIds
+        .map((nodeId) => getNodeRect(nodeId))
+        .filter((rect): rect is Rect => rect != null);
+      return unionRects(rects);
+    };
+
+    const targetRect = getObjectRect(target);
+    if (!targetRect) return;
+
+    const canvasBounds = canvasRef.current?.getBoundingClientRect();
+    const viewportWidth = canvasBounds?.width || canvasRef.current?.clientWidth || window.innerWidth;
+    const viewportHeight = canvasBounds?.height || canvasRef.current?.clientHeight || window.innerHeight;
+    if (viewportWidth <= 0 || viewportHeight <= 0) return;
+
+    const viewport = getViewport();
+    const visibleRect: Rect = {
+      x: -viewport.x / viewport.zoom,
+      y: -viewport.y / viewport.zoom,
+      width: viewportWidth / viewport.zoom,
+      height: viewportHeight / viewport.zoom,
+    };
+
+    if (rectsIntersect(targetRect, visibleRect)) return;
+
+    const centerX = targetRect.x + targetRect.width / 2;
+    const centerY = targetRect.y + targetRect.height / 2;
+    void setCenter(centerX, centerY, { zoom: viewport.zoom });
+  }, [getInternalNode, getViewport, setCenter, viewportFocusTrigger, viewportInitialized]);
 
   // Fit view when requested
   const fitViewTrigger = useUIStore((s) => s.fitViewTrigger);
@@ -251,7 +350,12 @@ export default function DiagramCanvas() {
   );
 
   return (
-    <div data-testid="diagram-flow" onDoubleClickCapture={onCanvasDoubleClick} style={{ width: '100%', height: '100%' }}>
+    <div
+      ref={canvasRef}
+      data-testid="diagram-flow"
+      onDoubleClickCapture={onCanvasDoubleClick}
+      style={{ width: '100%', height: '100%' }}
+    >
       <ReactFlow
         nodes={localNodes}
         edges={localEdges}
