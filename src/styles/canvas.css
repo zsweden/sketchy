@@ -19,7 +19,9 @@
 
 .entity-node.selected {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-shadow);
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 8px 24px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .entity-node-accent {
