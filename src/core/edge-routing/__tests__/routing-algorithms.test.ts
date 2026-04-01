@@ -1,0 +1,104 @@
+import { describe, expect, it } from 'vitest';
+import {
+  buildEdgeRoutingGeometry,
+  compareEdgeRoutingObjectiveScores,
+  computeEdgeRoutingPlacements,
+  scoreObjectiveEdgeRouting,
+  type EdgeRoutingAlgorithmId,
+  type EdgeRoutingEdge,
+  type EdgeRoutingNodeBox,
+} from '../index';
+
+function boxes(entries: Array<[string, number, number, number, number]>): Map<string, EdgeRoutingNodeBox> {
+  return new Map(entries.map(([id, left, top, right, bottom]) => [
+    id,
+    { left, top, right, bottom },
+  ]));
+}
+
+function route(
+  algorithm: EdgeRoutingAlgorithmId,
+  nodeBoxes: ReadonlyMap<string, EdgeRoutingNodeBox>,
+  edges: EdgeRoutingEdge[],
+) {
+  return computeEdgeRoutingPlacements(algorithm, {
+    edges,
+    nodeBoxes,
+    layoutDirection: 'TB',
+  });
+}
+
+describe('edge routing algorithms', () => {
+  it('returns a placement for every edge', () => {
+    const nodeBoxes = boxes([
+      ['a', 0, 0, 240, 48],
+      ['b', 320, 0, 560, 48],
+      ['c', 640, 0, 880, 48],
+    ]);
+    const edges = [
+      { id: 'ab', source: 'a', target: 'b' },
+      { id: 'bc', source: 'b', target: 'c' },
+    ];
+
+    for (const algorithm of ['legacy', 'legacy-plus'] as const) {
+      const placements = route(algorithm, nodeBoxes, edges);
+      expect(placements.size).toBe(edges.length);
+      expect(placements.get('ab')).toBeDefined();
+      expect(placements.get('bc')).toBeDefined();
+    }
+  });
+
+  it('legacy plus is never worse than legacy on its own score', () => {
+    const nodeBoxes = boxes([
+      ['a', 0, 0, 240, 48],
+      ['b', 220, 220, 460, 268],
+      ['c', 440, 0, 680, 48],
+      ['d', 220, -220, 460, -172],
+      ['e', 660, 220, 900, 268],
+    ]);
+    const edges = [
+      { id: 'ab', source: 'a', target: 'b' },
+      { id: 'cb', source: 'c', target: 'b' },
+      { id: 'bd', source: 'b', target: 'd' },
+      { id: 'be', source: 'b', target: 'e' },
+      { id: 'ad', source: 'a', target: 'd' },
+    ];
+
+    const legacyPlacements = route('legacy', nodeBoxes, edges);
+    const legacyPlusPlacements = route('legacy-plus', nodeBoxes, edges);
+    const legacyScore = scoreObjectiveEdgeRouting(edges, nodeBoxes, legacyPlacements);
+    const legacyPlusScore = scoreObjectiveEdgeRouting(edges, nodeBoxes, legacyPlusPlacements);
+
+    expect(compareEdgeRoutingObjectiveScores(legacyPlusScore, legacyScore)).toBeLessThanOrEqual(0);
+  });
+
+  it('uses right-exiting split corner handles for mostly horizontal adjacency', () => {
+    const nodeBoxes = boxes([
+      ['a', 0, 100, 240, 148],
+      ['b', 320, 0, 560, 48],
+    ]);
+    const placements = route('legacy', nodeBoxes, [{ id: 'ab', source: 'a', target: 'b' }]);
+
+    expect(placements.get('ab')).toEqual({
+      sourceSide: 'topright-right',
+      targetSide: 'bottomleft-left',
+    });
+  });
+
+  it('renders explicit split-corner placements with the encoded exit direction', () => {
+    const nodeBoxes = boxes([
+      ['a', 0, 0, 240, 48],
+      ['b', 40, 200, 280, 248],
+    ]);
+    const geometry = buildEdgeRoutingGeometry(
+      { id: 'ab', source: 'a', target: 'b' },
+      { sourceSide: 'bottomright-bottom', targetSide: 'topleft-top' },
+      nodeBoxes,
+    );
+
+    expect(geometry.sourceExitSide).toBe('bottom');
+    expect(geometry.targetExitSide).toBe('top');
+    expect(geometry.points[0]).toEqual({ x: 232, y: 48 });
+    expect(geometry.points[1]).toEqual({ x: 232, y: 76 });
+  });
+});
