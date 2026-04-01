@@ -72,16 +72,16 @@ export default function DiagramCanvas() {
   const diagram = useDiagramStore((s) => s.diagram);
   const addNode = useDiagramStore((s) => s.addNode);
   const addEdgeStore = useDiagramStore((s) => s.addEdge);
+  const batchApply = useDiagramStore((s) => s.batchApply);
   const dragNodes = useDiagramStore((s) => s.dragNodes);
   const commitDraggedNodes = useDiagramStore((s) => s.commitDraggedNodes);
-  const deleteNodes = useDiagramStore((s) => s.deleteNodes);
-  const deleteEdges = useDiagramStore((s) => s.deleteEdges);
   const framework = useDiagramStore((s) => s.framework);
   const snapToGrid = useDiagramStore((s) => s.diagram.settings.snapToGrid);
   const updateSettings = useDiagramStore((s) => s.updateSettings);
 
   const setSelectedNodes = useUIStore((s) => s.setSelectedNodes);
   const setSelectedEdges = useUIStore((s) => s.setSelectedEdges);
+  const setSelectedLoop = useUIStore((s) => s.setSelectedLoop);
   const openContextMenu = useUIStore((s) => s.openContextMenu);
   const closeContextMenu = useUIStore((s) => s.closeContextMenu);
   const addToast = useUIStore((s) => s.addToast);
@@ -120,6 +120,9 @@ export default function DiagramCanvas() {
     onPane: boolean;
   } | null>(null);
   const ignoreNextPaneClickRef = useRef(false);
+  const pendingRemovedNodeIdsRef = useRef<Set<string>>(new Set());
+  const pendingRemovedEdgeIdsRef = useRef<Set<string>>(new Set());
+  const removalFlushScheduledRef = useRef(false);
 
   const clearLongPressTimer = useCallback(() => {
     if (longPressTimerRef.current != null) {
@@ -162,6 +165,30 @@ export default function DiagramCanvas() {
     setLocalNodes((nds) => nds.map((n) => ({ ...n, selected: nodeSet.has(n.id) })));
     setLocalEdges((eds) => eds.map((e) => ({ ...e, selected: edgeSet.has(e.id) })));
   }, [selectionSyncTrigger]);
+
+  const flushPendingRemovals = useCallback(() => {
+    removalFlushScheduledRef.current = false;
+
+    const nodeIds = [...pendingRemovedNodeIdsRef.current];
+    const edgeIds = [...pendingRemovedEdgeIdsRef.current];
+    pendingRemovedNodeIdsRef.current.clear();
+    pendingRemovedEdgeIdsRef.current.clear();
+
+    if (nodeIds.length === 0 && edgeIds.length === 0) {
+      return;
+    }
+
+    batchApply({
+      ...(nodeIds.length > 0 ? { removeNodeIds: nodeIds } : {}),
+      ...(edgeIds.length > 0 ? { removeEdgeIds: edgeIds } : {}),
+    });
+  }, [batchApply]);
+
+  const scheduleRemovalFlush = useCallback(() => {
+    if (removalFlushScheduledRef.current) return;
+    removalFlushScheduledRef.current = true;
+    queueMicrotask(flushPendingRemovals);
+  }, [flushPendingRemovals]);
 
   const viewportFocusTrigger = useUIStore((s) => s.viewportFocusTrigger);
   useEffect(() => {
@@ -288,7 +315,10 @@ export default function DiagramCanvas() {
 
       const removeChanges = changes.filter((c) => c.type === 'remove');
       if (removeChanges.length > 0) {
-        deleteNodes(removeChanges.map((c) => c.id));
+        for (const change of removeChanges) {
+          pendingRemovedNodeIdsRef.current.add(change.id);
+        }
+        scheduleRemovalFlush();
       }
 
       if (pendingFitView.current) {
@@ -299,7 +329,7 @@ export default function DiagramCanvas() {
         }
       }
     },
-    [dragNodes, deleteNodes, fitView, snapToGrid, localNodes],
+    [dragNodes, fitView, snapToGrid, localNodes, scheduleRemovalFlush],
   );
 
   const onEdgesChange = useCallback(
@@ -307,10 +337,13 @@ export default function DiagramCanvas() {
       setLocalEdges((eds) => applyEdgeChanges(changes, eds));
       const removeChanges = changes.filter((c) => c.type === 'remove');
       if (removeChanges.length > 0) {
-        deleteEdges(removeChanges.map((c) => c.id));
+        for (const change of removeChanges) {
+          pendingRemovedEdgeIdsRef.current.add(change.id);
+        }
+        scheduleRemovalFlush();
       }
     },
-    [deleteEdges],
+    [scheduleRemovalFlush],
   );
 
   const onNodeDragStop = useCallback(() => {
@@ -344,8 +377,9 @@ export default function DiagramCanvas() {
       ignoreNextPaneClickRef.current = false;
       return;
     }
+    setSelectedLoop(null);
     closeContextMenu();
-  }, [closeContextMenu]);
+  }, [closeContextMenu, setSelectedLoop]);
 
   const onCanvasDoubleClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -360,10 +394,11 @@ export default function DiagramCanvas() {
 
   const onSelectionChange = useCallback(
     ({ nodes, edges }: OnSelectionChangeParams) => {
+      setSelectedLoop(null);
       setSelectedNodes(nodes.map((n) => n.id));
       setSelectedEdges(edges.map((e) => e.id));
     },
-    [setSelectedNodes, setSelectedEdges],
+    [setSelectedEdges, setSelectedLoop, setSelectedNodes],
   );
 
   const onPaneContextMenu = useCallback(

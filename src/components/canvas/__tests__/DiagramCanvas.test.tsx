@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import DiagramCanvas from '../DiagramCanvas';
 import { useDiagramStore } from '../../../store/diagram-store';
 import { useUIStore } from '../../../store/ui-store';
+import type { EdgeChange, NodeChange } from '@xyflow/react';
 
 const mocks = vi.hoisted(() => ({
   degreesMap: new Map(),
@@ -24,7 +25,18 @@ vi.mock('../EntityNode', () => ({
 }));
 
 vi.mock('@xyflow/react', () => ({
-  ReactFlow: ({ nodes, edges, onConnect, onSelectionChange, onPaneContextMenu, onNodeContextMenu, onEdgeContextMenu }: {
+  ReactFlow: ({
+    nodes,
+    edges,
+    onConnect,
+    onSelectionChange,
+    onPaneClick,
+    onPaneContextMenu,
+    onNodeContextMenu,
+    onEdgeContextMenu,
+    onNodesChange,
+    onEdgesChange,
+  }: {
     nodes: Array<{ id: string; selected?: boolean }>;
     edges: Array<{ id: string; selected?: boolean }>;
     onConnect: (connection: {
@@ -33,7 +45,10 @@ vi.mock('@xyflow/react', () => ({
       sourceHandle?: string;
       targetHandle?: string;
     }) => void;
+    onNodesChange?: (changes: NodeChange[]) => void;
+    onEdgesChange?: (changes: EdgeChange[]) => void;
     onSelectionChange?: (params: { nodes: Array<{ id: string }>; edges: Array<{ id: string }> }) => void;
+    onPaneClick?: () => void;
     onPaneContextMenu?: (event: {
       clientX: number;
       clientY: number;
@@ -92,6 +107,26 @@ vi.mock('@xyflow/react', () => ({
       </button>
       <button
         type="button"
+        data-testid="trigger-edge-remove"
+        onClick={() => {
+          const edgeId = edges[0]?.id;
+          if (edgeId) onEdgesChange?.([{ id: edgeId, type: 'remove' }]);
+        }}
+      >
+        Trigger edge remove
+      </button>
+      <button
+        type="button"
+        data-testid="trigger-node-remove"
+        onClick={() => {
+          const nodeId = nodes.at(-1)?.id;
+          if (nodeId) onNodesChange?.([{ id: nodeId, type: 'remove' }]);
+        }}
+      >
+        Trigger node remove
+      </button>
+      <button
+        type="button"
         data-testid="trigger-selection"
         onClick={() => onSelectionChange?.({
           nodes: nodes.filter((n) => n.id === 'n1').map((n) => ({ id: n.id })),
@@ -99,6 +134,13 @@ vi.mock('@xyflow/react', () => ({
         })}
       >
         Trigger selection
+      </button>
+      <button
+        type="button"
+        data-testid="trigger-pane-click"
+        onClick={() => onPaneClick?.()}
+      >
+        Trigger pane click
       </button>
       <button
         type="button"
@@ -254,6 +296,41 @@ describe('DiagramCanvas', () => {
     expect(useDiagramStore.getState().diagram.settings.edgeRoutingMode).toBe('fixed');
   });
 
+  it('treats node+edge deletions from separate RF callbacks as a single undo step', async () => {
+    const id1 = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+    const id2 = useDiagramStore.getState().addNode({ x: 0, y: 100 });
+    useDiagramStore.getState().addEdge(id1, id2);
+
+    mocks.rfNodes = [
+      { id: id1, position: { x: 0, y: 0 }, data: {} } as never,
+      { id: id2, position: { x: 0, y: 100 }, data: {} } as never,
+    ];
+    mocks.rfEdges = [
+      { id: 'e1', source: id1, target: id2 } as never,
+    ];
+    useDiagramStore.setState((state) => ({
+      diagram: {
+        ...state.diagram,
+        edges: [{ ...state.diagram.edges[0], id: 'e1' }],
+      },
+    }));
+
+    render(<DiagramCanvas />);
+
+    fireEvent.click(screen.getByTestId('trigger-edge-remove'));
+    fireEvent.click(screen.getByTestId('trigger-node-remove'));
+
+    await waitFor(() => {
+      expect(useDiagramStore.getState().diagram.nodes).toHaveLength(1);
+      expect(useDiagramStore.getState().diagram.edges).toHaveLength(0);
+    });
+
+    useDiagramStore.getState().undo();
+
+    expect(useDiagramStore.getState().diagram.nodes).toHaveLength(2);
+    expect(useDiagramStore.getState().diagram.edges).toHaveLength(1);
+  });
+
   it('clears RF selection when clearSelectionTrigger fires', async () => {
     mocks.rfNodes = [
       { id: 'n1', position: { x: 0, y: 0 }, data: {} } as never,
@@ -300,6 +377,34 @@ describe('DiagramCanvas', () => {
     // If we get here without crashing, the loop is fixed.
     // Verify the store received the selection.
     expect(useUIStore.getState().selectedNodeIds).toEqual(['n1']);
+  });
+
+  it('clears the selected loop when canvas selection changes', async () => {
+    const user = userEvent.setup();
+    mocks.rfNodes = [
+      { id: 'n1', position: { x: 0, y: 0 }, data: {} } as never,
+      { id: 'n2', position: { x: 0, y: 100 }, data: {} } as never,
+    ];
+
+    useUIStore.setState({ selectedLoopId: 'loop-1' });
+
+    render(<DiagramCanvas />);
+
+    await user.click(screen.getByTestId('trigger-selection'));
+
+    expect(useUIStore.getState().selectedNodeIds).toEqual(['n1']);
+    expect(useUIStore.getState().selectedLoopId).toBeNull();
+  });
+
+  it('clears the selected loop when the pane is clicked', async () => {
+    const user = userEvent.setup();
+    useUIStore.setState({ selectedLoopId: 'loop-1' });
+
+    render(<DiagramCanvas />);
+
+    await user.click(screen.getByTestId('trigger-pane-click'));
+
+    expect(useUIStore.getState().selectedLoopId).toBeNull();
   });
 
   it('syncs store-driven node and edge selections into React Flow state', async () => {

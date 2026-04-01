@@ -56,14 +56,6 @@ export default function SettingsPanel() {
             <span className="badge" style={{ backgroundColor: 'color-mix(in srgb, var(--loop-balancing) 8%, transparent)', color: 'var(--loop-balancing)' }}>
               {loopSummary.balancingLoops} Balancing
             </span>
-            {selectedLoopId && (
-              <button
-                className="btn btn-secondary btn-xs"
-                onClick={() => setSelectedLoop(null)}
-              >
-                Show All
-              </button>
-            )}
           </div>
           {loops.length === 0 ? (
             <p className="field-label">No feedback loops detected yet.</p>
