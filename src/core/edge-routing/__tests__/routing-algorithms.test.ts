@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { compareTieBreakScores } from '../legacy-plus-algorithm';
 import {
   buildEdgeRoutingGeometry,
   compareEdgeRoutingObjectiveScores,
@@ -70,6 +71,21 @@ describe('edge routing algorithms', () => {
     const legacyPlusScore = scoreObjectiveEdgeRouting(edges, nodeBoxes, legacyPlusPlacements);
 
     expect(compareEdgeRoutingObjectiveScores(legacyPlusScore, legacyScore)).toBeLessThanOrEqual(0);
+  });
+
+  it('legacy plus prefers middle handles before same-side sharing on score ties', () => {
+    expect(compareTieBreakScores(
+      {
+        mixedDirectionPenalty: 0,
+        sameDirectionReward: 0,
+        cornerPenalty: 0,
+      },
+      {
+        mixedDirectionPenalty: 0,
+        sameDirectionReward: 1,
+        cornerPenalty: 1,
+      },
+    )).toBeLessThan(0);
   });
 
   it('uses right-exiting split corner handles for mostly horizontal adjacency', () => {

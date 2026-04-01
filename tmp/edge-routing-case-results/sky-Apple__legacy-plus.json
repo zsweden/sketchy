@@ -1,0 +1,90 @@
+{
+  "generatedAt": "2026-04-01T17:02:27.230Z",
+  "fixtureCount": 1,
+  "rows": [
+    {
+      "fixture": "sky-Apple",
+      "algorithm": "legacy-plus",
+      "nodeCount": 9,
+      "edgeCount": 11,
+      "iterations": 10,
+      "timeMs": 13.475,
+      "evalMetrics": {
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 2356.81,
+        "boundingArea": 516341.83
+      },
+      "evalScore": 3647.664575,
+      "scoreMetrics": {
+        "crossings": 0,
+        "edgeNodeOverlaps": 0,
+        "mixedHandleConflicts": 0,
+        "totalLength": 2356.813438581258,
+        "sameDirectionSharing": 1,
+        "cornerHandleCount": 10
+      }
+    }
+  ],
+  "summary": {
+    "byAlgorithm": {
+      "legacy": {
+        "fixtureCount": 0,
+        "timeMs": 0,
+        "evalScore": 0,
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 0,
+        "boundingArea": 0,
+        "score": {
+          "crossings": 0,
+          "edgeNodeOverlaps": 0,
+          "mixedHandleConflicts": 0,
+          "totalLength": 0,
+          "sameDirectionSharing": 0,
+          "cornerHandleCount": 0
+        },
+        "winsVsLegacy": 0,
+        "tiesVsLegacy": 0,
+        "lossesVsLegacy": 0
+      },
+      "legacy-plus": {
+        "fixtureCount": 1,
+        "timeMs": 13.475,
+        "evalScore": 3647.665,
+        "nodeOverlaps": 0,
+        "edgeCrossings": 0,
+        "edgeNodeOverlaps": 0,
+        "connectorConflicts": 0,
+        "totalEdgeLength": 2356.81,
+        "boundingArea": 516341.83,
+        "score": {
+          "crossings": 0,
+          "edgeNodeOverlaps": 0,
+          "mixedHandleConflicts": 0,
+          "totalLength": 2356.813,
+          "sameDirectionSharing": 1,
+          "cornerHandleCount": 10
+        },
+        "winsVsLegacy": 0,
+        "tiesVsLegacy": 0,
+        "lossesVsLegacy": 0
+      }
+    },
+    "deltasVsLegacy": {
+      "legacy-plus": {
+        "betterOnEval": 0,
+        "equalOnEval": 0,
+        "worseOnEval": 0,
+        "faster": 0,
+        "slower": 0,
+        "timeDeltaMs": 0,
+        "evalScoreDelta": 0
+      }
+    }
+  }
+}

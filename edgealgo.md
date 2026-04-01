@@ -13,8 +13,8 @@ Treat these as lexicographic objectives, not as equal-weight goals.
 1. Minimize edge-edge intersections.
 2. Minimize mixed-direction handle conflicts.
 3. Minimize total routed edge length.
-4. Encourage same-direction handle sharing.
-5. Prefer middle handles over corner handles.
+4. Prefer middle handles over corner handles.
+5. Encourage same-direction handle sharing.
 
 ## Definitions
 
@@ -38,18 +38,7 @@ Among solutions with the same crossing and mixed-direction-conflict counts, pref
 
 Length should be measured on the final routed polyline, not just center-to-center node distance.
 
-### 4. Same-direction handle sharing
-
-Encourage multiple incoming edges to use the same exact handle point.
-
-Encourage multiple outgoing edges to use the same exact handle point.
-
-This is desirable as long as it does not increase:
-- edge-edge intersections
-- mixed-direction handle conflicts
-- total routed length at a higher-priority level
-
-### 5. Middle handles over corner handles
+### 4. Middle handles over corner handles
 
 All else being equal, prefer cardinal middle handles:
 - `top`
@@ -65,6 +54,17 @@ over corner handles:
 
 This is a tie-break preference, not a primary routing objective.
 
+### 5. Same-direction handle sharing
+
+Encourage multiple incoming edges to use the same exact handle point.
+
+Encourage multiple outgoing edges to use the same exact handle point.
+
+This is desirable as long as it does not increase:
+- edge-edge intersections
+- mixed-direction handle conflicts
+- total routed length at a higher-priority level
+
 ## Recommended Score Tuple
 
 Compare candidate full-diagram routings by this tuple:
@@ -74,8 +74,8 @@ Compare candidate full-diagram routings by this tuple:
   crossings,
   mixed_handle_conflicts,
   total_length,
-  -same_direction_sharing,
-  corner_handle_count
+  corner_handle_count,
+  -same_direction_sharing
 )
 ```
 

@@ -18,7 +18,7 @@ interface HandleUsage {
   outgoing: number;
 }
 
-interface TieBreakScore {
+export interface TieBreakScore {
   mixedDirectionPenalty: number;
   sameDirectionReward: number;
   cornerPenalty: number;
@@ -161,15 +161,15 @@ function getTieBreakScore(
   };
 }
 
-function compareTieBreakScores(a: TieBreakScore, b: TieBreakScore): number {
+export function compareTieBreakScores(a: TieBreakScore, b: TieBreakScore): number {
   if (a.mixedDirectionPenalty !== b.mixedDirectionPenalty) {
     return a.mixedDirectionPenalty - b.mixedDirectionPenalty;
   }
-  if (a.sameDirectionReward !== b.sameDirectionReward) {
-    return b.sameDirectionReward - a.sameDirectionReward;
-  }
   if (a.cornerPenalty !== b.cornerPenalty) {
     return a.cornerPenalty - b.cornerPenalty;
+  }
+  if (a.sameDirectionReward !== b.sameDirectionReward) {
+    return b.sameDirectionReward - a.sameDirectionReward;
   }
   return 0;
 }
