@@ -24,12 +24,25 @@ export interface TieBreakScore {
   cornerPenalty: number;
 }
 
+interface GeometrySnapshot {
+  points: ReturnType<typeof buildEdgeRoutingGeometry>['points'];
+}
+
 export function computeLegacyPlusEdgeRoutingPlacements({
   edges,
   nodeBoxes,
   layoutDirection,
 }: EdgeRoutingInput): Map<string, EdgeRoutingPlacement> {
   const placements = new Map<string, EdgeRoutingPlacement>();
+  const nodeBoxEntries = [...nodeBoxes.entries()];
+
+  const getGeometry = (
+    edge: EdgeRoutingInput['edges'][number],
+    placement: EdgeRoutingPlacement,
+  ): GeometrySnapshot => {
+    const geometry = buildEdgeRoutingGeometry(edge, placement, nodeBoxes);
+    return { points: geometry.points };
+  };
 
   for (const edge of edges) {
     placements.set(edge.id, createPlacementCandidates(edge, nodeBoxes, layoutDirection)[0]);
@@ -38,9 +51,16 @@ export function computeLegacyPlusEdgeRoutingPlacements({
   const passes = 2;
   for (let pass = 0; pass < passes; pass++) {
     const handleUsage = createHandleUsageMap(edges, placements);
+    const selectedGeometryCache = new Map(
+      edges.flatMap((edge) => {
+        const placement = placements.get(edge.id);
+        return placement ? [[edge.id, getGeometry(edge, placement)] as const] : [];
+      }),
+    );
 
     for (const edge of edges) {
-      const currentPlacement = placements.get(edge.id) ?? createPlacementCandidates(edge, nodeBoxes, layoutDirection)[0];
+      const currentPlacement = placements.get(edge.id)
+        ?? createPlacementCandidates(edge, nodeBoxes, layoutDirection)[0];
       removePlacementUsage(handleUsage, edge, currentPlacement);
 
       const candidates = createPlacementCandidates(edge, nodeBoxes, layoutDirection);
@@ -49,12 +69,12 @@ export function computeLegacyPlusEdgeRoutingPlacements({
       let bestTieBreak = getTieBreakScore(edge, currentPlacement, handleUsage);
 
       for (const candidate of candidates) {
-        const geometry = buildEdgeRoutingGeometry(edge, candidate, nodeBoxes);
+        const geometry = getGeometry(edge, candidate);
         if (geometry.points.length === 0) continue;
 
         let score = getPolylineLength(geometry.points) * EDGE_LENGTH_PENALTY;
 
-        for (const [nodeId, box] of nodeBoxes.entries()) {
+        for (const [nodeId, box] of nodeBoxEntries) {
           if (nodeId === edge.source || nodeId === edge.target) continue;
           if (polylineIntersectsBox(geometry.points, box)) {
             score += EDGE_NODE_OVERLAP_PENALTY;
@@ -66,7 +86,7 @@ export function computeLegacyPlusEdgeRoutingPlacements({
           if (sharesEndpoint(edge, other)) continue;
           const otherPlacement = placements.get(other.id);
           if (!otherPlacement) continue;
-          const otherGeometry = buildEdgeRoutingGeometry(other, otherPlacement, nodeBoxes);
+          const otherGeometry = selectedGeometryCache.get(other.id) ?? getGeometry(other, otherPlacement);
           if (otherGeometry.points.length === 0) continue;
           if (polylinesIntersect(geometry.points, otherGeometry.points)) {
             score += EDGE_INTERSECTION_PENALTY;
@@ -87,6 +107,7 @@ export function computeLegacyPlusEdgeRoutingPlacements({
 
       placements.set(edge.id, bestPlacement);
       addPlacementUsage(handleUsage, edge, bestPlacement);
+      selectedGeometryCache.set(edge.id, getGeometry(edge, bestPlacement));
     }
   }
 

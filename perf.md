@@ -158,22 +158,56 @@ This is the best place to improve item 2 without impacting quality.
 
 The safest changes are changes that preserve the current scoring model, penalties, tie-break rules, and candidate set, while reducing repeated work.
 
+#### One-at-a-time experiment results
+
+I compared the baseline router against one optimization at a time before enabling any change in the core product.
+
+The experiment checked that each variant preserved:
+
+- exact placements
+- evaluator metrics
+- objective metrics
+
+All four tested variants preserved quality on the benchmark fixtures.
+
+Measured speed deltas versus baseline:
+
+- `cache-current-edge-geometries`
+  - `route-40-chain`: `-20.9%`
+  - `route-31-tree`: `-28.4%`
+  - `route-24-dense`: `-44.4%`
+  - `route-12-cyclic`: `-42.0%`
+- `cache-candidate-geometries`
+  - `route-40-chain`: `+5.9%`
+  - `route-31-tree`: `-7.8%`
+  - `route-24-dense`: `-13.1%`
+  - `route-12-cyclic`: `-9.8%`
+- `precompute-candidates`
+  - `route-40-chain`: `+16.2%`
+  - `route-31-tree`: `+2.1%`
+  - `route-24-dense`: `-2.5%`
+  - `route-12-cyclic`: `-2.0%`
+- `prune-intersection-checks`
+  - `route-40-chain`: `-2.3%`
+  - `route-31-tree`: `-27.4%`
+  - `route-24-dense`: `+9.1%`
+  - `route-12-cyclic`: `+44.7%`
+
+Interpretation:
+
+- `cache-current-edge-geometries` is the clear winner. It was the only optimization that helped every fixture and it produced the largest improvement on the dense case.
+- `cache-candidate-geometries` is promising but mixed. It helps on tree, dense, and cyclic cases, but regressed the chain fixture in this run.
+- `precompute-candidates` is not worth shipping by itself.
+- `prune-intersection-checks` is not worth shipping in its current form. The extra bounding-box work helps some fixtures but loses badly on dense and cyclic cases.
+
+Status:
+
+- `cache-current-edge-geometries` is now enabled in the default router.
+- The other experimental variants were removed rather than kept behind flags.
+
 #### Best safe opportunities
 
-1. Cache candidate geometries per edge and placement
-
-- Today the router rebuilds geometry repeatedly for the same edge/candidate pair.
-- Cache `buildEdgeRoutingGeometry()` results and `getPolylineLength()` results for the duration of a routing pass.
-- This should not change behavior at all.
-
-Why it is safe:
-
-- Same candidates
-- Same scores
-- Same placement choice
-- Only less recomputation
-
-2. Cache current geometry for other edges inside each pass
+1. Cache current geometry for other edges inside each pass
 
 - In the inner loop, each candidate checks against every other edge and rebuilds that other edge's geometry every time.
 - Maintain a map from `edge.id` to the currently selected geometry for the current pass.
@@ -184,12 +218,27 @@ Why it is safe:
 - Same comparison set
 - Same intersection logic
 - Same scores
-- Only less duplicated geometry building
+- Same placements and quality metrics in the benchmark
+- Largest measured speedup across all fixtures
+
+2. Cache candidate geometries per edge and placement
+
+- Today the router rebuilds geometry repeatedly for the same edge/candidate pair.
+- Cache `buildEdgeRoutingGeometry()` results and `getPolylineLength()` results for the duration of a routing pass.
+- This preserved quality in the benchmark and helped the dense case materially.
+
+Why it is safe:
+
+- Same candidates
+- Same scores
+- Same placements and quality metrics in the benchmark
+- Only less recomputation
 
 3. Precompute and reuse candidate lists
 
 - `createPlacementCandidates()` is called repeatedly for the same edge within the same routing run.
 - Build the candidate list once per edge and reuse it across both passes.
+- This preserved quality in the benchmark, but the speedup was too small and too inconsistent to justify prioritizing it.
 
 Why it is safe:
 
@@ -201,6 +250,7 @@ Why it is safe:
 
 - Most candidate-vs-node and candidate-vs-edge pairs cannot intersect.
 - Add bounding-box rejection before `polylineIntersectsBox()` and `polylinesIntersect()`.
+- This preserved quality in the benchmark, but the current implementation was too inconsistent to recommend first.
 
 Why it is safe:
 
@@ -238,10 +288,10 @@ This is not urgent based on current numbers.
 
 ## Recommended Order
 
-1. Cache edge-routing candidate geometry and lengths
-2. Cache currently selected geometry for other edges during each routing pass
-3. Precompute candidate lists once per edge
-4. Add conservative spatial pruning for intersection checks
+1. Cache currently selected geometry for other edges during each routing pass
+2. Cache edge-routing candidate geometry and lengths
+3. Re-run the one-at-a-time benchmark and then test the combination of 1 and 2
+4. Leave candidate precomputation and pruning behind a benchmark gate until they show stable wins
 5. Profile again before changing scoring rules or penalties
 
 ## What Not To Change First
@@ -260,11 +310,9 @@ Those changes may improve speed, but they carry a real quality risk.
 
 The best quality-preserving performance work is inside the current edge-routing implementation.
 
-The first pass should be mechanical:
+The first pass should now be narrower:
 
-- cache geometry
-- cache candidate lists
-- cache current edge state
-- prune obviously impossible intersection checks
+- cache current edge state for other edges inside the pass
+- cache candidate geometry and length for reused placements
 
-That is the highest-probability way to cut routing time materially without changing the routing decisions the app makes today.
+Those two changes are the best measured opportunities to reduce routing time without changing the routing decisions the app makes today.
