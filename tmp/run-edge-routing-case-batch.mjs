@@ -4,30 +4,14 @@ import { spawnSync } from 'node:child_process';
 
 const cwd = process.cwd();
 const resultDir = path.join(cwd, 'tmp', 'edge-routing-case-results');
+const fixtureDir = path.join(cwd, 'src', 'core', 'persistence', '__tests__', 'fixtures', 'desktop-sky-samples');
 fs.rmSync(resultDir, { recursive: true, force: true });
 fs.mkdirSync(resultDir, { recursive: true });
 
-const fixtures = [
-  'layout-50-chain',
-  'layout-100-chain',
-  'layout-500-chain',
-  'layout-127-tree',
-  'layout-100-dense',
-  'layout-8-cyclic',
-  'layout-12-cyclic',
-  'cld-triangle',
-  'cld-four-cycle-chord',
-  'cld-figure-eight',
-  'cld-two-scc-cascade',
-  'cld-dense-six-node-scc',
-  'sky-4box-layout',
-  'sky-4box-layout-v2-cross-edge',
-  'sky-6box-layout',
-  'sky-9box-layout',
-  'sky-9box-layout-v2',
-  'sky-4box-layout-v3-offset',
-  'sky-9box-layout-v3-no-pins',
-];
+const fixtures = fs.readdirSync(fixtureDir)
+  .filter((name) => name.endsWith('.sky'))
+  .sort()
+  .map((name) => `sky-${path.basename(name, '.sky')}`);
 
 const algorithms = ['legacy', 'legacy-plus'];
 const results = [];

@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 import type { DiagramEdge, DiagramNode } from '../src/core/types';
 import { autoLayout } from '../src/core/layout/auto-layout';
 import { elkEngine } from '../src/core/layout/elk-engine';
+import { loadSkyFile } from '../src/core/persistence/sky-io';
+import { getFramework } from '../src/frameworks/registry';
 import {
   compareGraphMetrics,
   computeLayoutMetrics,
@@ -24,6 +26,7 @@ const describePerf = process.env.RUN_PERF_TESTS === '1' ? describe : describe.sk
 const SELECTED_FIXTURE_ID = process.env.EDGE_ROUTING_FIXTURE_ID;
 const SELECTED_ALGORITHM = process.env.EDGE_ROUTING_ALGORITHM as EdgeRoutingAlgorithmId | undefined;
 const RESULT_PATH = process.env.EDGE_ROUTING_RESULT_PATH;
+const SKY_FIXTURE_DIR = 'src/core/persistence/__tests__/fixtures/desktop-sky-samples';
 
 interface RoutingFixture {
   id: string;
@@ -125,121 +128,47 @@ function getCldFixtures(): RoutingFixture[] {
   ];
 }
 
-function getSkyFixtures(): RoutingFixture[] {
-  return [
-    {
-      id: 'sky-4box-layout',
-      direction: 'TB',
-      nodes: [
-        n('3468', 370.09, -321.26),
-        n('c3d0', 644.69, -502.33),
-        n('3b81', 363.0, -500.82),
-        n('5ae9', 645.25, -319.73),
-      ],
-      edges: [edge('3b81', '5ae9'), edge('c3d0', '3468')],
-    },
-    {
-      id: 'sky-4box-layout-v2-cross-edge',
-      direction: 'TB',
-      nodes: [
-        n('3468', 643.5, -368.9),
-        n('c3d0', 644.7, -502.3),
-        n('3b81', 363.0, -500.8),
-        n('5ae9', 363.7, -370.8),
-      ],
-      edges: [edge('3b81', '5ae9'), edge('c3d0', '3468'), edge('3b81', '3468')],
-    },
-    {
-      id: 'sky-6box-layout',
-      direction: 'TB',
-      nodes: [
-        n('3468', 311.28, 126.14),
-        n('c3d0', 2.56, 1.28),
-        n('3b81', 280, 0),
-        n('5ae9', -4.72, 131.14),
-        n('7f0d', 22.95, 228.22),
-        n('b747', 288.52, 223.77),
-      ],
-      edges: [edge('3b81', '5ae9'), edge('c3d0', '3468'), edge('3468', '7f0d'), edge('5ae9', 'b747')],
-    },
-    {
-      id: 'sky-9box-layout',
-      direction: 'TB',
-      nodes: [
-        n('3468', 710.65, 133.57),
-        n('c3d0', 2.56, 1.28),
-        n('3b81', 280, 0),
-        n('5ae9', 287.13, 130.61),
-        n('7f0d', 1.28, 256.64),
-        n('b747', 421.28, 256.64),
-        n('c06d', -0.72, 370.64),
-      ],
-      edges: [
-        edge('3b81', '5ae9'),
-        edge('c3d0', '3468'),
-        edge('3468', '7f0d'),
-        edge('5ae9', 'b747'),
-        edge('c06d', '5ae9'),
-        edge('c3d0', '5ae9'),
-        edge('5ae9', '7f0d'),
-      ],
-    },
-    {
-      id: 'sky-9box-layout-v2',
-      direction: 'TB',
-      nodes: [
-        n('3468', 136.28, 128.64),
-        n('c3d0', 51.12, -0.007),
-        n('3b81', 160.1, 354.05),
-        n('5ae9', 416.28, 128.64),
-        n('7f0d', 136.28, 256.64),
-        n('b747', 436.28, 256.64),
-        n('c06d', 566.28, 0.64),
-      ],
-      edges: [
-        edge('3b81', '5ae9'),
-        edge('c3d0', '3468'),
-        edge('3468', '7f0d'),
-        edge('5ae9', 'b747'),
-        edge('c06d', '5ae9'),
-        edge('c3d0', '5ae9'),
-        edge('5ae9', '7f0d'),
-      ],
-    },
-    {
-      id: 'sky-4box-layout-v3-offset',
-      direction: 'TB',
-      nodes: [
-        n('3468', 564.99, -366.24),
-        n('c3d0', 746.02, -418.33),
-        n('3b81', 382.33, -402.15),
-        n('5ae9', 530.51, -170.24),
-      ],
-      edges: [edge('3b81', '5ae9'), edge('c3d0', '3468')],
-    },
-    {
-      id: 'sky-9box-layout-v3-no-pins',
-      direction: 'TB',
-      nodes: [
-        n('3468', 140, 128),
-        n('c3d0', 59.01, 3.1),
-        n('3b81', 326.33, 0.78),
-        n('5ae9', 420, 128),
-        n('7f0d', 140, 256),
-        n('b747', 440, 256),
-        n('c06d', 570, 0),
-      ],
-      edges: [
-        edge('3b81', '5ae9'),
-        edge('c3d0', '3468'),
-        edge('3468', '7f0d'),
-        edge('5ae9', 'b747'),
-        edge('c06d', '5ae9'),
-        edge('c3d0', '5ae9'),
-        edge('5ae9', '7f0d'),
-      ],
-    },
-  ];
+function hasUninitializedPositions(nodes: DiagramNode[]) {
+  return nodes.every((node) => node.position.x === 0 && node.position.y === 0);
+}
+
+async function getSkyFixtures(): Promise<RoutingFixture[]> {
+  const fixtureDir = path.resolve(process.cwd(), SKY_FIXTURE_DIR);
+  const filenames = (await fs.readdir(fixtureDir))
+    .filter((name) => name.endsWith('.sky'))
+    .sort();
+
+  return Promise.all(filenames.map(async (filename) => {
+    const content = await fs.readFile(path.join(fixtureDir, filename), 'utf8');
+    const result = await loadSkyFile(new File([content], filename, { type: 'application/json' }));
+    const framework = getFramework(result.diagram.frameworkId);
+    let nodes = result.diagram.nodes;
+
+    if (nodes.length > 0 && (result.needsLayout || hasUninitializedPositions(nodes))) {
+      const updates = await autoLayout(
+        result.diagram.nodes,
+        result.diagram.edges,
+        {
+          direction: result.diagram.settings.layoutDirection,
+          cyclic: framework?.allowsCycles === true,
+        },
+        elkEngine,
+      );
+      const positions = new Map(updates.map((update) => [update.id, update.position]));
+      nodes = result.diagram.nodes.map((node) => ({
+        ...node,
+        position: positions.get(node.id) ?? node.position,
+      }));
+    }
+
+    return {
+      id: `sky-${path.basename(filename, '.sky')}`,
+      direction: result.diagram.settings.layoutDirection,
+      cyclic: framework?.allowsCycles === true,
+      nodes,
+      edges: result.diagram.edges,
+    };
+  }));
 }
 
 async function buildFixtureSet(): Promise<RoutingFixture[]> {
@@ -270,7 +199,7 @@ async function buildFixtureSet(): Promise<RoutingFixture[]> {
     }),
   );
 
-  return [...generated, ...cldWithPositions, ...getSkyFixtures()];
+  return [...generated, ...cldWithPositions, ...await getSkyFixtures()];
 }
 
 function toPositionMap(nodes: DiagramNode[]) {
