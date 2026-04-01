@@ -61,9 +61,12 @@ function getVisibleHandleStyle(side: HandleSide): CSSProperties | undefined {
 function EntityNode({ id, data, selected }: NodeProps) {
   const TOUCH_DOUBLE_TAP_MS = 320;
   const TOUCH_MOVE_TOLERANCE_PX = 14;
+  const HANDLE_REVEAL_DISTANCE_PX = 40;
   const nodeData = data as unknown as EntityNodeData;
   const [editing, setEditing] = useState(false);
+  const [handlesVisible, setHandlesVisible] = useState(false);
   const [text, setText] = useState(nodeData.label);
+  const nodeRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const touchPointerId = useRef<number | null>(null);
   const touchStart = useRef<{ x: number; y: number; moved: boolean } | null>(null);
@@ -93,11 +96,42 @@ function EntityNode({ id, data, selected }: NodeProps) {
     }
   }, [editing]);
 
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      if (event.pointerType === 'touch') return;
+      const nodeElement = nodeRef.current;
+      if (!nodeElement) return;
+
+      const rect = nodeElement.getBoundingClientRect();
+      const isNear = event.clientX >= rect.left - HANDLE_REVEAL_DISTANCE_PX
+        && event.clientX <= rect.right + HANDLE_REVEAL_DISTANCE_PX
+        && event.clientY >= rect.top - HANDLE_REVEAL_DISTANCE_PX
+        && event.clientY <= rect.bottom + HANDLE_REVEAL_DISTANCE_PX;
+
+      setHandlesVisible((current) => (current === isNear ? current : isNear));
+    };
+
+    const handlePointerLeave = () => {
+      setHandlesVisible(false);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove, { passive: true });
+    window.addEventListener('pointerleave', handlePointerLeave);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerleave', handlePointerLeave);
+    };
+  }, []);
+
   const handleDoubleClick = useCallback(() => {
     setEditing(true);
   }, []);
 
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'touch') {
+      setHandlesVisible(true);
+    }
     if (e.pointerType !== 'touch' || editing) return;
     touchPointerId.current = e.pointerId;
     touchStart.current = { x: e.clientX, y: e.clientY, moved: false };
@@ -186,9 +220,11 @@ function EntityNode({ id, data, selected }: NodeProps) {
 
   return (
     <div
+      ref={nodeRef}
       className={[
         'entity-node',
         selected ? 'selected' : '',
+        (handlesVisible || selected || editing) ? 'handles-visible' : '',
         nodeData.highlightState === 'dimmed' ? 'dimmed' : '',
         nodeData.highlightState === 'highlighted' && nodeData.loopKind
           ? `loop-focused loop-${nodeData.loopKind}`

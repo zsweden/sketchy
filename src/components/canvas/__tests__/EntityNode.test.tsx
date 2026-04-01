@@ -378,5 +378,30 @@ describe('EntityNode', () => {
         expect(screen.getByTestId(`source-${side}`)).toBeInTheDocument();
       }
     });
+
+    it('reveals handles when the pointer moves near the node', () => {
+      renderNode();
+      const nodeEl = document.querySelector('.entity-node') as HTMLDivElement;
+      const rect = {
+        x: 100,
+        y: 100,
+        left: 100,
+        top: 100,
+        right: 260,
+        bottom: 160,
+        width: 160,
+        height: 60,
+        toJSON: () => ({}),
+      };
+      vi.spyOn(nodeEl, 'getBoundingClientRect').mockReturnValue(rect as DOMRect);
+
+      expect(nodeEl.className).not.toContain('handles-visible');
+
+      fireEvent.pointerMove(window, { pointerType: 'mouse', clientX: 80, clientY: 80 });
+      expect(nodeEl.className).toContain('handles-visible');
+
+      fireEvent.pointerMove(window, { pointerType: 'mouse', clientX: 20, clientY: 20 });
+      expect(nodeEl.className).not.toContain('handles-visible');
+    });
   });
 });

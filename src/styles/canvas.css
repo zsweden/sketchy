@@ -92,7 +92,21 @@
   height: 12px !important;
   border: 2px solid var(--border-strong) !important;
   background: var(--surface) !important;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  opacity: 0;
+  scale: 0.75;
+  pointer-events: none;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    opacity 0.14s ease,
+    scale 0.14s ease;
+}
+
+.entity-node.handles-visible .react-flow__handle,
+.entity-node:focus-within .react-flow__handle {
+  opacity: 1;
+  scale: 1;
+  pointer-events: auto;
 }
 
 .react-flow__handle:hover {
