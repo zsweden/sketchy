@@ -11,6 +11,8 @@ export interface EdgeHandlePlacement {
   targetSide: HandleSide;
 }
 
+export type LegacyCornerHandleSide = 'topleft' | 'topright' | 'bottomleft' | 'bottomright';
+
 interface BoxLike {
   left: number;
   top: number;
@@ -18,30 +20,40 @@ interface BoxLike {
   bottom: number;
 }
 
+export const HANDLE_CORNER_OFFSET = 8;
+
 export const VISIBLE_HANDLE_SIDES = [
   'top',
   'right',
   'bottom',
   'left',
-  'topleft',
-  'topright',
-  'bottomright',
-  'bottomleft',
+  'topleft-top',
+  'topleft-left',
+  'topright-top',
+  'topright-right',
+  'bottomright-right',
+  'bottomright-bottom',
+  'bottomleft-bottom',
+  'bottomleft-left',
 ] as const satisfies readonly HandleSide[];
 
 export function getBaseHandleSide(side: HandleSide): CardinalHandleSide {
   switch (side) {
     case 'top':
-    case 'topleft':
-    case 'topright':
+    case 'topleft-top':
+    case 'topright-top':
       return 'top';
     case 'right':
+    case 'topright-right':
+    case 'bottomright-right':
       return 'right';
     case 'bottom':
-    case 'bottomleft':
-    case 'bottomright':
+    case 'bottomleft-bottom':
+    case 'bottomright-bottom':
       return 'bottom';
     case 'left':
+    case 'topleft-left':
+    case 'bottomleft-left':
       return 'left';
   }
 }
@@ -66,14 +78,22 @@ export function getOppositeHandleSide(side: HandleSide): HandleSide {
     case 'bottom':
     case 'left':
       return opposite(side);
-    case 'topleft':
-      return 'bottomleft';
-    case 'topright':
-      return 'bottomright';
-    case 'bottomleft':
-      return 'topleft';
-    case 'bottomright':
-      return 'topright';
+    case 'topleft-top':
+      return 'bottomleft-bottom';
+    case 'topleft-left':
+      return 'topright-right';
+    case 'topright-top':
+      return 'bottomright-bottom';
+    case 'topright-right':
+      return 'topleft-left';
+    case 'bottomright-right':
+      return 'bottomleft-left';
+    case 'bottomright-bottom':
+      return 'topright-top';
+    case 'bottomleft-bottom':
+      return 'topleft-top';
+    case 'bottomleft-left':
+      return 'bottomright-right';
   }
 }
 
@@ -84,13 +104,13 @@ export function isHorizontalCardinalSide(side: CardinalHandleSide): boolean {
 function getDirectionalHandleSide(baseSide: CardinalHandleSide, dx: number, dy: number): HandleSide {
   switch (baseSide) {
     case 'top':
-      return dx < 0 ? 'topleft' : dx > 0 ? 'topright' : 'top';
+      return dx < 0 ? 'topleft-top' : dx > 0 ? 'topright-top' : 'top';
     case 'right':
-      return dy < 0 ? 'topright' : dy > 0 ? 'bottomright' : 'right';
+      return dy < 0 ? 'topright-right' : dy > 0 ? 'bottomright-right' : 'right';
     case 'bottom':
-      return dx < 0 ? 'bottomleft' : dx > 0 ? 'bottomright' : 'bottom';
+      return dx < 0 ? 'bottomleft-bottom' : dx > 0 ? 'bottomright-bottom' : 'bottom';
     case 'left':
-      return dy < 0 ? 'topleft' : dy > 0 ? 'bottomleft' : 'left';
+      return dy < 0 ? 'topleft-left' : dy > 0 ? 'bottomleft-left' : 'left';
   }
 }
 
@@ -136,21 +156,9 @@ export function getEdgeHandlePlacement(
 }
 
 export function getEffectiveHandleSide(side: HandleSide, dx: number, dy: number): CardinalHandleSide {
-  switch (side) {
-    case 'top':
-    case 'right':
-    case 'bottom':
-    case 'left':
-      return side;
-    case 'topleft':
-      return Math.abs(dx) > Math.abs(dy) ? 'left' : 'top';
-    case 'topright':
-      return Math.abs(dx) > Math.abs(dy) ? 'right' : 'top';
-    case 'bottomleft':
-      return Math.abs(dx) > Math.abs(dy) ? 'left' : 'bottom';
-    case 'bottomright':
-      return Math.abs(dx) > Math.abs(dy) ? 'right' : 'bottom';
-  }
+  void dx;
+  void dy;
+  return getBaseHandleSide(side);
 }
 
 export function getSourceHandleId(side: HandleSide): string {
@@ -177,10 +185,47 @@ export function isHandleSide(side: string): side is HandleSide {
     || side === 'right'
     || side === 'bottom'
     || side === 'left'
-    || side === 'topleft'
+    || side === 'topleft-top'
+    || side === 'topleft-left'
+    || side === 'topright-top'
+    || side === 'topright-right'
+    || side === 'bottomleft-bottom'
+    || side === 'bottomleft-left'
+    || side === 'bottomright-bottom'
+    || side === 'bottomright-right';
+}
+
+export function isLegacyCornerHandleSide(side: string): side is LegacyCornerHandleSide {
+  return side === 'topleft'
     || side === 'topright'
     || side === 'bottomleft'
     || side === 'bottomright';
+}
+
+export function isCornerHandleSide(side: HandleSide): boolean {
+  return side !== 'top' && side !== 'right' && side !== 'bottom' && side !== 'left';
+}
+
+export function normalizeLegacyHandleSide(
+  side: HandleSide | LegacyCornerHandleSide | null | undefined,
+  dx: number,
+  dy: number,
+): HandleSide | undefined {
+  if (!side) return undefined;
+  if (isHandleSide(side)) return side;
+
+  const horizontalDominant = Math.abs(dx) > Math.abs(dy);
+
+  switch (side) {
+    case 'topleft':
+      return horizontalDominant ? 'topleft-left' : 'topleft-top';
+    case 'topright':
+      return horizontalDominant ? 'topright-right' : 'topright-top';
+    case 'bottomleft':
+      return horizontalDominant ? 'bottomleft-left' : 'bottomleft-bottom';
+    case 'bottomright':
+      return horizontalDominant ? 'bottomright-right' : 'bottomright-bottom';
+  }
 }
 
 export function getHandlePoint(box: BoxLike, side: HandleSide): Point {
@@ -190,19 +235,27 @@ export function getHandlePoint(box: BoxLike, side: HandleSide): Point {
   switch (side) {
     case 'top':
       return { x: box.left + width * 0.5, y: box.top };
-    case 'topleft':
-      return { x: box.left, y: box.top };
-    case 'topright':
-      return { x: box.right, y: box.top };
+    case 'topleft-top':
+      return { x: box.left + HANDLE_CORNER_OFFSET, y: box.top };
+    case 'topleft-left':
+      return { x: box.left, y: box.top + HANDLE_CORNER_OFFSET };
+    case 'topright-top':
+      return { x: box.right - HANDLE_CORNER_OFFSET, y: box.top };
+    case 'topright-right':
+      return { x: box.right, y: box.top + HANDLE_CORNER_OFFSET };
     case 'right':
       return { x: box.right, y: box.top + height * 0.5 };
+    case 'bottomright-right':
+      return { x: box.right, y: box.bottom - HANDLE_CORNER_OFFSET };
     case 'bottom':
       return { x: box.left + width * 0.5, y: box.bottom };
-    case 'bottomleft':
-      return { x: box.left, y: box.bottom };
-    case 'bottomright':
-      return { x: box.right, y: box.bottom };
+    case 'bottomright-bottom':
+      return { x: box.right - HANDLE_CORNER_OFFSET, y: box.bottom };
+    case 'bottomleft-bottom':
+      return { x: box.left + HANDLE_CORNER_OFFSET, y: box.bottom };
     case 'left':
       return { x: box.left, y: box.top + height * 0.5 };
+    case 'bottomleft-left':
+      return { x: box.left, y: box.bottom - HANDLE_CORNER_OFFSET };
   }
 }

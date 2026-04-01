@@ -1,0 +1,333 @@
+{
+  "name": "Untitled Diagram",
+  "framework": "crt",
+  "direction": "BT",
+  "showGrid": true,
+  "version": 2,
+  "createdAt": "2026-03-29T05:08:25.485Z",
+  "nodes": [
+    {
+      "id": "b102b55e-803b-4578-9715-b389d71d55ab",
+      "label": "The United States ultimately lost the Vietnam War.",
+      "tags": [
+        "ude"
+      ],
+      "isUDE": true,
+      "notes": "“Saigon's fall in April 1975 confirmed that America had lost the war.” – G. C. Herring, America's Longest War (2001) p. 287.",
+      "x": 636,
+      "y": 12
+    },
+    {
+      "id": "5c4641b9-c7fd-4908-9520-9dbf8df9b5c5",
+      "label": "U.S. domestic support collapsed, forcing military disengagement.",
+      "notes": "“By 1969 only 27 % of Americans deemed the war worth fighting.” – M. Small, Antiwarriors (2002) p. 74.",
+      "x": 612,
+      "y": 184
+    },
+    {
+      "id": "8d8d83a9-49ca-4034-9e99-80298ec4f20f",
+      "label": "North Vietnamese guerrilla tactics neutralized superior American firepower.",
+      "notes": "“The Viet Cong's hit-and-run attacks offset American firepower advantages.” – A. West, The Village (1972) p. 123.",
+      "x": 1172,
+      "y": 184
+    },
+    {
+      "id": "7966b23f-c7ca-4390-888c-2531f4c60b2a",
+      "label": "South Vietnamese government remained corrupt and ineffective despite aid.",
+      "notes": "“Rampant graft hollowed the regime’s foundations.” – N. F. Trullinger, Settling for Less (2016) p. 56.",
+      "x": 1732,
+      "y": 184
+    },
+    {
+      "id": "edc93122-8e67-40a7-b296-0fd8426b90a7",
+      "label": "Limited war strategy constrained American military options.",
+      "notes": "“Johnson fought with ‘one arm tied’ to avoid wider war.” – H. Kissinger, Diplomacy (1994) p. 654.",
+      "x": 52,
+      "y": 200
+    },
+    {
+      "id": "1f529e64-b467-46ea-a705-9b3c30ac564f",
+      "label": "Televised war coverage exposed civilian casualties to American audiences.",
+      "notes": "“The evening news brought graphic images of My Lai into living rooms.” – M. Hallin, The Uncensored War (1986) p. 138.",
+      "x": 852,
+      "y": 380
+    },
+    {
+      "id": "62370618-2d8f-4bf6-b11f-c639d3a66956",
+      "label": "Conscription inequities fueled widespread anti-war protests and dissent.",
+      "notes": "“African Americans suffered casualty rates 30 % higher than whites in 1965.” – C. Appy, Working-Class War (1993) p. 91.",
+      "x": 572,
+      "y": 380
+    },
+    {
+      "id": "8786119b-db1a-4416-8b46-714eba69082c",
+      "label": "Dense jungle terrain favored small-unit ambushes over conventional battles.",
+      "notes": "“Heavy canopy often rendered sensors and bombs useless.” – J. Prados, Vietnam: The History (2009) p. 301.",
+      "x": 1412,
+      "y": 380
+    },
+    {
+      "id": "7181bb22-89a2-4099-9e30-be1b0dcf5120",
+      "label": "Ho Chi Minh Trail ensured continuous infiltration and resupply.",
+      "notes": "“Despite bombing, 12,000 tons moved monthly along the trail.” – J. S. Moyar, Triumph Forsaken (2006) p. 343.",
+      "x": 1132,
+      "y": 380
+    },
+    {
+      "id": "f91155aa-6fdf-4228-8898-a2a7aa3af010",
+      "label": "Patronage networks siphoned U.S. aid into private coffers.",
+      "notes": "“Province chiefs skimmed payoffs, leaving soldiers unpaid and demoralized.” – F. Logevall, Embers of War (2012) p. 731.",
+      "x": 1972,
+      "y": 392
+    },
+    {
+      "id": "1e7917db-1aa7-4ac8-bcd2-a728af617918",
+      "label": "Religious and ethnic divisions undermined Saigon's legitimacy among villagers.",
+      "notes": "“Discontent among Buddhists exploded in the 1963 self-immolations.” – S. Karnow, Vietnam: A History (1983) p. 283.",
+      "x": 1692,
+      "y": 380
+    },
+    {
+      "id": "e15a4390-254d-4a8c-9481-7a70977a39bd",
+      "label": "Fear of Chinese intervention deterred U.S. invasion of North Vietnam.",
+      "notes": "“Johnson asked, ‘Are we prepared to go to war with China again?’” – R. McNamara, In Retrospect (1995) p. 188.",
+      "x": 292,
+      "y": 380
+    },
+    {
+      "id": "28f0c71d-e5c2-4a21-bfd3-ea2f310c957f",
+      "label": "Civilian casualty concerns restricted bombing target selection lists.",
+      "notes": "“Target lists required White House approval to avoid ‘headline shock.’” – L. Sorley, A Better War (1999) p. 52.",
+      "x": 12,
+      "y": 380
+    },
+    {
+      "id": "f633791a-06b7-46d1-81aa-6fd3f831246b",
+      "label": "Portable video cameras enabled real-time battlefield reporting.",
+      "notes": "“CBS crews lugged 16-mm cameras straight into firefights.” – D. Culbert, The Powers of Television (1997) p. 214.",
+      "x": 852,
+      "y": 576
+    },
+    {
+      "id": "f53d3bf8-ee67-487f-aa24-2b1e4de15433",
+      "label": "College deferments exempted middle-class youths, burdening minorities disproportionately.",
+      "notes": "“The draft became ‘a lottery the poor always lost.’” – D. Cortright, Soldiers in Revolt (1975) p. 42.",
+      "x": 572,
+      "y": 576
+    },
+    {
+      "id": "1840ed75-7b7a-413c-9668-a0c6d8beaffb",
+      "label": "Tropical climate and foliage limited aerial reconnaissance effectiveness.",
+      "notes": "“‘Triple-canopy jungle’ hid movement even from infrared sensors.” – T. R. Searle, It Seemed Like a Good Idea (2014) p. 122.",
+      "x": 1412,
+      "y": 576
+    },
+    {
+      "id": "a564fb70-2582-4d74-bcf7-e3539b6815c0",
+      "label": "Laos and Cambodia's neutrality shielded the Trail from direct attack.",
+      "notes": "“The Trail snaked through ‘neutral’ territory the U.S. hesitated to invade.” – T. Anderson, War That Never Ends (2014) p. 67.",
+      "x": 1132,
+      "y": 576
+    },
+    {
+      "id": "5d22cfbe-622e-4120-99b1-53c93376d266",
+      "label": "French colonial legacy preserved entrenched elite power structures.",
+      "notes": "“Colonial mandarins simply swapped Tricolore for Stars and Stripes.” – P. Goscha, Vietnam: A New History (2016) p. 249.",
+      "x": 1972,
+      "y": 576
+    },
+    {
+      "id": "e66bfa58-430e-4a10-ac03-7cb5414508dc",
+      "label": "Buddhist majority resented Catholic-dominated Diem regime policies.",
+      "notes": "“Diem’s regime appointed Catholics to 80 % of provincial posts.” – G. Kolko, Anatomy of a War (1985) p. 56.",
+      "x": 1692,
+      "y": 576
+    },
+    {
+      "id": "4c73e310-d2c8-4a61-8bcf-786e2dc93f3c",
+      "label": "Memories of Korean War escalations haunted Johnson's advisors.",
+      "notes": "“The specter of 300,000 Chinese volunteers loomed large in 1965 briefings.” – L. B. Johnson, The Vantage Point (1971) p. 500.",
+      "x": 292,
+      "y": 576
+    },
+    {
+      "id": "acdce807-7b1e-4c14-8022-075659daea11",
+      "label": "International media outcry threatened American global moral standing.",
+      "notes": "“Bombing villagers risked making America ‘look like the Nazis,’ advisors warned.” – N. Sheehan, A Bright Shining Lie (1988) p. 460.",
+      "x": 12,
+      "y": 576
+    },
+    {
+      "id": "63602bee-9eb6-487f-844a-dd2bde8d9613",
+      "label": "Lightweight 16mm film technology became mainstream by the 1960s.",
+      "notes": "“The compact Arriflex 16BL debuted in 1965, revolutionizing field reporting.” – J. Ellis, Seeing Things (2000) p. 98.",
+      "x": 852,
+      "y": 772
+    },
+    {
+      "id": "65f7de30-7249-4743-a021-c6ec06aae1ed",
+      "label": "Cold War educational priorities shaped draft deferment policies.",
+      "notes": "“The National Defense Education Act prioritized college deferments to grow scientists.” – A. Patterson, Cold War Education (2007) p. 112.",
+      "x": 572,
+      "y": 772
+    },
+    {
+      "id": "04f2ca0c-a608-4fc3-bea7-6f7f7f1d93c8",
+      "label": "Monsoon rainfall fostered year-round dense triple-canopy vegetation.",
+      "notes": "“Year-round rainfall nurtured foliage that regrew within weeks of defoliation.” – S. Buckingham, Nam Environment (1999) p. 73.",
+      "x": 1412,
+      "y": 772
+    },
+    {
+      "id": "9996029d-e02b-4195-af2e-c3275a38c4ca",
+      "label": "Geneva Accords of 1954 recognized Laos and Cambodia’s neutrality.",
+      "notes": "“Articles 14-17 guaranteed Laos and Cambodia’s neutrality.” – W. Rust, Before the Quagmire (2012) p. 23.",
+      "x": 1132,
+      "y": 772
+    },
+    {
+      "id": "12c97119-3c08-404e-851a-e40bfa0405f8",
+      "label": "Colonial tax farms survived into the independent South Vietnamese state.",
+      "notes": "“The colonial tax farms survived into the Diem era.” – D. Marr, Vietnam 1945 (1995) p. 410.",
+      "x": 1972,
+      "y": 772
+    },
+    {
+      "id": "d4f039a2-8899-478f-a6c1-c19f740f1270",
+      "label": "Ngo Dinh Diem favored Catholic refugees in land distribution.",
+      "notes": "“Diem allocated land titles overwhelmingly to Catholic refugees.” – J. Miller, Diem's Final Failure (2013) p. 29.",
+      "x": 1692,
+      "y": 772
+    },
+    {
+      "id": "a476c05a-8e05-4ed8-bb8a-2e08253f1a9d",
+      "label": "Chinese troop intervention in 1950 shaped Pentagon planning fears.",
+      "notes": "“Fears of ‘another Yalu River surprise’ shaped Pentagon planning.” – M. Lawrence, Assuming the Burden (2017) p. 344.",
+      "x": 292,
+      "y": 772
+    },
+    {
+      "id": "10fef109-59a6-412e-a79c-1f44e39fdda9",
+      "label": "Post-WWII human-rights norms emphasized civilian protection in warfare.",
+      "notes": "“Geneva Conventions of 1949 redefined civilian immunity in war.” – G. Best, War and Law Since 1945 (1994) p. 136.",
+      "x": 12,
+      "y": 772
+    }
+  ],
+  "edges": [
+    {
+      "source": "5c4641b9-c7fd-4908-9520-9dbf8df9b5c5",
+      "target": "b102b55e-803b-4578-9715-b389d71d55ab"
+    },
+    {
+      "source": "8d8d83a9-49ca-4034-9e99-80298ec4f20f",
+      "target": "b102b55e-803b-4578-9715-b389d71d55ab"
+    },
+    {
+      "source": "7966b23f-c7ca-4390-888c-2531f4c60b2a",
+      "target": "b102b55e-803b-4578-9715-b389d71d55ab"
+    },
+    {
+      "source": "edc93122-8e67-40a7-b296-0fd8426b90a7",
+      "target": "b102b55e-803b-4578-9715-b389d71d55ab"
+    },
+    {
+      "source": "1f529e64-b467-46ea-a705-9b3c30ac564f",
+      "target": "5c4641b9-c7fd-4908-9520-9dbf8df9b5c5"
+    },
+    {
+      "source": "62370618-2d8f-4bf6-b11f-c639d3a66956",
+      "target": "5c4641b9-c7fd-4908-9520-9dbf8df9b5c5"
+    },
+    {
+      "source": "8786119b-db1a-4416-8b46-714eba69082c",
+      "target": "8d8d83a9-49ca-4034-9e99-80298ec4f20f"
+    },
+    {
+      "source": "7181bb22-89a2-4099-9e30-be1b0dcf5120",
+      "target": "8d8d83a9-49ca-4034-9e99-80298ec4f20f"
+    },
+    {
+      "source": "f91155aa-6fdf-4228-8898-a2a7aa3af010",
+      "target": "7966b23f-c7ca-4390-888c-2531f4c60b2a"
+    },
+    {
+      "source": "1e7917db-1aa7-4ac8-bcd2-a728af617918",
+      "target": "7966b23f-c7ca-4390-888c-2531f4c60b2a"
+    },
+    {
+      "source": "e15a4390-254d-4a8c-9481-7a70977a39bd",
+      "target": "edc93122-8e67-40a7-b296-0fd8426b90a7"
+    },
+    {
+      "source": "28f0c71d-e5c2-4a21-bfd3-ea2f310c957f",
+      "target": "edc93122-8e67-40a7-b296-0fd8426b90a7",
+      "confidence": "medium"
+    },
+    {
+      "source": "f633791a-06b7-46d1-81aa-6fd3f831246b",
+      "target": "1f529e64-b467-46ea-a705-9b3c30ac564f"
+    },
+    {
+      "source": "f53d3bf8-ee67-487f-aa24-2b1e4de15433",
+      "target": "62370618-2d8f-4bf6-b11f-c639d3a66956"
+    },
+    {
+      "source": "1840ed75-7b7a-413c-9668-a0c6d8beaffb",
+      "target": "8786119b-db1a-4416-8b46-714eba69082c"
+    },
+    {
+      "source": "a564fb70-2582-4d74-bcf7-e3539b6815c0",
+      "target": "7181bb22-89a2-4099-9e30-be1b0dcf5120"
+    },
+    {
+      "source": "5d22cfbe-622e-4120-99b1-53c93376d266",
+      "target": "f91155aa-6fdf-4228-8898-a2a7aa3af010"
+    },
+    {
+      "source": "e66bfa58-430e-4a10-ac03-7cb5414508dc",
+      "target": "1e7917db-1aa7-4ac8-bcd2-a728af617918"
+    },
+    {
+      "source": "4c73e310-d2c8-4a61-8bcf-786e2dc93f3c",
+      "target": "e15a4390-254d-4a8c-9481-7a70977a39bd"
+    },
+    {
+      "source": "acdce807-7b1e-4c14-8022-075659daea11",
+      "target": "28f0c71d-e5c2-4a21-bfd3-ea2f310c957f",
+      "confidence": "medium"
+    },
+    {
+      "source": "63602bee-9eb6-487f-844a-dd2bde8d9613",
+      "target": "f633791a-06b7-46d1-81aa-6fd3f831246b"
+    },
+    {
+      "source": "65f7de30-7249-4743-a021-c6ec06aae1ed",
+      "target": "f53d3bf8-ee67-487f-aa24-2b1e4de15433"
+    },
+    {
+      "source": "04f2ca0c-a608-4fc3-bea7-6f7f7f1d93c8",
+      "target": "1840ed75-7b7a-413c-9668-a0c6d8beaffb"
+    },
+    {
+      "source": "9996029d-e02b-4195-af2e-c3275a38c4ca",
+      "target": "a564fb70-2582-4d74-bcf7-e3539b6815c0"
+    },
+    {
+      "source": "12c97119-3c08-404e-851a-e40bfa0405f8",
+      "target": "5d22cfbe-622e-4120-99b1-53c93376d266"
+    },
+    {
+      "source": "d4f039a2-8899-478f-a6c1-c19f740f1270",
+      "target": "e66bfa58-430e-4a10-ac03-7cb5414508dc"
+    },
+    {
+      "source": "a476c05a-8e05-4ed8-bb8a-2e08253f1a9d",
+      "target": "4c73e310-d2c8-4a61-8bcf-786e2dc93f3c"
+    },
+    {
+      "source": "10fef109-59a6-412e-a79c-1f44e39fdda9",
+      "target": "acdce807-7b1e-4c14-8022-075659daea11"
+    }
+  ]
+}

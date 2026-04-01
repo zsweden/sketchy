@@ -1,0 +1,370 @@
+{
+  "name": "Untitled Diagram",
+  "framework": "crt",
+  "direction": "BT",
+  "showGrid": true,
+  "version": 2,
+  "createdAt": "2026-03-29T00:54:26.447Z",
+  "nodes": [
+    {
+      "id": "04103aaf-6e08-4349-9f34-41426b15426b",
+      "label": "Hitler appointed Chancellor 1933",
+      "isUDE": true,
+      "notes": "30 Jan 1933 Hindenburg swore in Hitler as Reichskanzler, ending Weimar parliamentary rule. Source: Ian Kershaw, Hitler 1933-45, p.368.",
+      "x": 1644.857142857143,
+      "y": 752
+    },
+    {
+      "id": "e950248c-a768-4be5-bce7-7badb5ce1dd6",
+      "label": "Papen & elite intrigue",
+      "notes": "Vice-Chancellor Franz von Papen conspired with elites (e.g., Schleicher, Hugenberg) Nov 1932–Jan 1933 to place Hitler in a cabinet they thought controllable. Source: R. Evans, The Third Reich in Power, pp.34-36.",
+      "x": 734,
+      "y": 924
+    },
+    {
+      "id": "d177f59e-90e0-44a2-b46c-2c6b46f15480",
+      "label": "Conservative elites seek authoritarian solution",
+      "notes": "Conservative industrialists (Krupp, Thyssen) and DNVP figures petitioned Hindenburg in 1932 for an authoritarian government to curb labour unrest and communism. Source: H. Mommsen, Rise & Fall of Weimar Democracy, p.275.",
+      "x": 758,
+      "y": 1072
+    },
+    {
+      "id": "2341960e-5b83-477c-96b1-c33ef2efd57c",
+      "label": "Underestimate Hitler controllability",
+      "notes": "Cabinet deal limited Nazi ministers to three; Papen boasted to Hindenburg, \"We've hired him.\" Source: W. Shirer, Rise and Fall of the Third Reich, p.190; Kershaw, Hitler 1889-1936, p.458.",
+      "x": 12,
+      "y": 1072
+    },
+    {
+      "id": "e101183c-d1eb-4afa-92bd-19afa638895a",
+      "label": "President Hindenburg aging",
+      "notes": "By 1932 President Hindenburg (age 85) suffered memory lapses and increasingly relied on his son Oskar and advisers for decisions. Source: J. Wheeler-Bennett, Hindenburg, pp.480-485.",
+      "x": 1038,
+      "y": 1072
+    },
+    {
+      "id": "032c1e4d-59cf-4f3c-bbe2-6e894dd18ad3",
+      "label": "Article 48 emergency powers",
+      "notes": "Article 48 of the 1919 constitution allowed rule by decree; it was invoked 66 times in 1932 alone. Source: E. Kolb, The Weimar Republic, p.94.",
+      "x": 292,
+      "y": 1088
+    },
+    {
+      "id": "83e8d52b-5530-4714-9251-224fadc2a917",
+      "label": "Weimar political fragmentation",
+      "notes": "Reichstag splintered among 12+ parties; six national elections in 1928-32 failed to yield a stable coalition. Source: R. Evans, The Coming of the Third Reich, ch.4.",
+      "x": 372,
+      "y": 1244
+    },
+    {
+      "id": "d7bc0d7a-17ae-41e3-ba92-29f4875aee13",
+      "label": "Weak Weimar constitution",
+      "notes": "Weimar Constitution's proportional system fostered instability; civil rights could be suspended under Art.48. Source: Mommsen, Weimar Republic, pp.31-33.",
+      "x": 92,
+      "y": 1244
+    },
+    {
+      "id": "231374ac-f3b3-4b93-9ed6-e4f4b05e661b",
+      "label": "Nazi electoral gains 1932",
+      "notes": "NSDAP won 37.4% (July 1932) and 33.1% (Nov 1932), becoming largest Reichstag bloc with 196 then 196 seats. Source: Reichstagswahlergebnisse; Evans, Coming…, p.266.",
+      "x": 1644.857142857143,
+      "y": 1244
+    },
+    {
+      "id": "6b54ac2d-134c-4e0f-9d34-2752a3ae376d",
+      "label": "Public disillusion with democracy",
+      "notes": "In 1932 over 60% of votes went to anti-system parties (NSDAP+KPD), signalling massive disillusion with democracy. Source: Falter & Hänisch, Electoral Studies 1990.",
+      "x": 2112,
+      "y": 1392
+    },
+    {
+      "id": "9aec4eac-d311-46e4-9a3b-93792e41a9f7",
+      "label": "Great Depression unemployment",
+      "notes": "Unemployment peaked at 6 million (≈30% workforce) in early 1932 due to the Great Depression. Source: G. Bry, Wages in Germany 1871-1945.",
+      "x": 1832,
+      "y": 1564
+    },
+    {
+      "id": "3702bd14-fc41-450a-b2bd-1570dd27d904",
+      "label": "Versailles treaty resentment",
+      "notes": "Versailles Treaty (1919) imposed £6.6bn reparations, territorial losses, and the 'war guilt' clause, fuelling national resentment. Source: S. Marks, The Illusion of Peace, p.228.",
+      "x": 2392,
+      "y": 1564
+    },
+    {
+      "id": "b7930cb8-26b5-485b-b9b6-b0ce83893d14",
+      "label": "Fear of communist revolution",
+      "notes": "KPD membership reached 360,000 by 1932; rising strikes and rhetoric of revolution alarmed middle-class Germans. Source: K. McDermott, German Communism 1919-1945, p.112.",
+      "x": 822,
+      "y": 1392
+    },
+    {
+      "id": "b97ba94d-681b-47d9-8331-13fa884a2a22",
+      "label": "Nazi propaganda & rallies",
+      "notes": "Propaganda chief Goebbels staged 5,000 rallies in 1932 and exploited radio, film, and airplanes to reach voters. Source: D. Welch, Propaganda and the German Cinema, p.22.",
+      "x": 1102,
+      "y": 1404
+    },
+    {
+      "id": "d37d345e-e0f9-47ef-895a-47486a86fa56",
+      "label": "SA intimidation violence",
+      "notes": "SA storm-trooper ranks swelled to 400,000 by mid-1932; street violence caused ~300 deaths Jan-Jun 1932. Source: Evans, Coming…, p.244.",
+      "x": 1662,
+      "y": 1392
+    },
+    {
+      "id": "a25c0cd6-d1de-4541-9f9f-4ffd76f3e2d0",
+      "label": "Industrialist funding Nazis",
+      "notes": "The 'Keppler Circle' of industrialists funneled millions of Reichsmarks to the NSDAP after Feb 1932 meeting at Hermann Göring's house. Source: H. Turner, German Big Business and the Rise of Hitler, p.150.",
+      "x": 1102,
+      "y": 1564
+    },
+    {
+      "id": "bafc7388-8a8a-42a4-8dda-7fba76361116",
+      "label": "Anti-Semitic scapegoating",
+      "notes": "Nazi papers blamed Jews for Germany's ills; Der Stürmer circulation hit 480,000 in 1932, normalizing antisemitic scapegoating. Source: S. Friedländer, Nazi Germany & the Jews, Vol.1, p.89.",
+      "x": 1382,
+      "y": 1392
+    },
+    {
+      "id": "4b905227-e2da-462d-9e60-14505a21d1e0",
+      "label": "Reichstag Fire Decree Feb 1933",
+      "notes": "28 Feb 1933 decree “For the Protection of People and State” suspended civil liberties, enabling mass arrests of ≈10,000 Communists. Source: I. Kershaw, Hitler 1889-1936, p.471-475.",
+      "x": 1644.857142857143,
+      "y": 604
+    },
+    {
+      "id": "4e3093bf-c9aa-417d-82e4-5b7fe2ae8828",
+      "label": "Enabling Act Mar 1933",
+      "notes": "23 Mar 1933 Reichstag passed Ermächtigungsgesetz, transferring legislative power to cabinet for four years; vote 444-94 after exclusion of KPD deputies and SA intimidation. Source: R. Evans, Coming of the Third Reich, p.339.",
+      "x": 1644.857142857143,
+      "y": 456
+    },
+    {
+      "id": "46c335f7-74be-48fe-9c4b-ccbae0dc0544",
+      "label": "Gleichschaltung 1933",
+      "notes": "March–July 1933 ‘coordination’ laws: Länder governments dissolved; trade unions absorbed into DAF (2 May); all parties except NSDAP banned (14 Jul). Source: Evans, Third Reich in Power, p.3-11.",
+      "x": 1644.857142857143,
+      "y": 308
+    },
+    {
+      "id": "308f2f2c-01e9-4e3f-9f04-d4fbd4ec5b6d",
+      "label": "Night of Long Knives 1934",
+      "notes": "30 Jun–2 Jul 1934 purge eliminated SA leadership & conservative critics (≈85 killed); secured army’s loyalty. Source: Kershaw, Hitler 1936-45, p.155-162.",
+      "x": 1644.857142857143,
+      "y": 160
+    },
+    {
+      "id": "44d77a41-8564-4cf7-a4bf-b18802217fbd",
+      "label": "Hindenburg dies Aug 1934",
+      "notes": "2 Aug 1934 President Hindenburg died, removing the last constitutional check on Hitler. Source: J. Wheeler-Bennett, Hindenburg, p.537-540.",
+      "x": 1364.857142857143,
+      "y": 160
+    },
+    {
+      "id": "447f990b-c333-4aa6-9e21-e963074739f5",
+      "label": "Hitler becomes Führer 1934",
+      "isUDE": true,
+      "notes": "2 Aug 1934 offices of President and Chancellor merged; army swore personal oath to Hitler, finalising dictatorship. Source: W. Shirer, Rise and Fall of the Third Reich, p.206.",
+      "x": 1604.857142857143,
+      "y": 12
+    },
+    {
+      "id": "a3ba8231-f09c-45cb-b0a7-9cae8169b080",
+      "label": "US loans withdrawn 1929",
+      "notes": "After Wall St. crash, American banks recalled short-term credits extended under Dawes/Young Plans; ≈RM 3 billion left Germany 1929-31. Source: Harold James, The German Slump, ch.3–4.",
+      "x": 1552,
+      "y": 1712
+    },
+    {
+      "id": "e580051b-0b5a-4ce2-b73a-5c1442bfce81",
+      "label": "Global protectionism 1930-32",
+      "notes": "Smoot-Hawley Tariff (US 1930) and British Imperial Preference (1932) cut German exports by ≈40 %. Source: Adam Tooze, The Deluge, p.212-219.",
+      "x": 2112,
+      "y": 1712
+    },
+    {
+      "id": "bd427c44-7a11-488d-b177-607f8ba18961",
+      "label": "Ruhr occupation 1923",
+      "notes": "French–Belgian occupation and passive resistance cost Germany ≈2 % of GDP, fueling nationalist outrage. Source: Sally Marks, The Illusion of Peace, p.206-210.",
+      "x": 2392,
+      "y": 1712
+    },
+    {
+      "id": "4fcd8d72-75e0-4883-b601-1cf5a24beed7",
+      "label": "Comintern splits German left",
+      "notes": "1928-34 ‘social-fascism’ line ordered KPD to fight SPD, blocking united anti-Nazi front. Source: Eve Rosenhaft, Beating the Fascists?, p.45-52.",
+      "x": 372,
+      "y": 1392
+    },
+    {
+      "id": "8e112614-793c-4112-a0fd-5382f4ebbb07",
+      "label": "Allied passivity to Weimar",
+      "notes": "Britain & France viewed Papen/Schleicher as anti-communist bulwarks and voiced little protest against decree rule 1932. Source: Zara Steiner, Triumph of the Dark, p.150-158.",
+      "x": 652,
+      "y": 1244
+    },
+    {
+      "id": "d9289dd8-bc9f-48c5-b224-d7ab980aa4c0",
+      "label": "League impotence 1932-34",
+      "notes": "Failure of Disarmament Conf. & Manchuria crisis exposed League weakness, undermining faith in liberal internationalism. Source: Patricia Clavin, Securing the World Economy, p.93-99.",
+      "x": 2112,
+      "y": 1564
+    },
+    {
+      "id": "5e1d2ae8-ebb0-4e48-b85a-a22025972e55",
+      "label": "Gold-standard austerity",
+      "notes": "Fear of capital flight kept Germany on deflationary policies (Brüning), worsening unemployment 1930-32. Source: Barry Eichengreen, Golden Fetters, ch.10.",
+      "x": 1832,
+      "y": 1712
+    }
+  ],
+  "edges": [
+    {
+      "source": "9aec4eac-d311-46e4-9a3b-93792e41a9f7",
+      "target": "6b54ac2d-134c-4e0f-9d34-2752a3ae376d"
+    },
+    {
+      "source": "3702bd14-fc41-450a-b2bd-1570dd27d904",
+      "target": "6b54ac2d-134c-4e0f-9d34-2752a3ae376d"
+    },
+    {
+      "source": "bafc7388-8a8a-42a4-8dda-7fba76361116",
+      "target": "231374ac-f3b3-4b93-9ed6-e4f4b05e661b",
+      "confidence": "medium"
+    },
+    {
+      "source": "6b54ac2d-134c-4e0f-9d34-2752a3ae376d",
+      "target": "231374ac-f3b3-4b93-9ed6-e4f4b05e661b"
+    },
+    {
+      "source": "b97ba94d-681b-47d9-8331-13fa884a2a22",
+      "target": "231374ac-f3b3-4b93-9ed6-e4f4b05e661b"
+    },
+    {
+      "source": "d37d345e-e0f9-47ef-895a-47486a86fa56",
+      "target": "231374ac-f3b3-4b93-9ed6-e4f4b05e661b",
+      "confidence": "medium"
+    },
+    {
+      "source": "9aec4eac-d311-46e4-9a3b-93792e41a9f7",
+      "target": "231374ac-f3b3-4b93-9ed6-e4f4b05e661b",
+      "confidence": "medium"
+    },
+    {
+      "source": "b7930cb8-26b5-485b-b9b6-b0ce83893d14",
+      "target": "231374ac-f3b3-4b93-9ed6-e4f4b05e661b"
+    },
+    {
+      "source": "a25c0cd6-d1de-4541-9f9f-4ffd76f3e2d0",
+      "target": "b97ba94d-681b-47d9-8331-13fa884a2a22",
+      "confidence": "medium"
+    },
+    {
+      "source": "83e8d52b-5530-4714-9251-224fadc2a917",
+      "target": "d177f59e-90e0-44a2-b46c-2c6b46f15480"
+    },
+    {
+      "source": "83e8d52b-5530-4714-9251-224fadc2a917",
+      "target": "032c1e4d-59cf-4f3c-bbe2-6e894dd18ad3"
+    },
+    {
+      "source": "d7bc0d7a-17ae-41e3-ba92-29f4875aee13",
+      "target": "032c1e4d-59cf-4f3c-bbe2-6e894dd18ad3"
+    },
+    {
+      "source": "b7930cb8-26b5-485b-b9b6-b0ce83893d14",
+      "target": "d177f59e-90e0-44a2-b46c-2c6b46f15480"
+    },
+    {
+      "source": "231374ac-f3b3-4b93-9ed6-e4f4b05e661b",
+      "target": "d177f59e-90e0-44a2-b46c-2c6b46f15480"
+    },
+    {
+      "source": "d177f59e-90e0-44a2-b46c-2c6b46f15480",
+      "target": "e950248c-a768-4be5-bce7-7badb5ce1dd6"
+    },
+    {
+      "source": "2341960e-5b83-477c-96b1-c33ef2efd57c",
+      "target": "e950248c-a768-4be5-bce7-7badb5ce1dd6"
+    },
+    {
+      "source": "e101183c-d1eb-4afa-92bd-19afa638895a",
+      "target": "e950248c-a768-4be5-bce7-7badb5ce1dd6",
+      "confidence": "medium"
+    },
+    {
+      "source": "032c1e4d-59cf-4f3c-bbe2-6e894dd18ad3",
+      "target": "e950248c-a768-4be5-bce7-7badb5ce1dd6"
+    },
+    {
+      "source": "e950248c-a768-4be5-bce7-7badb5ce1dd6",
+      "target": "04103aaf-6e08-4349-9f34-41426b15426b"
+    },
+    {
+      "source": "231374ac-f3b3-4b93-9ed6-e4f4b05e661b",
+      "target": "04103aaf-6e08-4349-9f34-41426b15426b",
+      "confidence": "medium"
+    },
+    {
+      "source": "04103aaf-6e08-4349-9f34-41426b15426b",
+      "target": "4b905227-e2da-462d-9e60-14505a21d1e0"
+    },
+    {
+      "source": "4b905227-e2da-462d-9e60-14505a21d1e0",
+      "target": "4e3093bf-c9aa-417d-82e4-5b7fe2ae8828"
+    },
+    {
+      "source": "4e3093bf-c9aa-417d-82e4-5b7fe2ae8828",
+      "target": "46c335f7-74be-48fe-9c4b-ccbae0dc0544"
+    },
+    {
+      "source": "46c335f7-74be-48fe-9c4b-ccbae0dc0544",
+      "target": "308f2f2c-01e9-4e3f-9f04-d4fbd4ec5b6d",
+      "confidence": "medium"
+    },
+    {
+      "source": "308f2f2c-01e9-4e3f-9f04-d4fbd4ec5b6d",
+      "target": "447f990b-c333-4aa6-9e21-e963074739f5",
+      "confidence": "medium"
+    },
+    {
+      "source": "44d77a41-8564-4cf7-a4bf-b18802217fbd",
+      "target": "447f990b-c333-4aa6-9e21-e963074739f5"
+    },
+    {
+      "source": "a3ba8231-f09c-45cb-b0a7-9cae8169b080",
+      "target": "9aec4eac-d311-46e4-9a3b-93792e41a9f7"
+    },
+    {
+      "source": "e580051b-0b5a-4ce2-b73a-5c1442bfce81",
+      "target": "9aec4eac-d311-46e4-9a3b-93792e41a9f7",
+      "confidence": "medium"
+    },
+    {
+      "source": "5e1d2ae8-ebb0-4e48-b85a-a22025972e55",
+      "target": "9aec4eac-d311-46e4-9a3b-93792e41a9f7",
+      "confidence": "medium"
+    },
+    {
+      "source": "bd427c44-7a11-488d-b177-607f8ba18961",
+      "target": "3702bd14-fc41-450a-b2bd-1570dd27d904",
+      "confidence": "medium"
+    },
+    {
+      "source": "4fcd8d72-75e0-4883-b601-1cf5a24beed7",
+      "target": "83e8d52b-5530-4714-9251-224fadc2a917",
+      "confidence": "medium"
+    },
+    {
+      "source": "8e112614-793c-4112-a0fd-5382f4ebbb07",
+      "target": "d177f59e-90e0-44a2-b46c-2c6b46f15480",
+      "confidence": "low"
+    },
+    {
+      "source": "d9289dd8-bc9f-48c5-b224-d7ab980aa4c0",
+      "target": "6b54ac2d-134c-4e0f-9d34-2752a3ae376d",
+      "confidence": "low"
+    }
+  ]
+}

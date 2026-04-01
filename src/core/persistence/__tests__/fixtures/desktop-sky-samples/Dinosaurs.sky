@@ -1,0 +1,381 @@
+{
+  "name": "Untitled Diagram",
+  "framework": "crt",
+  "direction": "BT",
+  "showGrid": true,
+  "version": 2,
+  "createdAt": "2026-03-29T01:01:47.184Z",
+  "nodes": [
+    {
+      "id": "5eb387c5-f6fb-4fd2-ad5b-d62bdde94ba3",
+      "label": "Asteroid impact",
+      "notes": "• Chicxulub crater ~180 km diameter confirmed in Yucatán (Hildebrand et al., 1991)\n• Global iridium spike at K–Pg boundary (Alvarez et al., 1980)",
+      "x": 1322,
+      "y": 1640
+    },
+    {
+      "id": "bcd94ae6-083d-481c-b2e7-fd678e0e4c90",
+      "label": "Massive volcanism",
+      "notes": "• Deccan Traps erupted ≈1 M km³ basalt 66 Ma (Self et al., 2006)\n• Basalt volatiles released SO₂/CO₂ to atmosphere (Self et al., 2008)",
+      "x": 222,
+      "y": 1344
+    },
+    {
+      "id": "ce56f68e-2cbf-41a3-839e-30361b64afc0",
+      "label": "Dust & aerosols in air",
+      "notes": "• Soot and dust layer found in boundary clay (Schulte et al., 2010)\n• Sulfate aerosols from volcanic degassing modelled (Saunders & Reichow, 2009)",
+      "x": 1302,
+      "y": 1196
+    },
+    {
+      "id": "125cb7f9-a9f4-463a-a4ce-cb995e3d2584",
+      "label": "Sunlight blocked",
+      "notes": "• Climate models show ≥15 W m⁻² insolation drop post-impact (Toon et al., 1997)\n• Dense spherule clouds estimated to block sunlight (Pope, 2002)",
+      "x": 1302,
+      "y": 1048
+    },
+    {
+      "id": "72466b5c-ae21-4a63-85bf-b73d11af75e6",
+      "label": "Global cooling & darkness",
+      "notes": "• δ¹⁸O data indicate ~7 °C ocean cooling (Barron, 1983)\n• Impact-winter models simulate years-long darkness (Brugger et al., 2017)",
+      "x": 1302,
+      "y": 900
+    },
+    {
+      "id": "b0c7c385-615f-4b04-a1fb-1e6e781d76dd",
+      "label": "Photosynthesis drops",
+      "notes": "• Photosynthetic shutdown ≥80 % for months in simulations (Cockell, 1999)\n• \"Fern spike\" signals primary-productivity collapse (Vajda & McLoughlin, 2004)",
+      "x": 1302,
+      "y": 752
+    },
+    {
+      "id": "2d8b90f1-31c4-4ee4-ba88-9bfca691dfbe",
+      "label": "Plants die off",
+      "notes": "• Global pollen records show ~57 % plant extinction (Nichols & Johnson, 2008)\n• Boundary coal beds absent, indicating forest loss (Morgan et al., 2003)",
+      "x": 1344,
+      "y": 596
+    },
+    {
+      "id": "e8ceb54e-c2d0-4993-9115-07aea9c91093",
+      "label": "Herbivores starve",
+      "notes": "• Hadrosaur dental wear suggests food scarcity (Varricchio, 2001)\n• Herbivorous dinosaur diversity declined pre-boundary (Longrich et al., 2011)",
+      "x": 1344,
+      "y": 438
+    },
+    {
+      "id": "c557b5f1-5ea3-4a9f-99a8-8eb1f02c8b45",
+      "label": "Carnivores starve",
+      "notes": "• Trophic cascade models predict predator collapse after herbivore loss (Farquharson & Jackson, 2008)\n• Latest Maastrichtian theropod diversity drop (Longrich et al., 2011)",
+      "x": 1342,
+      "y": 314
+    },
+    {
+      "id": "4867e73e-ad1c-49ce-955e-2beb751d67ae",
+      "label": "Food chain collapses",
+      "notes": "• Marine plankton extinction up to 90 % (Hansen et al., 2004)\n• Food-web modelling shows systemic collapse at K–Pg (Dunne et al., 2014)",
+      "x": 1182,
+      "y": 160
+    },
+    {
+      "id": "23d372ab-0919-4f8d-b4ae-19507fbde53f",
+      "label": "Dinosaurs extinct",
+      "isUDE": true,
+      "notes": "• No non-avian dinosaur fossils above boundary layer (Fastovsky & Sheehan, 2005)\n• Iridium clay marks synchronous global extinction (Schulte et al., 2010)",
+      "x": 690,
+      "y": 24
+    },
+    {
+      "id": "718e9779-b90f-4201-a963-b1d28165ffd3",
+      "label": "Sea level falls",
+      "notes": "• Sequence stratigraphy indicates 100–150 m regression (Haq, 2014)\n• Drill-core data show exposed continental shelves (Miller et al., 2005)",
+      "x": 462,
+      "y": 1048
+    },
+    {
+      "id": "7cdb5b45-0348-48ae-ba2f-6b7f22ddddcd",
+      "label": "Coastal habitats lost",
+      "notes": "• Western Interior Seaway drained by late Maastrichtian (Kauffman & Hart, 1995)\n• Diversity drop in shallow-marine benthos (Royer et al., 2003)",
+      "x": 462,
+      "y": 900
+    },
+    {
+      "id": "9a3806a1-8428-4b2a-9f45-016706a2a04d",
+      "label": "Ecosystem stress",
+      "notes": "• Selective extinction patterns indicate chronic stress (Witts et al., 2016)\n• Carbon-cycle perturbations suggest productivity decline (Renne et al., 2013)",
+      "x": 422,
+      "y": 752
+    },
+    {
+      "id": "69725ce9-5d48-4d38-b5c0-db26102c036b",
+      "label": "Currents reconfigure",
+      "notes": "• Opening South Atlantic changed thermohaline circulation (Nunes & Norris, 2006)\n• Gateway reconfigurations modelled near K–Pg (Roberts et al., 2009)",
+      "x": 742,
+      "y": 900
+    },
+    {
+      "id": "bc905a5f-888e-44a2-ad7e-cb120abd2ded",
+      "label": "Long-term cooling",
+      "notes": "• Foraminiferal δ¹⁸O shows 4 °C cooling 73–66 Ma (Li & Keller, 1998)\n• High-latitude dinocyst shifts imply cooler climates (Brinkhuis et al., 1998)",
+      "x": 742,
+      "y": 752
+    },
+    {
+      "id": "ed4825d0-9292-47b5-9a0c-8d08f19b460b",
+      "label": "Vegetation shifts",
+      "notes": "• Leaf-margin analysis shows move to cooler-tolerant flora (Wilf et al., 2003)\n• Pollen assemblages turnover pre-boundary (Nichols & Sweet, 1993)",
+      "x": 742,
+      "y": 604
+    },
+    {
+      "id": "ca2a68be-d1ee-477d-9419-6a54b6284ea6",
+      "label": "Worldwide wildfires",
+      "notes": "• Thick global charcoal layer at boundary (Belcher et al., 2003)\n• Thermal radiation from ejecta re-entry could ignite forests (Clemens et al., 2002)",
+      "x": 1232,
+      "y": 1492
+    },
+    {
+      "id": "7645bcfb-1b52-49ad-9685-1ffc0b879da2",
+      "label": "Smoke & soot in air",
+      "notes": "• Soot globules identified in boundary clay (Wolbach et al., 1988)\n• Estimated soot mass ~10¹⁴ g (Belcher et al., 2010)",
+      "x": 1232,
+      "y": 1344
+    },
+    {
+      "id": "260e14db-a5a9-400d-8d19-c52beafebc57",
+      "label": "Methane release",
+      "notes": "• Carbon-isotope negative excursion hints at CH₄ release (Kump, 2011)\n• Evidence for hydrate destabilisation in sediments (McInerney & Wing, 2011)",
+      "x": 182,
+      "y": 1196
+    },
+    {
+      "id": "509b20c4-1ec4-4ac4-859f-436116034cd1",
+      "label": "Greenhouse warming",
+      "notes": "• PETM analog shows ~5 °C warming from CH₄ pulse (Zachos et al., 2005)\n• Methane-injection climate simulations support rapid warming (Beerling et al., 2002)",
+      "x": 182,
+      "y": 1048
+    },
+    {
+      "id": "9492987f-5692-40a1-964a-9cd9362df071",
+      "label": "Climate instability",
+      "notes": "• TEX⁸⁶ data record rapid warming then cooling (Hollis et al., 2019)\n• Pulsed Deccan CO₂ emissions suggest climate swings (Self et al., 2008)",
+      "x": 182,
+      "y": 900
+    },
+    {
+      "id": "37df6fb4-e74d-4c4b-bf2b-61af8bb29a53",
+      "label": "Dinosaur pathogen",
+      "notes": "• Pathogen extinction scenario proposed by George & Roth (1993)\n• Remains speculative; no direct fossil pathogens found (Fastovsky & Weishampel, 2009)",
+      "x": 292,
+      "y": 456
+    },
+    {
+      "id": "9066f418-e33e-44a0-8679-d835cca5d42c",
+      "label": "Widespread disease",
+      "notes": "• Modern avian malaria shows disease can decimate vertebrates (LaPointe et al., 2012)\n• Bone lesions in some dinosaur fossils interpreted as infection (Rothschild & Tanke, 2005)",
+      "x": 292,
+      "y": 308
+    },
+    {
+      "id": "bbbea201-077b-4132-a6ba-1e880599a91b",
+      "label": "Population decline",
+      "notes": "• Latest Maastrichtian diversity curves show decline (Fastovsky et al., 2012)\n• Thinner eggshells near boundary suggest stress (Jackson et al., 2010)",
+      "x": 252,
+      "y": 160
+    },
+    {
+      "id": "7b706bcd-abc9-4583-905c-9e109fc54e95",
+      "label": "Mammal radiation",
+      "notes": "• Multituberculate diversity spikes across K–Pg (Wilson et al., 2012)\n• Eutherian jaw fossils increase sharply (Clemens, 2013)",
+      "x": 12,
+      "y": 604
+    },
+    {
+      "id": "5c1e7c5a-e582-471f-8fed-8f912682154c",
+      "label": "Egg predation rises",
+      "notes": "• Mammal toothmarks on dinosaur eggs documented (Horner & Makela, 1979)\n• Nest site microvertebrate assemblages include mammal remains (Fiorillo, 1999)",
+      "x": 12,
+      "y": 456
+    },
+    {
+      "id": "6678066f-8fc1-4008-8d58-ed7e8c797e42",
+      "label": "Recruitment drops",
+      "notes": "• Fewer juvenile dinosaur fossils latest Maastrichtian (Longrich, 2014)\n• Nest abundance declines in uppermost Cretaceous strata (Larson et al., 2010)",
+      "x": 12,
+      "y": 308
+    },
+    {
+      "id": "20832936-6bf0-4dac-aa27-f38bb270c8c1",
+      "label": "Cosmic radiation",
+      "notes": "• ⁶⁰Fe peaks suggest nearby supernovae, though younger than K–Pg (Wallner et al., 2016)\n• GRB extinction models discuss late Cretaceous plausibility (Melott et al., 2004)",
+      "x": 1022,
+      "y": 1048
+    },
+    {
+      "id": "8cb1731d-81d7-4d20-ab7d-7ef158f82a44",
+      "label": "Ozone depletion",
+      "notes": "• Atmospheric modelling shows cosmic-ray NOx depletes 50 % ozone (Thomas et al., 2005)\n• Stratospheric chemistry studies support potential depletion (Halley & Allen, 2002)",
+      "x": 1022,
+      "y": 900
+    },
+    {
+      "id": "60bd558b-4682-4e7a-845b-01661646737e",
+      "label": "UV stress",
+      "notes": "• Elevated UV-B stunts plant growth and reproduction (Rozema et al., 2006)\n• Sporopollenin changes in K–Pg spores imply UV stress (Bercovici et al., 2009)",
+      "x": 1022,
+      "y": 752
+    }
+  ],
+  "edges": [
+    {
+      "source": "5eb387c5-f6fb-4fd2-ad5b-d62bdde94ba3",
+      "target": "ce56f68e-2cbf-41a3-839e-30361b64afc0"
+    },
+    {
+      "source": "bcd94ae6-083d-481c-b2e7-fd678e0e4c90",
+      "target": "ce56f68e-2cbf-41a3-839e-30361b64afc0",
+      "confidence": "medium"
+    },
+    {
+      "source": "ce56f68e-2cbf-41a3-839e-30361b64afc0",
+      "target": "125cb7f9-a9f4-463a-a4ce-cb995e3d2584"
+    },
+    {
+      "source": "125cb7f9-a9f4-463a-a4ce-cb995e3d2584",
+      "target": "72466b5c-ae21-4a63-85bf-b73d11af75e6"
+    },
+    {
+      "source": "72466b5c-ae21-4a63-85bf-b73d11af75e6",
+      "target": "b0c7c385-615f-4b04-a1fb-1e6e781d76dd"
+    },
+    {
+      "source": "b0c7c385-615f-4b04-a1fb-1e6e781d76dd",
+      "target": "2d8b90f1-31c4-4ee4-ba88-9bfca691dfbe"
+    },
+    {
+      "source": "2d8b90f1-31c4-4ee4-ba88-9bfca691dfbe",
+      "target": "e8ceb54e-c2d0-4993-9115-07aea9c91093"
+    },
+    {
+      "source": "e8ceb54e-c2d0-4993-9115-07aea9c91093",
+      "target": "c557b5f1-5ea3-4a9f-99a8-8eb1f02c8b45"
+    },
+    {
+      "source": "c557b5f1-5ea3-4a9f-99a8-8eb1f02c8b45",
+      "target": "4867e73e-ad1c-49ce-955e-2beb751d67ae"
+    },
+    {
+      "source": "4867e73e-ad1c-49ce-955e-2beb751d67ae",
+      "target": "23d372ab-0919-4f8d-b4ae-19507fbde53f"
+    },
+    {
+      "source": "718e9779-b90f-4201-a963-b1d28165ffd3",
+      "target": "7cdb5b45-0348-48ae-ba2f-6b7f22ddddcd",
+      "confidence": "medium"
+    },
+    {
+      "source": "7cdb5b45-0348-48ae-ba2f-6b7f22ddddcd",
+      "target": "9a3806a1-8428-4b2a-9f45-016706a2a04d",
+      "confidence": "medium"
+    },
+    {
+      "source": "9a3806a1-8428-4b2a-9f45-016706a2a04d",
+      "target": "4867e73e-ad1c-49ce-955e-2beb751d67ae",
+      "confidence": "medium"
+    },
+    {
+      "source": "69725ce9-5d48-4d38-b5c0-db26102c036b",
+      "target": "bc905a5f-888e-44a2-ad7e-cb120abd2ded",
+      "confidence": "medium"
+    },
+    {
+      "source": "bc905a5f-888e-44a2-ad7e-cb120abd2ded",
+      "target": "ed4825d0-9292-47b5-9a0c-8d08f19b460b",
+      "confidence": "medium"
+    },
+    {
+      "source": "ed4825d0-9292-47b5-9a0c-8d08f19b460b",
+      "target": "e8ceb54e-c2d0-4993-9115-07aea9c91093",
+      "confidence": "low"
+    },
+    {
+      "source": "5eb387c5-f6fb-4fd2-ad5b-d62bdde94ba3",
+      "target": "ca2a68be-d1ee-477d-9419-6a54b6284ea6",
+      "confidence": "medium"
+    },
+    {
+      "source": "ca2a68be-d1ee-477d-9419-6a54b6284ea6",
+      "target": "7645bcfb-1b52-49ad-9685-1ffc0b879da2",
+      "confidence": "medium"
+    },
+    {
+      "source": "7645bcfb-1b52-49ad-9685-1ffc0b879da2",
+      "target": "ce56f68e-2cbf-41a3-839e-30361b64afc0",
+      "confidence": "medium"
+    },
+    {
+      "source": "bcd94ae6-083d-481c-b2e7-fd678e0e4c90",
+      "target": "260e14db-a5a9-400d-8d19-c52beafebc57",
+      "confidence": "low"
+    },
+    {
+      "source": "260e14db-a5a9-400d-8d19-c52beafebc57",
+      "target": "509b20c4-1ec4-4ac4-859f-436116034cd1",
+      "confidence": "low"
+    },
+    {
+      "source": "509b20c4-1ec4-4ac4-859f-436116034cd1",
+      "target": "9492987f-5692-40a1-964a-9cd9362df071",
+      "confidence": "low"
+    },
+    {
+      "source": "9492987f-5692-40a1-964a-9cd9362df071",
+      "target": "9a3806a1-8428-4b2a-9f45-016706a2a04d",
+      "confidence": "low"
+    },
+    {
+      "source": "37df6fb4-e74d-4c4b-bf2b-61af8bb29a53",
+      "target": "9066f418-e33e-44a0-8679-d835cca5d42c",
+      "confidence": "low"
+    },
+    {
+      "source": "9066f418-e33e-44a0-8679-d835cca5d42c",
+      "target": "bbbea201-077b-4132-a6ba-1e880599a91b",
+      "confidence": "low"
+    },
+    {
+      "source": "bbbea201-077b-4132-a6ba-1e880599a91b",
+      "target": "23d372ab-0919-4f8d-b4ae-19507fbde53f",
+      "confidence": "low"
+    },
+    {
+      "source": "7b706bcd-abc9-4583-905c-9e109fc54e95",
+      "target": "5c1e7c5a-e582-471f-8fed-8f912682154c",
+      "confidence": "low"
+    },
+    {
+      "source": "5c1e7c5a-e582-471f-8fed-8f912682154c",
+      "target": "6678066f-8fc1-4008-8d58-ed7e8c797e42",
+      "confidence": "low"
+    },
+    {
+      "source": "6678066f-8fc1-4008-8d58-ed7e8c797e42",
+      "target": "bbbea201-077b-4132-a6ba-1e880599a91b",
+      "confidence": "low"
+    },
+    {
+      "source": "20832936-6bf0-4dac-aa27-f38bb270c8c1",
+      "target": "8cb1731d-81d7-4d20-ab7d-7ef158f82a44",
+      "confidence": "low"
+    },
+    {
+      "source": "8cb1731d-81d7-4d20-ab7d-7ef158f82a44",
+      "target": "60bd558b-4682-4e7a-845b-01661646737e",
+      "confidence": "low"
+    },
+    {
+      "source": "60bd558b-4682-4e7a-845b-01661646737e",
+      "target": "2d8b90f1-31c4-4ee4-ba88-9bfca691dfbe",
+      "confidence": "low"
+    }
+  ]
+}

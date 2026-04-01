@@ -72,9 +72,31 @@ describe('migrations', () => {
       };
 
       const result = migrate(v1Data);
-      expect(result.schemaVersion).toBe(3);
+      expect(result.schemaVersion).toBe(4);
       expect(result.settings).toMatchObject({ edgeRoutingMode: 'dynamic' });
       expect(result.edges[0]).toMatchObject({ confidence: 'high' });
+    });
+
+    it('normalizes legacy corner handles to explicit directional handles', () => {
+      const v3Data = {
+        schemaVersion: 3,
+        id: 'test',
+        name: 'Test',
+        frameworkId: 'crt',
+        settings: { layoutDirection: 'BT', showGrid: true, snapToGrid: false, edgeRoutingMode: 'fixed' },
+        nodes: [
+          { id: 'a', type: 'entity', position: { x: 0, y: 100 }, data: { label: 'A', tags: [], junctionType: 'or' } },
+          { id: 'b', type: 'entity', position: { x: 300, y: 0 }, data: { label: 'B', tags: [], junctionType: 'or' } },
+        ],
+        edges: [{ id: 'e1', source: 'a', target: 'b', sourceSide: 'topright', targetSide: 'topleft' }],
+      };
+
+      const result = migrate(v3Data);
+      expect(result.schemaVersion).toBe(4);
+      expect(result.edges[0]).toMatchObject({
+        sourceSide: 'topright-right',
+        targetSide: 'topleft-left',
+      });
     });
   });
 });

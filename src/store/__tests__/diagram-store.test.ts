@@ -321,7 +321,7 @@ describe('diagram store', () => {
 
     it('preserves stored fixed edge sides when loading a fixed diagram', () => {
       useDiagramStore.getState().loadDiagram({
-        schemaVersion: 3,
+        schemaVersion: 4,
         id: 'diagram-1',
         name: 'Loaded Diagram',
         frameworkId: 'crt',

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   getEdgeHandlePlacement,
+  getHandlePoint,
   getSideFromHandleId,
   getSourceHandleId,
   getTargetHandleId,
@@ -11,8 +12,8 @@ describe('getEdgeHandlePlacement', () => {
     expect(
       getEdgeHandlePlacement({ x: 0, y: 0 }, { x: 200, y: 50 }, 'TB'),
     ).toEqual({
-      sourceSide: 'bottomright',
-      targetSide: 'topleft',
+      sourceSide: 'bottomright-right',
+      targetSide: 'topleft-left',
     });
   });
 
@@ -20,8 +21,8 @@ describe('getEdgeHandlePlacement', () => {
     expect(
       getEdgeHandlePlacement({ x: 0, y: 0 }, { x: 40, y: 200 }, 'TB'),
     ).toEqual({
-      sourceSide: 'bottomright',
-      targetSide: 'topleft',
+      sourceSide: 'bottomright-bottom',
+      targetSide: 'topleft-top',
     });
   });
 
@@ -45,11 +46,22 @@ describe('getEdgeHandlePlacement', () => {
 describe('handle ids', () => {
   it('builds source and target handle ids from sides', () => {
     expect(getSourceHandleId('left')).toBe('source-left');
-    expect(getTargetHandleId('bottomright')).toBe('target-bottomright');
+    expect(getTargetHandleId('bottomright-right')).toBe('target-bottomright-right');
   });
 
-  it('parses legacy and expanded handle ids', () => {
+  it('parses expanded handle ids', () => {
     expect(getSideFromHandleId('source-left', 'source')).toBe('left');
-    expect(getSideFromHandleId('target-topright', 'target')).toBe('topright');
+    expect(getSideFromHandleId('target-topright-right', 'target')).toBe('topright-right');
+  });
+});
+
+describe('getHandlePoint', () => {
+  const box = { left: 0, top: 0, right: 240, bottom: 48 };
+
+  it('offsets split corner points away from the exact corner', () => {
+    expect(getHandlePoint(box, 'topright-top')).toEqual({ x: 232, y: 0 });
+    expect(getHandlePoint(box, 'topright-right')).toEqual({ x: 240, y: 8 });
+    expect(getHandlePoint(box, 'bottomleft-bottom')).toEqual({ x: 8, y: 48 });
+    expect(getHandlePoint(box, 'bottomleft-left')).toEqual({ x: 0, y: 40 });
   });
 });

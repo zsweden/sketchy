@@ -199,6 +199,25 @@ describe('convertSkyJson', () => {
     expect(diagram.edges[0].sourceSide).toBe('right');
     expect(diagram.edges[0].targetSide).toBe('left');
   });
+
+  it('normalizes legacy corner sides in imported sky files', () => {
+    const { diagram } = convertSkyJson({
+      framework: 'cld',
+      edgeRoutingMode: 'fixed',
+      version: 3,
+      nodes: [
+        { id: 'n1', label: 'Demand', x: 0, y: 100 },
+        { id: 'n2', label: 'Growth', x: 300, y: 0 },
+      ],
+      edges: [
+        { source: 'n1', target: 'n2', sourceSide: 'topright', targetSide: 'topleft' },
+      ],
+    });
+
+    expect(diagram.schemaVersion).toBe(4);
+    expect(diagram.edges[0].sourceSide).toBe('topright-right');
+    expect(diagram.edges[0].targetSide).toBe('topleft-left');
+  });
 });
 
 describe('diagramToSkyJson', () => {

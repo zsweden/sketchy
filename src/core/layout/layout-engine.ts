@@ -1,4 +1,5 @@
 import type { LayoutDirection } from '../framework-types';
+import type { EdgeHandleSide } from '../types';
 
 export const NODE_WIDTH = 240;
 export const MIN_NODE_HEIGHT = 48;
@@ -18,6 +19,8 @@ export interface LayoutInput {
 export interface LayoutEdgeInput {
   source: string;
   target: string;
+  sourceSide?: EdgeHandleSide;
+  targetSide?: EdgeHandleSide;
 }
 
 export interface LayoutResult {

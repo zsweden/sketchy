@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Toolbar from '../Toolbar';
 import { createEmptyDiagram } from '../../../core/types';
 import { getOptimizedEdgePlacements } from '../../../store/diagram-helpers';
+import { computeEdgeRoutingPlacements } from '../../../core/edge-routing';
 import { useChatStore } from '../../../store/chat-store';
 import { useDiagramStore } from '../../../store/diagram-store';
 import { useSettingsStore, PROVIDERS } from '../../../store/settings-store';
@@ -145,12 +146,47 @@ describe('Toolbar', () => {
     expect(edge.targetSide).toBe(expected.targetSide);
   });
 
+  it('runs legacy plus auto edges from button 2', async () => {
+    const user = userEvent.setup();
+    useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });
+    const edge1Source = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+    const edge1Target = useDiagramStore.getState().addNode({ x: 220, y: 220 });
+    useDiagramStore.getState().addEdge(edge1Source, edge1Target);
+    const edge2Source = useDiagramStore.getState().addNode({ x: 440, y: 0 });
+    const edge2Target = useDiagramStore.getState().addNode({ x: 220, y: -220 });
+    useDiagramStore.getState().addEdge(edge2Source, edge2Target);
+
+    render(<Toolbar />);
+    await user.click(screen.getByRole('button', { name: 'Auto edges legacy plus' }));
+
+    const { diagram } = useDiagramStore.getState();
+    const expected = computeEdgeRoutingPlacements('legacy-plus', {
+      edges: diagram.edges.map((edge) => ({ id: edge.id, source: edge.source, target: edge.target })),
+      nodeBoxes: new Map(diagram.nodes.map((node) => [
+        node.id,
+        {
+          left: node.position.x,
+          top: node.position.y,
+          right: node.position.x + 240,
+          bottom: node.position.y + 48,
+        },
+      ])),
+      layoutDirection: diagram.settings.layoutDirection,
+    });
+    const edge = diagram.edges[0];
+    const placement = expected.get(edge.id)!;
+    expect(edge.sourceSide).toBe(placement.sourceSide);
+    expect(edge.targetSide).toBe(placement.targetSide);
+  });
+
   it('disables auto edges in continuous optimize mode', () => {
     useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'dynamic' });
 
     render(<Toolbar />);
 
     expect(screen.getByRole('button', { name: 'Auto edges' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Auto edges legacy' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Auto edges legacy plus' })).toBeDisabled();
   });
 
   it('loads a project file, clears chat history, and surfaces warnings', async () => {

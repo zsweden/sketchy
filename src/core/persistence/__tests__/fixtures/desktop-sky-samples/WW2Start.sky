@@ -1,0 +1,423 @@
+{
+  "name": "Untitled Diagram",
+  "framework": "crt",
+  "direction": "BT",
+  "showGrid": true,
+  "version": 2,
+  "createdAt": "2026-03-29T04:36:21.145Z",
+  "nodes": [
+    {
+      "id": "c94f1fbe-90a6-4b99-bfc9-785c0f3f6ed9",
+      "label": "World War II outbreak (1939)",
+      "tags": [
+        "ude"
+      ],
+      "isUDE": true,
+      "notes": "* 1 Sep 1939 Germany invaded Poland; Britain & France declared war 3 Sep 1939. (Weinberg, 1994)\n* Marks the European eruption of the global conflict that had been escalating in Asia since 1937. (Evans, 2008)\n",
+      "x": 1388,
+      "y": 12
+    },
+    {
+      "id": "a84a1414-a0ca-4b1f-9992-bae2161bd638",
+      "label": "Versailles Treaty imposed harsh terms (1919)",
+      "notes": "* Versailles (1919) imposed £6.6 b reparations, military limits, territorial losses. (Steiner, 2005)\n* German politicians of all stripes denounced the treaty as a “Diktat,” fostering revisionism. (Kershaw, 1998)\n",
+      "x": 2038,
+      "y": 1496
+    },
+    {
+      "id": "07e7ad6f-08ff-4393-80a8-49409a1ac8d0",
+      "label": "German reparations burden mounts (1921)",
+      "notes": "* Annual reparations transfers reached 8 % of German GDP in early 1920s. (Tooze, 2006)\n* Allied Reparations Commission demands became symbol of foreign oppression. (Evans, 2003)\n",
+      "x": 1908,
+      "y": 1316
+    },
+    {
+      "id": "e1c36d67-0dee-4b9b-9c8d-312223f79e91",
+      "label": "War guilt clause resentment (1919)",
+      "notes": "* Article 231 “war guilt” clause singled out Germany, fuelling nationalist outrage. (Kershaw, 1998)\n* Right-wing press exploited the clause to delegitimise Weimar leaders. (Evans, 2003)\n",
+      "x": 2038,
+      "y": 972
+    },
+    {
+      "id": "0acebf0f-e75d-40ad-9ad5-02a345678bcd",
+      "label": "German economic hardship peaks (1932)",
+      "notes": "* German unemployment hit 30 % in 1932; industrial output fell by half vs 1928. (Tooze, 2006)\n* Poverty radicalised voters toward extremist parties, undermining democracy. (Evans, 2003)\n",
+      "x": 1628,
+      "y": 1144
+    },
+    {
+      "id": "d9586fa7-f4b4-42f0-afb8-5784f61ab8c5",
+      "label": "Hyperinflation devastates Germany (1923)",
+      "notes": "* 1923 hyperinflation peak: 4.2 trillion marks = 1 USD; wiped middle-class savings. (Tooze, 2006)\n* Crisis eroded trust in republican institutions and boosted paramilitary politics. (Evans, 2003)\n",
+      "x": 1628,
+      "y": 1316
+    },
+    {
+      "id": "95ab7c83-3f0f-40e6-9a68-b939988208b7",
+      "label": "Global Great Depression begins (1929)",
+      "notes": "* U.S. stock-market crash cascaded through German short-term loans; capital flight 1930-31. (Tooze, 2006)\n* Worldwide slump fostered protectionism and nationalist economic policies. (Steiner, 2011)\n",
+      "x": 972,
+      "y": 1316
+    },
+    {
+      "id": "8ed448e2-5ed0-485a-b5e5-756e2598cdea",
+      "label": "Weimar political instability grows (1930)",
+      "notes": "* Weimar coalition governments averaged <1 year tenure; 20 different cabinets 1919-33. (Evans, 2003)\n* Street violence between Nazis & Communists paralysed political discourse. (Kershaw, 1998)\n",
+      "x": 1480,
+      "y": 976
+    },
+    {
+      "id": "7a96eb7f-0f05-4f81-aa0a-81043b3b0764",
+      "label": "Nazi Party vote surges (1932)",
+      "notes": "* NSDAP vote rose from 2.6 % (1928) to 37.3 % (Jul 1932). (Kershaw, 1998)\n* Party propaganda fused nationalism, antisemitism, anti-Versailles themes. (Evans, 2003)\n",
+      "x": 1668,
+      "y": 824
+    },
+    {
+      "id": "bdd34497-8c6b-4e19-849f-908de1be09bf",
+      "label": "Hitler appointed Chancellor (1933)",
+      "notes": "* 30 Jan 1933 Hitler appointed Chancellor after elite intrigue by Papen & Hindenburg. (Kershaw, 1998)\n* Within months, Reichstag Fire Decree & Enabling Act dismantled democracy. (Evans, 2003)\n",
+      "x": 1668,
+      "y": 652
+    },
+    {
+      "id": "5e5bb899-3630-415a-ad7a-7a195b35a0f5",
+      "label": "Nazi expansionist ideology solidifies (1925)",
+      "notes": "* Mein Kampf (1925/27) called for Lebensraum in the east and racial war. (Kershaw, 1998)\n* 4-Year Plan (1936) oriented economy toward autarkic, war-ready footing. (Tooze, 2006)\n",
+      "x": 1668,
+      "y": 480
+    },
+    {
+      "id": "bd3ddaa5-8a6c-4059-93a2-5bff6315111f",
+      "label": "Rhineland remilitarised by Germany (1936)",
+      "notes": "* 7 Mar 1936 22,000 German troops entered demilitarised zone; France/Britain protested only. (Weinberg, 1994)\n* Move boosted Hitler’s domestic prestige and strategic depth. (Evans, 2008)\n",
+      "x": 1132,
+      "y": 328
+    },
+    {
+      "id": "8c7b823c-ec2f-467a-afae-dedfa24c91cf",
+      "label": "British-French appeasement policy (1938)",
+      "notes": "* British PM Chamberlain believed concessions could satisfy German grievances (1937-38). (Steiner, 2011)\n* Fear of another Great War & military unpreparedness shaped policy. (Kershaw, 2000)\n",
+      "x": 572,
+      "y": 480
+    },
+    {
+      "id": "e654ec8e-b165-4697-bfd3-d052e3de65ad",
+      "label": "Munich Agreement cedes Sudetenland (1938)",
+      "notes": "* 30 Sep 1938 Britain/France ceded Sudetenland to Germany without Czech input. (Weinberg, 1994)\n* Hitler privately told commanders it was only first step toward broader conquest. (Kershaw, 2000)\n",
+      "x": 572,
+      "y": 308
+    },
+    {
+      "id": "c236be85-5d0a-4172-ab6a-9a6edd0d4908",
+      "label": "Germany invades Poland (1939)",
+      "notes": "* Wehrmacht launched Fall Weiss 1 Sep 1939 with blitzkrieg tactics; Warsaw fell 27 Sep. (Weinberg, 1994)\n* Campaign tested new combined-arms doctrine perfected in earlier rearmament. (Tooze, 2006)\n",
+      "x": 1388,
+      "y": 160
+    },
+    {
+      "id": "315992f5-1478-4fec-97b4-86fbaf389c71",
+      "label": "Molotov-Ribbentrop Pact signed (1939)",
+      "notes": "* Signed 23 Aug 1939, secret protocol split Poland & Baltics into spheres. (Weinberg, 1994)\n* Gave Hitler freedom to attack westward while neutralising Soviet threat. (Kershaw, 2000)\n",
+      "x": 852,
+      "y": 308
+    },
+    {
+      "id": "8fc6e753-d5cb-4b3a-9307-c3a6164fa7fb",
+      "label": "Japanese imperial expansion escalates (1937)",
+      "notes": "* Japan seized Manchuria 1931, invaded China 1937; sought “Greater East Asia Co-Prosperity Sphere.” (Evans, 2008)\n* Militarists viewed colonial empire as solution to resource insecurity. (Weinberg, 1994)\n",
+      "x": 2276,
+      "y": 480
+    },
+    {
+      "id": "a2ce1c0c-caf3-4f02-8f64-9a4794755b26",
+      "label": "Italy invades Ethiopia (1935)",
+      "notes": "* Italy under Mussolini invaded Ethiopia Oct 1935; League sanctions proved toothless. (Steiner, 2011)\n* Victory boosted Fascist prestige and pushed Rome toward Berlin. (Weinberg, 1994)\n",
+      "x": 1996,
+      "y": 492
+    },
+    {
+      "id": "23358d32-c136-45b8-8a10-3835132ae01e",
+      "label": "Spanish Civil War erupts (1936)",
+      "notes": "* 1936-39 war pitted Franco’s Nationalists (backed by Germany/Italy) vs Republicans (USSR aid). (Weinberg, 1994)\n* Western non-intervention signalled reluctance to oppose fascist aggression. (Steiner, 2011)\n",
+      "x": 1002,
+      "y": 652
+    },
+    {
+      "id": "c0245eb9-1490-433b-bcb0-c68be644267e",
+      "label": "Japanese militarisation deepens (1936)",
+      "notes": "* 1930s Japanese budgets allocated >50 % to army & navy; Manchurian resources militarised economy. (Evans, 2008)\n* Young Officers’ coups (1936) entrenched military dominance in Tokyo. (Weinberg, 1994)\n",
+      "x": 2556,
+      "y": 652
+    },
+    {
+      "id": "e0ab7b62-3f61-4892-9907-2537b9bde984",
+      "label": "US imposes oil embargo on Japan (1941)",
+      "notes": "* U.S. froze Japanese assets & cut oil July 1941 after move into Indochina. (Weinberg, 1994)\n* Japan imported 80 % of its oil from U.S.; embargo made war in SE Asia urgent. (Evans, 2008)\n",
+      "x": 2276,
+      "y": 652
+    },
+    {
+      "id": "965eb2d9-02d0-4ce2-b50a-02e79acb60fd",
+      "label": "Pan-Germanism ideals revived (1938)",
+      "notes": "* Pan-Germanism sought unification of all ethnic Germans (Austria, Sudetenland, Danzig). (Kershaw, 1998)\n* Ideology framed expansion as ‘self-determination’ under Versailles principles. (Steiner, 2011)\n",
+      "x": 1412,
+      "y": 308
+    },
+    {
+      "id": "1c2101a1-89b5-474b-ad77-b65e393b6348",
+      "label": "Western elites fear communism (1936)",
+      "notes": "* Elites in London/Paris viewed USSR as greater threat than Nazi Germany. (Steiner, 2011)\n* Anti-communism eased acceptance of German rearmament as bulwark in Europe. (Weinberg, 1994)\n",
+      "x": 292,
+      "y": 652
+    },
+    {
+      "id": "389e2d35-c9ae-4fa2-a907-d12a410f3c57",
+      "label": "Soviet security anxieties grow (1939)",
+      "notes": "* Stalin sought buffer zone after WWI devastation; pursued collective security talks 1935-38. (Weinberg, 1994)\n* Western rebuffs pushed USSR toward pact with Germany. (Steiner, 2011)\n",
+      "x": 852,
+      "y": 480
+    },
+    {
+      "id": "7b399b91-c2c7-45f3-8dc8-ab95c112b96e",
+      "label": "French political will weakens (1936)",
+      "notes": "* French politics fractured among 44 parties; short-lived Popular Front 1936-38. (Steiner, 2011)\n* Economic malaise limited defense budgets; Maginot fixation discouraged forward policy. (Weinberg, 1994)\n",
+      "x": 572,
+      "y": 652
+    },
+    {
+      "id": "83f95768-6e4d-4b52-b23f-0b9b1a33931c",
+      "label": "US isolationism entrenched (1937)",
+      "notes": "* U.S. Neutrality Acts 1935-37 banned arms sales to belligerents. (Weinberg, 1994)\n* Majority opinion opposed entanglement; only 2 % favoured war vs Germany in 1938 poll. (Evans, 2008)\n",
+      "x": 12,
+      "y": 652
+    },
+    {
+      "id": "c8d45a24-0198-483d-b6b1-ba67a8ffae9a",
+      "label": "Geneva disarmament talks fail (1932)",
+      "notes": "* 1932 Geneva Disarmament Conference collapsed over French security demands & German equality. (Steiner, 2005)\n* Breakdown legitimised German withdrawal from League & rapid rearmament. (Kershaw, 1998)\n",
+      "x": 1172,
+      "y": 1144
+    },
+    {
+      "id": "cc7c0784-a101-483c-92d0-2d8250b4d0c0",
+      "label": "League of Nations proves weak (1935)",
+      "notes": "* League lacked enforcement: failed in Manchuria (1931) & Ethiopia (1935). (Weinberg, 1994)\n* U.S./USSR non-membership/late entry weakened authority. (Steiner, 2005)\n",
+      "x": 1996,
+      "y": 652
+    },
+    {
+      "id": "54541ca8-d823-49f4-9f14-17b2d9e89de5",
+      "label": "Nationalism surges worldwide (1933)",
+      "notes": "* Economic hardship & mass politics drove nationalist parties across Europe & Asia. (Steiner, 2011)\n* Radio/press amplified grievances and scapegoating narratives. (Evans, 2008)\n",
+      "x": 892,
+      "y": 1144
+    },
+    {
+      "id": "7fe47af3-524d-4fb7-abdb-460e0eaed090",
+      "label": "Militarist culture glorifies war (1935)",
+      "notes": "* School curricula & youth groups (Hitlerjugend, Japanese Kokumin Gakkō) glorified soldierly virtues. (Evans, 2008)\n* Popular war memoirs of WWI romanticised combat and sacrifice. (Kershaw, 1998)\n",
+      "x": 1132,
+      "y": 972
+    },
+    {
+      "id": "25fe0eb3-2d99-409a-ae8d-92b8624b7715",
+      "label": "Germany pursues economic autarky (1936)",
+      "notes": "* Germany’s Hereditary Farm Law (1933) & import quotas aimed at self-sufficiency. (Tooze, 2006)\n* Access to Polish grain & Soviet oil seen as strategic economic goal. (Weinberg, 1994)\n",
+      "x": 1692,
+      "y": 308
+    },
+    {
+      "id": "c13e9ff2-1525-4310-8ec0-11fc5121cf11",
+      "label": "Axis Alliance formalised (1936)",
+      "notes": "* Rome-Berlin Axis announced Nov 1936; Anti-Comintern Pact added Japan 1937. (Weinberg, 1994)\n* Shared revisionist aims & ideological affinity overrode strategic mistrust. (Steiner, 2011)\n",
+      "x": 1972,
+      "y": 308
+    },
+    {
+      "id": "df9a7109-8ca0-4f5c-85d9-30d31c44fb85",
+      "label": "Colonial rivalry tensions linger (1930)",
+      "notes": "* Britain, France, Japan scrambled for colonies pre-1914; grievances lingered inter-war. (Steiner, 2005)\n* German loss of colonies fuelled demands for world-power status restoration. (Evans, 2003)\n",
+      "x": 692,
+      "y": 1316
+    }
+  ],
+  "edges": [
+    {
+      "source": "a84a1414-a0ca-4b1f-9992-bae2161bd638",
+      "target": "07e7ad6f-08ff-4393-80a8-49409a1ac8d0"
+    },
+    {
+      "source": "a84a1414-a0ca-4b1f-9992-bae2161bd638",
+      "target": "e1c36d67-0dee-4b9b-9c8d-312223f79e91"
+    },
+    {
+      "source": "07e7ad6f-08ff-4393-80a8-49409a1ac8d0",
+      "target": "0acebf0f-e75d-40ad-9ad5-02a345678bcd"
+    },
+    {
+      "source": "d9586fa7-f4b4-42f0-afb8-5784f61ab8c5",
+      "target": "0acebf0f-e75d-40ad-9ad5-02a345678bcd"
+    },
+    {
+      "source": "95ab7c83-3f0f-40e6-9a68-b939988208b7",
+      "target": "0acebf0f-e75d-40ad-9ad5-02a345678bcd"
+    },
+    {
+      "source": "0acebf0f-e75d-40ad-9ad5-02a345678bcd",
+      "target": "8ed448e2-5ed0-485a-b5e5-756e2598cdea"
+    },
+    {
+      "source": "8ed448e2-5ed0-485a-b5e5-756e2598cdea",
+      "target": "7a96eb7f-0f05-4f81-aa0a-81043b3b0764"
+    },
+    {
+      "source": "e1c36d67-0dee-4b9b-9c8d-312223f79e91",
+      "target": "7a96eb7f-0f05-4f81-aa0a-81043b3b0764"
+    },
+    {
+      "source": "0acebf0f-e75d-40ad-9ad5-02a345678bcd",
+      "target": "7a96eb7f-0f05-4f81-aa0a-81043b3b0764"
+    },
+    {
+      "source": "7a96eb7f-0f05-4f81-aa0a-81043b3b0764",
+      "target": "bdd34497-8c6b-4e19-849f-908de1be09bf"
+    },
+    {
+      "source": "bdd34497-8c6b-4e19-849f-908de1be09bf",
+      "target": "5e5bb899-3630-415a-ad7a-7a195b35a0f5"
+    },
+    {
+      "source": "5e5bb899-3630-415a-ad7a-7a195b35a0f5",
+      "target": "bd3ddaa5-8a6c-4059-93a2-5bff6315111f"
+    },
+    {
+      "source": "5e5bb899-3630-415a-ad7a-7a195b35a0f5",
+      "target": "965eb2d9-02d0-4ce2-b50a-02e79acb60fd"
+    },
+    {
+      "source": "5e5bb899-3630-415a-ad7a-7a195b35a0f5",
+      "target": "25fe0eb3-2d99-409a-ae8d-92b8624b7715"
+    },
+    {
+      "source": "8c7b823c-ec2f-467a-afae-dedfa24c91cf",
+      "target": "bd3ddaa5-8a6c-4059-93a2-5bff6315111f"
+    },
+    {
+      "source": "8c7b823c-ec2f-467a-afae-dedfa24c91cf",
+      "target": "e654ec8e-b165-4697-bfd3-d052e3de65ad"
+    },
+    {
+      "source": "e654ec8e-b165-4697-bfd3-d052e3de65ad",
+      "target": "c236be85-5d0a-4172-ab6a-9a6edd0d4908"
+    },
+    {
+      "source": "5e5bb899-3630-415a-ad7a-7a195b35a0f5",
+      "target": "c13e9ff2-1525-4310-8ec0-11fc5121cf11"
+    },
+    {
+      "source": "8fc6e753-d5cb-4b3a-9307-c3a6164fa7fb",
+      "target": "c13e9ff2-1525-4310-8ec0-11fc5121cf11",
+      "confidence": "medium"
+    },
+    {
+      "source": "a2ce1c0c-caf3-4f02-8f64-9a4794755b26",
+      "target": "c13e9ff2-1525-4310-8ec0-11fc5121cf11"
+    },
+    {
+      "source": "83f95768-6e4d-4b52-b23f-0b9b1a33931c",
+      "target": "8c7b823c-ec2f-467a-afae-dedfa24c91cf"
+    },
+    {
+      "source": "cc7c0784-a101-483c-92d0-2d8250b4d0c0",
+      "target": "8c7b823c-ec2f-467a-afae-dedfa24c91cf"
+    },
+    {
+      "source": "cc7c0784-a101-483c-92d0-2d8250b4d0c0",
+      "target": "a2ce1c0c-caf3-4f02-8f64-9a4794755b26"
+    },
+    {
+      "source": "cc7c0784-a101-483c-92d0-2d8250b4d0c0",
+      "target": "8fc6e753-d5cb-4b3a-9307-c3a6164fa7fb"
+    },
+    {
+      "source": "315992f5-1478-4fec-97b4-86fbaf389c71",
+      "target": "c236be85-5d0a-4172-ab6a-9a6edd0d4908"
+    },
+    {
+      "source": "389e2d35-c9ae-4fa2-a907-d12a410f3c57",
+      "target": "315992f5-1478-4fec-97b4-86fbaf389c71"
+    },
+    {
+      "source": "1c2101a1-89b5-474b-ad77-b65e393b6348",
+      "target": "8c7b823c-ec2f-467a-afae-dedfa24c91cf"
+    },
+    {
+      "source": "25fe0eb3-2d99-409a-ae8d-92b8624b7715",
+      "target": "c236be85-5d0a-4172-ab6a-9a6edd0d4908",
+      "confidence": "medium"
+    },
+    {
+      "source": "c13e9ff2-1525-4310-8ec0-11fc5121cf11",
+      "target": "c94f1fbe-90a6-4b99-bfc9-785c0f3f6ed9"
+    },
+    {
+      "source": "c236be85-5d0a-4172-ab6a-9a6edd0d4908",
+      "target": "c94f1fbe-90a6-4b99-bfc9-785c0f3f6ed9"
+    },
+    {
+      "source": "8c7b823c-ec2f-467a-afae-dedfa24c91cf",
+      "target": "c94f1fbe-90a6-4b99-bfc9-785c0f3f6ed9"
+    },
+    {
+      "source": "c0245eb9-1490-433b-bcb0-c68be644267e",
+      "target": "8fc6e753-d5cb-4b3a-9307-c3a6164fa7fb"
+    },
+    {
+      "source": "c8d45a24-0198-483d-b6b1-ba67a8ffae9a",
+      "target": "7fe47af3-524d-4fb7-abdb-460e0eaed090",
+      "confidence": "medium"
+    },
+    {
+      "source": "7fe47af3-524d-4fb7-abdb-460e0eaed090",
+      "target": "bd3ddaa5-8a6c-4059-93a2-5bff6315111f",
+      "confidence": "medium"
+    },
+    {
+      "source": "54541ca8-d823-49f4-9f14-17b2d9e89de5",
+      "target": "7fe47af3-524d-4fb7-abdb-460e0eaed090"
+    },
+    {
+      "source": "df9a7109-8ca0-4f5c-85d9-30d31c44fb85",
+      "target": "54541ca8-d823-49f4-9f14-17b2d9e89de5",
+      "confidence": "medium"
+    },
+    {
+      "source": "e0ab7b62-3f61-4892-9907-2537b9bde984",
+      "target": "8fc6e753-d5cb-4b3a-9307-c3a6164fa7fb",
+      "confidence": "medium"
+    },
+    {
+      "source": "7b399b91-c2c7-45f3-8dc8-ab95c112b96e",
+      "target": "8c7b823c-ec2f-467a-afae-dedfa24c91cf"
+    },
+    {
+      "source": "95ab7c83-3f0f-40e6-9a68-b939988208b7",
+      "target": "54541ca8-d823-49f4-9f14-17b2d9e89de5"
+    },
+    {
+      "source": "965eb2d9-02d0-4ce2-b50a-02e79acb60fd",
+      "target": "c236be85-5d0a-4172-ab6a-9a6edd0d4908"
+    },
+    {
+      "source": "23358d32-c136-45b8-8a10-3835132ae01e",
+      "target": "8c7b823c-ec2f-467a-afae-dedfa24c91cf",
+      "confidence": "medium"
+    },
+    {
+      "source": "23358d32-c136-45b8-8a10-3835132ae01e",
+      "target": "c13e9ff2-1525-4310-8ec0-11fc5121cf11",
+      "confidence": "medium"
+    }
+  ]
+}

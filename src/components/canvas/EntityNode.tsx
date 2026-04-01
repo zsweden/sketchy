@@ -4,6 +4,7 @@ import { useDiagramStore } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
 import { getDerivedIndicators } from '../../core/graph/derived';
 import {
+  HANDLE_CORNER_OFFSET,
   VISIBLE_HANDLE_SIDES,
   getBaseHandleSide,
 } from '../../core/graph/ports';
@@ -36,14 +37,22 @@ function getPositionForBaseSide(side: CardinalHandleSide): Position {
 
 function getVisibleHandleStyle(side: HandleSide): CSSProperties | undefined {
   switch (side) {
-    case 'topleft':
-      return { left: 0 };
-    case 'topright':
-      return { left: '100%' };
-    case 'bottomright':
-      return { left: '100%' };
-    case 'bottomleft':
-      return { left: 0 };
+    case 'topleft-top':
+      return { left: HANDLE_CORNER_OFFSET };
+    case 'topleft-left':
+      return { top: HANDLE_CORNER_OFFSET };
+    case 'topright-top':
+      return { left: `calc(100% - ${HANDLE_CORNER_OFFSET}px)` };
+    case 'topright-right':
+      return { top: HANDLE_CORNER_OFFSET };
+    case 'bottomright-right':
+      return { top: `calc(100% - ${HANDLE_CORNER_OFFSET}px)` };
+    case 'bottomright-bottom':
+      return { left: `calc(100% - ${HANDLE_CORNER_OFFSET}px)` };
+    case 'bottomleft-bottom':
+      return { left: HANDLE_CORNER_OFFSET };
+    case 'bottomleft-left':
+      return { top: `calc(100% - ${HANDLE_CORNER_OFFSET}px)` };
     default:
       return undefined;
   }

@@ -358,9 +358,22 @@ describe('EntityNode', () => {
   });
 
   describe('handles', () => {
-    it('renders 8 target handles and 8 source handles', () => {
+    it('renders 12 target handles and 12 source handles', () => {
       renderNode();
-      for (const side of ['top', 'right', 'bottom', 'left', 'topleft', 'topright', 'bottomright', 'bottomleft']) {
+      for (const side of [
+        'top',
+        'right',
+        'bottom',
+        'left',
+        'topleft-top',
+        'topleft-left',
+        'topright-top',
+        'topright-right',
+        'bottomright-right',
+        'bottomright-bottom',
+        'bottomleft-bottom',
+        'bottomleft-left',
+      ]) {
         expect(screen.getByTestId(`target-${side}`)).toBeInTheDocument();
         expect(screen.getByTestId(`source-${side}`)).toBeInTheDocument();
       }

@@ -6,6 +6,8 @@ import type {
   EdgePolarity,
 } from '../types';
 import { SCHEMA_VERSION } from '../types';
+import type { LegacyCornerHandleSide } from '../graph/ports';
+import { normalizeLegacyHandleSide } from '../graph/ports';
 
 // --- Unified .sky format types ---
 
@@ -25,8 +27,8 @@ interface SkyNode {
 interface SkyEdge {
   source: string;
   target: string;
-  sourceSide?: DiagramEdge['sourceSide'];
-  targetSide?: DiagramEdge['targetSide'];
+  sourceSide?: DiagramEdge['sourceSide'] | LegacyCornerHandleSide;
+  targetSide?: DiagramEdge['targetSide'] | LegacyCornerHandleSide;
   confidence?: EdgeConfidence;
   polarity?: EdgePolarity;
   delay?: boolean;
@@ -102,20 +104,36 @@ export function convertSkyJson(data: SkyJson): { diagram: Diagram; needsLayout: 
     },
   }));
 
-  const edges: DiagramEdge[] = data.edges.map((e, i) => ({
-    id: `e${i + 1}`,
-    source: e.source,
-    target: e.target,
-    ...(e.sourceSide ? { sourceSide: e.sourceSide } : {}),
-    ...(e.targetSide ? { targetSide: e.targetSide } : {}),
-    ...(e.confidence ? { confidence: e.confidence } : {}),
-    ...(e.polarity ? { polarity: e.polarity } : {}),
-    ...(e.delay ? { delay: true } : {}),
-    ...(e.notes ? { notes: e.notes } : {}),
-  }));
+  const nodePositions = new Map(nodes.map((node) => [node.id, node.position]));
+  const edges: DiagramEdge[] = data.edges.map((e, i) => {
+    const sourcePosition = nodePositions.get(e.source) ?? { x: 0, y: 0 };
+    const targetPosition = nodePositions.get(e.target) ?? { x: 0, y: 0 };
+    const sourceSide = normalizeLegacyHandleSide(
+      e.sourceSide,
+      targetPosition.x - sourcePosition.x,
+      targetPosition.y - sourcePosition.y,
+    );
+    const targetSide = normalizeLegacyHandleSide(
+      e.targetSide,
+      sourcePosition.x - targetPosition.x,
+      sourcePosition.y - targetPosition.y,
+    );
+
+    return {
+      id: `e${i + 1}`,
+      source: e.source,
+      target: e.target,
+      ...(sourceSide ? { sourceSide } : {}),
+      ...(targetSide ? { targetSide } : {}),
+      ...(e.confidence ? { confidence: e.confidence } : {}),
+      ...(e.polarity ? { polarity: e.polarity } : {}),
+      ...(e.delay ? { delay: true } : {}),
+      ...(e.notes ? { notes: e.notes } : {}),
+    };
+  });
 
   const diagram: Diagram = {
-    schemaVersion: data.version ?? SCHEMA_VERSION,
+    schemaVersion: SCHEMA_VERSION,
     id: crypto.randomUUID(),
     name: data.name ?? 'Untitled Diagram',
     frameworkId: data.framework ?? 'crt',

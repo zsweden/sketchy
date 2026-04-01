@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { LayoutInput, LayoutEdgeInput } from '../layout-engine';
+import type { LayoutInput } from '../layout-engine';
 import { compareGraphMetrics, computeLayoutMetrics, scoreLayoutMetrics } from '../layout-metrics';
 
 const nodes: LayoutInput[] = [
@@ -8,34 +8,34 @@ const nodes: LayoutInput[] = [
   { id: 'c', width: 120, height: 60 },
 ];
 
-const edges: LayoutEdgeInput[] = [
-  { source: 'a', target: 'b' },
-  { source: 'b', target: 'c' },
-];
-
 describe('layout connector conflict scoring', () => {
-  it('penalizes incoming and outgoing flow on the same side of a node', () => {
+  it('penalizes incoming and outgoing flow on the same exact handle point', () => {
+    const positions = new Map([
+      ['a', { x: 0, y: 0 }],
+      ['b', { x: 240, y: 80 }],
+      ['c', { x: 480, y: 180 }],
+    ]);
+
     const conflicted = computeLayoutMetrics(
       nodes,
-      edges,
-      new Map([
-        ['a', { x: 0, y: 0 }],
-        ['b', { x: 240, y: 80 }],
-        ['c', { x: 0, y: 180 }],
-      ]),
+      [
+        { source: 'a', target: 'b', sourceSide: 'bottom', targetSide: 'top' },
+        { source: 'b', target: 'c', sourceSide: 'top', targetSide: 'left' },
+      ],
+      positions,
     );
 
     const separated = computeLayoutMetrics(
       nodes,
-      edges,
-      new Map([
-        ['a', { x: 0, y: 0 }],
-        ['b', { x: 240, y: 80 }],
-        ['c', { x: 480, y: 180 }],
-      ]),
+      [
+        { source: 'a', target: 'b', sourceSide: 'bottom', targetSide: 'top' },
+        { source: 'b', target: 'c', sourceSide: 'topright-top', targetSide: 'left' },
+      ],
+      positions,
     );
 
     expect(conflicted.connectorConflicts).toBeGreaterThan(separated.connectorConflicts);
+    expect(separated.connectorConflicts).toBe(0);
     expect(scoreLayoutMetrics(conflicted)).toBeGreaterThan(scoreLayoutMetrics(separated));
   });
 

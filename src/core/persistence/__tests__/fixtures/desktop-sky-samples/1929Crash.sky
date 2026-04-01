@@ -1,0 +1,225 @@
+{
+  "name": "Untitled Diagram",
+  "framework": "crt",
+  "direction": "BT",
+  "showGrid": true,
+  "version": 2,
+  "createdAt": "2026-03-29T05:30:18.177Z",
+  "nodes": [
+    {
+      "id": "51a499c9-5f4f-4b11-bbc5-05ca587d47a2",
+      "label": "Stock market collapses in Oct 1929",
+      "tags": [
+        "ude"
+      ],
+      "isUDE": true,
+      "notes": "Undesirable Effect. The Dow Jones Industrial Average fell nearly 25% between \"Black Thursday\" (24 Oct) and \"Black Tuesday\" (29 Oct).  Source: John K. Galbraith, The Great Crash 1929, ch. 1.",
+      "x": 332,
+      "y": 12
+    },
+    {
+      "id": "40767dc1-05fc-4a9d-8a25-7b26dd4bd462",
+      "label": "Massive panic selling overwhelms buyers",
+      "notes": "\"Sell orders came in so fast that tickers fell behind by hours\" (Galbraith, ch. 2).  Total volume on 29 Oct hit a record 16.4 million shares, far exceeding demand.",
+      "x": 857,
+      "y": 184
+    },
+    {
+      "id": "c69d63d7-a208-4112-b533-818d2a37452f",
+      "label": "Stock prices far exceed firm earnings",
+      "notes": "\"By late 1928 the average P-E ratio exceeded 32, twice its historical mean\" (Robert Sobel, The Great Bull Market, p. 87).  Economist Irving Fisher nevertheless called prices \"permanently high\" (New York Times, 16 Oct 1929).",
+      "x": 292,
+      "y": 184
+    },
+    {
+      "id": "59e809a1-6f37-42a3-9536-ae79ec95c664",
+      "label": "Margin calls force rapid liquidation",
+      "notes": "Broker loans totaled $8.5 billion in Sept 1929—\"more than the entire amount of U.S. currency in circulation\" (Galbraith, ch. 3).  When prices dipped, brokers demanded cash, compelling sales.",
+      "x": 833,
+      "y": 356
+    },
+    {
+      "id": "9915d776-7853-453c-98c2-223f1ad0787a",
+      "label": "Speculative bubble fueled by easy credit",
+      "notes": "\"Credit was cheap and plentiful; call-money rates hovered near 5% while stocks rose 20%\" (Liaquat Ahamed, Lords of Finance, p. 293).",
+      "x": 12,
+      "y": 356
+    },
+    {
+      "id": "073f18b2-f5b3-4004-8c30-4b69b571cd85",
+      "label": "Investors believe prices will rise indefinitely",
+      "notes": "\"The popular conviction was that prosperity had no end; stocks could only go up\" (Frederick Lewis Allen, Since Yesterday, p. 52).  Such optimism encouraged risk-taking.",
+      "x": 462,
+      "y": 700
+    },
+    {
+      "id": "aa597615-62c8-4714-a57a-67b33ea294ed",
+      "label": "Fed keeps interest rates low 1927-28",
+      "notes": "Minutes of the Federal Reserve Board (Aug 1927) show a deliberate \"ease\" policy to support Britain’s gold standard, holding the discount rate at 3.5%.  Cheap money flowed to Wall St.",
+      "x": 12,
+      "y": 528
+    },
+    {
+      "id": "2bfee3c3-90b8-44f2-b491-99645a2a3919",
+      "label": "Fed rate hikes raise broker-loan costs",
+      "notes": "The Fed lifted the discount rate to 6% by Aug 1929.  \"Higher call-money rates squeezed investors using leverage\" (Ahamed, p. 311).",
+      "x": 793,
+      "y": 528
+    },
+    {
+      "id": "0f4e7f58-d7ce-4c5f-9f3c-05a5cc9472f7",
+      "label": "Widespread buying of stocks on margin",
+      "notes": "\"As little as 10% cash could control a share block\" (Sobel, p. 91).  Roughly one in ten dollars of market value was margin debt.",
+      "x": 1073,
+      "y": 528
+    },
+    {
+      "id": "00300e1e-ef00-4305-acfa-ca5b8994d525",
+      "label": "Weak regulation of broker and bank practices",
+      "notes": "\"Neither the NYSE nor federal law set firm limits on leverage\" (Securities and Exchange Commission Historical Study, 1963).  Banks freely lent for speculation.",
+      "x": 1153,
+      "y": 700
+    },
+    {
+      "id": "8341dfcd-68e5-41c1-be17-e970ebf38902",
+      "label": "Media reports amplify price declines",
+      "notes": "Front-page headlines like \"Stocks Plunge in Frenzied Selling\" (NY Times, 25 Oct 1929) spread fear nationwide, accelerating sell orders (Galbraith, ch. 4).",
+      "x": 553,
+      "y": 356
+    },
+    {
+      "id": "eda55237-78d1-42b7-9ae4-d98ea0b9e742",
+      "label": "Bank failures erode investor confidence",
+      "notes": "\"Over 650 banks closed in 1929, many after the crash\" (Federal Deposit Insurance Corp., Historical Statistics).  Depositors and investors lost trust.",
+      "x": 1393,
+      "y": 356
+    },
+    {
+      "id": "ee7382b2-b80a-4923-ab0d-6702a1052ceb",
+      "label": "Banks hold large speculative stock positions",
+      "notes": "\"City banks had over $2 billion in call loans, tying solvency to stock prices\" (Galbraith, ch. 3).",
+      "x": 1393,
+      "y": 528
+    },
+    {
+      "id": "772e69dd-e5b7-4e33-9757-c78f79bd0d43",
+      "label": "Gold-standard pressures shape Fed policy",
+      "notes": "Through the late 1920s the Federal Reserve felt compelled to defend the international gold standard.  When Britain lost gold in 1927, the Fed deliberately eased: “To assist the Bank of England we reduced our discount rate to 3.5 percent” (Federal Reserve Board minutes, 16 Aug 1927).  Conversely, when U.S. gold outflows resumed in 1929 the Fed tightened.  Liaquat Ahamed writes: “The gold standard dictated first the easy-money of 1927 and then the drastic rate hike of 1929” (Lords of Finance, p. 268).",
+      "x": 52,
+      "y": 700
+    },
+    {
+      "id": "1a5e7327-7300-448c-b693-617f95ab0236",
+      "label": "1929 industrial slowdown cuts profits",
+      "notes": "U.S. Industrial Production peaked in June 1929 and declined 8 percent by October (Federal Reserve Bulletin, 1930).  Railroad freight car loadings fell 10 percent year-on-year (Historical Statistics of the U.S., Series Q).  Economist Alfred P. Sloan warned in July 1929, “Earnings are slipping below expectations” (GM Board Minutes).  Lower profits made lofty stock valuations untenable.",
+      "x": 292,
+      "y": 356
+    },
+    {
+      "id": "f18a8cc5-9480-4491-aef5-f0af9dde41bc",
+      "label": "Laissez-faire ideology thwarts regulation",
+      "notes": "Secretary of the Treasury Andrew Mellon argued, “Liquidate labor, liquidate stocks… it will purge the rottenness” (recalled in Hoover Memoirs, vol. 3, p. 30).  Congress rejected Senator Brookhart’s 1928 margin-limits bill as “interference with private enterprise” (Senate Record, 70th Cong.).  Historian Maury Klein concludes: “Prevailing laissez-faire philosophy neutered any attempt at federal financial oversight” (Rainbow’s End, p. 119).",
+      "x": 1153,
+      "y": 872
+    },
+    {
+      "id": "e0b60ecd-0ca4-42e6-84c9-9ad61263e4ef",
+      "label": "No mechanisms to halt free-fall trading",
+      "notes": "The NYSE had no circuit breakers; trading continued in cascading sell waves.  Exchange president Richard Whitney later testified, “We possessed no authority to close the market swiftly” (Senate Banking Hearings, 1932).  The Federal Reserve likewise declined to purchase stocks or government bonds en masse.  Allan Meltzer notes: “The absence of any brake allowed panic to feed on itself” (A History of the Fed, vol. 1, p. 275).",
+      "x": 1113,
+      "y": 356
+    }
+  ],
+  "edges": [
+    {
+      "source": "40767dc1-05fc-4a9d-8a25-7b26dd4bd462",
+      "target": "51a499c9-5f4f-4b11-bbc5-05ca587d47a2"
+    },
+    {
+      "source": "c69d63d7-a208-4112-b533-818d2a37452f",
+      "target": "51a499c9-5f4f-4b11-bbc5-05ca587d47a2"
+    },
+    {
+      "source": "59e809a1-6f37-42a3-9536-ae79ec95c664",
+      "target": "40767dc1-05fc-4a9d-8a25-7b26dd4bd462"
+    },
+    {
+      "source": "9915d776-7853-453c-98c2-223f1ad0787a",
+      "target": "c69d63d7-a208-4112-b533-818d2a37452f"
+    },
+    {
+      "source": "073f18b2-f5b3-4004-8c30-4b69b571cd85",
+      "target": "c69d63d7-a208-4112-b533-818d2a37452f",
+      "confidence": "medium"
+    },
+    {
+      "source": "aa597615-62c8-4714-a57a-67b33ea294ed",
+      "target": "9915d776-7853-453c-98c2-223f1ad0787a",
+      "confidence": "medium"
+    },
+    {
+      "source": "2bfee3c3-90b8-44f2-b491-99645a2a3919",
+      "target": "59e809a1-6f37-42a3-9536-ae79ec95c664",
+      "confidence": "medium"
+    },
+    {
+      "source": "0f4e7f58-d7ce-4c5f-9f3c-05a5cc9472f7",
+      "target": "59e809a1-6f37-42a3-9536-ae79ec95c664"
+    },
+    {
+      "source": "00300e1e-ef00-4305-acfa-ca5b8994d525",
+      "target": "0f4e7f58-d7ce-4c5f-9f3c-05a5cc9472f7",
+      "confidence": "medium"
+    },
+    {
+      "source": "073f18b2-f5b3-4004-8c30-4b69b571cd85",
+      "target": "0f4e7f58-d7ce-4c5f-9f3c-05a5cc9472f7",
+      "confidence": "medium"
+    },
+    {
+      "source": "8341dfcd-68e5-41c1-be17-e970ebf38902",
+      "target": "40767dc1-05fc-4a9d-8a25-7b26dd4bd462",
+      "confidence": "medium"
+    },
+    {
+      "source": "eda55237-78d1-42b7-9ae4-d98ea0b9e742",
+      "target": "40767dc1-05fc-4a9d-8a25-7b26dd4bd462",
+      "confidence": "medium"
+    },
+    {
+      "source": "ee7382b2-b80a-4923-ab0d-6702a1052ceb",
+      "target": "eda55237-78d1-42b7-9ae4-d98ea0b9e742",
+      "confidence": "medium"
+    },
+    {
+      "source": "00300e1e-ef00-4305-acfa-ca5b8994d525",
+      "target": "ee7382b2-b80a-4923-ab0d-6702a1052ceb",
+      "confidence": "medium"
+    },
+    {
+      "source": "772e69dd-e5b7-4e33-9757-c78f79bd0d43",
+      "target": "aa597615-62c8-4714-a57a-67b33ea294ed",
+      "confidence": "medium"
+    },
+    {
+      "source": "772e69dd-e5b7-4e33-9757-c78f79bd0d43",
+      "target": "2bfee3c3-90b8-44f2-b491-99645a2a3919",
+      "confidence": "medium"
+    },
+    {
+      "source": "1a5e7327-7300-448c-b693-617f95ab0236",
+      "target": "c69d63d7-a208-4112-b533-818d2a37452f",
+      "confidence": "medium"
+    },
+    {
+      "source": "f18a8cc5-9480-4491-aef5-f0af9dde41bc",
+      "target": "00300e1e-ef00-4305-acfa-ca5b8994d525",
+      "confidence": "medium"
+    },
+    {
+      "source": "e0b60ecd-0ca4-42e6-84c9-9ad61263e4ef",
+      "target": "40767dc1-05fc-4a9d-8a25-7b26dd4bd462",
+      "confidence": "medium"
+    }
+  ]
+}

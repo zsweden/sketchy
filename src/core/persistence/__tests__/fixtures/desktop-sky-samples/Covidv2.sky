@@ -1,0 +1,221 @@
+{
+  "name": "Untitled Diagram",
+  "framework": "crt",
+  "direction": "BT",
+  "showGrid": true,
+  "version": 2,
+  "createdAt": "2026-03-29T05:53:45.553Z",
+  "nodes": [
+    {
+      "id": "260bc3b9-4b82-4e43-b9ca-1d720e0a6269",
+      "label": "SARS-CoV-2 genetic material originated in bats.",
+      "notes": "“Genomic analyses show that SARS-CoV-2 shares 96 % sequence identity with the bat coronavirus RaTG13.” – Zhou et al., Nature, 2020.",
+      "x": 460.93782383419693,
+      "y": 681.0829015544041
+    },
+    {
+      "id": "71a932f5-fe3a-415b-a345-2ef907be5403",
+      "label": "Humans were in close proximity to live wildlife.",
+      "notes": "“Animals of multiple species were kept in stacked cages, creating ‘an ideal mixing vessel for novel pathogens’.” – WHO–China Joint Study, 2021, p. 75.",
+      "x": 766.4300518134716,
+      "y": 523.2642487046631
+    },
+    {
+      "id": "a07a6640-0710-4e7a-8bb5-6812399cc8e2",
+      "label": "The outbreak was seeded in Wuhan's wet market.",
+      "notes": "“Fifty-five of the first 168 confirmed COVID-19 patients had direct exposure to the Huanan Seafood Market.” – Huang et al., The Lancet, 2020.",
+      "x": 766.4300518134716,
+      "y": 397.740932642487
+    },
+    {
+      "id": "3e7495e5-babb-44b6-b38b-8c642d0b9cc6",
+      "label": "The virus transmitted from animals to humans.",
+      "tags": [
+        "ude"
+      ],
+      "isUDE": true,
+      "notes": "“Early epidemiological evidence indicates a zoonotic spillover event, with many initial cases linked to animal stalls in Wuhan markets.” – WHO–China Joint Study, 2021, p. 36.",
+      "x": 766,
+      "y": 184
+    },
+    {
+      "id": "778623dc-2c9a-4207-b2ec-6af040f0e8d0",
+      "label": "COVID-19 emerged as a novel human disease.",
+      "tags": [
+        "ude"
+      ],
+      "isUDE": true,
+      "notes": "“A cluster of pneumonia cases of unknown cause was reported in Wuhan on 31 Dec 2019; a novel coronavirus was identified on 7 Jan 2020.” – WHO Situation Report #1, 2020.",
+      "x": 766,
+      "y": 12
+    },
+    {
+      "id": "d2d64e52-9a11-4083-bf6f-afb9f92b04e4",
+      "label": "An intermediate host species carried the virus.",
+      "notes": "“Metagenomic sequencing revealed pangolin coronaviruses sharing 91 % amino-acid identity with the SARS-CoV-2 S1 protein.” – Xiao et al., Nature, 2020.",
+      "x": 460.238341968912,
+      "y": 491.77202072538853
+    },
+    {
+      "id": "3363e5b1-b594-417f-802e-c090225b31ef",
+      "label": "Experts continue debating a possible laboratory origin.",
+      "notes": "• “Our analyses clearly show that SARS-CoV-2 is not a laboratory construct or a purposefully manipulated virus.” – Andersen et al., Nature Medicine, 2020.\n• “We condemn conspiracy theories suggesting that COVID-19 does not have a natural origin.” – Calisher et al., The Lancet Correspondence, Feb 2020.\n• “We must take hypotheses about both natural and laboratory spillovers seriously until we have sufficient data.” – Bloom et al., Science, May 2021.\n• “One IC element assesses with moderate confidence that the first human infection was most likely the result of a laboratory-associated incident.” – U.S. Intelligence Community, Declassified Summary, Oct 2021.\n• “The Department of Energy has concluded, albeit with low confidence, that a laboratory leak was the most likely cause.” – U.S. DOE Intelligence Update, Feb 2023.",
+      "x": 1058.7461139896373,
+      "y": 179.75129533678756
+    },
+    {
+      "id": "d4aaa17a-3ad7-4b54-8b69-2c7487cefb18",
+      "label": "Zoonotic spillover events frequently occur with coronaviruses.",
+      "notes": "“Since 2002, three novel coronaviruses—SARS-CoV, MERS-CoV and SARS-CoV-2—have crossed species barriers into humans.” – CDC, Emerging Infectious Diseases, 2020.",
+      "x": 1021.2746113989638,
+      "y": 502.07772020725383
+    },
+    {
+      "id": "fbb1e2b7-426f-45c4-b4d9-45fb80358416",
+      "label": "Environmental change increased human-wildlife contact risk.",
+      "notes": "“Rapid land-use change and deforestation around wildlife habitats increase human–animal contact, heightening spillover risk for viruses like SARS-CoV-2.” – IPBES Pandemics Report, 2020, p. 4.",
+      "x": 1020.9378238341969,
+      "y": 681.0829015544041
+    },
+    {
+      "id": "b634fad4-1e89-4396-a036-2a469a34e9e6",
+      "label": "Social and cultural practices sustained wildlife consumption.",
+      "notes": "“Consumer demand for freshly slaughtered wildlife in wet markets sustains high-risk interfaces for coronavirus emergence.” – Zhang & Holmes, The Lancet, 2020.",
+      "x": 740.9378238341969,
+      "y": 681.0829015544041
+    },
+    {
+      "id": "5e80b324-90f6-4809-b967-1394547e36c7",
+      "label": "Globalization and air travel spread the virus worldwide.",
+      "notes": "“Within 30 days of detection, SARS-CoV-2 had spread to 19 countries via international air travel.” – Bogoch et al., Journal of Travel Medicine, 2020.",
+      "x": 1378.921169026586,
+      "y": 179.6408441729919
+    },
+    {
+      "id": "565be921-4b75-4cc4-b386-49203b91dd68",
+      "label": "Weak public-health surveillance delayed outbreak detection.",
+      "notes": "“Delayed case reporting in early January hindered timely containment and contact tracing efforts.” – Tsang et al., The Lancet, 2020.",
+      "x": -44.295336787564764,
+      "y": 183.92746113989634
+    },
+    {
+      "id": "b9d9933c-dfbc-41d6-8620-3c9fd53db657",
+      "label": "The virus rapidly mutated and adapted to humans.",
+      "notes": "“The D614G substitution became globally dominant within months, conferring increased viral fitness.” – Korber et al., Cell, 2020.",
+      "x": 1172.4559585492227,
+      "y": 392.1139896373056
+    },
+    {
+      "id": "790220a9-ecb9-4c19-a4bc-7653947672a5",
+      "label": "Animal surveillance failed to detect emerging coronaviruses.",
+      "notes": "“Retrospective sampling of 11,000 farmed animals in China found no evidence of SARS-CoV-2 circulation before 2019.” – WHO–China Joint Study, 2021, Annex C.",
+      "x": 1300.937823834197,
+      "y": 681.0829015544041
+    },
+    {
+      "id": "200f84cb-7d27-4e95-96f4-a2967a742909",
+      "label": "Public misunderstanding and speculation hindered mitigation efforts.",
+      "notes": "“Tweets containing the hashtag #coronavirushoax surged 900 % between January and February 2020.” – Gallagher & Sayers, JMIR Infodemiology, 2020.",
+      "x": 166.66321243523316,
+      "y": 497.2694300518134
+    },
+    {
+      "id": "3cb02b3d-2ead-4cb6-8a4f-0db5ab7ae32e",
+      "label": "Containment and control measures were delayed.",
+      "tags": [
+        "ude"
+      ],
+      "isUDE": true,
+      "x": 252,
+      "y": 184
+    }
+  ],
+  "edges": [
+    {
+      "source": "260bc3b9-4b82-4e43-b9ca-1d720e0a6269",
+      "target": "71a932f5-fe3a-415b-a345-2ef907be5403",
+      "confidence": "medium"
+    },
+    {
+      "source": "71a932f5-fe3a-415b-a345-2ef907be5403",
+      "target": "a07a6640-0710-4e7a-8bb5-6812399cc8e2"
+    },
+    {
+      "source": "a07a6640-0710-4e7a-8bb5-6812399cc8e2",
+      "target": "3e7495e5-babb-44b6-b38b-8c642d0b9cc6",
+      "confidence": "medium"
+    },
+    {
+      "source": "3e7495e5-babb-44b6-b38b-8c642d0b9cc6",
+      "target": "778623dc-2c9a-4207-b2ec-6af040f0e8d0"
+    },
+    {
+      "source": "260bc3b9-4b82-4e43-b9ca-1d720e0a6269",
+      "target": "d2d64e52-9a11-4083-bf6f-afb9f92b04e4",
+      "confidence": "medium"
+    },
+    {
+      "source": "d2d64e52-9a11-4083-bf6f-afb9f92b04e4",
+      "target": "3e7495e5-babb-44b6-b38b-8c642d0b9cc6",
+      "confidence": "medium"
+    },
+    {
+      "source": "3363e5b1-b594-417f-802e-c090225b31ef",
+      "target": "778623dc-2c9a-4207-b2ec-6af040f0e8d0",
+      "confidence": "low"
+    },
+    {
+      "source": "d4aaa17a-3ad7-4b54-8b69-2c7487cefb18",
+      "target": "3e7495e5-babb-44b6-b38b-8c642d0b9cc6",
+      "confidence": "medium"
+    },
+    {
+      "source": "b634fad4-1e89-4396-a036-2a469a34e9e6",
+      "target": "71a932f5-fe3a-415b-a345-2ef907be5403",
+      "confidence": "medium"
+    },
+    {
+      "source": "5e80b324-90f6-4809-b967-1394547e36c7",
+      "target": "778623dc-2c9a-4207-b2ec-6af040f0e8d0"
+    },
+    {
+      "source": "565be921-4b75-4cc4-b386-49203b91dd68",
+      "target": "778623dc-2c9a-4207-b2ec-6af040f0e8d0"
+    },
+    {
+      "source": "b9d9933c-dfbc-41d6-8620-3c9fd53db657",
+      "target": "3e7495e5-babb-44b6-b38b-8c642d0b9cc6",
+      "confidence": "medium"
+    },
+    {
+      "source": "790220a9-ecb9-4c19-a4bc-7653947672a5",
+      "target": "d4aaa17a-3ad7-4b54-8b69-2c7487cefb18",
+      "confidence": "medium"
+    },
+    {
+      "source": "fbb1e2b7-426f-45c4-b4d9-45fb80358416",
+      "target": "71a932f5-fe3a-415b-a345-2ef907be5403",
+      "confidence": "medium"
+    },
+    {
+      "source": "fbb1e2b7-426f-45c4-b4d9-45fb80358416",
+      "target": "d4aaa17a-3ad7-4b54-8b69-2c7487cefb18",
+      "confidence": "medium"
+    },
+    {
+      "source": "200f84cb-7d27-4e95-96f4-a2967a742909",
+      "target": "3cb02b3d-2ead-4cb6-8a4f-0db5ab7ae32e",
+      "confidence": "low"
+    },
+    {
+      "source": "565be921-4b75-4cc4-b386-49203b91dd68",
+      "target": "3cb02b3d-2ead-4cb6-8a4f-0db5ab7ae32e",
+      "confidence": "medium"
+    },
+    {
+      "source": "3cb02b3d-2ead-4cb6-8a4f-0db5ab7ae32e",
+      "target": "778623dc-2c9a-4207-b2ec-6af040f0e8d0",
+      "confidence": "medium"
+    }
+  ]
+}

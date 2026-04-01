@@ -1,0 +1,329 @@
+{
+  "name": "Untitled Diagram",
+  "framework": "crt",
+  "direction": "BT",
+  "showGrid": true,
+  "version": 1,
+  "createdAt": "2026-03-28T17:09:48.247Z",
+  "nodes": [
+    {
+      "id": "2bf09db4-c07f-4cdf-b67c-f19a3c800c51",
+      "label": "Caesar's rise to power",
+      "notes": "Caesar rose to power through military success and political alliances (Goldsworthy, 2006). His crossing of the Rubicon in 49 BC marked the start of civil war (Suetonius, 'The Twelve Caesars').",
+      "x": 956,
+      "y": 1368
+    },
+    {
+      "id": "7cbdf9c5-761b-4739-ab26-c444d03eaf54",
+      "label": "Political reforms by Caesar",
+      "notes": "Caesar enacted reforms like the Julian calendar and land redistribution (Plutarch, 'Life of Caesar'). His reforms aimed to centralize power (Goldsworthy, 2006).",
+      "x": 332,
+      "y": 1220
+    },
+    {
+      "id": "ddc63015-514a-48be-91ae-f8ed3b448cb6",
+      "label": "Concentration of power",
+      "notes": "Caesar's appointment as dictator for life concentrated power (Suetonius, 'The Twelve Caesars'). This move alarmed many senators (Plutarch, 'Life of Caesar').",
+      "x": 916,
+      "y": 1072
+    },
+    {
+      "id": "6e9d1dbd-6cdc-4076-820b-638baffa05fc",
+      "label": "Fear of monarchy",
+      "notes": "Fear of monarchy grew as Caesar's power increased (Goldsworthy, 2006). Romans had a deep-seated aversion to kingship (Plutarch, 'Life of Caesar').",
+      "x": 1632,
+      "y": 916
+    },
+    {
+      "id": "58632054-e4b4-45ba-a5c4-63331fc62f25",
+      "label": "Personal rivalries",
+      "notes": "Personal rivalries among senators were exacerbated by Caesar's rise (Suetonius, 'The Twelve Caesars'). These rivalries contributed to the conspiracy against him (Goldsworthy, 2006).",
+      "x": 1022,
+      "y": 752
+    },
+    {
+      "id": "0d29946b-13f2-4811-85fc-0f5a902667d1",
+      "label": "Disregard for Senate",
+      "notes": "Caesar often bypassed the Senate, diminishing its authority (Plutarch, 'Life of Caesar'). His actions were seen as autocratic (Goldsworthy, 2006).",
+      "x": 892,
+      "y": 912
+    },
+    {
+      "id": "c89aa8da-ce08-4a33-a06c-0f2dcca571e6",
+      "label": "Expansion of Roman territory",
+      "notes": "Caesar expanded Roman territory significantly through conquests (Suetonius, 'The Twelve Caesars'). His campaigns in Gaul were particularly notable (Goldsworthy, 2006).",
+      "x": 956,
+      "y": 1220
+    },
+    {
+      "id": "48eebe6e-3742-4499-bf4e-5385f5607260",
+      "label": "Caesar's military success",
+      "notes": "Caesar's military success, especially in Gaul, bolstered his popularity (Plutarch, 'Life of Caesar'). His victories were celebrated in Rome (Goldsworthy, 2006).",
+      "x": 1632,
+      "y": 1220
+    },
+    {
+      "id": "feecaf44-05e6-403a-bced-3ada9d6a0819",
+      "label": "Public support for Caesar",
+      "notes": "Public support for Caesar was strong due to his military and political successes (Suetonius, 'The Twelve Caesars'). His populist policies endeared him to the masses (Goldsworthy, 2006).",
+      "x": 1276,
+      "y": 1092
+    },
+    {
+      "id": "5397f71e-2865-4b55-b242-700d995ec6be",
+      "label": "Senate's loss of influence",
+      "notes": "The Senate's influence waned as Caesar's power grew (Plutarch, 'Life of Caesar'). Many senators resented their diminished role (Goldsworthy, 2006).",
+      "x": 652,
+      "y": 752
+    },
+    {
+      "id": "5036fa3d-cccd-4fa0-9186-d50e31b988e6",
+      "label": "Economic reforms by Caesar",
+      "notes": "Caesar's economic reforms included debt relief and land redistribution (Suetonius, 'The Twelve Caesars'). These measures were popular among the lower classes (Goldsworthy, 2006).",
+      "x": 292,
+      "y": 1072
+    },
+    {
+      "id": "8c4527c3-e63f-49c7-b549-0b86c004b575",
+      "label": "Caesar's declaration as dictator for life",
+      "notes": "Caesar's declaration as dictator for life was unprecedented (Plutarch, 'Life of Caesar'). It was a key factor in the conspiracy against him (Goldsworthy, 2006).",
+      "x": 332,
+      "y": 920
+    },
+    {
+      "id": "a54ab3f8-5b53-49f1-bbe6-c4e34fa3cca0",
+      "label": "Brutus' internal conflict",
+      "notes": "Brutus faced internal conflict due to his friendship with Caesar and republican ideals (Plutarch, 'Life of Brutus'). His role in the conspiracy was pivotal (Suetonius, 'The Twelve Caesars').",
+      "x": 982,
+      "y": 604
+    },
+    {
+      "id": "f6e6ae49-9419-42ea-a895-d1cf556b31b3",
+      "label": "Cassius' manipulation",
+      "notes": "Cassius was a key instigator in the conspiracy against Caesar (Plutarch, 'Life of Brutus'). His manipulation was crucial in persuading Brutus (Goldsworthy, 2006).",
+      "x": 1262,
+      "y": 604
+    },
+    {
+      "id": "c6127b5b-55bd-486a-b09e-0969fa73751a",
+      "label": "Conspiracy among senators",
+      "notes": "The conspiracy among senators was driven by fear of Caesar's power (Suetonius, 'The Twelve Caesars'). It culminated in his assassination (Plutarch, 'Life of Caesar').",
+      "x": 1033.4285714285716,
+      "y": 456
+    },
+    {
+      "id": "cd8a352e-6cf6-4308-864f-f5552ded5d6d",
+      "label": "Public unrest",
+      "notes": "Public unrest grew due to economic disparities and political tensions (Goldsworthy, 2006). Caesar's reforms failed to address all grievances (Plutarch, 'Life of Caesar').",
+      "x": 52,
+      "y": 916
+    },
+    {
+      "id": "211e0a3e-d374-4dcd-8965-d5fb6edf4304",
+      "label": "Mistrust among senators",
+      "notes": "Mistrust among senators was exacerbated by Caesar's centralization of power (Suetonius, 'The Twelve Caesars'). This mistrust fueled the conspiracy (Goldsworthy, 2006).",
+      "x": 652,
+      "y": 604
+    },
+    {
+      "id": "d02531bf-84e2-488f-b86e-db7dfa4db2b8",
+      "label": "Caesar's refusal to share power",
+      "notes": "Caesar's refusal to share power alienated many senators (Plutarch, 'Life of Caesar'). His actions were seen as tyrannical (Goldsworthy, 2006).",
+      "x": 1352,
+      "y": 900
+    },
+    {
+      "id": "26aaf3e7-bd8f-4640-ad73-06a2fe338aba",
+      "label": "Senators' fear of losing power",
+      "notes": "Senators feared losing power and influence under Caesar (Suetonius, 'The Twelve Caesars'). This fear was a major motive for the conspiracy (Goldsworthy, 2006).",
+      "x": 1392,
+      "y": 752
+    },
+    {
+      "id": "d7b4d255-b613-482e-ba88-1d956c16b6a6",
+      "label": "Assassination plot",
+      "notes": "The assassination plot was carefully orchestrated by key senators (Plutarch, 'Life of Brutus'). It was executed on the Ides of March (Suetonius, 'The Twelve Caesars').",
+      "x": 112,
+      "y": 308
+    },
+    {
+      "id": "a6c0fff5-b056-45d1-9bd2-8d0de71e831b",
+      "label": "Ides of March",
+      "notes": "The Ides of March (March 15, 44 BC) was the date of Caesar's assassination (Plutarch, 'Life of Caesar'). It marked a turning point in Roman history (Goldsworthy, 2006).",
+      "x": 112,
+      "y": 160
+    },
+    {
+      "id": "9a61327a-7dc8-42dd-862b-815f194d9abb",
+      "label": "Caesar's assassination",
+      "isUDE": true,
+      "notes": "Caesar's assassination was a result of a conspiracy by senators (Suetonius, 'The Twelve Caesars'). It led to the end of the Roman Republic (Goldsworthy, 2006).",
+      "x": 112,
+      "y": 12
+    },
+    {
+      "id": "4664d3f2-ae1a-417f-babb-f47c189ae13c",
+      "label": "Senate's institutional weaknesses",
+      "x": 612,
+      "y": 900
+    },
+    {
+      "id": "19746f55-a1d6-4b51-822d-2cb3da963c27",
+      "label": "Varied public support",
+      "x": 1236,
+      "y": 1220
+    },
+    {
+      "id": "5c46832b-3e48-487d-9be8-8100b002c85a",
+      "label": "Economic disruptions",
+      "x": 12,
+      "y": 1072
+    },
+    {
+      "id": "5ad93845-5ed1-431b-81df-ace3b932bde1",
+      "label": "Personal vendettas",
+      "x": 1523,
+      "y": 604
+    },
+    {
+      "id": "649d57d0-5edb-4dcf-96dd-eea1078b702b",
+      "label": "Ideological differences",
+      "x": 1803,
+      "y": 604
+    }
+  ],
+  "edges": [
+    {
+      "source": "2bf09db4-c07f-4cdf-b67c-f19a3c800c51",
+      "target": "7cbdf9c5-761b-4739-ab26-c444d03eaf54"
+    },
+    {
+      "source": "7cbdf9c5-761b-4739-ab26-c444d03eaf54",
+      "target": "ddc63015-514a-48be-91ae-f8ed3b448cb6"
+    },
+    {
+      "source": "ddc63015-514a-48be-91ae-f8ed3b448cb6",
+      "target": "6e9d1dbd-6cdc-4076-820b-638baffa05fc"
+    },
+    {
+      "source": "ddc63015-514a-48be-91ae-f8ed3b448cb6",
+      "target": "58632054-e4b4-45ba-a5c4-63331fc62f25"
+    },
+    {
+      "source": "ddc63015-514a-48be-91ae-f8ed3b448cb6",
+      "target": "0d29946b-13f2-4811-85fc-0f5a902667d1"
+    },
+    {
+      "source": "2bf09db4-c07f-4cdf-b67c-f19a3c800c51",
+      "target": "c89aa8da-ce08-4a33-a06c-0f2dcca571e6"
+    },
+    {
+      "source": "2bf09db4-c07f-4cdf-b67c-f19a3c800c51",
+      "target": "48eebe6e-3742-4499-bf4e-5385f5607260"
+    },
+    {
+      "source": "48eebe6e-3742-4499-bf4e-5385f5607260",
+      "target": "feecaf44-05e6-403a-bced-3ada9d6a0819"
+    },
+    {
+      "source": "7cbdf9c5-761b-4739-ab26-c444d03eaf54",
+      "target": "5036fa3d-cccd-4fa0-9186-d50e31b988e6"
+    },
+    {
+      "source": "ddc63015-514a-48be-91ae-f8ed3b448cb6",
+      "target": "8c4527c3-e63f-49c7-b549-0b86c004b575"
+    },
+    {
+      "source": "6e9d1dbd-6cdc-4076-820b-638baffa05fc",
+      "target": "26aaf3e7-bd8f-4640-ad73-06a2fe338aba"
+    },
+    {
+      "source": "0d29946b-13f2-4811-85fc-0f5a902667d1",
+      "target": "5397f71e-2865-4b55-b242-700d995ec6be"
+    },
+    {
+      "source": "5397f71e-2865-4b55-b242-700d995ec6be",
+      "target": "211e0a3e-d374-4dcd-8965-d5fb6edf4304"
+    },
+    {
+      "source": "58632054-e4b4-45ba-a5c4-63331fc62f25",
+      "target": "a54ab3f8-5b53-49f1-bbe6-c4e34fa3cca0"
+    },
+    {
+      "source": "58632054-e4b4-45ba-a5c4-63331fc62f25",
+      "target": "f6e6ae49-9419-42ea-a895-d1cf556b31b3"
+    },
+    {
+      "source": "a54ab3f8-5b53-49f1-bbe6-c4e34fa3cca0",
+      "target": "c6127b5b-55bd-486a-b09e-0969fa73751a"
+    },
+    {
+      "source": "f6e6ae49-9419-42ea-a895-d1cf556b31b3",
+      "target": "c6127b5b-55bd-486a-b09e-0969fa73751a"
+    },
+    {
+      "source": "c6127b5b-55bd-486a-b09e-0969fa73751a",
+      "target": "d7b4d255-b613-482e-ba88-1d956c16b6a6"
+    },
+    {
+      "source": "cd8a352e-6cf6-4308-864f-f5552ded5d6d",
+      "target": "d7b4d255-b613-482e-ba88-1d956c16b6a6"
+    },
+    {
+      "source": "d7b4d255-b613-482e-ba88-1d956c16b6a6",
+      "target": "a6c0fff5-b056-45d1-9bd2-8d0de71e831b"
+    },
+    {
+      "source": "a6c0fff5-b056-45d1-9bd2-8d0de71e831b",
+      "target": "9a61327a-7dc8-42dd-862b-815f194d9abb"
+    },
+    {
+      "source": "48eebe6e-3742-4499-bf4e-5385f5607260",
+      "target": "6e9d1dbd-6cdc-4076-820b-638baffa05fc"
+    },
+    {
+      "source": "c89aa8da-ce08-4a33-a06c-0f2dcca571e6",
+      "target": "ddc63015-514a-48be-91ae-f8ed3b448cb6"
+    },
+    {
+      "source": "5036fa3d-cccd-4fa0-9186-d50e31b988e6",
+      "target": "cd8a352e-6cf6-4308-864f-f5552ded5d6d"
+    },
+    {
+      "source": "d02531bf-84e2-488f-b86e-db7dfa4db2b8",
+      "target": "26aaf3e7-bd8f-4640-ad73-06a2fe338aba"
+    },
+    {
+      "source": "26aaf3e7-bd8f-4640-ad73-06a2fe338aba",
+      "target": "c6127b5b-55bd-486a-b09e-0969fa73751a"
+    },
+    {
+      "source": "4664d3f2-ae1a-417f-babb-f47c189ae13c",
+      "target": "5397f71e-2865-4b55-b242-700d995ec6be"
+    },
+    {
+      "source": "19746f55-a1d6-4b51-822d-2cb3da963c27",
+      "target": "feecaf44-05e6-403a-bced-3ada9d6a0819"
+    },
+    {
+      "source": "5c46832b-3e48-487d-9be8-8100b002c85a",
+      "target": "cd8a352e-6cf6-4308-864f-f5552ded5d6d"
+    },
+    {
+      "source": "5ad93845-5ed1-431b-81df-ace3b932bde1",
+      "target": "c6127b5b-55bd-486a-b09e-0969fa73751a"
+    },
+    {
+      "source": "649d57d0-5edb-4dcf-96dd-eea1078b702b",
+      "target": "c6127b5b-55bd-486a-b09e-0969fa73751a"
+    },
+    {
+      "source": "211e0a3e-d374-4dcd-8965-d5fb6edf4304",
+      "target": "c6127b5b-55bd-486a-b09e-0969fa73751a"
+    },
+    {
+      "source": "211e0a3e-d374-4dcd-8965-d5fb6edf4304",
+      "target": "d7b4d255-b613-482e-ba88-1d956c16b6a6"
+    }
+  ]
+}

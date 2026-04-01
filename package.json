@@ -11,6 +11,7 @@
     "test": "npm run test:unit",
     "test:unit": "vitest run",
     "test:perf": "RUN_PERF_TESTS=1 vitest run src/__tests__/perf-benchmark.test.ts src/core/layout/__tests__/cld-layout-metrics.test.ts",
+    "test:perf:routing": "RUN_PERF_TESTS=1 vitest run src/core/layout/__tests__/edge-routing-comparison.test.ts",
     "test:perf:engines": "RUN_PERF_TESTS=1 vitest run src/core/layout/__tests__/engine-benchmark.test.ts",
     "test:e2e": "playwright test",
     "test:all": "npm run test:unit && npm run test:e2e"
