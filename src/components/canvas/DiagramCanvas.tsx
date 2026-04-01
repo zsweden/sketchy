@@ -204,6 +204,7 @@ export default function DiagramCanvas() {
   const onCanvasDoubleClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       if (!(event.target instanceof Element)) return;
+      if (event.target.closest('.react-flow__node, .react-flow__edge')) return;
       if (!event.target.closest('.react-flow__pane')) return;
       const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
       addNode(position);

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import DiagramCanvas from '../DiagramCanvas';
@@ -12,6 +12,8 @@ const mocks = vi.hoisted(() => ({
   rfEdges: [] as never[],
   defaultEdgeOptions: {},
   activeTheme: { js: { minimapFallback: '#999' } },
+  screenToFlowPosition: vi.fn(() => ({ x: 200, y: 100 })),
+  fitView: vi.fn(),
 }));
 
 vi.mock('../EntityNode', () => ({
@@ -57,6 +59,23 @@ vi.mock('@xyflow/react', () => ({
     <div>
       <div data-testid="selected-nodes">{nodes.filter((node) => node.selected).map((node) => node.id).join(',')}</div>
       <div data-testid="selected-edges">{edges.filter((edge) => edge.selected).map((edge) => edge.id).join(',')}</div>
+      <button
+        type="button"
+        className="react-flow__pane"
+        data-testid="trigger-canvas-double-click"
+      >
+        Trigger canvas double click
+      </button>
+      <div className="react-flow__pane">
+        <div className="react-flow__node">
+          <button
+            type="button"
+            data-testid="trigger-node-double-click"
+          >
+            Trigger node double click
+          </button>
+        </div>
+      </div>
       <button
         type="button"
         onClick={() => onConnect({
@@ -151,8 +170,8 @@ vi.mock('@xyflow/react', () => ({
   MiniMap: () => null,
   BackgroundVariant: { Dots: 'dots' },
   useReactFlow: () => ({
-    screenToFlowPosition: vi.fn(),
-    fitView: vi.fn(),
+    screenToFlowPosition: mocks.screenToFlowPosition,
+    fitView: mocks.fitView,
   }),
   applyNodeChanges: vi.fn((changes, nodes) => nodes),
   applyEdgeChanges: vi.fn((changes, edges) => edges),
@@ -197,6 +216,7 @@ describe('DiagramCanvas', () => {
   beforeEach(() => {
     resetStores();
     vi.clearAllMocks();
+    mocks.screenToFlowPosition.mockReturnValue({ x: 200, y: 100 });
   });
 
   it('offers to switch routing to fixed when moving an edge anchor in continuous optimize mode', async () => {
@@ -347,5 +367,35 @@ describe('DiagramCanvas', () => {
     await user.click(screen.getByTestId('trigger-pane-context-menu-over-edge'));
 
     expect(useUIStore.getState().contextMenu).toBeNull();
+  });
+
+  it('creates a node when double-clicking on the canvas pane', () => {
+    const addNode = vi.fn();
+    useDiagramStore.setState({ addNode });
+
+    render(<DiagramCanvas />);
+
+    fireEvent.doubleClick(screen.getByTestId('trigger-canvas-double-click'), {
+      clientX: 320,
+      clientY: 180,
+    });
+
+    expect(mocks.screenToFlowPosition).toHaveBeenCalledWith({ x: 320, y: 180 });
+    expect(addNode).toHaveBeenCalledWith({ x: 200, y: 100 });
+  });
+
+  it('does not create a node when double-clicking on a node', () => {
+    const addNode = vi.fn();
+    useDiagramStore.setState({ addNode });
+
+    render(<DiagramCanvas />);
+
+    fireEvent.doubleClick(screen.getByTestId('trigger-node-double-click'), {
+      clientX: 320,
+      clientY: 180,
+    });
+
+    expect(mocks.screenToFlowPosition).not.toHaveBeenCalled();
+    expect(addNode).not.toHaveBeenCalled();
   });
 });
