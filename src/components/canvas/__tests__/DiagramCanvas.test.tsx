@@ -377,6 +377,35 @@ describe('DiagramCanvas', () => {
     expect(mocks.setCenter).not.toHaveBeenCalled();
   });
 
+  it('recenters on a chat-focused loop when part of the loop is off-screen', async () => {
+    useDiagramStore.getState().setFramework('cld');
+    mocks.rfNodes = [
+      { id: 'n1', position: { x: 900, y: 100 }, data: {} } as never,
+      { id: 'n2', position: { x: 1200, y: 100 }, data: {} } as never,
+    ];
+    useDiagramStore.setState((state) => ({
+      diagram: {
+        ...state.diagram,
+        nodes: [
+          { id: 'n1', type: 'entity', position: { x: 900, y: 100 }, data: { label: 'Loop A', tags: [], junctionType: 'or' } },
+          { id: 'n2', type: 'entity', position: { x: 1200, y: 100 }, data: { label: 'Loop B', tags: [], junctionType: 'or' } },
+        ],
+        edges: [
+          { id: 'e1', source: 'n1', target: 'n2', polarity: 'positive' },
+          { id: 'e2', source: 'n2', target: 'n1', polarity: 'positive' },
+        ],
+      },
+    }));
+
+    render(<DiagramCanvas />);
+
+    useUIStore.getState().focusGraphObject({ kind: 'loop', id: 'n1>n2' });
+
+    await waitFor(() => {
+      expect(mocks.setCenter).toHaveBeenCalledWith(1170, 124, { zoom: 1 });
+    });
+  });
+
   it('keeps a node context menu targeted to the node when pane fallback would also run', async () => {
     const user = userEvent.setup();
     mocks.rfNodes = [

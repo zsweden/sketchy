@@ -54,6 +54,15 @@ function rectsIntersect(a: Rect, b: Rect): boolean {
   );
 }
 
+function rectContains(outer: Rect, inner: Rect): boolean {
+  return (
+    inner.x >= outer.x
+    && inner.y >= outer.y
+    && inner.x + inner.width <= outer.x + outer.width
+    && inner.y + inner.height <= outer.y + outer.height
+  );
+}
+
 export default function DiagramCanvas() {
   const TOUCH_DOUBLE_TAP_MS = 320;
   const TOUCH_LONG_PRESS_MS = 550;
@@ -218,7 +227,10 @@ export default function DiagramCanvas() {
       height: viewportHeight / viewport.zoom,
     };
 
-    if (rectsIntersect(targetRect, visibleRect)) return;
+    const isVisible = target.kind === 'loop'
+      ? rectContains(visibleRect, targetRect)
+      : rectsIntersect(targetRect, visibleRect);
+    if (isVisible) return;
 
     const centerX = targetRect.x + targetRect.width / 2;
     const centerY = targetRect.y + targetRect.height / 2;
