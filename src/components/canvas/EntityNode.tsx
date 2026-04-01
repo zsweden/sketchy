@@ -50,10 +50,15 @@ function getVisibleHandleStyle(side: HandleSide): CSSProperties | undefined {
 }
 
 function EntityNode({ id, data, selected }: NodeProps) {
+  const TOUCH_DOUBLE_TAP_MS = 320;
+  const TOUCH_MOVE_TOLERANCE_PX = 14;
   const nodeData = data as unknown as EntityNodeData;
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(nodeData.label);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const touchPointerId = useRef<number | null>(null);
+  const touchStart = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  const lastTouchTap = useRef<{ timestamp: number; x: number; y: number } | null>(null);
 
   const commitNodeText = useDiagramStore((s) => s.commitNodeText);
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
@@ -81,6 +86,56 @@ function EntityNode({ id, data, selected }: NodeProps) {
 
   const handleDoubleClick = useCallback(() => {
     setEditing(true);
+  }, []);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'touch' || editing) return;
+    touchPointerId.current = e.pointerId;
+    touchStart.current = { x: e.clientX, y: e.clientY, moved: false };
+  }, [editing]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'touch' || touchPointerId.current !== e.pointerId || !touchStart.current) return;
+    const movedX = e.clientX - touchStart.current.x;
+    const movedY = e.clientY - touchStart.current.y;
+    if (Math.hypot(movedX, movedY) > TOUCH_MOVE_TOLERANCE_PX) {
+      touchStart.current.moved = true;
+    }
+  }, []);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'touch' || touchPointerId.current !== e.pointerId) return;
+    touchPointerId.current = null;
+
+    const touch = touchStart.current;
+    touchStart.current = null;
+    if (!touch || touch.moved || editing) return;
+
+    const target = e.target instanceof Element ? e.target : null;
+    if (target?.closest('.react-flow__handle, textarea, button')) {
+      lastTouchTap.current = null;
+      return;
+    }
+
+    const now = Date.now();
+    const lastTap = lastTouchTap.current;
+    if (
+      lastTap &&
+      now - lastTap.timestamp <= TOUCH_DOUBLE_TAP_MS &&
+      Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) <= TOUCH_MOVE_TOLERANCE_PX
+    ) {
+      lastTouchTap.current = null;
+      setEditing(true);
+      return;
+    }
+
+    lastTouchTap.current = { timestamp: now, x: e.clientX, y: e.clientY };
+  }, [editing]);
+
+  const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (touchPointerId.current !== e.pointerId) return;
+    touchPointerId.current = null;
+    touchStart.current = null;
   }, []);
 
   const handleJunctionToggle = useCallback(
@@ -131,6 +186,10 @@ function EntityNode({ id, data, selected }: NodeProps) {
           : '',
       ].join(' ')}
       onDoubleClick={handleDoubleClick}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
       style={nodeData.color ? { backgroundColor: nodeData.color } : undefined}
       data-testid={`entity-node-${id}`}
       data-node-id={id}
@@ -186,7 +245,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
           <div className="entity-node-label" style={nodeData.textColor ? { color: nodeData.textColor } : undefined}>
             {nodeData.label || (
               <span style={{ color: 'var(--text-soft)', fontStyle: 'italic' }}>
-                Double-click to edit
+                Double-tap or double-click to edit
               </span>
             )}
           </div>

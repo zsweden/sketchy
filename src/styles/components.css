@@ -1,7 +1,29 @@
 /* App shell */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  height: 100dvh;
+}
+
+.app-main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-canvas-shell {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
 .app-header {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
   gap: 1rem;
   padding: 0.75rem 1.25rem;
   background: var(--header-bg);
@@ -378,7 +400,9 @@
 .toolbar-group {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.25rem;
+  min-width: 0;
 }
 
 .toolbar-group-right {
@@ -390,6 +414,46 @@
   height: 1.5rem;
   background: var(--border);
   margin: 0 0.5rem;
+}
+
+@media (max-width: 1180px) {
+  .app-header {
+    gap: 0.625rem;
+    padding: 0.625rem 0.875rem;
+  }
+
+  .app-title {
+    font-size: 1.35rem;
+  }
+
+  .btn {
+    padding: 0.55rem 0.95rem;
+    font-size: 0.75rem;
+  }
+
+  .btn-icon {
+    width: 2.125rem;
+    height: 2.125rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .toolbar-group-right {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+}
+
+@media (pointer: coarse) {
+  .btn-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .select-control {
+    min-height: 2.5rem;
+  }
 }
 
 /* Settings popover */

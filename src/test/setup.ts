@@ -29,3 +29,7 @@ if (!navigator.clipboard) {
     },
   })
 }
+
+if (!globalThis.PointerEvent) {
+  globalThis.PointerEvent = MouseEvent as typeof PointerEvent
+}

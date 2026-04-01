@@ -70,7 +70,7 @@ vi.mock('@xyflow/react', () => ({
         Trigger canvas double click
       </button>
       <div className="react-flow__pane">
-        <div className="react-flow__node">
+        <div className="react-flow__node" data-node-id="n1">
           <button
             type="button"
             data-testid="trigger-node-double-click"
@@ -461,5 +461,79 @@ describe('DiagramCanvas', () => {
 
     expect(mocks.screenToFlowPosition).not.toHaveBeenCalled();
     expect(addNode).not.toHaveBeenCalled();
+  });
+
+  it('creates a node when double-tapping on the canvas pane with touch', () => {
+    vi.useFakeTimers();
+    const addNode = vi.fn();
+    useDiagramStore.setState({ addNode });
+
+    render(<DiagramCanvas />);
+
+    const pane = screen.getByTestId('trigger-canvas-double-click');
+
+    fireEvent.pointerDown(pane, {
+      pointerType: 'touch',
+      pointerId: 1,
+      clientX: 300,
+      clientY: 160,
+    });
+    fireEvent.pointerUp(pane, {
+      pointerType: 'touch',
+      pointerId: 1,
+      clientX: 300,
+      clientY: 160,
+    });
+    vi.advanceTimersByTime(120);
+    fireEvent.pointerDown(pane, {
+      pointerType: 'touch',
+      pointerId: 1,
+      clientX: 302,
+      clientY: 162,
+    });
+    fireEvent.pointerUp(pane, {
+      pointerType: 'touch',
+      pointerId: 1,
+      clientX: 302,
+      clientY: 162,
+    });
+
+    expect(mocks.screenToFlowPosition).toHaveBeenCalledWith({ x: 302, y: 162 });
+    expect(addNode).toHaveBeenCalledWith({ x: 200, y: 100 });
+
+    vi.useRealTimers();
+  });
+
+  it('opens the node context menu on a touch long press', () => {
+    vi.useFakeTimers();
+    mocks.rfNodes = [
+      { id: 'n1', position: { x: 0, y: 0 }, data: {} } as never,
+    ];
+
+    render(<DiagramCanvas />);
+
+    const nodeTarget = screen.getByTestId('trigger-node-double-click');
+    fireEvent.pointerDown(nodeTarget, {
+      pointerType: 'touch',
+      pointerId: 7,
+      clientX: 150,
+      clientY: 96,
+    });
+    vi.advanceTimersByTime(600);
+
+    expect(useUIStore.getState().contextMenu).toEqual({
+      x: 150,
+      y: 96,
+      nodeId: 'n1',
+      edgeId: undefined,
+    });
+
+    fireEvent.pointerUp(nodeTarget, {
+      pointerType: 'touch',
+      pointerId: 7,
+      clientX: 150,
+      clientY: 96,
+    });
+    vi.useRealTimers();
   });
 });

@@ -99,6 +99,7 @@
   width: 6px;
   height: 100%;
   cursor: col-resize;
+  touch-action: none;
   z-index: 10;
 }
 
@@ -119,7 +120,19 @@
   flex: none;
   height: 6px;
   cursor: row-resize;
+  touch-action: none;
   transition: background 0.15s ease;
+}
+
+@media (pointer: coarse) {
+  .side-panel-resize {
+    left: -6px;
+    width: 12px;
+  }
+
+  .side-panel-v-resize {
+    height: 12px;
+  }
 }
 
 .side-panel-v-resize:hover,

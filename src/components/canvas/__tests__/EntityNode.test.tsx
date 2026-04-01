@@ -119,7 +119,7 @@ describe('EntityNode', () => {
 
     it('shows placeholder when label is empty', () => {
       renderNode({ label: '' });
-      expect(screen.getByText('Double-click to edit')).toBeInTheDocument();
+      expect(screen.getByText('Double-tap or double-click to edit')).toBeInTheDocument();
     });
   });
 
@@ -187,6 +187,21 @@ describe('EntityNode', () => {
       const nodeEl = document.querySelector('.entity-node')!;
       fireEvent.doubleClick(nodeEl);
       expect(screen.getByRole('textbox')).toBeInTheDocument();
+    });
+
+    it('enters edit mode on touch double-tap', () => {
+      vi.useFakeTimers();
+      renderNode({ label: 'Edit me' });
+      const nodeEl = document.querySelector('.entity-node')!;
+
+      fireEvent.pointerDown(nodeEl, { pointerType: 'touch', pointerId: 1, clientX: 120, clientY: 80 });
+      fireEvent.pointerUp(nodeEl, { pointerType: 'touch', pointerId: 1, clientX: 120, clientY: 80 });
+      vi.advanceTimersByTime(120);
+      fireEvent.pointerDown(nodeEl, { pointerType: 'touch', pointerId: 1, clientX: 122, clientY: 82 });
+      fireEvent.pointerUp(nodeEl, { pointerType: 'touch', pointerId: 1, clientX: 122, clientY: 82 });
+
+      expect(screen.getByRole('textbox')).toBeInTheDocument();
+      vi.useRealTimers();
     });
 
     it('textarea has current label text', () => {

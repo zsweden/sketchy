@@ -115,4 +115,38 @@ describe('SidePanel', () => {
 
     expect(container).toBeEmptyDOMElement();
   });
+
+  it('uses a narrower default width on tablet-sized viewports', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 820,
+    });
+
+    const { container } = render(<SidePanel />);
+
+    expect(container.querySelector('.side-panel')).toHaveStyle({
+      width: '280px',
+      minWidth: '280px',
+    });
+  });
+
+  it('resizes with pointer dragging', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1400,
+    });
+
+    const { container } = render(<SidePanel />);
+    const panel = container.querySelector('.side-panel') as HTMLElement;
+    const handle = container.querySelector('.side-panel-resize') as HTMLElement;
+
+    fireEvent.pointerDown(handle, { pointerId: 11, clientX: 700 });
+    fireEvent.pointerMove(document, { pointerId: 11, clientX: 600 });
+    fireEvent.pointerUp(document, { pointerId: 11, clientX: 600 });
+
+    expect(panel.style.width).toBe('420px');
+    expect(panel.style.minWidth).toBe('420px');
+  });
 });

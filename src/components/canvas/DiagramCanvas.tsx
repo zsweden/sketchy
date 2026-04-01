@@ -55,6 +55,9 @@ function rectsIntersect(a: Rect, b: Rect): boolean {
 }
 
 export default function DiagramCanvas() {
+  const TOUCH_DOUBLE_TAP_MS = 320;
+  const TOUCH_LONG_PRESS_MS = 550;
+  const TOUCH_MOVE_TOLERANCE_PX = 14;
   const { screenToFlowPosition, fitView, getViewport, getInternalNode, setCenter, viewportInitialized } = useReactFlow();
 
   const diagram = useDiagramStore((s) => s.diagram);
@@ -89,6 +92,32 @@ export default function DiagramCanvas() {
   const [localNodes, setLocalNodes] = useState<Node[]>(rfNodes);
   const [localEdges, setLocalEdges] = useState<Edge[]>(rfEdges);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const touchGestureRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    clientX: number;
+    clientY: number;
+    moved: boolean;
+    longPressTriggered: boolean;
+    nodeId?: string;
+    onPane: boolean;
+  } | null>(null);
+  const longPressTimerRef = useRef<number | null>(null);
+  const lastTapRef = useRef<{
+    timestamp: number;
+    x: number;
+    y: number;
+    onPane: boolean;
+  } | null>(null);
+  const ignoreNextPaneClickRef = useRef(false);
+
+  const clearLongPressTimer = useCallback(() => {
+    if (longPressTimerRef.current != null) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
 
   // Sync store -> local when diagram DATA changes (preserving RF selection)
   useEffect(() => {
@@ -298,7 +327,13 @@ export default function DiagramCanvas() {
     [addEdgeStore, addToast, updateSettings],
   );
 
-  const onPaneClickHandler = useCallback(() => closeContextMenu(), [closeContextMenu]);
+  const onPaneClickHandler = useCallback(() => {
+    if (ignoreNextPaneClickRef.current) {
+      ignoreNextPaneClickRef.current = false;
+      return;
+    }
+    closeContextMenu();
+  }, [closeContextMenu]);
 
   const onCanvasDoubleClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -349,11 +384,103 @@ export default function DiagramCanvas() {
     [openContextMenu],
   );
 
+  const onPointerDownCapture = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== 'touch') return;
+
+    const target = event.target instanceof Element ? event.target : null;
+    const nodeId = target?.closest<HTMLElement>('[data-node-id]')?.dataset.nodeId;
+    const onPane = Boolean(
+      target?.closest('.react-flow__pane') &&
+      !target?.closest('.react-flow__node, .react-flow__edge'),
+    );
+
+    touchGestureRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      moved: false,
+      longPressTriggered: false,
+      nodeId,
+      onPane,
+    };
+
+    clearLongPressTimer();
+
+    if (!nodeId && !onPane) return;
+
+    longPressTimerRef.current = window.setTimeout(() => {
+      const gesture = touchGestureRef.current;
+      if (!gesture || gesture.pointerId !== event.pointerId || gesture.moved) return;
+      gesture.longPressTriggered = true;
+      ignoreNextPaneClickRef.current = true;
+      openContextMenu(gesture.clientX, gesture.clientY, gesture.nodeId);
+      lastTapRef.current = null;
+    }, TOUCH_LONG_PRESS_MS);
+  }, [clearLongPressTimer, openContextMenu]);
+
+  const onPointerMoveCapture = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const gesture = touchGestureRef.current;
+    if (event.pointerType !== 'touch' || !gesture || gesture.pointerId !== event.pointerId) return;
+
+    gesture.clientX = event.clientX;
+    gesture.clientY = event.clientY;
+
+    if (
+      !gesture.moved &&
+      Math.hypot(event.clientX - gesture.startX, event.clientY - gesture.startY) > TOUCH_MOVE_TOLERANCE_PX
+    ) {
+      gesture.moved = true;
+      clearLongPressTimer();
+    }
+  }, [clearLongPressTimer]);
+
+  const onPointerUpCapture = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const gesture = touchGestureRef.current;
+    if (event.pointerType !== 'touch' || !gesture || gesture.pointerId !== event.pointerId) return;
+
+    clearLongPressTimer();
+    touchGestureRef.current = null;
+
+    if (gesture.moved || gesture.longPressTriggered || !gesture.onPane) return;
+
+    const now = Date.now();
+    const lastTap = lastTapRef.current;
+    if (
+      lastTap &&
+      lastTap.onPane &&
+      now - lastTap.timestamp <= TOUCH_DOUBLE_TAP_MS &&
+      Math.hypot(gesture.clientX - lastTap.x, gesture.clientY - lastTap.y) <= TOUCH_MOVE_TOLERANCE_PX
+    ) {
+      lastTapRef.current = null;
+      addNode(screenToFlowPosition({ x: gesture.clientX, y: gesture.clientY }));
+      return;
+    }
+
+    lastTapRef.current = {
+      timestamp: now,
+      x: gesture.clientX,
+      y: gesture.clientY,
+      onPane: true,
+    };
+  }, [addNode, clearLongPressTimer, screenToFlowPosition]);
+
+  const onPointerCancelCapture = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (touchGestureRef.current?.pointerId !== event.pointerId) return;
+    clearLongPressTimer();
+    touchGestureRef.current = null;
+  }, [clearLongPressTimer]);
+
   return (
     <div
       ref={canvasRef}
       data-testid="diagram-flow"
       onDoubleClickCapture={onCanvasDoubleClick}
+      onPointerDownCapture={onPointerDownCapture}
+      onPointerMoveCapture={onPointerMoveCapture}
+      onPointerUpCapture={onPointerUpCapture}
+      onPointerCancelCapture={onPointerCancelCapture}
       style={{ width: '100%', height: '100%' }}
     >
       <ReactFlow

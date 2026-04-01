@@ -35,10 +35,10 @@ export default function App() {
 
   return (
     <ReactFlowProvider>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      <div className="app-shell">
         <Toolbar />
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-          <div style={{ flex: 1 }}>
+        <div className="app-main">
+          <div className="app-canvas-shell">
             <DiagramCanvas />
           </div>
           <SidePanel />

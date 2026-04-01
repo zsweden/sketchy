@@ -253,14 +253,14 @@ describe('ContextMenu', () => {
     expect(useUIStore.getState().contextMenu).toBeNull();
   });
 
-  it('closes on outside click', () => {
+  it('closes on outside pointer interaction', () => {
     const nodeId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
     useUIStore.setState({
       contextMenu: { x: 100, y: 200, nodeId, edgeId: undefined },
     });
     render(<ContextMenu />);
 
-    fireEvent.mouseDown(document.body);
+    fireEvent.pointerDown(document.body);
     expect(useUIStore.getState().contextMenu).toBeNull();
   });
 });

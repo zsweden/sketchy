@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Lock, Unlock } from 'lucide-react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
@@ -21,7 +21,25 @@ export default function SidePanel() {
   const distributeNodesHorizontally = useDiagramStore((s) => s.distributeNodesHorizontally);
   const distributeNodesVertically = useDiagramStore((s) => s.distributeNodesVertically);
 
-  const [width, setWidth] = useState(320);
+  const getPanelWidthBounds = useCallback(() => {
+    const viewportWidth = typeof window === 'undefined' ? 1440 : window.innerWidth;
+    return {
+      min: 240,
+      max: Math.max(240, Math.min(600, Math.round(viewportWidth * 0.45))),
+    };
+  }, []);
+
+  const clampWidth = useCallback((nextWidth: number) => {
+    const { min, max } = getPanelWidthBounds();
+    return Math.min(max, Math.max(min, nextWidth));
+  }, [getPanelWidthBounds]);
+
+  const [width, setWidth] = useState(() => {
+    const viewportWidth = typeof window === 'undefined' ? 1440 : window.innerWidth;
+    const defaultWidth = viewportWidth <= 900 ? 280 : viewportWidth <= 1200 ? 300 : 320;
+    const max = Math.max(240, Math.min(600, Math.round(viewportWidth * 0.45)));
+    return Math.min(max, Math.max(240, defaultWidth));
+  });
   const [dragging, setDragging] = useState(false);
   const startX = useRef(0);
   const startWidth = useRef(0);
@@ -31,48 +49,74 @@ export default function SidePanel() {
   const [vDragging, setVDragging] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const onMouseDown = useCallback((e: React.MouseEvent) => {
+  const dragPointerId = useRef<number | null>(null);
+  const vDragPointerId = useRef<number | null>(null);
+
+  const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
+    dragPointerId.current = e.pointerId;
     startX.current = e.clientX;
     startWidth.current = width;
     setDragging(true);
+    e.currentTarget.setPointerCapture?.(e.pointerId);
 
-    const onMouseMove = (ev: MouseEvent) => {
+    const onPointerMove = (ev: PointerEvent) => {
+      if (dragPointerId.current !== ev.pointerId) return;
       const delta = startX.current - ev.clientX;
-      const newWidth = Math.min(600, Math.max(240, startWidth.current + delta));
-      setWidth(newWidth);
+      setWidth(clampWidth(startWidth.current + delta));
     };
 
-    const onMouseUp = () => {
+    const onPointerUp = (ev: PointerEvent) => {
+      if (dragPointerId.current !== ev.pointerId) return;
+      dragPointerId.current = null;
       setDragging(false);
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerUp);
+      document.removeEventListener('pointercancel', onPointerUp);
     };
 
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-  }, [width]);
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', onPointerUp);
+  }, [clampWidth, width]);
 
-  const onVMouseDown = useCallback((e: React.MouseEvent) => {
+  const onVPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
+    vDragPointerId.current = e.pointerId;
     setVDragging(true);
+    e.currentTarget.setPointerCapture?.(e.pointerId);
 
-    const onMouseMove = (ev: MouseEvent) => {
+    const onPointerMove = (ev: PointerEvent) => {
+      if (vDragPointerId.current !== ev.pointerId) return;
       if (!panelRef.current) return;
       const rect = panelRef.current.getBoundingClientRect();
       const pct = ((ev.clientY - rect.top) / rect.height) * 100;
       setTopPercent(Math.min(80, Math.max(15, pct)));
     };
 
-    const onMouseUp = () => {
+    const onPointerUp = (ev: PointerEvent) => {
+      if (vDragPointerId.current !== ev.pointerId) return;
+      vDragPointerId.current = null;
       setVDragging(false);
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerUp);
+      document.removeEventListener('pointercancel', onPointerUp);
     };
 
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', onPointerUp);
   }, []);
+
+  const syncWidthToViewport = useCallback(() => {
+    setWidth((current) => clampWidth(current));
+  }, [clampWidth]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    window.addEventListener('resize', syncWidthToViewport);
+    return () => window.removeEventListener('resize', syncWidthToViewport);
+  }, [syncWidthToViewport]);
 
   if (!sidePanelOpen) return null;
 
@@ -83,7 +127,7 @@ export default function SidePanel() {
     <div className="side-panel" style={{ width, minWidth: width }} ref={panelRef}>
       <div
         className={`side-panel-resize ${dragging ? 'dragging' : ''}`}
-        onMouseDown={onMouseDown}
+        onPointerDown={onPointerDown}
       />
       <div className="side-panel-top" style={{ height: `${topPercent}%` }}>
         {selectedNodes.length === 1 ? (
@@ -175,7 +219,7 @@ export default function SidePanel() {
       </div>
       <div
         className={`side-panel-v-resize ${vDragging ? 'dragging' : ''}`}
-        onMouseDown={onVMouseDown}
+        onPointerDown={onVPointerDown}
       />
       <ChatPanel />
     </div>

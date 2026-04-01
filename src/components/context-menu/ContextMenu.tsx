@@ -50,7 +50,7 @@ export default function ContextMenu() {
   useEffect(() => {
     if (!contextMenu) return;
 
-    const handleClick = (e: MouseEvent) => {
+    const handleClick = (e: PointerEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         closeContextMenu();
       }
@@ -59,10 +59,10 @@ export default function ContextMenu() {
       if (e.key === 'Escape') closeContextMenu();
     };
 
-    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('pointerdown', handleClick);
     document.addEventListener('keydown', handleEscape);
     return () => {
-      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('pointerdown', handleClick);
       document.removeEventListener('keydown', handleEscape);
     };
   }, [contextMenu, closeContextMenu]);
