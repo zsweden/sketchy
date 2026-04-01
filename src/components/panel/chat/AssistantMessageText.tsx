@@ -1,26 +1,15 @@
-import { useCallback, useMemo, type KeyboardEvent } from 'react';
-import { findCausalLoops, labelCausalLoops } from '../../../core/graph/derived';
-import { useDiagramStore } from '../../../store/diagram-store';
-import { parseChatMessageMentions, type ChatMentionTarget } from '../chat-mentions';
+import { useCallback, type KeyboardEvent } from 'react';
+import type { ChatMentionTarget, ParsedChatSegment } from '../chat-mentions';
 
 export function AssistantMessageText({
+  segments,
   text,
   onMentionClick,
 }: {
+  segments?: ParsedChatSegment[];
   text: string;
   onMentionClick: (mention: ChatMentionTarget) => void;
 }) {
-  const nodes = useDiagramStore((state) => state.diagram.nodes);
-  const edges = useDiagramStore((state) => state.diagram.edges);
-  const framework = useDiagramStore((state) => state.framework);
-  const loops = useMemo(
-    () => (framework.allowsCycles ? labelCausalLoops(findCausalLoops(edges)) : []),
-    [edges, framework.allowsCycles],
-  );
-  const segments = useMemo(
-    () => parseChatMessageMentions(text, nodes, edges, loops),
-    [text, nodes, edges, loops],
-  );
   const handleMentionKeyDown = useCallback(
     (event: KeyboardEvent<HTMLSpanElement>, mention: ChatMentionTarget) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -29,10 +18,11 @@ export function AssistantMessageText({
     },
     [onMentionClick],
   );
+  const resolvedSegments = segments ?? [{ type: 'text', text }];
 
   return (
     <div className="chat-bubble-text">
-      {segments.map((segment, index) => {
+      {resolvedSegments.map((segment, index) => {
         if (segment.type === 'text') {
           return <span key={`text-${index}`}>{segment.text}</span>;
         }

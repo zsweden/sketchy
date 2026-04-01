@@ -1,11 +1,13 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ChatPanel from '../ChatPanel';
+import { findCausalLoops, labelCausalLoops } from '../../../core/graph/derived';
 import { useChatStore } from '../../../store/chat-store';
 import { useDiagramStore } from '../../../store/diagram-store';
 import { useSettingsStore } from '../../../store/settings-store';
 import { useUIStore } from '../../../store/ui-store';
+import { buildChatMessageRenderData } from '../chat-mentions';
 
 function resetStore() {
   useChatStore.setState({
@@ -49,6 +51,20 @@ function resetStore() {
     viewportFocusTarget: null,
     viewportFocusTrigger: 0,
   });
+}
+
+function createAssistantMessage(id: string, content: string) {
+  const { diagram, framework } = useDiagramStore.getState();
+  const loops = framework.allowsCycles ? labelCausalLoops(findCausalLoops(diagram.edges)) : [];
+  const renderData = buildChatMessageRenderData(content, diagram.nodes, diagram.edges, loops);
+
+  return {
+    id,
+    role: 'assistant' as const,
+    content: renderData.normalizedText,
+    displayText: renderData.displayText,
+    segments: renderData.segments,
+  };
 }
 
 describe('ChatPanel', () => {
@@ -164,11 +180,10 @@ describe('ChatPanel', () => {
 
     useChatStore.setState({
       messages: [
-        {
-          id: 'a1',
-          role: 'assistant',
-          content: '[Demand][node:n1] reinforces [Demand -> Growth][edge:e1] through [R1][loop:n1>n2].',
-        },
+        createAssistantMessage(
+          'a1',
+          '[Demand][node:n1] reinforces [Demand -> Growth][edge:e1] through [R1][loop:n1>n2].',
+        ),
       ],
     });
 
@@ -217,11 +232,10 @@ describe('ChatPanel', () => {
 
     useChatStore.setState({
       messages: [
-        {
-          id: 'a1',
-          role: 'assistant',
-          content: '[Demand][node:n1] reinforces [Demand -> Growth][edge:e1] through [R1][loop:n1>n2].',
-        },
+        createAssistantMessage(
+          'a1',
+          '[Demand][node:n1] reinforces [Demand -> Growth][edge:e1] through [R1][loop:n1>n2].',
+        ),
       ],
     });
 
@@ -230,5 +244,30 @@ describe('ChatPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Copy response' }));
 
     expect(writeText).toHaveBeenCalledWith('Demand reinforces Demand -> Growth through R1.');
+  });
+
+  it('keeps prior assistant mentions visible after the diagram changes', () => {
+    useChatStore.setState({
+      messages: [
+        createAssistantMessage('a1', '[Demand][node:n1] matters here.'),
+      ],
+    });
+
+    render(<ChatPanel />);
+
+    expect(screen.getByRole('button', { name: 'Demand' })).toBeInTheDocument();
+
+    act(() => {
+      useDiagramStore.setState((state) => ({
+        diagram: {
+          ...state.diagram,
+          nodes: state.diagram.nodes.filter((node) => node.id !== 'n1'),
+          edges: state.diagram.edges.filter((edge) => edge.source !== 'n1' && edge.target !== 'n1'),
+        },
+      }));
+    });
+
+    expect(screen.getByRole('button', { name: 'Demand' })).toBeInTheDocument();
+    expect(screen.queryByText('[Demand][node:n1] matters here.')).not.toBeInTheDocument();
   });
 });

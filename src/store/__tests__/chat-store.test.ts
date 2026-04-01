@@ -138,6 +138,48 @@ describe('chat-store', () => {
       expect(assistant!.content).toBe('[Demand][node:n1] drives [Demand -> Growth][edge:e1].');
     });
 
+    it('remaps newly added node mentions to persisted node IDs', async () => {
+      mockStreamChatMessage.mockImplementationOnce((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
+        setTimeout(() => {
+          callbacks.onDone({
+            text: 'Added [Revenue][node:new_1].',
+            modifications: {
+              addNodes: [{ id: 'new_1', label: 'Revenue' }],
+              updateNodes: [],
+              removeNodeIds: [],
+              addEdges: [],
+              updateEdges: [],
+              removeEdgeIds: [],
+            },
+          });
+        }, 0);
+        return new AbortController();
+      });
+
+      useChatStore.getState().sendMessage('Add revenue');
+      await new Promise((r) => setTimeout(r, 50));
+
+      const revenueNode = useDiagramStore.getState().diagram.nodes.find((node) => node.data.label === 'Revenue');
+      const assistant = useChatStore.getState().messages.find((message) => message.role === 'assistant');
+
+      expect(revenueNode).toBeDefined();
+      expect(assistant).toBeDefined();
+      expect(assistant!.content).toBe(`Added [Revenue][node:${revenueNode!.id}].`);
+      expect(assistant!.displayText).toBe('Added Revenue.');
+      expect(assistant!.segments).toEqual([
+        { type: 'text', text: 'Added ' },
+        expect.objectContaining({
+          type: 'mention',
+          mention: expect.objectContaining({
+            kind: 'node',
+            id: revenueNode!.id,
+            displayText: 'Revenue',
+          }),
+        }),
+        { type: 'text', text: '.' },
+      ]);
+    });
+
     it('leaves malformed canonical mentions as plain text and logs them', async () => {
       const diagram = useDiagramStore.getState().diagram;
       useDiagramStore.setState({

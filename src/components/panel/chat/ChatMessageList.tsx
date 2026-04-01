@@ -48,14 +48,20 @@ export function ChatMessageList({
       {messages.map((message) => (
         <div key={message.id} className={`chat-bubble chat-bubble--${message.role}`}>
           {message.role === 'assistant' ? (
-            <AssistantMessageText text={message.content} onMentionClick={onMentionClick} />
+            <AssistantMessageText
+              segments={message.segments}
+              text={message.content}
+              onMentionClick={onMentionClick}
+            />
           ) : (
             <div className="chat-bubble-text">{message.content}</div>
           )}
           {message.modifications && (
             <span className="chat-badge-modified">changes applied</span>
           )}
-          {message.role === 'assistant' && <ChatCopyButton text={message.content} />}
+          {message.role === 'assistant' && (
+            <ChatCopyButton text={message.displayText ?? message.content} />
+          )}
         </div>
       ))}
       {loading && streamingContent && (

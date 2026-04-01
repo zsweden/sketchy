@@ -31,6 +31,13 @@ interface ParsedChatSegmentsResult {
   malformedMentions: string[];
 }
 
+export interface ChatMessageRenderData {
+  segments: ParsedChatSegment[];
+  normalizedText: string;
+  displayText: string;
+  malformedMentionCount: number;
+}
+
 function getMentionIds(
   nodes: DiagramNode[],
   edges: DiagramEdge[],
@@ -104,9 +111,9 @@ export function normalizeChatMessageMentions(
   edges: DiagramEdge[],
   loops: NamedCausalLoop[],
 ): string {
-  return parseChatMessageMentionsDetailed(text, nodes, edges, loops).segments
-    .map((segment) => segment.type === 'mention' ? segment.rawText : segment.text)
-    .join('');
+  return getNormalizedChatMessageTextFromSegments(
+    parseChatMessageMentionsDetailed(text, nodes, edges, loops).segments,
+  );
 }
 
 export function getChatMessageDisplayText(
@@ -115,9 +122,9 @@ export function getChatMessageDisplayText(
   edges: DiagramEdge[],
   loops: NamedCausalLoop[],
 ): string {
-  return parseChatMessageMentionsDetailed(text, nodes, edges, loops).segments
-    .map((segment) => segment.type === 'mention' ? segment.displayText : segment.text)
-    .join('');
+  return getChatMessageDisplayTextFromSegments(
+    parseChatMessageMentionsDetailed(text, nodes, edges, loops).segments,
+  );
 }
 
 export function countMalformedCanonicalMentions(
@@ -127,4 +134,40 @@ export function countMalformedCanonicalMentions(
   loops: NamedCausalLoop[],
 ): number {
   return parseChatMessageMentionsDetailed(text, nodes, edges, loops).malformedMentions.length;
+}
+
+export function getNormalizedChatMessageTextFromSegments(segments: ParsedChatSegment[]): string {
+  return segments
+    .map((segment) => segment.type === 'mention' ? segment.rawText : segment.text)
+    .join('');
+}
+
+export function getChatMessageDisplayTextFromSegments(segments: ParsedChatSegment[]): string {
+  return segments
+    .map((segment) => segment.type === 'mention' ? segment.displayText : segment.text)
+    .join('');
+}
+
+export function buildChatMessageRenderData(
+  text: string,
+  nodes: DiagramNode[],
+  edges: DiagramEdge[],
+  loops: NamedCausalLoop[],
+): ChatMessageRenderData {
+  const { segments, malformedMentions } = parseChatMessageMentionsDetailed(text, nodes, edges, loops);
+
+  return {
+    segments,
+    normalizedText: getNormalizedChatMessageTextFromSegments(segments),
+    displayText: getChatMessageDisplayTextFromSegments(segments),
+    malformedMentionCount: malformedMentions.length,
+  };
+}
+
+export function remapCanonicalMentionIds(text: string, idMap: Map<string, string>): string {
+  return text.replace(CANONICAL_MENTION_PATTERN, (rawText, displayText, kind, id) => {
+    const mappedId = idMap.get(id);
+    if (!mappedId) return rawText;
+    return `[${displayText}][${kind}:${mappedId}]`;
+  });
 }

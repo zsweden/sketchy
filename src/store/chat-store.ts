@@ -1,3 +1,5 @@
+import type { Framework } from '../core/framework-types';
+import type { Diagram } from '../core/types';
 import { create } from 'zustand';
 import type { ChatMessage, DiagramModification } from '../core/ai/openai-client';
 import { streamChatMessage } from '../core/ai/openai-client';
@@ -5,12 +7,15 @@ import { useSettingsStore } from './settings-store';
 import { useDiagramStore } from './diagram-store';
 import { reportError } from '../core/monitoring/error-logging';
 import { findCausalLoops, labelCausalLoops } from '../core/graph/derived';
-import { countMalformedCanonicalMentions, normalizeChatMessageMentions } from '../components/panel/chat-mentions';
+import type { ParsedChatSegment } from '../components/panel/chat-mentions';
+import { buildChatMessageRenderData, remapCanonicalMentionIds } from '../components/panel/chat-mentions';
 
 export interface DisplayMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  displayText?: string;
+  segments?: ParsedChatSegment[];
   modifications?: DiagramModification;
 }
 
@@ -29,6 +34,50 @@ interface ChatState {
 
 let activeController: AbortController | null = null;
 const EMPTY_RESPONSE_FALLBACK = 'The AI returned an empty response. Please try again.';
+
+function getLoopsForDiagram(diagram: Diagram, framework: Framework) {
+  return framework.allowsCycles ? labelCausalLoops(findCausalLoops(diagram.edges)) : [];
+}
+
+function createTextSegments(text: string): ParsedChatSegment[] {
+  return [{ type: 'text', text }];
+}
+
+function createAssistantMessage(
+  content: string,
+  options?: {
+    diagram?: Diagram;
+    framework?: Framework;
+    modifications?: DiagramModification;
+  },
+): DisplayMessage {
+  if (options?.diagram && options.framework) {
+    const renderData = buildChatMessageRenderData(
+      content,
+      options.diagram.nodes,
+      options.diagram.edges,
+      getLoopsForDiagram(options.diagram, options.framework),
+    );
+
+    return {
+      id: crypto.randomUUID(),
+      role: 'assistant',
+      content: renderData.normalizedText,
+      displayText: renderData.displayText,
+      segments: renderData.segments,
+      modifications: options.modifications,
+    };
+  }
+
+  return {
+    id: crypto.randomUUID(),
+    role: 'assistant',
+    content,
+    displayText: content,
+    segments: createTextSegments(content),
+    modifications: options?.modifications,
+  };
+}
 
 function getEndpointHost(baseUrl: string): string {
   try {
@@ -96,23 +145,25 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         onDone: (result) => {
           activeController = null;
-          const loops = framework.allowsCycles ? labelCausalLoops(findCausalLoops(diagram.edges)) : [];
-          const normalizedText = normalizeChatMessageMentions(
-            result.text,
-            diagram.nodes,
-            diagram.edges,
-            loops,
+          let messageDiagram = diagram;
+          let normalizedInput = result.text;
+
+          if (result.modifications) {
+            const idMap = applyModifications(result.modifications);
+            normalizedInput = remapCanonicalMentionIds(result.text, idMap);
+            messageDiagram = useDiagramStore.getState().diagram;
+          }
+
+          const renderData = buildChatMessageRenderData(
+            normalizedInput,
+            messageDiagram.nodes,
+            messageDiagram.edges,
+            getLoopsForDiagram(messageDiagram, framework),
           );
-          const malformedMentionCount = countMalformedCanonicalMentions(
-            result.text,
-            diagram.nodes,
-            diagram.edges,
-            loops,
-          );
-          const trimmedText = normalizedText.trim();
+          const trimmedText = renderData.normalizedText.trim();
           const content = trimmedText || EMPTY_RESPONSE_FALLBACK;
 
-          if (malformedMentionCount > 0) {
+          if (renderData.malformedMentionCount > 0) {
             void reportError(new Error('AI chat returned malformed canonical mentions'), {
               source: 'chat.malformed_mention',
               fatal: false,
@@ -122,9 +173,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 endpointHost: getEndpointHost(baseUrl),
                 frameworkId: framework.id,
                 historyCount: history.length,
-                malformedMentionCount,
+                malformedMentionCount: renderData.malformedMentionCount,
                 resultTextLength: result.text.length,
-                normalizedTextLength: normalizedText.length,
+                normalizedTextLength: renderData.normalizedText.length,
               },
             });
           }
@@ -142,7 +193,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 userMessageLength: text.length,
                 streamingLength: get().streamingContent.length,
                 resultTextLength: result.text.length,
-                normalizedTextLength: normalizedText.length,
+                normalizedTextLength: renderData.normalizedText.length,
                 hasModifications: Boolean(result.modifications),
                 addedNodes: result.modifications?.addNodes.length ?? 0,
                 updatedNodes: result.modifications?.updateNodes.length ?? 0,
@@ -154,22 +205,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
             });
           }
 
-          const assistantMsg: DisplayMessage = {
-            id: crypto.randomUUID(),
-            role: 'assistant',
-            content,
+          const assistantMsg = createAssistantMessage(content, {
+            diagram: trimmedText ? messageDiagram : undefined,
+            framework: trimmedText ? framework : undefined,
             modifications: result.modifications,
-          };
+          });
 
           set((s) => ({
             messages: [...s.messages, assistantMsg],
             loading: false,
             streamingContent: '',
           }));
-
-          if (result.modifications) {
-            applyModifications(result.modifications);
-          }
         },
 
         onError: (error) => {
@@ -186,11 +232,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
               userMessageLength: text.length,
             },
           });
-          const errorMsg: DisplayMessage = {
-            id: crypto.randomUUID(),
-            role: 'assistant',
-            content: `Error: ${error.message}`,
-          };
+          const errorMsg = createAssistantMessage(`Error: ${error.message}`);
           set((s) => ({
             messages: [...s.messages, errorMsg],
             loading: false,
@@ -209,11 +251,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
     const streaming = get().streamingContent;
     if (streaming) {
-      const partialMsg: DisplayMessage = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: streaming,
-      };
+      const partialMsg = createAssistantMessage(streaming);
       set((s) => ({
         messages: [...s.messages, partialMsg],
         loading: false,
@@ -236,7 +274,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
 // --- Apply AI modifications to the diagram ---
 
-function applyModifications(mods: DiagramModification) {
+function applyModifications(mods: DiagramModification): Map<string, string> {
   // Single batched store update — one render instead of many
   const idMap = useDiagramStore.getState().batchApply({
     addNodes: mods.addNodes,
@@ -260,4 +298,5 @@ function applyModifications(mods: DiagramModification) {
   useChatStore.setState({ aiModifiedNodeIds: modifiedIds });
 
   void useDiagramStore.getState().runAutoLayout({ fitView: true });
+  return idMap;
 }
