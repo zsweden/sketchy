@@ -88,14 +88,20 @@ describe('Toolbar', () => {
     confirmSpy.mockRestore();
   });
 
-  it('switches frameworks through the toolbar selector', async () => {
+  it('switches frameworks through the toolbar selector and clears chat state', async () => {
     const user = userEvent.setup();
+    useChatStore.setState({
+      messages: [{ id: 'm1', role: 'assistant', content: 'Existing chat' }],
+      aiModifiedNodeIds: new Set(['n1']),
+    });
 
     render(<Toolbar />);
     await user.selectOptions(screen.getByLabelText('Framework'), 'frt');
 
     expect(useDiagramStore.getState().framework.id).toBe('frt');
     expect(useDiagramStore.getState().diagram.frameworkId).toBe('frt');
+    expect(useChatStore.getState().messages).toEqual([]);
+    expect(useChatStore.getState().aiModifiedNodeIds.size).toBe(0);
   });
 
   it('runs auto-layout and stores the resulting node positions', async () => {

@@ -1,3 +1,4 @@
+import { useChatStore } from '../../store/chat-store';
 import { useDiagramStore } from '../../store/diagram-store';
 import { listFrameworks } from '../../frameworks/registry';
 
@@ -25,6 +26,8 @@ export default function FrameworkSelector() {
       return;
     }
     setFramework(newId);
+    useChatStore.getState().clearMessages();
+    useChatStore.getState().clearAiModified();
   };
 
   return (
