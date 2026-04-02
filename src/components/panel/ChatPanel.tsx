@@ -121,6 +121,7 @@ export default function ChatPanel() {
             messagesEndRef={messagesEndRef}
             onMentionClick={handleMentionClick}
             onOpenSettings={toggleSettings}
+            onRetry={sendMessage}
             streamingContent={streamingContent}
           />
 

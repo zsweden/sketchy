@@ -287,6 +287,7 @@
   color: var(--text);
   border-bottom-left-radius: 0.25rem;
   position: relative;
+  padding-right: 3.4rem;
 }
 
 .chat-copy-btn {
@@ -303,11 +304,27 @@
   transition: opacity 0.15s;
 }
 
-.chat-bubble--assistant:hover .chat-copy-btn {
+.chat-retry-btn {
+  position: absolute;
+  top: 0.25rem;
+  right: 1.7rem;
+  background: none;
+  border: none;
+  color: var(--text-soft);
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.chat-bubble--assistant:hover .chat-copy-btn,
+.chat-bubble--assistant:hover .chat-retry-btn {
   opacity: 0.6;
 }
 
-.chat-copy-btn:hover {
+.chat-copy-btn:hover,
+.chat-retry-btn:hover {
   opacity: 1 !important;
   background: var(--border);
 }

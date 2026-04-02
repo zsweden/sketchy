@@ -17,6 +17,7 @@ export interface DisplayMessage {
   displayText?: string;
   segments?: ParsedChatSegment[];
   modifications?: DiagramModification;
+  retryText?: string;
 }
 
 interface ChatState {
@@ -103,6 +104,7 @@ function createAssistantMessage(
     diagram?: Diagram;
     framework?: Framework;
     modifications?: DiagramModification;
+    retryText?: string;
   },
 ): DisplayMessage {
   if (options?.diagram && options.framework) {
@@ -120,6 +122,7 @@ function createAssistantMessage(
       displayText: renderData.displayText,
       segments: renderData.segments,
       modifications: options.modifications,
+      retryText: options.retryText,
     };
   }
 
@@ -130,7 +133,17 @@ function createAssistantMessage(
     displayText: content,
     segments: createTextSegments(content),
     modifications: options?.modifications,
+    retryText: options?.retryText,
   };
+}
+
+function buildConversationHistory(messages: DisplayMessage[]): ChatMessage[] {
+  return messages
+    .filter((message) => !(message.role === 'assistant' && message.retryText))
+    .map((message) => ({
+      role: message.role,
+      content: message.content,
+    }));
 }
 
 function getEndpointHost(baseUrl: string): string {
@@ -197,10 +210,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     activeRequestId = requestId;
 
     // Build conversation history
-    const history: ChatMessage[] = get().messages.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
+    const history = buildConversationHistory(get().messages);
 
     const controller = streamChatMessage(
       openaiApiKey,
@@ -311,7 +321,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
               userMessageLength: text.length,
             },
           });
-          const errorMsg = createAssistantMessage(`Error: ${error.message}`);
+          const errorMsg = createAssistantMessage(`Error: ${error.message}`, { retryText: text });
           set((s) => ({
             messages: [...s.messages, errorMsg],
             loading: false,

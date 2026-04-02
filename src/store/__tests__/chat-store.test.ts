@@ -111,6 +111,39 @@ describe('chat-store', () => {
       );
     });
 
+    it('stores retry text on stream errors and excludes prior error bubbles from the next request history', async () => {
+      mockStreamChatMessage
+        .mockImplementationOnce((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
+          setTimeout(() => {
+            callbacks.onError(new Error('network error'));
+          }, 0);
+          return new AbortController();
+        })
+        .mockImplementationOnce((_key, _url, _model, _diagram, _fw, msgs, callbacks) => {
+          expect(msgs).toEqual([
+            { role: 'user', content: 'Hello' },
+            { role: 'user', content: 'Hello' },
+          ]);
+          setTimeout(() => {
+            callbacks.onDone({ text: 'Recovered response' });
+          }, 0);
+          return new AbortController();
+        });
+
+      useChatStore.getState().sendMessage('Hello');
+      await new Promise((r) => setTimeout(r, 50));
+
+      const errorMessage = useChatStore.getState().messages.find((message) => message.role === 'assistant');
+      expect(errorMessage).toBeDefined();
+      expect(errorMessage?.content).toBe('Error: network error');
+      expect(errorMessage?.retryText).toBe('Hello');
+
+      useChatStore.getState().sendMessage('Hello');
+      await new Promise((r) => setTimeout(r, 50));
+
+      expect(useChatStore.getState().messages.at(-1)?.content).toBe('Recovered response');
+    });
+
     it('stores canonical mention text unchanged', async () => {
       const diagram = useDiagramStore.getState().diagram;
       useDiagramStore.setState({

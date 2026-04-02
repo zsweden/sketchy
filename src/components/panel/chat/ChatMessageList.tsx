@@ -1,4 +1,4 @@
-import { Settings } from 'lucide-react';
+import { RotateCcw, Settings } from 'lucide-react';
 import type { RefObject } from 'react';
 import type { DisplayMessage } from '../../../store/chat-store';
 import { getStreamingChatMessageDisplayText, type ChatMentionTarget } from '../chat-mentions';
@@ -12,6 +12,7 @@ export function ChatMessageList({
   messagesEndRef,
   onMentionClick,
   onOpenSettings,
+  onRetry,
   streamingContent,
 }: {
   isConfigured: boolean;
@@ -20,6 +21,7 @@ export function ChatMessageList({
   messagesEndRef: RefObject<HTMLDivElement | null>;
   onMentionClick: (mention: ChatMentionTarget) => void;
   onOpenSettings: () => void;
+  onRetry: (text: string) => void;
   streamingContent: string;
 }) {
   const streamingDisplayText = getStreamingChatMessageDisplayText(streamingContent).trimStart();
@@ -61,6 +63,21 @@ export function ChatMessageList({
           {message.modifications && (
             <span className="chat-badge-modified">changes applied</span>
           )}
+          {(() => {
+            const retryText = message.role === 'assistant' ? message.retryText : undefined;
+            if (typeof retryText !== 'string') return null;
+
+            return (
+              <button
+                className="chat-retry-btn"
+                onClick={() => onRetry(retryText)}
+                title="Retry message"
+                aria-label="Retry message"
+              >
+                <RotateCcw size={12} />
+              </button>
+            );
+          })()}
           {message.role === 'assistant' && (
             <ChatCopyButton text={message.displayText ?? message.content} />
           )}

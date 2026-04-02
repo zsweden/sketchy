@@ -202,6 +202,24 @@ describe('ChatPanel', () => {
     expect(cancelStream).toHaveBeenCalledTimes(1);
   });
 
+  it('retries the failed user prompt from an assistant error bubble', async () => {
+    const user = userEvent.setup();
+    const sendMessage = vi.fn();
+
+    useChatStore.setState({
+      messages: [
+        { id: 'u1', role: 'user', content: 'Explain this flow' },
+        { id: 'a1', role: 'assistant', content: 'Error: network error', retryText: 'Explain this flow' },
+      ],
+      sendMessage,
+    });
+
+    render(<ChatPanel />);
+
+    await user.click(screen.getByRole('button', { name: 'Retry message' }));
+    expect(sendMessage).toHaveBeenCalledWith('Explain this flow');
+  });
+
   it('renders clickable node, edge, and loop mentions and selects them', async () => {
     const user = userEvent.setup();
 
