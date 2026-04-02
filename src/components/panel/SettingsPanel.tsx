@@ -63,6 +63,11 @@ export default function SettingsPanel() {
         />
       </div>
 
+      <div className="section-stack gap-field">
+        <p className="section-label">TYPE</p>
+        <p className="field-label">{framework.name}</p>
+      </div>
+
 
       {framework.allowsCycles && (
         <div className="section-stack gap-section">

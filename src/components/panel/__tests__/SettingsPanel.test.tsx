@@ -48,6 +48,13 @@ describe('SettingsPanel', () => {
     resetStores();
   });
 
+  it('shows the current diagram type', () => {
+    render(<SettingsPanel />);
+
+    expect(screen.getByText('TYPE')).toBeInTheDocument();
+    expect(screen.getByText('Causal Loop Diagram')).toBeInTheDocument();
+  });
+
   it('shows loop summary badges and toggles loop selection', async () => {
     const user = userEvent.setup();
     const { loopId } = buildReinforcingLoop();
