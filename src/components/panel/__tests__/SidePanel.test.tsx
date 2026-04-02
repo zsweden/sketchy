@@ -12,6 +12,7 @@ function resetStores() {
   window.sessionStorage?.removeItem?.('sketchy_diagram');
   useDiagramStore.getState().setFramework('crt');
   useDiagramStore.getState().newDiagram();
+  useDiagramStore.setState((s) => ({ diagram: { ...s.diagram, nodes: [] } }));
   useChatStore.setState({
     messages: [],
     loading: false,

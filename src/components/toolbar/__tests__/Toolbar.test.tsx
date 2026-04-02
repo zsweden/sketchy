@@ -80,7 +80,7 @@ describe('Toolbar', () => {
     await user.click(screen.getByRole('button', { name: 'New' }));
 
     expect(confirmSpy).toHaveBeenCalledTimes(1);
-    expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
+    expect(useDiagramStore.getState().diagram.nodes).toHaveLength(1);
     expect(useChatStore.getState().messages).toEqual([]);
     expect(useChatStore.getState().aiModifiedNodeIds.size).toBe(0);
     expect(useUIStore.getState().fitViewTrigger).toBe(1);
@@ -249,12 +249,12 @@ describe('Toolbar', () => {
 
     render(<Toolbar />);
 
-    expect(screen.getByRole('button', { name: 'Next Document' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'to FRT' })).toHaveAttribute(
       'title',
       'Create FRT draft from current CRT',
     );
 
-    await user.click(screen.getByRole('button', { name: 'Next Document' }));
+    await user.click(screen.getByRole('button', { name: 'to FRT' }));
 
     expect(confirmSpy).toHaveBeenCalledTimes(1);
     await waitFor(() => {
@@ -273,11 +273,27 @@ describe('Toolbar', () => {
     confirmSpy.mockRestore();
   });
 
-  it('disables next document when there is no canonical transition', () => {
+  it('shows the next document button from the active framework even if diagram metadata is stale', () => {
+    useDiagramStore.setState((state) => ({
+      diagram: {
+        ...state.diagram,
+        frameworkId: 'stt',
+      },
+    }));
+
+    render(<Toolbar />);
+
+    expect(screen.getByRole('button', { name: 'to FRT' })).toHaveAttribute(
+      'title',
+      'Create FRT draft from current CRT',
+    );
+  });
+
+  it('hides next document when there is no canonical transition', () => {
     useDiagramStore.getState().setFramework('stt');
 
     render(<Toolbar />);
 
-    expect(screen.getByRole('button', { name: 'Next Document' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /^to /i })).not.toBeInTheDocument();
   });
 });

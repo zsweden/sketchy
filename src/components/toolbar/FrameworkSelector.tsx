@@ -4,7 +4,11 @@ import { listFrameworks } from '../../frameworks/registry';
 export default function FrameworkSelector() {
   const currentId = useDiagramStore((s) => s.framework.id);
   const setFramework = useDiagramStore((s) => s.setFramework);
-  const nodeCount = useDiagramStore((s) => s.diagram.nodes.length);
+  const hasDiagramWork = useDiagramStore((s) =>
+    s.diagram.nodes.length > 1 ||
+    s.diagram.edges.length > 0 ||
+    s.diagram.nodes.some((n) => n.data.label !== ''),
+  );
 
   const frameworks = listFrameworks();
 
@@ -12,7 +16,7 @@ export default function FrameworkSelector() {
     const newId = e.target.value;
     if (newId === currentId) return;
     if (
-      nodeCount > 0 &&
+      hasDiagramWork &&
       !window.confirm(
         'Switching framework will reset the diagram. Continue?',
       )

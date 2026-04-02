@@ -8,6 +8,7 @@ import { useUIStore } from '../../../store/ui-store';
 function resetStores() {
   useDiagramStore.getState().setFramework('crt');
   useDiagramStore.getState().newDiagram();
+  useDiagramStore.setState((s) => ({ diagram: { ...s.diagram, nodes: [] } }));
   useUIStore.setState({
     selectedNodeIds: [],
     selectedEdgeIds: [],

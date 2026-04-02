@@ -114,7 +114,7 @@ describe('App', () => {
   it('leaves the default diagram untouched when nothing is stored', () => {
     render(<App />);
 
-    expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
+    expect(useDiagramStore.getState().diagram.nodes).toHaveLength(1);
     expect(useUIStore.getState().toasts).toHaveLength(0);
   });
 });

@@ -8,7 +8,6 @@ import {
   MousePointer2,
   Hand,
   Settings,
-  CircleOff,
 } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 import { useDiagramStore } from '../../store/diagram-store';
@@ -24,6 +23,7 @@ import { AlignHorizontalIcon, AlignVerticalIcon, DistributeHorizontalIcon, Distr
 
 export default function Toolbar() {
   const diagram = useDiagramStore((s) => s.diagram);
+  const framework = useDiagramStore((s) => s.framework);
   const canUndo = useDiagramStore((s) => s.canUndo);
   const canRedo = useDiagramStore((s) => s.canRedo);
   const undo = useDiagramStore((s) => s.undo);
@@ -42,18 +42,16 @@ export default function Toolbar() {
   const toggleSidePanel = useUIStore((s) => s.toggleSidePanel);
   const requestFitView = useUIStore((s) => s.requestFitView);
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
-  const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
-  const selectedLoopId = useUIStore((s) => s.selectedLoopId);
   const interactionMode = useUIStore((s) => s.interactionMode);
   const setInteractionMode = useUIStore((s) => s.setInteractionMode);
 
   const nodes = useDiagramStore((s) => s.diagram.nodes);
   const selectedNodes = nodes.filter((n) => selectedNodeIds.includes(n.id));
-  const hasSelection = selectedNodeIds.length > 0 || selectedEdgeIds.length > 0 || selectedLoopId !== null;
   const canAlign = selectedNodes.length >= 2;
   const canDistribute = selectedNodes.length >= 3;
   const canOptimizeEdges = diagram.settings.edgeRoutingMode === 'fixed';
-  const nextTransition = getNextDiagramTransition(diagram.frameworkId);
+  const currentFrameworkId = framework.id;
+  const nextTransition = getNextDiagramTransition(currentFrameworkId);
   const nextDocumentLabel = nextTransition
     ? getFrameworkSuffix(nextTransition.targetFrameworkId)
     : null;
@@ -74,17 +72,18 @@ export default function Toolbar() {
     distributeNodesVertically(selectedNodeIds);
   }, [distributeNodesVertically, selectedNodeIds]);
 
-  const requestClearSelection = useUIStore((s) => s.requestClearSelection);
-  const handleClearSelection = useCallback(() => {
-    requestClearSelection();
-  }, [requestClearSelection]);
   const toggleSettings = useSettingsStore((s) => s.toggleSettings);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const hasDiagramWork =
+    diagram.nodes.length > 1 ||
+    diagram.edges.length > 0 ||
+    diagram.nodes.some((n) => n.data.label !== '');
+
   const handleNew = useCallback(() => {
     if (
-      diagram.nodes.length > 0 &&
+      hasDiagramWork &&
       !window.confirm('Create a new diagram? Unsaved changes will be lost.')
     ) {
       return;
@@ -93,7 +92,7 @@ export default function Toolbar() {
     useChatStore.getState().clearMessages();
     useChatStore.getState().clearAiModified();
     requestFitView();
-  }, [diagram.nodes.length, newDiagram, requestFitView]);
+  }, [hasDiagramWork, newDiagram, requestFitView]);
 
   const handleAutoLayout = useCallback(async () => {
     await runAutoLayout({ commitHistory: true, fitView: true });
@@ -155,9 +154,9 @@ export default function Toolbar() {
     if (!nextTransition) return;
 
     if (
-      diagram.nodes.length > 0 &&
+      hasDiagramWork &&
       !window.confirm(
-        `Create a ${getFrameworkSuffix(nextTransition.targetFrameworkId)} draft from this ${getFrameworkSuffix(diagram.frameworkId)}? The current in-memory session will be replaced.`,
+        `Create a ${getFrameworkSuffix(nextTransition.targetFrameworkId)} draft from this ${getFrameworkSuffix(currentFrameworkId)}? The current in-memory session will be replaced.`,
       )
     ) {
       return;
@@ -168,7 +167,7 @@ export default function Toolbar() {
 
     useChatStore.getState().clearMessages();
     useChatStore.getState().clearAiModified();
-  }, [deriveNextDiagram, diagram.frameworkId, diagram.nodes.length, nextTransition]);
+  }, [currentFrameworkId, deriveNextDiagram, hasDiagramWork, nextTransition]);
 
   return (
     <header className="app-header">
@@ -195,16 +194,6 @@ export default function Toolbar() {
           aria-label="Pan tool"
         >
           <Hand size={16} />
-        </button>
-
-        <button
-          className={`btn btn-secondary btn-icon ${hasSelection ? 'btn-toggle-active' : ''}`}
-          onClick={handleClearSelection}
-          disabled={!hasSelection}
-          title="Clear selection (Esc)"
-          aria-label="Clear selection"
-        >
-          <CircleOff size={16} />
         </button>
 
         <div className="toolbar-divider" />
@@ -317,18 +306,15 @@ export default function Toolbar() {
         >
           Print
         </button>
-        <button
-          className="btn btn-secondary"
-          onClick={handleNextDocument}
-          disabled={!nextTransition}
-          title={
-            nextTransition && nextDocumentLabel
-              ? `Create ${nextDocumentLabel} draft from current ${getFrameworkSuffix(diagram.frameworkId)}`
-              : 'No next document transition available'
-          }
-        >
-          Next Document
-        </button>
+        {nextTransition && nextDocumentLabel ? (
+          <button
+            className="btn btn-secondary"
+            onClick={handleNextDocument}
+            title={`Create ${nextDocumentLabel} draft from current ${getFrameworkSuffix(currentFrameworkId)}`}
+          >
+            {`to ${nextDocumentLabel}`}
+          </button>
+        ) : null}
         <input
           ref={fileInputRef}
           type="file"

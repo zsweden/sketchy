@@ -4,6 +4,7 @@ import { useDiagramStore } from '../diagram-store';
 describe('batchApply drops edges referencing non-existent nodes', () => {
   beforeEach(() => {
     useDiagramStore.getState().newDiagram();
+    useDiagramStore.setState((s) => ({ diagram: { ...s.diagram, nodes: [] } }));
   });
 
   it('drops edge when target node does not exist', () => {

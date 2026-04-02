@@ -13,6 +13,7 @@ describe('e2e: sessionStorage persistence', () => {
   beforeEach(() => {
     sessionStorage.removeItem('sketchy_diagram');
     useDiagramStore.getState().newDiagram();
+    useDiagramStore.setState((s) => ({ diagram: { ...s.diagram, nodes: [] } }));
   });
 
   it('save → load round-trip preserves full diagram state', () => {
@@ -74,6 +75,7 @@ describe('e2e: sessionStorage persistence', () => {
 describe('e2e: .sky format round-trips', () => {
   beforeEach(() => {
     useDiagramStore.getState().newDiagram();
+    useDiagramStore.setState((s) => ({ diagram: { ...s.diagram, nodes: [] } }));
   });
 
   it('large diagram (50 nodes) survives round-trip', () => {
@@ -106,6 +108,7 @@ describe('e2e: .sky format round-trips', () => {
 
   it('FRT diagram preserves framework and structure through round-trip', () => {
     useDiagramStore.getState().setFramework('frt');
+    useDiagramStore.setState((s) => ({ diagram: { ...s.diagram, nodes: [] } }));
     const store = useDiagramStore.getState;
 
     const n1 = store().addNode({ x: 0, y: 0 });

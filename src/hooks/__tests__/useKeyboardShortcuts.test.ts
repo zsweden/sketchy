@@ -25,6 +25,7 @@ describe('keyboard shortcuts', () => {
 
   beforeEach(() => {
     useDiagramStore.getState().newDiagram();
+    useDiagramStore.setState((s) => ({ diagram: { ...s.diagram, nodes: [] } }));
     useUIStore.setState({ interactionMode: 'select' });
     cleanup = render(createElement(Harness)).unmount;
   });
