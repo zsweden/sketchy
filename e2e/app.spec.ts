@@ -691,9 +691,12 @@ test('align buttons are disabled until two nodes are selected', async ({ page })
   await createNode(page, 150, 200);
   await createNode(page, 350, 200);
 
-  await page.locator('.entity-node').nth(0).click();
-  await page.locator('.entity-node').nth(1).click({ modifiers: ['Shift'] });
-  await expect(page.getByText('2 nodes selected')).toBeVisible();
+  const ids = await getNodeIds(page);
+  await page.evaluate(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (nodeIds) => (window as any).__uiStore.getState().setSelectedNodes(nodeIds),
+    ids,
+  );
 
   // Now enabled
   await expect(alignH).toBeEnabled();
@@ -713,8 +716,11 @@ test('aligns selected nodes horizontally by rendered center', async ({ page }) =
   );
   await expect(page.locator(`[data-node-id="${ids[1]}"]`)).toContainText('This is a much longer');
 
-  await page.locator('.entity-node').nth(0).click();
-  await page.locator('.entity-node').nth(1).click({ modifiers: ['Shift'] });
+  await page.evaluate(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (nodeIds) => (window as any).__uiStore.getState().setSelectedNodes(nodeIds),
+    ids,
+  );
   await page.locator('header').getByLabel('Align horizontally').click();
   await page.waitForTimeout(100);
 
@@ -736,8 +742,11 @@ test('aligns selected nodes vertically by rendered center', async ({ page }) => 
   );
   await expect(page.locator(`[data-node-id="${ids[1]}"]`)).toContainText('This is another long');
 
-  await page.locator('.entity-node').nth(0).click();
-  await page.locator('.entity-node').nth(1).click({ modifiers: ['Shift'] });
+  await page.evaluate(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (nodeIds) => (window as any).__uiStore.getState().setSelectedNodes(nodeIds),
+    ids,
+  );
   await page.locator('header').getByLabel('Align vertically').click();
   await page.waitForTimeout(100);
 

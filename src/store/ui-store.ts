@@ -125,3 +125,7 @@ export const useUIStore = create<UIState>((set) => ({
     viewportFocusTrigger: s.viewportFocusTrigger + 1,
   })),
 }));
+
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  (window as unknown as Record<string, unknown>).__uiStore = useUIStore;
+}
