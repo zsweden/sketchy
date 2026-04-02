@@ -21,7 +21,6 @@ function resetStores() {
     openaiApiKey: '',
     baseUrl: '',
     model: '',
-    edgeRenderMode: 'legacy',
     availableModels: [],
     modelsLoading: false,
     modelsError: null,
@@ -94,14 +93,6 @@ describe('SettingsPopover', () => {
 
     await user.selectOptions(screen.getByLabelText('Arrow routing'), 'dynamic');
     expect(useDiagramStore.getState().diagram.settings.edgeRoutingMode).toBe('dynamic');
-  });
-
-  it('changes edge render mode', async () => {
-    const user = userEvent.setup();
-    render(<SettingsPopover />);
-
-    await user.selectOptions(screen.getByLabelText('Edge render'), 'new');
-    expect(useSettingsStore.getState().edgeRenderMode).toBe('new');
   });
 
   it('switches AI provider', async () => {

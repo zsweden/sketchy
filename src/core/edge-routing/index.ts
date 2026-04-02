@@ -12,7 +12,6 @@ export function computeEdgeRoutingPlacements(
 
 export {
   buildEdgeRoutingGeometry,
-  buildOrthogonalEdgePoints,
   compareEdgeRoutingObjectiveScores,
   createPlacementCandidates,
   DEFAULT_EDGE_ROUTING_POLICY,

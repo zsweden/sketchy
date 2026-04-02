@@ -18,7 +18,6 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import EntityNode from './EntityNode';
-import OrthogonalEdge from './OrthogonalEdge';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { FIT_VIEW_OPTIONS } from '../../core/layout/fit-view-options';
@@ -29,7 +28,6 @@ import { useRFNodeEdgeBuilder } from '../../hooks/useRFNodeEdgeBuilder';
 import type { GraphObjectTarget } from '../../store/ui-store';
 
 const nodeTypes = { entity: EntityNode };
-const edgeTypes = { orthogonal: OrthogonalEdge };
 
 function unionRects(rects: Rect[]): Rect | null {
   if (rects.length === 0) return null;
@@ -561,7 +559,6 @@ export default function DiagramCanvas() {
         edges={localEdges}
         nodeTypes={nodeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
-        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeDragStart={onNodeDragStart}

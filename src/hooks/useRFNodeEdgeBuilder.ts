@@ -29,7 +29,6 @@ export function useRFNodeEdgeBuilder(
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
   const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
   const themeId = useSettingsStore((s) => s.theme);
-  const edgeRenderMode = useSettingsStore((s) => s.edgeRenderMode);
   const activeTheme = useMemo(() => getTheme(themeId), [themeId]);
   const cachedOptimizedPlacements = useRef<Map<string, EdgeHandlePlacement>>(new Map());
 
@@ -129,7 +128,6 @@ export function useRFNodeEdgeBuilder(
           },
           sourceHandle: getSourceHandleId(sourceSide),
           targetHandle: getTargetHandleId(targetSide),
-          ...(edgeRenderMode === 'new' ? { type: 'orthogonal' } : {}),
           pathOptions: { borderRadius: 100 },
           ...((selectedEdgeIds.includes(e.id) || highlightSets?.edgeIds.has(e.id)) && {
             markerEnd: { type: MarkerType.ArrowClosed, width: ARROW_MARKER_SIZE, height: ARROW_MARKER_SIZE, color: activeTheme.js.arrowColorSelected },
@@ -147,7 +145,7 @@ export function useRFNodeEdgeBuilder(
         };
       });
     },
-    [diagram.edges, diagram.nodes, diagram.settings, edgeRoutingMode, framework, highlightSets, selectedLoop, selectedEdgeIds, activeTheme, optimizedPlacements, edgeRenderMode],
+    [diagram.edges, diagram.nodes, diagram.settings, edgeRoutingMode, framework, highlightSets, selectedLoop, selectedEdgeIds, activeTheme, optimizedPlacements],
   );
 
   return { rfNodes, rfEdges, defaultEdgeOptions, activeTheme };

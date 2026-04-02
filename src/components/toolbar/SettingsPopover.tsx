@@ -20,8 +20,6 @@ export default function SettingsPopover() {
   const setBaseUrl = useSettingsStore((s) => s.setBaseUrl);
   const model = useSettingsStore((s) => s.model);
   const setModel = useSettingsStore((s) => s.setModel);
-  const edgeRenderMode = useSettingsStore((s) => s.edgeRenderMode);
-  const setEdgeRenderMode = useSettingsStore((s) => s.setEdgeRenderMode);
   const availableModels = useSettingsStore((s) => s.availableModels);
   const modelsLoading = useSettingsStore((s) => s.modelsLoading);
   const modelsError = useSettingsStore((s) => s.modelsError);
@@ -125,18 +123,6 @@ export default function SettingsPopover() {
           >
             <option value="dynamic">Optimize Continuously</option>
             <option value="fixed">Keep Fixed</option>
-          </select>
-        </div>
-        <div className="settings-field">
-          <p className="section-label">Edge Render</p>
-          <select
-            className="input-text"
-            value={edgeRenderMode}
-            onChange={(e) => setEdgeRenderMode(e.target.value as 'legacy' | 'new')}
-            aria-label="Edge render"
-          >
-            <option value="legacy">Legacy</option>
-            <option value="new">New</option>
           </select>
         </div>
       </div>

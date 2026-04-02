@@ -4,7 +4,6 @@ import { DEFAULT_THEME, type ThemeId } from '../styles/themes';
 import { getWebStorage } from '../utils/web-storage';
 
 const STORAGE_KEY = 'sketchy-settings';
-export type EdgeRenderMode = 'legacy' | 'new';
 
 export interface Provider {
   id: string;
@@ -36,7 +35,6 @@ interface StoredSettings {
   model: string;
   provider?: string;
   theme?: string;
-  edgeRenderMode?: EdgeRenderMode;
 }
 
 const DEFAULT_SETTINGS: StoredSettings = {
@@ -45,7 +43,6 @@ const DEFAULT_SETTINGS: StoredSettings = {
   model: '',
   provider: PROVIDERS[0].id,
   theme: DEFAULT_THEME,
-  edgeRenderMode: 'legacy',
 };
 
 interface SettingsState {
@@ -54,7 +51,6 @@ interface SettingsState {
   openaiApiKey: string;
   baseUrl: string;
   model: string;
-  edgeRenderMode: EdgeRenderMode;
   settingsOpen: boolean;
   availableModels: ModelInfo[];
   modelsLoading: boolean;
@@ -65,7 +61,6 @@ interface SettingsState {
   setOpenaiApiKey: (key: string) => void;
   setBaseUrl: (url: string) => void;
   setModel: (model: string) => void;
-  setEdgeRenderMode: (mode: EdgeRenderMode) => void;
   toggleSettings: () => void;
   closeSettings: () => void;
   refreshModels: () => void;
@@ -86,7 +81,6 @@ function loadSettings(): StoredSettings {
         model: parsed.model ?? '',
         provider: parsed.provider ?? detectProvider(baseUrl),
         theme: parsed.theme ?? DEFAULT_THEME,
-        edgeRenderMode: parsed.edgeRenderMode ?? 'legacy',
       };
     }
   } catch { /* ignore */ }
@@ -145,7 +139,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     openaiApiKey: initial.apiKey,
     baseUrl: initial.baseUrl,
     model: initial.model,
-    edgeRenderMode: initial.edgeRenderMode ?? 'legacy',
     settingsOpen: false,
     availableModels: [],
     modelsLoading: false,
@@ -182,11 +175,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       set({ model });
     },
 
-    setEdgeRenderMode: (edgeRenderMode) => {
-      saveSettings({ edgeRenderMode });
-      set({ edgeRenderMode });
-    },
-
     toggleSettings: () => set((s) => ({ settingsOpen: !s.settingsOpen })),
     closeSettings: () => set({ settingsOpen: false }),
     refreshModels,
@@ -212,7 +200,6 @@ window.addEventListener('storage', (e) => {
       model: parsed.model ?? '',
       provider: newProvider,
       theme: (parsed.theme as ThemeId) ?? DEFAULT_THEME,
-      edgeRenderMode: (parsed.edgeRenderMode as EdgeRenderMode) ?? 'legacy',
     });
     useSettingsStore.getState().refreshModels();
   } catch { /* ignore malformed data */ }

@@ -62,7 +62,6 @@ describe('settings store', () => {
       expect(state.baseUrl).toBe(DEFAULT_BASE_URL);
       expect(state.model).toBe(DEFAULT_MODEL);
       expect(state.settingsOpen).toBe(false);
-      expect(state.edgeRenderMode).toBe('legacy');
     });
   });
 
@@ -74,7 +73,6 @@ describe('settings store', () => {
           apiKey: 'sk-existing',
           baseUrl: 'https://other.api/v1',
           model: 'o3-mini',
-          edgeRenderMode: 'new',
         })
       );
 
@@ -84,7 +82,6 @@ describe('settings store', () => {
       expect(state.openaiApiKey).toBe('sk-existing');
       expect(state.baseUrl).toBe('https://other.api/v1');
       expect(state.model).toBe('o3-mini');
-      expect(state.edgeRenderMode).toBe('new');
     });
 
     it('handles corrupted localStorage gracefully (falls back to defaults)', async () => {
@@ -179,22 +176,6 @@ describe('settings store', () => {
 
       const stored = JSON.parse(mockStorage.getItem(STORAGE_KEY)!);
       expect(stored.model).toBe('gpt-4.1-mini');
-    });
-  });
-
-  describe('setEdgeRenderMode', () => {
-    it('updates state with the new render mode', async () => {
-      const useSettingsStore = await importFreshStore();
-      useSettingsStore.getState().setEdgeRenderMode('new');
-      expect(useSettingsStore.getState().edgeRenderMode).toBe('new');
-    });
-
-    it('persists the render mode to localStorage', async () => {
-      const useSettingsStore = await importFreshStore();
-      useSettingsStore.getState().setEdgeRenderMode('new');
-
-      const stored = JSON.parse(mockStorage.getItem(STORAGE_KEY)!);
-      expect(stored.edgeRenderMode).toBe('new');
     });
   });
 
