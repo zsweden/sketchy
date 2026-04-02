@@ -8,6 +8,7 @@ import {
   MousePointer2,
   Hand,
   Settings,
+  Settings2,
 } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 import { useDiagramStore } from '../../store/diagram-store';
@@ -18,6 +19,7 @@ import { appVersion } from '../../core/app-version';
 import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import { getFrameworkSuffix, getNextDiagramTransition } from '../../transitions/registry';
 import FrameworkSelector from './FrameworkSelector';
+import LayoutLabPopover from './LayoutLabPopover';
 import SettingsPopover from './SettingsPopover';
 import { AlignHorizontalIcon, AlignVerticalIcon, DistributeHorizontalIcon, DistributeVerticalIcon } from '../icons/AlignDistributeIcons';
 
@@ -44,6 +46,7 @@ export default function Toolbar() {
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
   const interactionMode = useUIStore((s) => s.interactionMode);
   const setInteractionMode = useUIStore((s) => s.setInteractionMode);
+  const toggleLayoutLab = useSettingsStore((s) => s.toggleLayoutLab);
 
   const nodes = useDiagramStore((s) => s.diagram.nodes);
   const selectedNodes = nodes.filter((n) => selectedNodeIds.includes(n.id));
@@ -332,6 +335,18 @@ export default function Toolbar() {
       </div>
 
       <div className="toolbar-group toolbar-group-right">
+        <div style={{ position: 'relative' }}>
+          <button
+            className="btn btn-ghost btn-icon"
+            onClick={toggleLayoutLab}
+            title="Layout lab"
+            aria-label="Layout lab"
+          >
+            <Settings2 size={16} />
+          </button>
+          <LayoutLabPopover />
+        </div>
+
         <div style={{ position: 'relative' }}>
           <button
             className="btn btn-ghost btn-icon"

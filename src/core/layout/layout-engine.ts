@@ -1,5 +1,6 @@
 import type { LayoutDirection } from '../framework-types';
 import type { EdgeHandleSide } from '../types';
+import type { ElkExperimentSettings } from './elk-options';
 
 export const NODE_WIDTH = 160;
 export const MIN_NODE_HEIGHT = 60;
@@ -32,6 +33,7 @@ export interface LayoutResult {
 export interface LayoutEngineOptions {
   direction: LayoutDirection;
   cyclic?: boolean;
+  elk?: ElkExperimentSettings;
 }
 
 /** A layout engine computes top-left positions for a set of nodes. */

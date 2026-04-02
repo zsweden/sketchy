@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Toolbar from '../Toolbar';
+import { DEFAULT_ELK_EXPERIMENT_SETTINGS } from '../../../core/layout/elk-options';
 import { createEmptyDiagram } from '../../../core/types';
 import { getOptimizedEdgePlacements } from '../../../store/diagram-helpers';
 import { useChatStore } from '../../../store/chat-store';
@@ -52,9 +53,12 @@ function resetStores() {
     baseUrl: PROVIDERS[0].baseUrl,
     model: 'gpt-4o',
     settingsOpen: false,
+    layoutLabOpen: false,
     availableModels: [],
     modelsLoading: false,
     modelsError: null,
+    elkExperimentSettings: DEFAULT_ELK_EXPERIMENT_SETTINGS,
+    lastLayoutRun: null,
   });
 }
 
@@ -120,6 +124,16 @@ describe('Toolbar', () => {
     });
 
     expect(useUIStore.getState().fitViewTrigger).toBe(1);
+    expect(useSettingsStore.getState().lastLayoutRun).toEqual(
+      expect.objectContaining({
+        algorithm: 'layered',
+        direction: 'BT',
+        metrics: expect.objectContaining({
+          nodeOverlaps: 0,
+          edgeCrossings: 0,
+        }),
+      }),
+    );
   });
 
   it('runs auto edges once in fixed mode', async () => {

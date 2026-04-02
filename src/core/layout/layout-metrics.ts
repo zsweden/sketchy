@@ -6,6 +6,7 @@ import {
   sharesEndpoint,
   type EdgeRoutingPlacement,
 } from '../edge-routing';
+import type { LayoutDirection } from '../framework-types';
 import { VISIBLE_HANDLE_SIDES } from '../graph/ports';
 import type { LayoutEdgeInput, LayoutInput, LayoutResult } from './layout-engine';
 
@@ -34,9 +35,10 @@ export function computeLayoutMetrics(
   nodes: LayoutInput[],
   edges: LayoutEdgeInput[],
   positions: ReadonlyMap<string, PositionLike>,
+  options?: { layoutDirection?: LayoutDirection },
 ): LayoutMetrics {
   const boxes = new Map(nodes.map((node) => [node.id, getBox(node, positions)]));
-  const geometries = computeRoutedEdgeGeometries(nodes, edges, positions);
+  const geometries = computeRoutedEdgeGeometries(nodes, edges, positions, options);
 
   let nodeOverlaps = 0;
   for (let i = 0; i < nodes.length; i++) {
@@ -130,6 +132,7 @@ export function computeRoutedEdgeGeometries(
   nodes: LayoutInput[],
   edges: LayoutEdgeInput[],
   positions: ReadonlyMap<string, PositionLike>,
+  options?: { layoutDirection?: LayoutDirection },
 ): RoutedEdgeGeometry[] {
   const boxes = new Map(nodes.map((node) => [node.id, getBox(node, positions)]));
   const preparedEdges = edges.map((edge, index) => ({
@@ -149,7 +152,7 @@ export function computeRoutedEdgeGeometries(
     : computeEdgeRoutingPlacements({
       edges: preparedEdges,
       nodeBoxes: boxes,
-      layoutDirection: 'TB',
+      layoutDirection: options?.layoutDirection ?? 'TB',
     });
 
   return edges.flatMap((edge, index) => {

@@ -1,5 +1,6 @@
 import type { LayoutEngine } from './layout-engine';
 import { RANK_SEP, NODE_SEP } from './layout-engine';
+import { DEFAULT_ELK_EXPERIMENT_SETTINGS, type ElkAlgorithm } from './elk-options';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let elkInstance: any = null;
@@ -15,15 +16,16 @@ async function getElk() {
 const DIRECTION_MAP: Record<string, string> = {
   TB: 'DOWN',
   BT: 'UP',
+  LR: 'RIGHT',
+  RL: 'LEFT',
 };
-
-type ElkAlgorithm = 'layered' | 'force' | 'stress' | 'radial';
 
 function createElkEngine(algorithm: ElkAlgorithm): LayoutEngine {
   return async (nodes, edges, options) => {
     const hasPositions = nodes.some((node) => node.position);
     const cyclic = options.cyclic === true;
     const isLayered = algorithm === 'layered';
+    const elkOptions = { ...DEFAULT_ELK_EXPERIMENT_SETTINGS, ...options.elk };
 
     const graph = {
       id: 'root',
@@ -33,16 +35,20 @@ function createElkEngine(algorithm: ElkAlgorithm): LayoutEngine {
         'elk.spacing.nodeNode': String(NODE_SEP),
         'elk.separateConnectedComponents': 'true',
         'elk.spacing.componentComponent': String(RANK_SEP),
-        'elk.aspectRatio': '2.5',
+        'elk.aspectRatio': String(elkOptions.aspectRatio),
         ...(isLayered && {
           'elk.edgeRouting': cyclic ? 'SPLINES' : 'ORTHOGONAL',
           'elk.layered.spacing.nodeNodeBetweenLayers': String(RANK_SEP),
+          'elk.layered.layering.strategy': elkOptions.layeringStrategy,
+          'elk.layered.nodePlacement.strategy': elkOptions.nodePlacementStrategy,
+          'elk.layered.cycleBreaking.strategy': elkOptions.cycleBreakingStrategy,
+          'elk.layered.wrapping.strategy': elkOptions.wrappingStrategy,
+          'elk.layered.thoroughness': String(elkOptions.thoroughness),
         }),
         ...(cyclic && isLayered && {
-          'elk.layered.feedbackEdges': 'true',
-          'elk.layered.nodePlacement.favorStraightEdges': 'true',
-          'elk.layered.priority.straightness': '10',
-          'elk.layered.thoroughness': '12',
+          'elk.layered.feedbackEdges': String(elkOptions.feedbackEdges),
+          'elk.layered.nodePlacement.favorStraightEdges': String(elkOptions.favorStraightEdges),
+          'elk.layered.priority.straightness': String(elkOptions.straightnessPriority),
         }),
         ...(hasPositions && isLayered && {
           'elk.layered.crossingMinimization.semiInteractive': 'true',
@@ -86,4 +92,8 @@ export const elkStressEngine = createElkEngine('stress');
 export const elkRadialEngine = createElkEngine('radial');
 
 export const elkEngine: LayoutEngine = async (nodes, edges, options) =>
-  elkLayeredEngine(nodes, edges, options);
+  createElkEngine(options.elk?.algorithm ?? DEFAULT_ELK_EXPERIMENT_SETTINGS.algorithm)(
+    nodes,
+    edges,
+    options,
+  );

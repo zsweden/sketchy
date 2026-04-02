@@ -32,4 +32,8 @@ export interface DerivedIndicator {
   description: string;
 }
 
-export type LayoutDirection = 'TB' | 'BT';
+export type LayoutDirection = 'TB' | 'BT' | 'LR' | 'RL';
+
+export function isVerticalLayoutDirection(direction: LayoutDirection): boolean {
+  return direction === 'TB' || direction === 'BT';
+}

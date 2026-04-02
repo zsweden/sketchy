@@ -1,11 +1,13 @@
 import type { DiagramNode, DiagramEdge } from '../types';
-import type { LayoutDirection } from '../framework-types';
+import { isVerticalLayoutDirection, type LayoutDirection } from '../framework-types';
 import type { LayoutEngine } from './layout-engine';
+import type { ElkExperimentSettings } from './elk-options';
 import { prepareLayoutEdges, prepareLayoutNodes } from './layout-inputs';
 
 export interface AutoLayoutOptions {
   direction: LayoutDirection;
   cyclic?: boolean;
+  elk?: ElkExperimentSettings;
 }
 
 export interface NodePositionUpdate {
@@ -29,6 +31,7 @@ export async function autoLayout(
   const results = await engine(inputs, edgeInputs, {
     direction: options.direction,
     cyclic: useCyclicLayout,
+    elk: options.elk,
   });
   const tightenedResults = useCyclicLayout
     ? results
@@ -45,7 +48,7 @@ export async function autoLayout(
 }
 
 function tightenTopSpine(
-  nodes: { id: string; height: number }[],
+  nodes: { id: string; width: number; height: number }[],
   edges: { source: string; target: string }[],
   results: { id: string; x: number; y: number }[],
   direction: LayoutDirection,
@@ -54,22 +57,37 @@ function tightenTopSpine(
   if (chain.length < 3) return results;
 
   const positions = new Map(results.map((result) => [result.id, { ...result }]));
-  const heights = new Map(nodes.map((node) => [node.id, node.height]));
+  const isVertical = isVerticalLayoutDirection(direction);
+  const sizes = new Map(
+    nodes.map((node) => [node.id, isVertical ? node.height : node.width]),
+  );
   const visualAdjacency = buildVisualAdjacency(edges, direction);
 
   for (let i = 0; i < chain.length - 1; i++) {
     const current = positions.get(chain[i]);
     const next = positions.get(chain[i + 1]);
-    const currentHeight = heights.get(chain[i]);
-    if (!current || !next || currentHeight === undefined) continue;
+    const currentSize = sizes.get(chain[i]);
+    const nextSize = sizes.get(chain[i + 1]);
+    if (!current || !next || currentSize === undefined) continue;
 
-    const currentGap = next.y - (current.y + currentHeight);
+    const currentGap = isVertical
+      ? next.y - (current.y + currentSize)
+      : direction === 'LR'
+        ? next.x - (current.x + currentSize)
+        : current.x - (next.x + (nextSize ?? currentSize));
     if (currentGap <= TOP_SPINE_GAP) continue;
 
     const shift = currentGap - TOP_SPINE_GAP;
     for (const id of collectReachable(chain[i + 1], visualAdjacency)) {
       const position = positions.get(id);
-      if (position) position.y -= shift;
+      if (!position) continue;
+      if (isVertical) {
+        position.y -= shift;
+      } else if (direction === 'LR') {
+        position.x -= shift;
+      } else {
+        position.x += shift;
+      }
     }
   }
 
@@ -99,7 +117,7 @@ function findTopSpine(
     incoming.set(edge.target, [...(incoming.get(edge.target) ?? []), edge.source]);
   }
 
-  const topNodes = [...(direction === 'TB' ? indegree : outdegree).entries()]
+  const topNodes = [...(direction === 'TB' || direction === 'LR' ? indegree : outdegree).entries()]
     .filter(([, degree]) => degree === 0)
     .map(([id]) => id);
   if (topNodes.length !== 1) return [];
@@ -108,13 +126,13 @@ function findTopSpine(
   let current = topNodes[0];
 
   while (true) {
-    const nextCandidates = direction === 'TB'
+    const nextCandidates = direction === 'TB' || direction === 'LR'
       ? (outgoing.get(current) ?? [])
       : (incoming.get(current) ?? []);
     if (nextCandidates.length !== 1) break;
 
     const next = nextCandidates[0];
-    const sharedDegree = direction === 'TB'
+    const sharedDegree = direction === 'TB' || direction === 'LR'
       ? indegree.get(next) ?? 0
       : outdegree.get(next) ?? 0;
     if (sharedDegree !== 1) break;
@@ -132,8 +150,8 @@ function buildVisualAdjacency(
 ): Map<string, string[]> {
   const adjacency = new Map<string, string[]>();
   for (const edge of edges) {
-    const from = direction === 'TB' ? edge.source : edge.target;
-    const to = direction === 'TB' ? edge.target : edge.source;
+    const from = direction === 'TB' || direction === 'LR' ? edge.source : edge.target;
+    const to = direction === 'TB' || direction === 'LR' ? edge.target : edge.source;
     adjacency.set(from, [...(adjacency.get(from) ?? []), to]);
   }
   return adjacency;

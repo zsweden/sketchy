@@ -1,5 +1,10 @@
 import { create } from 'zustand';
 import { fetchAvailableModels, KNOWN_MODELS, type ModelInfo } from '../core/ai/model-fetcher';
+import {
+  DEFAULT_ELK_EXPERIMENT_SETTINGS,
+  type ElkExperimentSettings,
+} from '../core/layout/elk-options';
+import type { LayoutMetrics } from '../core/layout/layout-metrics';
 import { DEFAULT_THEME, type ThemeId } from '../styles/themes';
 import { getWebStorage } from '../utils/web-storage';
 
@@ -52,9 +57,18 @@ interface SettingsState {
   baseUrl: string;
   model: string;
   settingsOpen: boolean;
+  layoutLabOpen: boolean;
   availableModels: ModelInfo[];
   modelsLoading: boolean;
   modelsError: string | null;
+  elkExperimentSettings: ElkExperimentSettings;
+  lastLayoutRun: {
+    metrics: LayoutMetrics;
+    score: number;
+    durationMs: number;
+    algorithm: ElkExperimentSettings['algorithm'];
+    direction: 'TB' | 'BT' | 'LR' | 'RL';
+  } | null;
 
   setProvider: (providerId: string) => void;
   setTheme: (theme: ThemeId) => void;
@@ -63,6 +77,11 @@ interface SettingsState {
   setModel: (model: string) => void;
   toggleSettings: () => void;
   closeSettings: () => void;
+  toggleLayoutLab: () => void;
+  closeLayoutLab: () => void;
+  updateElkExperimentSettings: (patch: Partial<ElkExperimentSettings>) => void;
+  resetElkExperimentSettings: () => void;
+  setLastLayoutRun: (run: SettingsState['lastLayoutRun']) => void;
   refreshModels: () => void;
 }
 
@@ -140,9 +159,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     baseUrl: initial.baseUrl,
     model: initial.model,
     settingsOpen: false,
+    layoutLabOpen: false,
     availableModels: [],
     modelsLoading: false,
     modelsError: null,
+    elkExperimentSettings: DEFAULT_ELK_EXPERIMENT_SETTINGS,
+    lastLayoutRun: null,
 
     setProvider: (providerId) => {
       const p = PROVIDERS.find((pr) => pr.id === providerId);
@@ -175,8 +197,21 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       set({ model });
     },
 
-    toggleSettings: () => set((s) => ({ settingsOpen: !s.settingsOpen })),
+    toggleSettings: () => set((s) => ({
+      settingsOpen: !s.settingsOpen,
+      layoutLabOpen: false,
+    })),
     closeSettings: () => set({ settingsOpen: false }),
+    toggleLayoutLab: () => set((s) => ({
+      layoutLabOpen: !s.layoutLabOpen,
+      settingsOpen: false,
+    })),
+    closeLayoutLab: () => set({ layoutLabOpen: false }),
+    updateElkExperimentSettings: (patch) => set((state) => ({
+      elkExperimentSettings: { ...state.elkExperimentSettings, ...patch },
+    })),
+    resetElkExperimentSettings: () => set({ elkExperimentSettings: DEFAULT_ELK_EXPERIMENT_SETTINGS }),
+    setLastLayoutRun: (run) => set({ lastLayoutRun: run }),
     refreshModels,
   };
 });
