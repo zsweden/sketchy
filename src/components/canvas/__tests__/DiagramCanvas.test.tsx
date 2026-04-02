@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   rfEdges: [] as never[],
   defaultEdgeOptions: {},
   activeTheme: { js: { minimapFallback: '#999' } },
+  useRFNodeEdgeBuilder: vi.fn(),
   screenToFlowPosition: vi.fn(() => ({ x: 200, y: 100 })),
   fitView: vi.fn(),
   getViewport: vi.fn(() => ({ x: 0, y: 0, zoom: 1 })),
@@ -35,8 +36,10 @@ vi.mock('@xyflow/react', () => ({
     onPaneContextMenu,
     onNodeContextMenu,
     onEdgeContextMenu,
+    onNodeDragStart,
     onNodesChange,
     onEdgesChange,
+    onNodeDragStop,
   }: {
     nodes: Array<{ id: string; selected?: boolean }>;
     edges: Array<{ id: string; selected?: boolean }>;
@@ -50,6 +53,7 @@ vi.mock('@xyflow/react', () => ({
     onNodesChange?: (changes: NodeChange[]) => void;
     onEdgesChange?: (changes: EdgeChange[]) => void;
     onSelectionChange?: (params: { nodes: Array<{ id: string }>; edges: Array<{ id: string }> }) => void;
+    onNodeDragStart?: () => void;
     onPaneClick?: () => void;
     onPaneContextMenu?: (event: {
       clientX: number;
@@ -75,6 +79,7 @@ vi.mock('@xyflow/react', () => ({
       },
       edge: { id: string },
     ) => void;
+    onNodeDragStop?: () => void;
   }) => (
     <div>
       <div data-testid="zoom-on-double-click">{String(zoomOnDoubleClick)}</div>
@@ -127,6 +132,20 @@ vi.mock('@xyflow/react', () => ({
         }}
       >
         Trigger node remove
+      </button>
+      <button
+        type="button"
+        data-testid="trigger-node-drag-start"
+        onClick={() => onNodeDragStart?.()}
+      >
+        Trigger node drag start
+      </button>
+      <button
+        type="button"
+        data-testid="trigger-node-drag-stop"
+        onClick={() => onNodeDragStop?.()}
+      >
+        Trigger node drag stop
       </button>
       <button
         type="button"
@@ -238,12 +257,7 @@ vi.mock('../../../hooks/useCanvasHighlighting', () => ({
 }));
 
 vi.mock('../../../hooks/useRFNodeEdgeBuilder', () => ({
-  useRFNodeEdgeBuilder: () => ({
-    rfNodes: mocks.rfNodes,
-    rfEdges: mocks.rfEdges,
-    defaultEdgeOptions: mocks.defaultEdgeOptions,
-    activeTheme: mocks.activeTheme,
-  }),
+  useRFNodeEdgeBuilder: (...args: unknown[]) => mocks.useRFNodeEdgeBuilder(...args),
 }));
 
 function resetStores() {
@@ -273,6 +287,12 @@ describe('DiagramCanvas', () => {
   beforeEach(() => {
     resetStores();
     vi.clearAllMocks();
+    mocks.useRFNodeEdgeBuilder.mockImplementation(() => ({
+      rfNodes: mocks.rfNodes,
+      rfEdges: mocks.rfEdges,
+      defaultEdgeOptions: mocks.defaultEdgeOptions,
+      activeTheme: mocks.activeTheme,
+    }));
     mocks.screenToFlowPosition.mockReturnValue({ x: 200, y: 100 });
     mocks.getViewport.mockReturnValue({ x: 0, y: 0, zoom: 1 });
     mocks.getInternalNode.mockReturnValue(undefined);
@@ -298,6 +318,37 @@ describe('DiagramCanvas', () => {
     toast.action?.onClick();
 
     expect(useDiagramStore.getState().diagram.settings.edgeRoutingMode).toBe('fixed');
+  });
+
+  it('freezes dynamic routing while a node drag is in progress and unfreezes on drop', async () => {
+    const user = userEvent.setup();
+
+    render(<DiagramCanvas />);
+
+    expect(mocks.useRFNodeEdgeBuilder).toHaveBeenLastCalledWith(
+      mocks.highlightSets,
+      null,
+      mocks.degreesMap,
+      false,
+    );
+
+    await user.click(screen.getByTestId('trigger-node-drag-start'));
+
+    expect(mocks.useRFNodeEdgeBuilder).toHaveBeenLastCalledWith(
+      mocks.highlightSets,
+      null,
+      mocks.degreesMap,
+      true,
+    );
+
+    await user.click(screen.getByTestId('trigger-node-drag-stop'));
+
+    expect(mocks.useRFNodeEdgeBuilder).toHaveBeenLastCalledWith(
+      mocks.highlightSets,
+      null,
+      mocks.degreesMap,
+      false,
+    );
   });
 
   it('treats node+edge deletions from separate RF callbacks as a single undo step', async () => {

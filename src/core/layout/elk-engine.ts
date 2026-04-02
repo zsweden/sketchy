@@ -20,6 +20,13 @@ const DIRECTION_MAP: Record<string, string> = {
   RL: 'LEFT',
 };
 
+export function resolveElkAlgorithm(
+  algorithm: ElkAlgorithm,
+  cyclic?: boolean,
+): ElkAlgorithm {
+  return cyclic ? 'force' : algorithm;
+}
+
 function createElkEngine(algorithm: ElkAlgorithm): LayoutEngine {
   return async (nodes, edges, options) => {
     const hasPositions = nodes.some((node) => node.position);
@@ -74,7 +81,14 @@ function createElkEngine(algorithm: ElkAlgorithm): LayoutEngine {
     };
 
     const elk = await getElk();
-    const laid = await elk.layout(graph);
+
+    let laid;
+    try {
+      laid = await elk.layout(graph);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new Error(`Layout engine failed: ${msg}`);
+    }
 
     return (laid.children ?? [])
       .filter((child: { x?: number; y?: number }) => child.x !== undefined && child.y !== undefined)
@@ -92,7 +106,12 @@ export const elkStressEngine = createElkEngine('stress');
 export const elkRadialEngine = createElkEngine('radial');
 
 export const elkEngine: LayoutEngine = async (nodes, edges, options) =>
-  createElkEngine(options.elk?.algorithm ?? DEFAULT_ELK_EXPERIMENT_SETTINGS.algorithm)(
+  createElkEngine(
+    resolveElkAlgorithm(
+      options.elk?.algorithm ?? DEFAULT_ELK_EXPERIMENT_SETTINGS.algorithm,
+      options.cyclic,
+    ),
+  )(
     nodes,
     edges,
     options,

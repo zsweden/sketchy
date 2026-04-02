@@ -1,9 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { MarkerType, type Edge, type Node } from '@xyflow/react';
 import { useDiagramStore } from '../store/diagram-store';
 import { useUIStore } from '../store/ui-store';
 import { useSettingsStore } from '../store/settings-store';
-import { getSourceHandleId, getTargetHandleId } from '../core/graph/ports';
+import { getSourceHandleId, getTargetHandleId, type EdgeHandlePlacement } from '../core/graph/ports';
 import { getAutomaticEdgeSides, getOptimizedEdgePlacements, getStoredOrAutomaticEdgeSides } from '../store/diagram-helpers';
 import { getTheme } from '../styles/themes';
 import { ARROW_MARKER_SIZE } from '../constants/layout';
@@ -20,6 +20,7 @@ export function useRFNodeEdgeBuilder(
   highlightSets: ConnectedSubgraph | null,
   selectedLoop: NamedCausalLoop | null,
   degreesMap: Map<string, NodeDegrees>,
+  freezeDynamicRouting = false,
 ): BuilderResult {
   const diagram = useDiagramStore((s) => s.diagram);
   const framework = useDiagramStore((s) => s.framework);
@@ -27,6 +28,7 @@ export function useRFNodeEdgeBuilder(
   const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
   const themeId = useSettingsStore((s) => s.theme);
   const activeTheme = useMemo(() => getTheme(themeId), [themeId]);
+  const cachedOptimizedPlacements = useRef<Map<string, EdgeHandlePlacement>>(new Map());
 
   const defaultEdgeOptions = useMemo(() => ({
     type: 'smoothstep',
@@ -35,8 +37,19 @@ export function useRFNodeEdgeBuilder(
   }), [activeTheme]);
 
   const optimizedPlacements = useMemo(
-    () => getOptimizedEdgePlacements(diagram.edges, diagram.nodes, diagram.settings),
-    [diagram.edges, diagram.nodes, diagram.settings],
+    () => {
+      if (edgeRoutingMode !== 'dynamic') {
+        return cachedOptimizedPlacements.current;
+      }
+      if (freezeDynamicRouting) {
+        return cachedOptimizedPlacements.current;
+      }
+
+      const placements = getOptimizedEdgePlacements(diagram.edges, diagram.nodes, diagram.settings);
+      cachedOptimizedPlacements.current = placements;
+      return placements;
+    },
+    [diagram.edges, diagram.nodes, diagram.settings, edgeRoutingMode, freezeDynamicRouting],
   );
 
   const rfNodes: Node[] = useMemo(

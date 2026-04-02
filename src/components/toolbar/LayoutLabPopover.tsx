@@ -6,6 +6,7 @@ import {
   ELK_NODE_PLACEMENT_OPTIONS,
   ELK_WRAPPING_OPTIONS,
 } from '../../core/layout/elk-options';
+import { useDiagramStore } from '../../store/diagram-store';
 import { useSettingsStore } from '../../store/settings-store';
 
 function formatNumber(value: number) {
@@ -19,6 +20,7 @@ export default function LayoutLabPopover() {
   const updateElkExperimentSettings = useSettingsStore((s) => s.updateElkExperimentSettings);
   const resetElkExperimentSettings = useSettingsStore((s) => s.resetElkExperimentSettings);
   const lastLayoutRun = useSettingsStore((s) => s.lastLayoutRun);
+  const forceLocked = useDiagramStore((s) => s.framework.allowsCycles === true);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -36,7 +38,8 @@ export default function LayoutLabPopover() {
 
   if (!open) return null;
 
-  const layeredOnly = elkSettings.algorithm !== 'layered';
+  const effectiveAlgorithm = forceLocked ? 'force' : elkSettings.algorithm;
+  const layeredOnly = effectiveAlgorithm !== 'layered';
 
   return (
     <div className="settings-popover layout-lab-popover" ref={ref}>
@@ -59,14 +62,18 @@ export default function LayoutLabPopover() {
           <p className="section-label">Engine</p>
           <select
             className="input-text"
-            value={elkSettings.algorithm}
+            value={effectiveAlgorithm}
             onChange={(event) => updateElkExperimentSettings({ algorithm: event.target.value as typeof elkSettings.algorithm })}
             aria-label="ELK engine"
+            disabled={forceLocked}
           >
             {ELK_ALGORITHM_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>{option.label}</option>
             ))}
           </select>
+          {forceLocked ? (
+            <p className="layout-lab-copy">Cyclic diagrams always use Force.</p>
+          ) : null}
         </div>
 
         <div className="settings-field">

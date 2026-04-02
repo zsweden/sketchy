@@ -3,10 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import LayoutLabPopover from '../LayoutLabPopover';
 import { DEFAULT_ELK_EXPERIMENT_SETTINGS } from '../../../core/layout/elk-options';
+import { useDiagramStore } from '../../../store/diagram-store';
 import { useSettingsStore } from '../../../store/settings-store';
 
 describe('LayoutLabPopover', () => {
   beforeEach(() => {
+    useDiagramStore.getState().setFramework('crt');
     useSettingsStore.setState({
       layoutLabOpen: true,
       elkExperimentSettings: DEFAULT_ELK_EXPERIMENT_SETTINGS,
@@ -29,6 +31,16 @@ describe('LayoutLabPopover', () => {
 
     expect(useSettingsStore.getState().elkExperimentSettings.algorithm).toBe('radial');
     expect(useSettingsStore.getState().elkExperimentSettings.aspectRatio).toBe(3.5);
+  });
+
+  it('locks the engine to force for cyclic frameworks', () => {
+    useDiagramStore.getState().setFramework('cld');
+
+    render(<LayoutLabPopover />);
+
+    expect(screen.getByLabelText('ELK engine')).toBeDisabled();
+    expect(screen.getByLabelText('ELK engine')).toHaveValue('force');
+    expect(screen.getByText('Cyclic diagrams always use Force.')).toBeInTheDocument();
   });
 
   it('closes on outside click', () => {

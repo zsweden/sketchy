@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { autoLayout } from '../auto-layout';
 import { elkEngine } from '../elk-engine';
+import type { LayoutEngine } from '../layout-engine';
 import type { DiagramEdge, DiagramNode } from '../../types';
 import { NODE_WIDTH, estimateHeight } from '../layout-engine';
 import { computeLayoutMetrics } from '../layout-metrics';
@@ -190,5 +191,18 @@ describe('autoLayout (ELK)', () => {
 
     expect(metrics.nodeOverlaps).toBe(0);
     expect(metrics.edgeNodeOverlaps).toBeLessThanOrEqual(4);
+  });
+
+  it('wraps layout engine errors with a descriptive message', async () => {
+    const failingEngine: LayoutEngine = async () => {
+      throw new Error('java.lang.NullPointerException');
+    };
+
+    const nodes = [node('a'), node('b')];
+    const edges = [edge('a', 'b')];
+
+    await expect(
+      autoLayout(nodes, edges, { direction: 'TB' }, failingEngine),
+    ).rejects.toThrow('java.lang.NullPointerException');
   });
 });

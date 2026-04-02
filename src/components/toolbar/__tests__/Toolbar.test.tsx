@@ -152,6 +152,25 @@ describe('Toolbar', () => {
     );
   });
 
+  it('reports force as the last-run algorithm for cyclic frameworks', async () => {
+    const user = userEvent.setup();
+    useDiagramStore.getState().setFramework('cld');
+    const nodeId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+    mocks.runElkAutoLayout.mockResolvedValue([{ id: nodeId, position: { x: 140, y: 90 } }]);
+
+    render(<Toolbar />);
+    await user.click(screen.getByRole('button', { name: 'Auto-layout' }));
+
+    await waitFor(() => {
+      expect(useSettingsStore.getState().lastLayoutRun).toEqual(
+        expect.objectContaining({
+          algorithm: 'force',
+          direction: 'TB',
+        }),
+      );
+    });
+  });
+
   it('runs auto edges once in fixed mode', async () => {
     const user = userEvent.setup();
     useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });

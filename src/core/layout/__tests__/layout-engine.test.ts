@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { estimateHeight, MIN_NODE_HEIGHT } from '../layout-engine';
+import { resolveElkAlgorithm } from '../elk-engine';
 
 describe('estimateHeight', () => {
   it('returns MIN_NODE_HEIGHT (60) for empty label', () => {
@@ -29,5 +30,17 @@ describe('estimateHeight', () => {
     const label = 'A'.repeat(120); // ceil(120/30) = 4 lines
     // 4 lines * 24 + 24 = 120
     expect(estimateHeight(label)).toBe(120);
+  });
+});
+
+describe('resolveElkAlgorithm', () => {
+  it('preserves the requested algorithm for acyclic layouts', () => {
+    expect(resolveElkAlgorithm('layered', false)).toBe('layered');
+    expect(resolveElkAlgorithm('radial', false)).toBe('radial');
+  });
+
+  it('forces cyclic layouts onto the force algorithm', () => {
+    expect(resolveElkAlgorithm('layered', true)).toBe('force');
+    expect(resolveElkAlgorithm('stress', true)).toBe('force');
   });
 });

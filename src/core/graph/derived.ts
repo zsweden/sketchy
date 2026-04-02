@@ -188,6 +188,11 @@ function canonicalizeCycle(
   return { key: bestKey, nodeIds: bestNodes, edgeIds: bestEdges };
 }
 
+/** Maximum cycle length to explore (longer cycles are not visually useful). */
+export const MAX_CYCLE_LENGTH = 30;
+/** Maximum total loops to collect before stopping (prevents combinatorial explosion). */
+export const MAX_TOTAL_LOOPS = 200;
+
 export function findCausalLoops(edges: DiagramEdge[]): CausalLoop[] {
   const nodeIds = getUniqueNodeIds(edges);
   const components = findStronglyConnectedComponents(nodeIds, edges)
@@ -227,7 +232,12 @@ export function findCausalLoops(edges: DiagramEdge[]): CausalLoop[] {
       pathEdges: string[],
       visited: Set<string>,
     ) {
+      if (pathNodes.length > MAX_CYCLE_LENGTH) return;
+      if (loops.size >= MAX_TOTAL_LOOPS) return;
+
       for (const edge of outgoing.get(currentId) ?? []) {
+        if (loops.size >= MAX_TOTAL_LOOPS) return;
+
         const nextId = edge.target;
         if (!componentSet.has(nextId)) continue;
 
@@ -249,6 +259,7 @@ export function findCausalLoops(edges: DiagramEdge[]): CausalLoop[] {
     }
 
     for (const startId of component) {
+      if (loops.size >= MAX_TOTAL_LOOPS) break;
       dfs(startId, startId, [startId], [], new Set([startId]));
     }
   }

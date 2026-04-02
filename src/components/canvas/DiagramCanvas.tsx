@@ -92,12 +92,13 @@ export default function DiagramCanvas() {
   // Highlighting logic (extracted hook)
   const { selectedLoop, highlightSets, degreesMap } = useCanvasHighlighting();
 
+  // Local state for React Flow selection/interaction
+  const [isNodeDragging, setIsNodeDragging] = useState(false);
   // Build RF nodes/edges (extracted hook)
   const { rfNodes, rfEdges, defaultEdgeOptions, activeTheme } = useRFNodeEdgeBuilder(
-    highlightSets, selectedLoop, degreesMap,
+    highlightSets, selectedLoop, degreesMap, isNodeDragging,
   );
 
-  // Local state for React Flow selection/interaction
   const [localNodes, setLocalNodes] = useState<Node[]>(rfNodes);
   const [localEdges, setLocalEdges] = useState<Edge[]>(rfEdges);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -347,7 +348,12 @@ export default function DiagramCanvas() {
     [scheduleRemovalFlush],
   );
 
+  const onNodeDragStart = useCallback(() => {
+    setIsNodeDragging(true);
+  }, []);
+
   const onNodeDragStop = useCallback(() => {
+    setIsNodeDragging(false);
     commitDraggedNodes();
   }, [commitDraggedNodes]);
 
@@ -555,6 +561,7 @@ export default function DiagramCanvas() {
         defaultEdgeOptions={defaultEdgeOptions}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodeDragStart={onNodeDragStart}
         onNodeDragStop={onNodeDragStop}
         onConnect={onConnect}
         onSelectionChange={onSelectionChange}

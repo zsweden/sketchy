@@ -6,6 +6,8 @@ import {
   getDerivedIndicators,
   getConnectedSubgraph,
   summarizeCausalLoops,
+  MAX_CYCLE_LENGTH,
+  MAX_TOTAL_LOOPS,
 } from '../derived';
 import { crtFramework } from '../../../frameworks/crt';
 import type { DiagramEdge } from '../../types';
@@ -171,6 +173,34 @@ describe('findCausalLoops', () => {
 
     const loops = findCausalLoops(edges);
     expect(loops).toHaveLength(1);
+  });
+
+  it('does not overflow on a large fully-connected SCC', () => {
+    // Build a complete directed graph (every node connects to every other)
+    const n = 40;
+    const nodeNames = Array.from({ length: n }, (_, i) => `n${i}`);
+    const edges = nodeNames.flatMap((src) =>
+      nodeNames
+        .filter((tgt) => tgt !== src)
+        .map((tgt) => edge(src, tgt)),
+    );
+
+    // Should complete without stack overflow and respect MAX_TOTAL_LOOPS
+    const loops = findCausalLoops(edges);
+    expect(loops.length).toBeLessThanOrEqual(MAX_TOTAL_LOOPS);
+    expect(loops.length).toBeGreaterThan(0);
+  });
+
+  it('skips cycles longer than MAX_CYCLE_LENGTH', () => {
+    // Build a single long ring: n0→n1→n2→...→n(N-1)→n0
+    const n = MAX_CYCLE_LENGTH + 5;
+    const nodeNames = Array.from({ length: n }, (_, i) => `n${i}`);
+    const edges = nodeNames.map((src, i) =>
+      edge(src, nodeNames[(i + 1) % n]),
+    );
+
+    const loops = findCausalLoops(edges);
+    expect(loops).toHaveLength(0);
   });
 });
 

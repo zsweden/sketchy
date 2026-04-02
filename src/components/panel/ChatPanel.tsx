@@ -66,7 +66,7 @@ export default function ChatPanel() {
     <div className={`chat-panel${isMinimized ? ' chat-panel--minimized' : ''}`}>
       <div className="chat-header">
         <p className="section-heading chat-header-title">
-          <span>AI Chat</span>
+          <span>AI</span>
           {model && <span className="chat-model-name">{model}</span>}
           {isConnected && <Check size={14} style={{ color: '#22c55e' }} />}
         </p>

@@ -1,7 +1,9 @@
 import { getFramework } from '../frameworks/registry';
 import { getAutomaticEdgeRoutingPlacement } from '../core/edge-routing';
+import { resolveElkAlgorithm } from '../core/layout/elk-engine';
 import { prepareLayoutNodes } from '../core/layout/layout-inputs';
 import { computeLayoutMetrics, scoreLayoutMetrics } from '../core/layout/layout-metrics';
+import { reportError } from '../core/monitoring/error-logging';
 import { runElkAutoLayout } from '../core/layout/run-elk-auto-layout';
 import { deriveDiagramFromTransition, getNextDiagramTransition } from '../transitions/registry';
 import { useSettingsStore } from './settings-store';
@@ -80,11 +82,20 @@ export function createDiagramActions(
       const state = get();
       const startedAt = Date.now();
       const elkExperimentSettings = useSettingsStore.getState().elkExperimentSettings;
-      const updates = await runElkAutoLayout(state.diagram.nodes, state.diagram.edges, {
-        direction: state.diagram.settings.layoutDirection,
-        cyclic: state.framework.allowsCycles,
-        elk: elkExperimentSettings,
-      });
+
+      let updates;
+      try {
+        updates = await runElkAutoLayout(state.diagram.nodes, state.diagram.edges, {
+          direction: state.diagram.settings.layoutDirection,
+          cyclic: state.framework.allowsCycles,
+          elk: elkExperimentSettings,
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        useUIStore.getState().addToast(`Auto-layout failed: ${msg}`, 'error');
+        void reportError(err, { source: 'layout.elk_error', fatal: false });
+        return false;
+      }
 
       if (updates.length === 0) {
         useSettingsStore.getState().setLastLayoutRun(null);
@@ -104,6 +115,7 @@ export function createDiagramActions(
           get().diagram.settings,
           Date.now() - startedAt,
           elkExperimentSettings.algorithm,
+          state.framework.allowsCycles,
         ),
       );
 
@@ -263,6 +275,7 @@ function computeLatestLayoutRun(
   settings: DiagramSettings,
   durationMs: number,
   algorithm: ReturnType<typeof useSettingsStore.getState>['elkExperimentSettings']['algorithm'],
+  cyclic?: boolean,
 ) {
   if (nodes.length === 0) {
     return null;
@@ -309,7 +322,7 @@ function computeLatestLayoutRun(
     metrics,
     score: Math.round(scoreLayoutMetrics(metrics) * 100) / 100,
     durationMs,
-    algorithm,
+    algorithm: resolveElkAlgorithm(algorithm, cyclic),
     direction: settings.layoutDirection,
   };
 }
