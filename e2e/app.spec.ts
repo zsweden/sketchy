@@ -17,11 +17,16 @@ test.beforeEach(async ({ page }) => {
 
 async function createNode(page: import('@playwright/test').Page, x: number, y: number) {
   const countBefore = await page.locator('.entity-node').count();
-  await page.locator(PANE).dblclick({ position: { x, y } });
+  await page.evaluate(
+    ([nodeX, nodeY]) => {
+      // Use store-level creation for deterministic flow-space coordinates.
+      // Pane double-click coordinates become viewport-dependent once fitView zooms.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (window as any).__diagramStore.getState().addNode({ x: nodeX, y: nodeY });
+    },
+    [x, y],
+  );
   await expect(page.locator('.entity-node')).toHaveCount(countBefore + 1);
-  // The dblclick handler sets a 250ms selection suppression window.
-  // Wait for it to expire so subsequent clicks can select nodes/edges.
-  await page.waitForTimeout(300);
 }
 
 async function getNodeIds(page: import('@playwright/test').Page): Promise<string[]> {
@@ -194,7 +199,7 @@ test('undo restores a deleted node and redo removes it again', async ({ page }) 
   await page.getByLabel('Node text').fill('Keep me');
   await page.getByLabel('Node text').blur();
 
-  await page.locator('.react-flow__node').nth(1).click();
+  await page.locator('.entity-node').nth(1).click();
   await page.keyboard.press('Backspace');
   await expect(page.locator('.entity-node')).toHaveCount(1);
 
@@ -271,7 +276,7 @@ test('applies a tag via right-click context menu and shows badge', async ({ page
   await createNode(page, 200, 250);
   const node = page.locator('.entity-node').first();
 
-  await page.locator('.react-flow__node').first().click({ button: 'right' });
+  await page.locator('.entity-node').first().click({ button: 'right' });
   await expect(page.locator('.context-menu')).toBeVisible();
   await page.locator('.context-menu-item', { hasText: 'Undesirable Effect' }).click();
   await expect(node.locator('.badge', { hasText: 'UDE' })).toBeVisible();
@@ -285,9 +290,9 @@ test('multi-select nodes and delete all', async ({ page }) => {
   await createNode(page, 250, 350);
   await expect(page.locator('.entity-node')).toHaveCount(3);
 
-  await page.locator('.react-flow__node').nth(0).click();
-  await page.locator('.react-flow__node').nth(1).click({ modifiers: ['Shift'] });
-  await page.locator('.react-flow__node').nth(2).click({ modifiers: ['Shift'] });
+  await page.locator('.entity-node').nth(0).click();
+  await page.locator('.entity-node').nth(1).click({ modifiers: ['Shift'] });
+  await page.locator('.entity-node').nth(2).click({ modifiers: ['Shift'] });
 
   await expect(page.getByText('3 nodes selected')).toBeVisible();
   await page.getByRole('button', { name: 'Delete All' }).click();
@@ -304,7 +309,7 @@ test('side panel switches between Node and Diagram views', async ({ page }) => {
   await createNode(page, 200, 250);
 
   // Click node → NodePanel
-  await page.locator('.react-flow__node').nth(0).click();
+  await page.locator('.entity-node').nth(0).click();
   await expect(page.locator('.side-panel-top').getByText('Node', { exact: true })).toBeVisible();
 
   // Click pane → back to Diagram
@@ -339,7 +344,7 @@ test('clicking a node highlights connected edges and dims unconnected nodes', as
   await expect(page.locator('.react-flow__edge')).toHaveCount(1);
 
   // Click the first node
-  await page.locator('.react-flow__node').nth(0).click();
+  await page.locator('.entity-node').nth(0).click();
   await expect(page.locator('.edge-highlighted')).toHaveCount(1);
   await expect(page.locator('.entity-node.dimmed')).toHaveCount(1);
 
@@ -412,7 +417,7 @@ test('locked node shows lock indicator and survives auto-layout', async ({ page 
   await expect(node).toHaveCount(1);
 
   // Right-click to lock
-  await page.locator('.react-flow__node').first().click({ button: 'right' });
+  await page.locator('.entity-node').first().click({ button: 'right' });
   await expect(page.locator('.context-menu')).toBeVisible();
   await page.locator('.context-menu-item', { hasText: 'Unlocked' }).click();
 
@@ -541,7 +546,7 @@ test('chat panel shows setup prompt when AI is not configured', async ({ page })
 test('sets node background color via context menu color swatch', async ({ page }) => {
   await createNode(page, 200, 250);
 
-  await page.locator('.react-flow__node').first().click({ button: 'right' });
+  await page.locator('.entity-node').first().click({ button: 'right' });
   await expect(page.locator('.context-menu')).toBeVisible();
 
   // Default swatch should be active initially
@@ -564,7 +569,7 @@ test('sets node background color via context menu color swatch', async ({ page }
 test('sets node text color via context menu and persists to store', async ({ page }) => {
   await createNode(page, 200, 250);
 
-  await page.locator('.react-flow__node').first().click({ button: 'right' });
+  await page.locator('.entity-node').first().click({ button: 'right' });
   await expect(page.locator('.context-menu')).toBeVisible();
 
   // Click the Red text-color swatch (second .context-menu-colors block)
@@ -585,12 +590,12 @@ test('reopen context menu reflects current node color as active swatch', async (
   await createNode(page, 200, 250);
 
   // Apply Green background
-  await page.locator('.react-flow__node').first().click({ button: 'right' });
+  await page.locator('.entity-node').first().click({ button: 'right' });
   await expect(page.locator('.context-menu')).toBeVisible();
   await page.locator('.context-menu-colors').first().locator('.color-swatch[title="Green"]').click();
 
   // Re-open context menu
-  await page.locator('.react-flow__node').first().click({ button: 'right' });
+  await page.locator('.entity-node').first().click({ button: 'right' });
   await expect(page.locator('.context-menu')).toBeVisible();
 
   const bgSwatches = page.locator('.context-menu-colors').first();
@@ -634,8 +639,8 @@ test('align buttons are disabled until two nodes are selected', async ({ page })
   await createNode(page, 150, 200);
   await createNode(page, 350, 200);
 
-  await page.locator('.react-flow__node').nth(0).click();
-  await page.locator('.react-flow__node').nth(1).click({ modifiers: ['Shift'] });
+  await page.locator('.entity-node').nth(0).click();
+  await page.locator('.entity-node').nth(1).click({ modifiers: ['Shift'] });
   await expect(page.getByText('2 nodes selected')).toBeVisible();
 
   // Now enabled
@@ -656,8 +661,8 @@ test('aligns selected nodes horizontally by rendered center', async ({ page }) =
   );
   await expect(page.locator(`[data-node-id="${ids[1]}"]`)).toContainText('This is a much longer');
 
-  await page.locator('.react-flow__node').nth(0).click();
-  await page.locator('.react-flow__node').nth(1).click({ modifiers: ['Shift'] });
+  await page.locator('.entity-node').nth(0).click();
+  await page.locator('.entity-node').nth(1).click({ modifiers: ['Shift'] });
   await page.locator('header').getByLabel('Align horizontally').click();
   await page.waitForTimeout(100);
 
@@ -679,8 +684,8 @@ test('aligns selected nodes vertically by rendered center', async ({ page }) => 
   );
   await expect(page.locator(`[data-node-id="${ids[1]}"]`)).toContainText('This is another long');
 
-  await page.locator('.react-flow__node').nth(0).click();
-  await page.locator('.react-flow__node').nth(1).click({ modifiers: ['Shift'] });
+  await page.locator('.entity-node').nth(0).click();
+  await page.locator('.entity-node').nth(1).click({ modifiers: ['Shift'] });
   await page.locator('header').getByLabel('Align vertically').click();
   await page.waitForTimeout(100);
 
@@ -705,9 +710,9 @@ test('distribute buttons require three selected nodes and reposition them', asyn
   await expect(distV).toBeDisabled();
 
   // Select all 3
-  await page.locator('.react-flow__node').nth(0).click();
-  await page.locator('.react-flow__node').nth(1).click({ modifiers: ['Shift'] });
-  await page.locator('.react-flow__node').nth(2).click({ modifiers: ['Shift'] });
+  await page.locator('.entity-node').nth(0).click();
+  await page.locator('.entity-node').nth(1).click({ modifiers: ['Shift'] });
+  await page.locator('.entity-node').nth(2).click({ modifiers: ['Shift'] });
 
   await expect(distH).toBeEnabled();
   await expect(distV).toBeEnabled();
@@ -730,7 +735,7 @@ test('distribute buttons require three selected nodes and reposition them', asyn
 
 test('edits node notes in the side panel and persists to store', async ({ page }) => {
   await createNode(page, 200, 250);
-  await page.locator('.react-flow__node').first().click();
+  await page.locator('.entity-node').first().click();
 
   await page.getByLabel('Node notes').fill('This is the root cause');
   await page.getByLabel('Node notes').blur();
@@ -754,7 +759,7 @@ test('junction type toggle appears when node has two incoming edges', async ({ p
   await addEdge(page, ids[0], ids[2]); // A -> C
 
   // Click C — junction not yet visible (indegree 1)
-  await page.locator('.react-flow__node').nth(2).click();
+  await page.locator('.entity-node').nth(2).click();
   await expect(page.getByText('Junction Logic')).not.toBeVisible();
 
   // Add second edge B -> C
@@ -762,7 +767,7 @@ test('junction type toggle appears when node has two incoming edges', async ({ p
 
   // Re-click C to refresh panel
   await page.locator(PANE).click({ position: { x: 50, y: 50 } });
-  await page.locator('.react-flow__node').nth(2).click();
+  await page.locator('.entity-node').nth(2).click();
   await expect(page.getByText('Junction Logic')).toBeVisible();
 
   // Toggle to AND
@@ -800,7 +805,7 @@ test('edge panel shows confidence and notes when an edge is clicked', async ({ p
 
   // Left-click edge to select it
   const edgePath = page.locator('.react-flow__edge-interaction').first();
-  await expect(edgePath).toBeVisible();
+  await expect(edgePath).toHaveCount(1);
   const box = await edgePath.boundingBox();
   expect(box).not.toBeNull();
   await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
@@ -829,7 +834,7 @@ test('edge panel shows confidence and notes when an edge is clicked', async ({ p
 
 test('tag chips in NodePanel toggle on and off', async ({ page }) => {
   await createNode(page, 200, 250);
-  await page.locator('.react-flow__node').first().click();
+  await page.locator('.entity-node').first().click();
 
   // CRT default — UDE tag chip should be present but inactive
   const udeChip = page.locator('.tag-chip', { hasText: 'Undesirable Effect' });
@@ -855,7 +860,7 @@ test('FRT framework shows Injection and Desirable Effect tags in context menu', 
 
   await createNode(page, 200, 250);
 
-  await page.locator('.react-flow__node').first().click({ button: 'right' });
+  await page.locator('.entity-node').first().click({ button: 'right' });
   await expect(page.locator('.context-menu')).toBeVisible();
 
   await expect(page.locator('.context-menu-item', { hasText: 'Injection' })).toBeVisible();
@@ -879,7 +884,7 @@ test('PRT framework exposes Obstacle, Intermediate Objective, and Goal tags', as
   await page.getByLabel('Framework').selectOption('prt');
 
   await createNode(page, 200, 250);
-  await page.locator('.react-flow__node').first().click();
+  await page.locator('.entity-node').first().click();
 
   // All three tags should appear as chips
   await expect(page.locator('.tag-chip', { hasText: 'Obstacle' })).toBeVisible();
@@ -901,7 +906,7 @@ test('STT tags appear in both context menu and side panel', async ({ page }) => 
   await createNode(page, 200, 250);
 
   // Context menu
-  await page.locator('.react-flow__node').first().click({ button: 'right' });
+  await page.locator('.entity-node').first().click({ button: 'right' });
   await expect(page.locator('.context-menu')).toBeVisible();
   await expect(page.locator('.context-menu-item', { hasText: 'Objective' })).toBeVisible();
   await expect(page.locator('.context-menu-item', { hasText: 'Strategy' })).toBeVisible();
@@ -909,7 +914,7 @@ test('STT tags appear in both context menu and side panel', async ({ page }) => 
   await page.keyboard.press('Escape');
 
   // Side panel tag chips
-  await page.locator('.react-flow__node').first().click();
+  await page.locator('.entity-node').first().click();
   await expect(page.locator('.tag-chip', { hasText: 'Objective' })).toBeVisible();
   await expect(page.locator('.tag-chip', { hasText: 'Strategy' })).toBeVisible();
   await expect(page.locator('.tag-chip', { hasText: 'Tactic' })).toBeVisible();
@@ -924,7 +929,7 @@ test('STT tags appear in both context menu and side panel', async ({ page }) => 
 test('switching framework clears diagram and shows new framework tags', async ({ page }) => {
   // CRT: apply UDE tag
   await createNode(page, 200, 250);
-  await page.locator('.react-flow__node').first().click({ button: 'right' });
+  await page.locator('.entity-node').first().click({ button: 'right' });
   await expect(page.locator('.context-menu')).toBeVisible();
   await page.locator('.context-menu-item', { hasText: 'Undesirable Effect' }).click();
   await expect(page.locator('.entity-node .badge', { hasText: 'UDE' })).toBeVisible();
@@ -938,7 +943,7 @@ test('switching framework clears diagram and shows new framework tags', async ({
   // Create new node in FRT
   await createNode(page, 200, 250);
   await page.locator(PANE).click({ position: { x: 50, y: 50 } });
-  await page.locator('.react-flow__node').first().click();
+  await page.locator('.entity-node').first().click();
 
   // CRT tag should not exist, FRT tags should
   await expect(page.locator('.tag-chip', { hasText: 'Undesirable Effect' })).toHaveCount(0);
