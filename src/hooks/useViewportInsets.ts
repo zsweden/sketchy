@@ -16,13 +16,12 @@ export function useViewportInsets() {
 
       const visualViewport = window.visualViewport;
       const layoutViewportHeight = window.innerHeight;
-      const visibleViewportHeight = visualViewport?.height ?? layoutViewportHeight;
       const topInset = visualViewport?.offsetTop ?? 0;
       const bottomInset = visualViewport
         ? layoutViewportHeight - visualViewport.height - visualViewport.offsetTop
         : 0;
 
-      setViewportVar(root, '--app-viewport-height', visibleViewportHeight);
+      setViewportVar(root, '--app-viewport-height', layoutViewportHeight);
       setViewportVar(root, '--app-viewport-top-inset', topInset);
       setViewportVar(root, '--app-viewport-bottom-inset', bottomInset);
     };
