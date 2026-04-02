@@ -159,8 +159,24 @@ export function buildEdgeRoutingGeometry(
   const end = getHandlePoint(targetBox, placement.targetSide);
   const sourceExitSide = getBaseHandleSide(placement.sourceSide);
   const targetExitSide = getBaseHandleSide(placement.targetSide);
-  const startStub = offsetPoint(start, sourceExitSide, EDGE_STUB);
-  const endStub = offsetPoint(end, targetExitSide, EDGE_STUB);
+  return {
+    edge,
+    placement,
+    points: buildOrthogonalEdgePoints(start, end, sourceExitSide, targetExitSide),
+    sourceExitSide,
+    targetExitSide,
+  };
+}
+
+export function buildOrthogonalEdgePoints(
+  start: Point,
+  end: Point,
+  sourceExitSide: CardinalHandleSide,
+  targetExitSide: CardinalHandleSide,
+  stubLength = EDGE_STUB,
+): Point[] {
+  const startStub = offsetPoint(start, sourceExitSide, stubLength);
+  const endStub = offsetPoint(end, targetExitSide, stubLength);
   const points: Point[] = [start, startStub];
 
   const sourceHorizontal = isHorizontalCardinalSide(sourceExitSide);
@@ -180,13 +196,7 @@ export function buildEdgeRoutingGeometry(
 
   points.push(endStub, end);
 
-  return {
-    edge,
-    placement,
-    points: dedupePoints(points),
-    sourceExitSide,
-    targetExitSide,
-  };
+  return dedupePoints(points);
 }
 
 export function getPolylineLength(points: Point[]): number {

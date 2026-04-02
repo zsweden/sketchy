@@ -1,5 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { MarkerType, type Edge, type Node } from '@xyflow/react';
+import { DEFAULT_EDGE_ROUTING_POLICY } from '../core/edge-routing';
 import { useDiagramStore } from '../store/diagram-store';
 import { useUIStore } from '../store/ui-store';
 import { useSettingsStore } from '../store/settings-store';
@@ -25,9 +26,10 @@ export function useRFNodeEdgeBuilder(
   const diagram = useDiagramStore((s) => s.diagram);
   const framework = useDiagramStore((s) => s.framework);
   const edgeRoutingMode = useDiagramStore((s) => s.diagram.settings.edgeRoutingMode);
+  const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
   const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
   const themeId = useSettingsStore((s) => s.theme);
-  const edgeRoutingPolicy = useSettingsStore((s) => s.edgeRoutingExperimentPolicy);
+  const edgeRenderMode = useSettingsStore((s) => s.edgeRenderMode);
   const activeTheme = useMemo(() => getTheme(themeId), [themeId]);
   const cachedOptimizedPlacements = useRef<Map<string, EdgeHandlePlacement>>(new Map());
 
@@ -46,32 +48,53 @@ export function useRFNodeEdgeBuilder(
         return cachedOptimizedPlacements.current;
       }
 
-      const placements = getOptimizedEdgePlacements(diagram.edges, diagram.nodes, diagram.settings, edgeRoutingPolicy);
+      const placements = getOptimizedEdgePlacements(
+        diagram.edges,
+        diagram.nodes,
+        diagram.settings,
+        DEFAULT_EDGE_ROUTING_POLICY,
+      );
       cachedOptimizedPlacements.current = placements;
       return placements;
     },
-    [diagram.edges, diagram.nodes, diagram.settings, edgeRoutingMode, edgeRoutingPolicy, freezeDynamicRouting],
+    [diagram.edges, diagram.nodes, diagram.settings, edgeRoutingMode, freezeDynamicRouting],
   );
 
   const rfNodes: Node[] = useMemo(
     () =>
-      diagram.nodes.map((n) => ({
-        id: n.id,
-        type: n.type,
-        position: n.position,
-        draggable: !n.data.locked,
-        data: {
-          ...n.data,
-          degreesMap,
-          highlightState: highlightSets
-            ? highlightSets.nodeIds.has(n.id) ? 'highlighted' : 'dimmed'
-            : 'none',
-          loopKind: selectedLoop && highlightSets?.nodeIds.has(n.id)
-            ? selectedLoop.kind
-            : undefined,
-        },
-      })),
-    [diagram.nodes, degreesMap, highlightSets, selectedLoop],
+      diagram.nodes.map((n) => {
+        let highlightState: 'highlighted' | 'dimmed' | 'none' = 'none';
+
+        if (highlightSets) {
+          const inHighlightedSet = highlightSets.nodeIds.has(n.id);
+
+          if (selectedLoop || (selectedEdgeIds.length === 1 && selectedNodeIds.length === 0)) {
+            highlightState = inHighlightedSet ? 'highlighted' : 'dimmed';
+          } else if (selectedNodeIds.length === 1) {
+            if (n.id === selectedNodeIds[0]) {
+              highlightState = 'highlighted';
+            } else if (!inHighlightedSet) {
+              highlightState = 'dimmed';
+            }
+          }
+        }
+
+        return {
+          id: n.id,
+          type: n.type,
+          position: n.position,
+          draggable: !n.data.locked,
+          data: {
+            ...n.data,
+            degreesMap,
+            highlightState,
+            loopKind: selectedLoop && highlightSets?.nodeIds.has(n.id)
+              ? selectedLoop.kind
+              : undefined,
+          },
+        };
+      }),
+    [diagram.nodes, degreesMap, highlightSets, selectedLoop, selectedEdgeIds, selectedNodeIds],
   );
 
   const rfEdges: Edge[] = useMemo(
@@ -106,6 +129,7 @@ export function useRFNodeEdgeBuilder(
           },
           sourceHandle: getSourceHandleId(sourceSide),
           targetHandle: getTargetHandleId(targetSide),
+          ...(edgeRenderMode === 'new' ? { type: 'orthogonal' } : {}),
           pathOptions: { borderRadius: 100 },
           ...((selectedEdgeIds.includes(e.id) || highlightSets?.edgeIds.has(e.id)) && {
             markerEnd: { type: MarkerType.ArrowClosed, width: ARROW_MARKER_SIZE, height: ARROW_MARKER_SIZE, color: activeTheme.js.arrowColorSelected },
@@ -123,7 +147,7 @@ export function useRFNodeEdgeBuilder(
         };
       });
     },
-    [diagram.edges, diagram.nodes, diagram.settings, edgeRoutingMode, framework, highlightSets, selectedLoop, selectedEdgeIds, activeTheme, optimizedPlacements],
+    [diagram.edges, diagram.nodes, diagram.settings, edgeRoutingMode, framework, highlightSets, selectedLoop, selectedEdgeIds, activeTheme, optimizedPlacements, edgeRenderMode],
   );
 
   return { rfNodes, rfEdges, defaultEdgeOptions, activeTheme };

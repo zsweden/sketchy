@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compareTieBreakScores } from '../edge-optimization-algorithm';
 import {
   buildEdgeRoutingGeometry,
+  buildOrthogonalEdgePoints,
   computeEdgeRoutingPlacements,
   shouldRewardSharedEndpointCrossingAlignment,
   shouldCountCrossingBetweenEdges,
@@ -91,6 +92,24 @@ describe('edge routing', () => {
     expect(geometry.targetExitSide).toBe('top');
     expect(geometry.points[0]).toEqual({ x: 232, y: 48 });
     expect(geometry.points[1]).toEqual({ x: 232, y: 76 });
+  });
+
+  it('builds the same orthogonal polyline from explicit anchor points', () => {
+    const points = buildOrthogonalEdgePoints(
+      { x: 232, y: 48 },
+      { x: 48, y: 200 },
+      'bottom',
+      'top',
+    );
+
+    expect(points).toEqual([
+      { x: 232, y: 48 },
+      { x: 232, y: 76 },
+      { x: 232, y: 124 },
+      { x: 48, y: 124 },
+      { x: 48, y: 172 },
+      { x: 48, y: 200 },
+    ]);
   });
 
   it('legacy mode exempts reciprocal crossings', () => {

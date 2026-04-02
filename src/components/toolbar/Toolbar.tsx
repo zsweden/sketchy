@@ -8,7 +8,6 @@ import {
   MousePointer2,
   Hand,
   Settings,
-  Settings2,
 } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 import { useDiagramStore } from '../../store/diagram-store';
@@ -20,11 +19,8 @@ import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import { getFrameworkSuffix, getNextDiagramTransition } from '../../transitions/registry';
 import { useNodeAlignmentActions } from '../../hooks/useNodeAlignmentActions';
 import FrameworkSelector from './FrameworkSelector';
-import LayoutLabPopover from './LayoutLabPopover';
 import SettingsPopover from './SettingsPopover';
 import { AlignHorizontalIcon, AlignVerticalIcon, DistributeHorizontalIcon, DistributeVerticalIcon } from '../icons/AlignDistributeIcons';
-
-const SHOW_LAYOUT_LAB = false;
 
 export default function Toolbar() {
   const diagram = useDiagramStore((s) => s.diagram);
@@ -47,7 +43,6 @@ export default function Toolbar() {
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
   const interactionMode = useUIStore((s) => s.interactionMode);
   const setInteractionMode = useUIStore((s) => s.setInteractionMode);
-  const toggleLayoutLab = useSettingsStore((s) => s.toggleLayoutLab);
   const { alignSelectedNodesHorizontally, alignSelectedNodesVertically } = useNodeAlignmentActions();
 
   const nodes = useDiagramStore((s) => s.diagram.nodes);
@@ -337,20 +332,6 @@ export default function Toolbar() {
       </div>
 
       <div className="toolbar-group toolbar-group-right">
-        {SHOW_LAYOUT_LAB ? (
-          <div style={{ position: 'relative' }}>
-            <button
-              className="btn btn-ghost btn-icon"
-              onClick={toggleLayoutLab}
-              title="Layout lab"
-              aria-label="Layout lab"
-            >
-              <Settings2 size={16} />
-            </button>
-            <LayoutLabPopover />
-          </div>
-        ) : null}
-
         <div style={{ position: 'relative' }}>
           <button
             className="btn btn-ghost btn-icon"

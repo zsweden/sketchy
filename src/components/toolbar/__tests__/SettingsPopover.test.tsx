@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_ELK_EXPERIMENT_SETTINGS } from '../../../core/layout/elk-options';
 import SettingsPopover from '../SettingsPopover';
 import { useSettingsStore } from '../../../store/settings-store';
 import { useDiagramStore } from '../../../store/diagram-store';
@@ -17,17 +16,15 @@ function resetStores() {
   getWebStorage('localStorage')?.removeItem('sketchy-settings');
   useSettingsStore.setState({
     settingsOpen: true,
-    layoutLabOpen: false,
     provider: 'openai',
     theme: 'figma-dark',
     openaiApiKey: '',
     baseUrl: '',
     model: '',
+    edgeRenderMode: 'legacy',
     availableModels: [],
     modelsLoading: false,
     modelsError: null,
-    elkExperimentSettings: DEFAULT_ELK_EXPERIMENT_SETTINGS,
-    lastLayoutRun: null,
   });
   useDiagramStore.getState().setFramework('crt');
   useDiagramStore.getState().newDiagram();
@@ -97,6 +94,14 @@ describe('SettingsPopover', () => {
 
     await user.selectOptions(screen.getByLabelText('Arrow routing'), 'dynamic');
     expect(useDiagramStore.getState().diagram.settings.edgeRoutingMode).toBe('dynamic');
+  });
+
+  it('changes edge render mode', async () => {
+    const user = userEvent.setup();
+    render(<SettingsPopover />);
+
+    await user.selectOptions(screen.getByLabelText('Edge render'), 'new');
+    expect(useSettingsStore.getState().edgeRenderMode).toBe('new');
   });
 
   it('switches AI provider', async () => {

@@ -1,16 +1,10 @@
 import { create } from 'zustand';
 import { fetchAvailableModels, KNOWN_MODELS, type ModelInfo } from '../core/ai/model-fetcher';
-import { DEFAULT_EDGE_ROUTING_POLICY, type EdgeRoutingPolicy } from '../core/edge-routing';
-import {
-  DEFAULT_ELK_EXPERIMENT_SETTINGS,
-  type ElkAlgorithm,
-  type ElkExperimentSettings,
-} from '../core/layout/elk-options';
-import type { LayoutMetrics } from '../core/layout/layout-metrics';
 import { DEFAULT_THEME, type ThemeId } from '../styles/themes';
 import { getWebStorage } from '../utils/web-storage';
 
 const STORAGE_KEY = 'sketchy-settings';
+export type EdgeRenderMode = 'legacy' | 'new';
 
 export interface Provider {
   id: string;
@@ -42,6 +36,7 @@ interface StoredSettings {
   model: string;
   provider?: string;
   theme?: string;
+  edgeRenderMode?: EdgeRenderMode;
 }
 
 const DEFAULT_SETTINGS: StoredSettings = {
@@ -50,6 +45,7 @@ const DEFAULT_SETTINGS: StoredSettings = {
   model: '',
   provider: PROVIDERS[0].id,
   theme: DEFAULT_THEME,
+  edgeRenderMode: 'legacy',
 };
 
 interface SettingsState {
@@ -58,34 +54,20 @@ interface SettingsState {
   openaiApiKey: string;
   baseUrl: string;
   model: string;
+  edgeRenderMode: EdgeRenderMode;
   settingsOpen: boolean;
-  layoutLabOpen: boolean;
   availableModels: ModelInfo[];
   modelsLoading: boolean;
   modelsError: string | null;
-  elkExperimentSettings: ElkExperimentSettings;
-  edgeRoutingExperimentPolicy: EdgeRoutingPolicy;
-  lastLayoutRun: {
-    metrics: LayoutMetrics;
-    score: number;
-    durationMs: number;
-    algorithm: ElkAlgorithm;
-    direction: 'TB' | 'BT' | 'LR' | 'RL';
-  } | null;
 
   setProvider: (providerId: string) => void;
   setTheme: (theme: ThemeId) => void;
   setOpenaiApiKey: (key: string) => void;
   setBaseUrl: (url: string) => void;
   setModel: (model: string) => void;
+  setEdgeRenderMode: (mode: EdgeRenderMode) => void;
   toggleSettings: () => void;
   closeSettings: () => void;
-  toggleLayoutLab: () => void;
-  closeLayoutLab: () => void;
-  updateElkExperimentSettings: (patch: Partial<ElkExperimentSettings>) => void;
-  setEdgeRoutingExperimentPolicy: (policy: EdgeRoutingPolicy) => void;
-  resetElkExperimentSettings: () => void;
-  setLastLayoutRun: (run: SettingsState['lastLayoutRun']) => void;
   refreshModels: () => void;
 }
 
@@ -104,6 +86,7 @@ function loadSettings(): StoredSettings {
         model: parsed.model ?? '',
         provider: parsed.provider ?? detectProvider(baseUrl),
         theme: parsed.theme ?? DEFAULT_THEME,
+        edgeRenderMode: parsed.edgeRenderMode ?? 'legacy',
       };
     }
   } catch { /* ignore */ }
@@ -162,14 +145,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     openaiApiKey: initial.apiKey,
     baseUrl: initial.baseUrl,
     model: initial.model,
+    edgeRenderMode: initial.edgeRenderMode ?? 'legacy',
     settingsOpen: false,
-    layoutLabOpen: false,
     availableModels: [],
     modelsLoading: false,
     modelsError: null,
-    elkExperimentSettings: DEFAULT_ELK_EXPERIMENT_SETTINGS,
-    edgeRoutingExperimentPolicy: DEFAULT_EDGE_ROUTING_POLICY,
-    lastLayoutRun: null,
 
     setProvider: (providerId) => {
       const p = PROVIDERS.find((pr) => pr.id === providerId);
@@ -202,25 +182,13 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       set({ model });
     },
 
-    toggleSettings: () => set((s) => ({
-      settingsOpen: !s.settingsOpen,
-      layoutLabOpen: false,
-    })),
+    setEdgeRenderMode: (edgeRenderMode) => {
+      saveSettings({ edgeRenderMode });
+      set({ edgeRenderMode });
+    },
+
+    toggleSettings: () => set((s) => ({ settingsOpen: !s.settingsOpen })),
     closeSettings: () => set({ settingsOpen: false }),
-    toggleLayoutLab: () => set((s) => ({
-      layoutLabOpen: !s.layoutLabOpen,
-      settingsOpen: false,
-    })),
-    closeLayoutLab: () => set({ layoutLabOpen: false }),
-    updateElkExperimentSettings: (patch) => set((state) => ({
-      elkExperimentSettings: { ...state.elkExperimentSettings, ...patch },
-    })),
-    setEdgeRoutingExperimentPolicy: (policy) => set({ edgeRoutingExperimentPolicy: policy }),
-    resetElkExperimentSettings: () => set({
-      elkExperimentSettings: DEFAULT_ELK_EXPERIMENT_SETTINGS,
-      edgeRoutingExperimentPolicy: DEFAULT_EDGE_ROUTING_POLICY,
-    }),
-    setLastLayoutRun: (run) => set({ lastLayoutRun: run }),
     refreshModels,
   };
 });
@@ -244,6 +212,7 @@ window.addEventListener('storage', (e) => {
       model: parsed.model ?? '',
       provider: newProvider,
       theme: (parsed.theme as ThemeId) ?? DEFAULT_THEME,
+      edgeRenderMode: (parsed.edgeRenderMode as EdgeRenderMode) ?? 'legacy',
     });
     useSettingsStore.getState().refreshModels();
   } catch { /* ignore malformed data */ }

@@ -478,12 +478,6 @@
   animation: popover-in 0.15s ease-out;
 }
 
-.layout-lab-popover {
-  width: 24rem;
-  max-height: min(75vh, 48rem);
-  overflow-y: auto;
-}
-
 @keyframes popover-in {
   from {
     opacity: 0;
@@ -511,52 +505,6 @@
   height: 1px;
   background: var(--border);
   margin: 0.5rem 0;
-}
-
-.layout-lab-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.layout-lab-copy {
-  margin: 0.25rem 0 0;
-  font-size: 0.75rem;
-  color: var(--text-soft);
-}
-
-.layout-metrics-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-soft);
-}
-
-.layout-metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
-}
-
-.layout-metrics-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.625rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  background: var(--surface-muted);
-}
-
-.layout-metrics-label {
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-soft);
 }
 
 .settings-footer {

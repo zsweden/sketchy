@@ -192,7 +192,7 @@ describe('EntityNode', () => {
   });
 
   describe('highlight styling', () => {
-    it('adds a highlight class when connected through a highlighted edge', () => {
+    it('adds a highlight class when a node is highlighted', () => {
       renderNode({ highlightState: 'highlighted' });
       expect(document.querySelector('.entity-node')).toHaveClass('highlighted');
     });

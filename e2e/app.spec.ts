@@ -16,7 +16,12 @@ test.beforeEach(async ({ page }) => {
 // --- Helpers ---
 
 async function createNode(page: import('@playwright/test').Page, x: number, y: number) {
+  const countBefore = await page.locator('.entity-node').count();
   await page.locator(PANE).dblclick({ position: { x, y } });
+  await expect(page.locator('.entity-node')).toHaveCount(countBefore + 1);
+  // The dblclick handler sets a 250ms selection suppression window.
+  // Wait for it to expire so subsequent clicks can select nodes/edges.
+  await page.waitForTimeout(300);
 }
 
 async function getNodeIds(page: import('@playwright/test').Page): Promise<string[]> {
@@ -275,9 +280,9 @@ test('applies a tag via right-click context menu and shows badge', async ({ page
 // --- 6. Multi-select & delete ---
 
 test('multi-select nodes and delete all', async ({ page }) => {
-  await createNode(page, 150, 200);
-  await createNode(page, 300, 200);
-  await createNode(page, 225, 350);
+  await createNode(page, 100, 100);
+  await createNode(page, 400, 100);
+  await createNode(page, 250, 350);
   await expect(page.locator('.entity-node')).toHaveCount(3);
 
   await page.locator('.react-flow__node').nth(0).click();
@@ -790,9 +795,14 @@ test('edge panel shows confidence and notes when an edge is clicked', async ({ p
   await addEdge(page, ids[0], ids[1]);
   await expect(page.locator('.react-flow__edge')).toHaveCount(1);
 
+  // Deselect so the edge click registers in the UI store
+  await page.locator(PANE).click({ position: { x: 50, y: 50 } });
+
   // Left-click edge to select it
   const edgePath = page.locator('.react-flow__edge-interaction').first();
+  await expect(edgePath).toBeVisible();
   const box = await edgePath.boundingBox();
+  expect(box).not.toBeNull();
   await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
 
   // Edge panel should appear
@@ -923,9 +933,11 @@ test('switching framework clears diagram and shows new framework tags', async ({
   page.once('dialog', (dialog) => dialog.accept());
   await page.getByLabel('Framework').selectOption('frt');
   await expect(page.locator('.entity-node')).toHaveCount(0);
+  await expect(page.getByLabel('Framework')).toHaveValue('frt');
 
   // Create new node in FRT
   await createNode(page, 200, 250);
+  await page.locator(PANE).click({ position: { x: 50, y: 50 } });
   await page.locator('.react-flow__node').first().click();
 
   // CRT tag should not exist, FRT tags should

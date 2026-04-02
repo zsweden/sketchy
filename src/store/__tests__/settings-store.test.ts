@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { DEFAULT_EDGE_ROUTING_POLICY } from '../../core/edge-routing';
 
 const STORAGE_KEY = 'sketchy-settings';
 const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
@@ -63,7 +62,7 @@ describe('settings store', () => {
       expect(state.baseUrl).toBe(DEFAULT_BASE_URL);
       expect(state.model).toBe(DEFAULT_MODEL);
       expect(state.settingsOpen).toBe(false);
-      expect(state.edgeRoutingExperimentPolicy).toBe(DEFAULT_EDGE_ROUTING_POLICY);
+      expect(state.edgeRenderMode).toBe('legacy');
     });
   });
 
@@ -75,6 +74,7 @@ describe('settings store', () => {
           apiKey: 'sk-existing',
           baseUrl: 'https://other.api/v1',
           model: 'o3-mini',
+          edgeRenderMode: 'new',
         })
       );
 
@@ -84,6 +84,7 @@ describe('settings store', () => {
       expect(state.openaiApiKey).toBe('sk-existing');
       expect(state.baseUrl).toBe('https://other.api/v1');
       expect(state.model).toBe('o3-mini');
+      expect(state.edgeRenderMode).toBe('new');
     });
 
     it('handles corrupted localStorage gracefully (falls back to defaults)', async () => {
@@ -181,6 +182,22 @@ describe('settings store', () => {
     });
   });
 
+  describe('setEdgeRenderMode', () => {
+    it('updates state with the new render mode', async () => {
+      const useSettingsStore = await importFreshStore();
+      useSettingsStore.getState().setEdgeRenderMode('new');
+      expect(useSettingsStore.getState().edgeRenderMode).toBe('new');
+    });
+
+    it('persists the render mode to localStorage', async () => {
+      const useSettingsStore = await importFreshStore();
+      useSettingsStore.getState().setEdgeRenderMode('new');
+
+      const stored = JSON.parse(mockStorage.getItem(STORAGE_KEY)!);
+      expect(stored.edgeRenderMode).toBe('new');
+    });
+  });
+
   describe('toggleSettings', () => {
     it('opens settings when closed', async () => {
       const useSettingsStore = await importFreshStore();
@@ -193,26 +210,6 @@ describe('settings store', () => {
       useSettingsStore.getState().toggleSettings(); // open
       useSettingsStore.getState().toggleSettings(); // close
       expect(useSettingsStore.getState().settingsOpen).toBe(false);
-    });
-  });
-
-  describe('edge routing experiment policy', () => {
-    it('updates the local Layout Lab policy without persisting it', async () => {
-      const useSettingsStore = await importFreshStore();
-
-      useSettingsStore.getState().setEdgeRoutingExperimentPolicy('shared-endpoint-anywhere');
-
-      expect(useSettingsStore.getState().edgeRoutingExperimentPolicy).toBe('shared-endpoint-anywhere');
-      expect(mockStorage.getItem(STORAGE_KEY)).toBe(null);
-    });
-
-    it('resets the policy together with ELK experiment settings', async () => {
-      const useSettingsStore = await importFreshStore();
-
-      useSettingsStore.getState().setEdgeRoutingExperimentPolicy('reciprocal-only');
-      useSettingsStore.getState().resetElkExperimentSettings();
-
-      expect(useSettingsStore.getState().edgeRoutingExperimentPolicy).toBe(DEFAULT_EDGE_ROUTING_POLICY);
     });
   });
 

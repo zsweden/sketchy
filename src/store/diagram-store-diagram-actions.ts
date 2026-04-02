@@ -1,12 +1,8 @@
 import { getFramework } from '../frameworks/registry';
-import { getAutomaticEdgeRoutingPlacement } from '../core/edge-routing';
-import { resolveElkAlgorithm } from '../core/layout/elk-engine';
-import { prepareLayoutNodes } from '../core/layout/layout-inputs';
-import { computeLayoutMetrics, scoreLayoutMetrics } from '../core/layout/layout-metrics';
+import { DEFAULT_EDGE_ROUTING_POLICY } from '../core/edge-routing';
 import { reportError } from '../core/monitoring/error-logging';
 import { runElkAutoLayout } from '../core/layout/run-elk-auto-layout';
 import { deriveDiagramFromTransition, getNextDiagramTransition } from '../transitions/registry';
-import { useSettingsStore } from './settings-store';
 import { useUIStore } from './ui-store';
 import {
   getDefaultFramework,
@@ -20,10 +16,8 @@ import {
   batchRemoveEdges,
   snapshot,
   captureOptimizedEdgeSides,
-  getOptimizedEdgePlacements,
-  getStoredOrAutomaticEdgeSides,
 } from './diagram-helpers';
-import type { DiagramEdge, DiagramNode, DiagramSettings } from '../core/types';
+import type { DiagramSettings } from '../core/types';
 import type { DiagramState, DiagramStoreContext } from './diagram-store-types';
 
 export function createDiagramActions(
@@ -81,16 +75,12 @@ export function createDiagramActions(
 
     runAutoLayout: async ({ commitHistory = false, fitView = true } = {}) => {
       const state = get();
-      const startedAt = Date.now();
-      const elkExperimentSettings = useSettingsStore.getState().elkExperimentSettings;
-      const edgeRoutingPolicy = useSettingsStore.getState().edgeRoutingExperimentPolicy;
 
       let updates;
       try {
         updates = await runElkAutoLayout(state.diagram.nodes, state.diagram.edges, {
           direction: state.diagram.settings.layoutDirection,
           cyclic: state.framework.allowsCycles,
-          elk: elkExperimentSettings,
         });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -100,7 +90,6 @@ export function createDiagramActions(
       }
 
       if (updates.length === 0) {
-        useSettingsStore.getState().setLastLayoutRun(null);
         return false;
       }
 
@@ -110,17 +99,6 @@ export function createDiagramActions(
 
       moveNodes(updates);
       get().optimizeEdgesAfterLayout();
-      useSettingsStore.getState().setLastLayoutRun(
-        computeLatestLayoutRun(
-          get().diagram.nodes,
-          get().diagram.edges,
-          get().diagram.settings,
-          Date.now() - startedAt,
-          elkExperimentSettings.algorithmOverride,
-          edgeRoutingPolicy,
-          state.framework.allowsCycles,
-        ),
-      );
 
       if (commitHistory) {
         set(undoState);
@@ -180,7 +158,6 @@ export function createDiagramActions(
     updateSettings: (settings) => {
       set((state) => {
         const nextSettings = { ...state.diagram.settings, ...settings };
-        const edgeRoutingPolicy = useSettingsStore.getState().edgeRoutingExperimentPolicy;
         const edgeRoutingModeChanged =
           settings.edgeRoutingMode !== undefined
           && settings.edgeRoutingMode !== state.diagram.settings.edgeRoutingMode;
@@ -190,7 +167,12 @@ export function createDiagramActions(
             ...state.diagram,
             settings: nextSettings,
             edges: edgeRoutingModeChanged && nextSettings.edgeRoutingMode === 'fixed'
-              ? captureOptimizedEdgeSides(state.diagram.edges, state.diagram.nodes, nextSettings, edgeRoutingPolicy)
+              ? captureOptimizedEdgeSides(
+                state.diagram.edges,
+                state.diagram.nodes,
+                nextSettings,
+                DEFAULT_EDGE_ROUTING_POLICY,
+              )
               : state.diagram.edges,
           },
         };
@@ -272,64 +254,3 @@ export function createDiagramActions(
 }
 
 export const initialFramework = getDefaultFramework();
-
-function computeLatestLayoutRun(
-  nodes: DiagramNode[],
-  edges: DiagramEdge[],
-  settings: DiagramSettings,
-  durationMs: number,
-  algorithmOverride: ReturnType<typeof useSettingsStore.getState>['elkExperimentSettings']['algorithmOverride'],
-  edgeRoutingPolicy: ReturnType<typeof useSettingsStore.getState>['edgeRoutingExperimentPolicy'],
-  cyclic?: boolean,
-) {
-  if (nodes.length === 0) {
-    return null;
-  }
-
-  const layoutNodes = prepareLayoutNodes(nodes, edges);
-  const layoutNodesById = new Map(layoutNodes.map((node) => [node.id, node]));
-  const positions = new Map(nodes.map((node) => [node.id, node.position]));
-  const nodeBoxes = new Map(layoutNodes.map((node) => [
-    node.id,
-    {
-      left: node.position?.x ?? 0,
-      top: node.position?.y ?? 0,
-      right: (node.position?.x ?? 0) + node.width,
-      bottom: (node.position?.y ?? 0) + node.height,
-    },
-  ]));
-
-  const optimizedPlacements = getOptimizedEdgePlacements(edges, nodes, settings, edgeRoutingPolicy);
-  const layoutEdges = edges.map((edge) => {
-    const sourceNode = layoutNodesById.get(edge.source);
-    const targetNode = layoutNodesById.get(edge.target);
-
-    const placement = edge.sourceSide && edge.targetSide && sourceNode && targetNode
-      ? getStoredOrAutomaticEdgeSides(edge, nodes, settings)
-      : optimizedPlacements.get(edge.id) ?? getAutomaticEdgeRoutingPlacement(
-        { source: edge.source, target: edge.target },
-        nodeBoxes,
-        settings.layoutDirection,
-      );
-
-    return {
-      source: edge.source,
-      target: edge.target,
-      sourceSide: placement.sourceSide,
-      targetSide: placement.targetSide,
-    };
-  });
-
-  const metrics = computeLayoutMetrics(layoutNodes, layoutEdges, positions, {
-    layoutDirection: settings.layoutDirection,
-    edgeRoutingPolicy,
-  });
-
-  return {
-    metrics,
-    score: Math.round(scoreLayoutMetrics(metrics) * 100) / 100,
-    durationMs,
-    algorithm: resolveElkAlgorithm(algorithmOverride, cyclic),
-    direction: settings.layoutDirection,
-  };
-}
