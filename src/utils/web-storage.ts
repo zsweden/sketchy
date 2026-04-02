@@ -1,5 +1,8 @@
 type StorageName = 'localStorage' | 'sessionStorage'
-const isNodeRuntime = typeof process !== 'undefined' && !!process.versions?.node
+const nodeProcess = (globalThis as typeof globalThis & {
+  process?: { versions?: { node?: string } }
+}).process
+const isNodeRuntime = !!nodeProcess?.versions?.node
 
 function isStorageLike(value: unknown): value is Storage {
   return !!value
