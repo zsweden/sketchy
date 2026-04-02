@@ -120,6 +120,7 @@ export default function DiagramCanvas() {
     onPane: boolean;
   } | null>(null);
   const ignoreNextPaneClickRef = useRef(false);
+  const suppressSelectionUntilRef = useRef(0);
   const pendingRemovedNodeIdsRef = useRef<Set<string>>(new Set());
   const pendingRemovedEdgeIdsRef = useRef<Set<string>>(new Set());
   const removalFlushScheduledRef = useRef(false);
@@ -350,6 +351,14 @@ export default function DiagramCanvas() {
     commitDraggedNodes();
   }, [commitDraggedNodes]);
 
+  const clearCanvasSelection = useCallback(() => {
+    setSelectedLoop(null);
+    setSelectedNodes([]);
+    setSelectedEdges([]);
+    setLocalNodes((nds) => nds.map((node) => ({ ...node, selected: false })));
+    setLocalEdges((eds) => eds.map((edge) => ({ ...edge, selected: false })));
+  }, [setSelectedEdges, setSelectedLoop, setSelectedNodes]);
+
   const onConnect = useCallback(
     (connection: Connection) => {
       if (!connection.source || !connection.target) return;
@@ -377,23 +386,29 @@ export default function DiagramCanvas() {
       ignoreNextPaneClickRef.current = false;
       return;
     }
-    setSelectedLoop(null);
+    clearCanvasSelection();
     closeContextMenu();
-  }, [closeContextMenu, setSelectedLoop]);
+  }, [clearCanvasSelection, closeContextMenu]);
 
   const onCanvasDoubleClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       if (!(event.target instanceof Element)) return;
       if (event.target.closest('.react-flow__node, .react-flow__edge')) return;
       if (!event.target.closest('.react-flow__pane')) return;
+      suppressSelectionUntilRef.current = Date.now() + 250;
+      clearCanvasSelection();
+      closeContextMenu();
       const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
       addNode(position);
     },
-    [screenToFlowPosition, addNode],
+    [addNode, clearCanvasSelection, closeContextMenu, screenToFlowPosition],
   );
 
   const onSelectionChange = useCallback(
     ({ nodes, edges }: OnSelectionChangeParams) => {
+      if (Date.now() < suppressSelectionUntilRef.current && (nodes.length > 0 || edges.length > 0)) {
+        return;
+      }
       setSelectedLoop(null);
       setSelectedNodes(nodes.map((n) => n.id));
       setSelectedEdges(edges.map((e) => e.id));
@@ -501,6 +516,9 @@ export default function DiagramCanvas() {
       Math.hypot(gesture.clientX - lastTap.x, gesture.clientY - lastTap.y) <= TOUCH_MOVE_TOLERANCE_PX
     ) {
       lastTapRef.current = null;
+      suppressSelectionUntilRef.current = now + 250;
+      clearCanvasSelection();
+      closeContextMenu();
       addNode(screenToFlowPosition({ x: gesture.clientX, y: gesture.clientY }));
       return;
     }
@@ -511,7 +529,7 @@ export default function DiagramCanvas() {
       y: gesture.clientY,
       onPane: true,
     };
-  }, [addNode, clearLongPressTimer, screenToFlowPosition]);
+  }, [addNode, clearCanvasSelection, clearLongPressTimer, closeContextMenu, screenToFlowPosition]);
 
   const onPointerCancelCapture = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (touchGestureRef.current?.pointerId !== event.pointerId) return;
@@ -550,6 +568,7 @@ export default function DiagramCanvas() {
         multiSelectionKeyCode="Shift"
         selectionOnDrag={!isPanMode}
         panOnDrag={isPanMode ? [0, 1, 2] : [1, 2]}
+        zoomOnDoubleClick={false}
         nodesDraggable={!isPanMode}
         nodesConnectable={!isPanMode}
         elementsSelectable={!isPanMode}

@@ -28,6 +28,7 @@ vi.mock('@xyflow/react', () => ({
   ReactFlow: ({
     nodes,
     edges,
+    zoomOnDoubleClick,
     onConnect,
     onSelectionChange,
     onPaneClick,
@@ -39,6 +40,7 @@ vi.mock('@xyflow/react', () => ({
   }: {
     nodes: Array<{ id: string; selected?: boolean }>;
     edges: Array<{ id: string; selected?: boolean }>;
+    zoomOnDoubleClick?: boolean;
     onConnect: (connection: {
       source: string;
       target: string;
@@ -75,6 +77,7 @@ vi.mock('@xyflow/react', () => ({
     ) => void;
   }) => (
     <div>
+      <div data-testid="zoom-on-double-click">{String(zoomOnDoubleClick)}</div>
       <div data-testid="selected-nodes">{nodes.filter((node) => node.selected).map((node) => node.id).join(',')}</div>
       <div data-testid="selected-edges">{edges.filter((edge) => edge.selected).map((edge) => edge.id).join(',')}</div>
       <button
@@ -597,6 +600,35 @@ describe('DiagramCanvas', () => {
 
     expect(mocks.screenToFlowPosition).not.toHaveBeenCalled();
     expect(addNode).not.toHaveBeenCalled();
+  });
+
+  it('disables React Flow zoom on double click', () => {
+    render(<DiagramCanvas />);
+
+    expect(screen.getByTestId('zoom-on-double-click')).toHaveTextContent('false');
+  });
+
+  it('ignores accidental non-empty selection right after creating a node with pane double-click', async () => {
+    const user = userEvent.setup();
+    const addNode = vi.fn();
+    useDiagramStore.setState({ addNode });
+    mocks.rfNodes = [
+      { id: 'n1', position: { x: 0, y: 0 }, data: {} } as never,
+      { id: 'n2', position: { x: 0, y: 100 }, data: {} } as never,
+    ];
+
+    render(<DiagramCanvas />);
+
+    fireEvent.doubleClick(screen.getByTestId('trigger-canvas-double-click'), {
+      clientX: 320,
+      clientY: 180,
+    });
+    await user.click(screen.getByTestId('trigger-selection'));
+
+    expect(addNode).toHaveBeenCalledWith({ x: 200, y: 100 });
+    expect(useUIStore.getState().selectedNodeIds).toEqual([]);
+    expect(useUIStore.getState().selectedEdgeIds).toEqual([]);
+    expect(screen.getByTestId('selected-nodes')).toHaveTextContent('');
   });
 
   it('creates a node when double-tapping on the canvas pane with touch', () => {
