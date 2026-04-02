@@ -33,6 +33,7 @@ interface ChatState {
 }
 
 let activeController: AbortController | null = null;
+let activeRequestId = 0;
 const EMPTY_RESPONSE_FALLBACK = 'The AI returned an empty response. Please try again.';
 const CHAT_STORAGE_KEY = 'sketchy_chat';
 
@@ -140,6 +141,20 @@ function getEndpointHost(baseUrl: string): string {
   }
 }
 
+function invalidateActiveRequest(options: { abort?: boolean } = {}): void {
+  activeRequestId += 1;
+
+  if (options.abort && activeController) {
+    activeController.abort();
+  }
+
+  activeController = null;
+}
+
+function isActiveRequest(requestId: number, diagramId: string): boolean {
+  return activeRequestId === requestId && useDiagramStore.getState().diagram.id === diagramId;
+}
+
 export const useChatStore = create<ChatState>((set, get) => ({
   ...getInitialChatState(),
   loading: false,
@@ -162,6 +177,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       return;
     }
 
+    invalidateActiveRequest({ abort: true });
+
     const userMsg: DisplayMessage = {
       id: crypto.randomUUID(),
       role: 'user',
@@ -175,6 +192,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }));
 
     const { diagram, framework } = useDiagramStore.getState();
+    const requestId = activeRequestId + 1;
+    const requestDiagramId = diagram.id;
+    activeRequestId = requestId;
 
     // Build conversation history
     const history: ChatMessage[] = get().messages.map((m) => ({
@@ -182,7 +202,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       content: m.content,
     }));
 
-    activeController = streamChatMessage(
+    const controller = streamChatMessage(
       openaiApiKey,
       baseUrl,
       model,
@@ -192,11 +212,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
       {
 
         onToken: (token) => {
+          if (!isActiveRequest(requestId, requestDiagramId)) return;
           set((s) => ({ streamingContent: s.streamingContent + token }));
         },
 
         onDone: (result) => {
-          activeController = null;
+          if (!isActiveRequest(requestId, requestDiagramId)) return;
+          if (activeController === controller) {
+            activeController = null;
+          }
           let messageDiagram = diagram;
           let normalizedInput = result.text;
 
@@ -271,7 +295,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         },
 
         onError: (error) => {
-          activeController = null;
+          if (!isActiveRequest(requestId, requestDiagramId)) return;
+          if (activeController === controller) {
+            activeController = null;
+          }
           void reportError(error, {
             source: 'chat.stream_error',
             fatal: false,
@@ -294,12 +321,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
       },
       provider,
     );
+    activeController = controller;
   },
 
   cancelStream: () => {
+    const requestId = activeRequestId;
     if (activeController) {
       activeController.abort();
       activeController = null;
+    }
+    if (activeRequestId === requestId) {
+      activeRequestId += 1;
     }
     const streaming = get().streamingContent;
     if (streaming) {
@@ -314,7 +346,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  clearMessages: () => set({ messages: [] }),
+  clearMessages: () => {
+    invalidateActiveRequest({ abort: true });
+    set({ messages: [], loading: false, streamingContent: '' });
+  },
   clearAiModified: () => set({ aiModifiedNodeIds: new Set() }),
   removeAiModified: (nodeId) =>
     set((s) => {

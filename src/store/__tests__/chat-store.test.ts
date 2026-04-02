@@ -264,6 +264,25 @@ describe('chat-store', () => {
       useChatStore.getState().clearMessages();
       expect(useChatStore.getState().messages).toEqual([]);
     });
+
+    it('cancels in-flight responses and ignores late completions', async () => {
+      mockStreamChatMessage.mockImplementationOnce((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
+        const controller = new AbortController();
+        setTimeout(() => {
+          callbacks.onDone({ text: 'Late response' });
+        }, 10);
+        return controller;
+      });
+
+      useChatStore.getState().sendMessage('Hello');
+      useChatStore.getState().clearMessages();
+
+      await new Promise((r) => setTimeout(r, 50));
+
+      expect(useChatStore.getState().messages).toEqual([]);
+      expect(useChatStore.getState().loading).toBe(false);
+      expect(useChatStore.getState().streamingContent).toBe('');
+    });
   });
 
   describe('AI modification tracking', () => {
