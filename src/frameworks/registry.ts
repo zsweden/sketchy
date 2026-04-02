@@ -6,6 +6,7 @@ import { goalTreeFramework } from './goal-tree';
 import { prtFramework } from './prt';
 import { successTreeFramework } from './success-tree';
 import { sttFramework } from './stt';
+import { valueStreamFramework } from './value-stream';
 
 const frameworks = new Map<string, Framework>();
 
@@ -16,6 +17,7 @@ frameworks.set(goalTreeFramework.id, goalTreeFramework);
 frameworks.set(prtFramework.id, prtFramework);
 frameworks.set(successTreeFramework.id, successTreeFramework);
 frameworks.set(sttFramework.id, sttFramework);
+frameworks.set(valueStreamFramework.id, valueStreamFramework);
 
 export function getFramework(id: string): Framework | undefined {
   return frameworks.get(id);

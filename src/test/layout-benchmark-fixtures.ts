@@ -89,7 +89,7 @@ export function buildDenseGraph(
 
 export interface LayoutPerfFixture {
   id: string;
-  direction: 'TB' | 'BT';
+  direction: 'TB' | 'BT' | 'LR' | 'RL';
   cyclic?: boolean;
   nodes: DiagramNode[];
   edges: DiagramEdge[];

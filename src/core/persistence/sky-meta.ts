@@ -45,7 +45,7 @@ export function buildSkyMeta(diagram: Diagram): SkyFileMeta {
       derivedIndicators: 'Unknown framework — cannot describe derived indicators.',
       settings: {
         layoutDirection:
-          'TB = Top-to-Bottom, BT = Bottom-to-Top (direction of flow)',
+          'TB = Top-to-Bottom, BT = Bottom-to-Top, LR = Left-to-Right, RL = Right-to-Left (direction of flow)',
       },
     };
   }
@@ -70,7 +70,7 @@ export function buildSkyMeta(diagram: Diagram): SkyFileMeta {
     derivedIndicators: buildDerivedSummary(fw),
     settings: {
       layoutDirection:
-        'TB = Top-to-Bottom, BT = Bottom-to-Top (direction of causal flow)',
+        'TB = Top-to-Bottom, BT = Bottom-to-Top, LR = Left-to-Right, RL = Right-to-Left (direction of flow)',
     },
   };
 

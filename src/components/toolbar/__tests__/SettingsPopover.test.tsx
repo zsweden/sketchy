@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_ELK_EXPERIMENT_SETTINGS } from '../../../core/layout/elk-options';
 import SettingsPopover from '../SettingsPopover';
 import { useSettingsStore } from '../../../store/settings-store';
 import { useDiagramStore } from '../../../store/diagram-store';
@@ -16,6 +17,7 @@ function resetStores() {
   getWebStorage('localStorage')?.removeItem('sketchy-settings');
   useSettingsStore.setState({
     settingsOpen: true,
+    layoutLabOpen: false,
     provider: 'openai',
     theme: 'figma-dark',
     openaiApiKey: '',
@@ -24,6 +26,8 @@ function resetStores() {
     availableModels: [],
     modelsLoading: false,
     modelsError: null,
+    elkExperimentSettings: DEFAULT_ELK_EXPERIMENT_SETTINGS,
+    lastLayoutRun: null,
   });
   useDiagramStore.getState().setFramework('crt');
   useDiagramStore.getState().newDiagram();
@@ -83,8 +87,8 @@ describe('SettingsPopover', () => {
     const user = userEvent.setup();
     render(<SettingsPopover />);
 
-    await user.selectOptions(screen.getByLabelText('Layout direction'), 'TB');
-    expect(useDiagramStore.getState().diagram.settings.layoutDirection).toBe('TB');
+    await user.selectOptions(screen.getByLabelText('Layout direction'), 'LR');
+    expect(useDiagramStore.getState().diagram.settings.layoutDirection).toBe('LR');
   });
 
   it('changes arrow routing mode', async () => {

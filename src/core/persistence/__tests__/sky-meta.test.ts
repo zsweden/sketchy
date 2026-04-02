@@ -25,6 +25,8 @@ describe('buildSkyMeta', () => {
 
     expect(meta.settings.layoutDirection).toContain('TB');
     expect(meta.settings.layoutDirection).toContain('BT');
+    expect(meta.settings.layoutDirection).toContain('LR');
+    expect(meta.settings.layoutDirection).toContain('RL');
   });
 
   it('handles unknown framework gracefully', () => {

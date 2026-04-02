@@ -1,4 +1,4 @@
-import type { LayoutDirection } from '../framework-types';
+import { isVerticalLayoutDirection, type LayoutDirection } from '../framework-types';
 import type { CardinalHandleSide, EdgeHandleSide as HandleSide } from '../types';
 
 interface Point {
@@ -114,12 +114,24 @@ function getDirectionalHandleSide(baseSide: CardinalHandleSide, dx: number, dy: 
   }
 }
 
+export function getPrimaryFlowSides(direction: LayoutDirection): {
+  sourceSide: CardinalHandleSide;
+  targetSide: CardinalHandleSide;
+} {
+  switch (direction) {
+    case 'TB':
+      return { sourceSide: 'bottom', targetSide: 'top' };
+    case 'BT':
+      return { sourceSide: 'top', targetSide: 'bottom' };
+    case 'LR':
+      return { sourceSide: 'right', targetSide: 'left' };
+    case 'RL':
+      return { sourceSide: 'left', targetSide: 'right' };
+  }
+}
+
 function defaultPlacement(direction: LayoutDirection): EdgeHandlePlacement {
-  const sourceSide = direction === 'TB' ? 'bottom' : 'top';
-  return {
-    sourceSide,
-    targetSide: getOppositeHandleSide(sourceSide),
-  };
+  return getPrimaryFlowSides(direction);
 }
 
 export function getEdgeHandlePlacement(
@@ -140,6 +152,15 @@ export function getEdgeHandlePlacement(
 
   if (Math.abs(dx) > Math.abs(dy)) {
     const sourceBaseSide = dx > 0 ? 'right' : 'left';
+    const targetBaseSide = opposite(sourceBaseSide);
+    return {
+      sourceSide: getDirectionalHandleSide(sourceBaseSide, dx, dy),
+      targetSide: getDirectionalHandleSide(targetBaseSide, -dx, -dy),
+    };
+  }
+
+  if (!isVerticalLayoutDirection(direction) && Math.abs(dx) === Math.abs(dy)) {
+    const sourceBaseSide = dx >= 0 ? 'right' : 'left';
     const targetBaseSide = opposite(sourceBaseSide);
     return {
       sourceSide: getDirectionalHandleSide(sourceBaseSide, dx, dy),

@@ -5,6 +5,7 @@ import { formatModelDate } from '../../core/ai/model-fetcher';
 import { THEMES, type ThemeId } from '../../styles/themes';
 import { DROPDOWN_BLUR_DELAY_MS } from '../../constants/timing';
 import { useDiagramStore } from '../../store/diagram-store';
+import type { LayoutDirection } from '../../core/framework-types';
 
 export default function SettingsPopover() {
   const open = useSettingsStore((s) => s.settingsOpen);
@@ -31,7 +32,7 @@ export default function SettingsPopover() {
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
 
   const handleDirectionChange = useCallback(
-    async (direction: 'TB' | 'BT') => {
+    async (direction: LayoutDirection) => {
       updateDiagramSettings({ layoutDirection: direction });
       await runAutoLayout({ commitHistory: true, fitView: true });
     },
@@ -103,11 +104,13 @@ export default function SettingsPopover() {
           <select
             className="input-text"
             value={diagramSettings.layoutDirection}
-            onChange={(e) => handleDirectionChange(e.target.value as 'TB' | 'BT')}
+            onChange={(e) => handleDirectionChange(e.target.value as LayoutDirection)}
             aria-label="Layout direction"
           >
             <option value="TB">Top to Bottom</option>
             <option value="BT">Bottom to Top</option>
+            <option value="LR">Left to Right</option>
+            <option value="RL">Right to Left</option>
           </select>
         </div>
         <div className="settings-field">

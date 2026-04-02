@@ -24,7 +24,7 @@ export interface Diagram {
 }
 
 export interface DiagramSettings {
-  layoutDirection: 'TB' | 'BT';
+  layoutDirection: 'TB' | 'BT' | 'LR' | 'RL';
   showGrid: boolean;
   snapToGrid: boolean;
   edgeRoutingMode: EdgeRoutingMode;

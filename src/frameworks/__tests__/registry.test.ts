@@ -10,6 +10,7 @@ describe('framework registry', () => {
     const prt = getFramework('prt');
     const successTree = getFramework('success-tree');
     const stt = getFramework('stt');
+    const valueStream = getFramework('value-stream');
     expect(cld).toBeDefined();
     expect(cld!.name).toBe('Causal Loop Diagram');
     expect(crt).toBeDefined();
@@ -19,6 +20,7 @@ describe('framework registry', () => {
     expect(prt?.name).toBe('Prerequisite Tree');
     expect(successTree?.name).toBe('Success Tree');
     expect(stt?.name).toBe('Strategy & Tactics Tree');
+    expect(valueStream?.name).toBe('Value Stream Map');
   });
 
   it('returns undefined for unknown framework', () => {
@@ -27,7 +29,7 @@ describe('framework registry', () => {
 
   it('lists all frameworks', () => {
     const frameworks = listFrameworks();
-    expect(frameworks.length).toBeGreaterThanOrEqual(7);
+    expect(frameworks.length).toBeGreaterThanOrEqual(8);
     expect(frameworks.some((f) => f.id === 'cld')).toBe(true);
     expect(frameworks.some((f) => f.id === 'crt')).toBe(true);
     expect(frameworks.some((f) => f.id === 'frt')).toBe(true);
@@ -35,6 +37,7 @@ describe('framework registry', () => {
     expect(frameworks.some((f) => f.id === 'prt')).toBe(true);
     expect(frameworks.some((f) => f.id === 'success-tree')).toBe(true);
     expect(frameworks.some((f) => f.id === 'stt')).toBe(true);
+    expect(frameworks.some((f) => f.id === 'value-stream')).toBe(true);
   });
 
   it('can register a new framework', () => {

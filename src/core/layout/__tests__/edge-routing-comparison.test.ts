@@ -16,7 +16,7 @@ const SHOULD_LOG = process.env.RUN_PERF_TESTS === '1';
 
 interface RoutingFixture {
   id: string;
-  direction: 'TB' | 'BT';
+  direction: 'TB' | 'BT' | 'LR' | 'RL';
   nodes: DiagramNode[];
   edges: DiagramEdge[];
 }

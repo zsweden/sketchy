@@ -44,7 +44,7 @@ interface SkyJunction {
 export interface SkyJson {
   name?: string;
   framework?: string;
-  direction?: 'TB' | 'BT';
+  direction?: Diagram['settings']['layoutDirection'];
   showGrid?: boolean;
   snapToGrid?: boolean;
   edgeRoutingMode?: Diagram['settings']['edgeRoutingMode'];

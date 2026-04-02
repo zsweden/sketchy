@@ -4,6 +4,7 @@ import {
   VISIBLE_HANDLE_SIDES,
   getBaseHandleSide,
   getEdgeHandlePlacement,
+  getPrimaryFlowSides,
   getHandlePoint,
   isCornerHandleSide,
   isHorizontalCardinalSide,
@@ -96,10 +97,7 @@ export function createPlacementCandidates(
     ? (sourceCenter.y <= targetCenter.y
       ? { sourceSide: 'bottom' as const, targetSide: 'top' as const }
       : { sourceSide: 'top' as const, targetSide: 'bottom' as const })
-    : {
-      sourceSide: layoutDirection === 'TB' ? 'bottom' as const : 'top' as const,
-      targetSide: layoutDirection === 'TB' ? 'top' as const : 'bottom' as const,
-    };
+    : getPrimaryFlowSides(layoutDirection);
 
   const seen = new Set<string>();
   const candidates = [

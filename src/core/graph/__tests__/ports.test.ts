@@ -40,6 +40,20 @@ describe('getEdgeHandlePlacement', () => {
       sourceSide: 'top',
       targetSide: 'bottom',
     });
+
+    expect(
+      getEdgeHandlePlacement({ x: 0, y: 0 }, { x: 0, y: 0 }, 'LR'),
+    ).toEqual({
+      sourceSide: 'right',
+      targetSide: 'left',
+    });
+
+    expect(
+      getEdgeHandlePlacement({ x: 0, y: 0 }, { x: 0, y: 0 }, 'RL'),
+    ).toEqual({
+      sourceSide: 'left',
+      targetSide: 'right',
+    });
   });
 });
 

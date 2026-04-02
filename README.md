@@ -10,6 +10,7 @@ Today the app supports:
 - Prerequisite Tree (PRT)
 - Success Tree
 - Strategy & Tactics Tree (STT)
+- Value Stream Map
 - Causal Loop Diagram (CLD)
 - AI-assisted diagram analysis and modification through a configurable OpenAI-compatible endpoint
 - `.sky` project save/load, plus in-session autosave
@@ -58,6 +59,14 @@ Use Goal Tree to break a desired outcome into supporting conditions, sub-goals, 
 - Edge semantics: `supports`
 - Tags: `Goal`, `Necessary Condition`, `Action`
 - Derived indicators: `Foundation`, `Bridge`, `Target Goal`
+
+### Value Stream Map
+
+Use Value Stream Map to trace how work moves through a delivery flow, where it waits, and where waste or constraints appear.
+
+- Edge semantics: `flows to`
+- Tags: `Process`, `Queue`, `Inspection`, `Handoff`, `Customer Value`, `Waste`, `Constraint`
+- Derived indicators: `Start`, `Intermediate Step`, `End`
 
 ## Recommended Next Frameworks
 

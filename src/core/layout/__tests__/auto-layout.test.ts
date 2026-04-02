@@ -69,6 +69,33 @@ describe('autoLayout (ELK)', () => {
     expect(posMap['b'].y).toBeGreaterThan(posMap['c'].y);
   });
 
+  it('positions chain left-to-right', async () => {
+    const nodes = [node('a'), node('b'), node('c')];
+    const edges = [edge('a', 'b'), edge('b', 'c')];
+    const updates = await autoLayout(nodes, edges, {
+      direction: 'LR',
+    }, elkEngine);
+
+    const posMap = Object.fromEntries(updates.map((u) => [u.id, u.position]));
+    expect(posMap['a'].x).toBeLessThan(posMap['b'].x);
+    expect(posMap['b'].x).toBeLessThan(posMap['c'].x);
+  });
+
+  it('tightens the unique leading spine before the first branch in LR trees', async () => {
+    const nodes = [node('a'), node('b'), node('c'), node('d'), node('e')];
+    const edges = [edge('a', 'b'), edge('b', 'c'), edge('c', 'd'), edge('c', 'e')];
+    const updates = await autoLayout(nodes, edges, {
+      direction: 'LR',
+    }, elkEngine);
+
+    const posMap = Object.fromEntries(updates.map((u) => [u.id, u.position]));
+    const gap = (left: string, right: string) =>
+      posMap[right].x - (posMap[left].x + NODE_WIDTH);
+
+    expect(gap('a', 'b')).toBe(gap('b', 'c'));
+    expect(gap('b', 'c')).toBeLessThan(gap('c', 'd'));
+  });
+
   it('tightens the unique top spine before the first branch in BT trees', async () => {
     const nodes = [node('a'), node('b'), node('c'), node('d'), node('e')];
     const edges = [edge('a', 'b'), edge('b', 'c'), edge('d', 'a'), edge('e', 'a')];

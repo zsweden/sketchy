@@ -45,7 +45,7 @@ describe('isSkyJson', () => {
   });
 
   it('accepts format with optional top-level fields', () => {
-    expect(isSkyJson({ ...minimal, name: 'My Diagram', direction: 'TB' })).toBe(true);
+    expect(isSkyJson({ ...minimal, name: 'My Diagram', direction: 'LR' })).toBe(true);
   });
 });
 
@@ -94,12 +94,12 @@ describe('convertSkyJson', () => {
       ...minimal,
       name: 'My Tree',
       framework: 'crt',
-      direction: 'TB',
+      direction: 'LR',
       showGrid: false,
       edgeRoutingMode: 'fixed',
     });
     expect(diagram.name).toBe('My Tree');
-    expect(diagram.settings.layoutDirection).toBe('TB');
+    expect(diagram.settings.layoutDirection).toBe('LR');
     expect(diagram.settings.showGrid).toBe(false);
     expect(diagram.settings.edgeRoutingMode).toBe('fixed');
   });

@@ -6,6 +6,7 @@ import { prtFramework } from '../prt';
 import { successTreeFramework } from '../success-tree';
 import { sttFramework } from '../stt';
 import { cldFramework } from '../cld';
+import { valueStreamFramework } from '../value-stream';
 import type { Framework } from '../../core/framework-types';
 
 const ALL_FRAMEWORKS: Framework[] = [
@@ -16,6 +17,7 @@ const ALL_FRAMEWORKS: Framework[] = [
   successTreeFramework,
   sttFramework,
   cldFramework,
+  valueStreamFramework,
 ];
 
 describe('framework definitions', () => {
@@ -33,7 +35,7 @@ describe('framework definitions', () => {
     expect(fw.id).toBeTruthy();
     expect(fw.name).toBeTruthy();
     expect(fw.description).toBeTruthy();
-    expect(['TB', 'BT']).toContain(fw.defaultLayoutDirection);
+    expect(['TB', 'BT', 'LR', 'RL']).toContain(fw.defaultLayoutDirection);
     expect(fw.nodeTags).toBeInstanceOf(Array);
     expect(fw.derivedIndicators).toBeInstanceOf(Array);
   });
@@ -175,6 +177,31 @@ describe('framework definitions', () => {
 
     it('has no derived indicators', () => {
       expect(cldFramework.derivedIndicators).toHaveLength(0);
+    });
+  });
+
+  describe('Value Stream Map', () => {
+    it('defaults to left-to-right direction', () => {
+      expect(valueStreamFramework.defaultLayoutDirection).toBe('LR');
+    });
+
+    it('does not support junctions', () => {
+      expect(valueStreamFramework.supportsJunctions).toBe(false);
+    });
+
+    it('has flow-mapping tags', () => {
+      const tagIds = valueStreamFramework.nodeTags.map((tag) => tag.id);
+      expect(tagIds).toContain('process');
+      expect(tagIds).toContain('queue');
+      expect(tagIds).toContain('waste');
+      expect(tagIds).toContain('constraint');
+    });
+
+    it('has start, intermediate, and end indicators', () => {
+      const indicatorIds = valueStreamFramework.derivedIndicators.map((indicator) => indicator.id);
+      expect(indicatorIds).toContain('start');
+      expect(indicatorIds).toContain('intermediate-step');
+      expect(indicatorIds).toContain('end');
     });
   });
 
