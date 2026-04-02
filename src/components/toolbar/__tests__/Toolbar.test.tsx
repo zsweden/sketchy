@@ -80,7 +80,7 @@ describe('Toolbar', () => {
     await user.click(screen.getByRole('button', { name: 'New' }));
 
     expect(confirmSpy).toHaveBeenCalledTimes(1);
-    expect(useDiagramStore.getState().diagram.nodes).toHaveLength(1);
+    expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
     expect(useChatStore.getState().messages).toEqual([]);
     expect(useChatStore.getState().aiModifiedNodeIds.size).toBe(0);
     expect(useUIStore.getState().fitViewTrigger).toBe(1);

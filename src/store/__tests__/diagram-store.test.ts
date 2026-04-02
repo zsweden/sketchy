@@ -47,13 +47,12 @@ describe('diagram store', () => {
     resetStore();
   });
 
-  it('focuses the initial node when creating a new diagram', () => {
+  it('creates an empty new diagram without requesting viewport focus', () => {
     useDiagramStore.getState().newDiagram();
 
-    const initialNodeId = useDiagramStore.getState().diagram.nodes[0]?.id;
-    expect(initialNodeId).toBeTruthy();
-    expect(useUIStore.getState().viewportFocusTarget).toEqual({ kind: 'node', id: initialNodeId! });
-    expect(useUIStore.getState().viewportFocusTrigger).toBe(1);
+    expect(useDiagramStore.getState().diagram.nodes).toEqual([]);
+    expect(useUIStore.getState().viewportFocusTarget).toBeNull();
+    expect(useUIStore.getState().viewportFocusTrigger).toBe(0);
   });
 
   describe('addNode', () => {

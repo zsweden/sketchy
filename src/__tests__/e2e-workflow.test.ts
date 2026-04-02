@@ -311,7 +311,7 @@ describe('end-to-end: framework switching', () => {
     // Switch to FRT
     store().setFramework('frt');
     expect(store().framework.id).toBe('frt');
-    expect(store().diagram.nodes).toHaveLength(1);
+    expect(store().diagram.nodes).toHaveLength(0);
     expect(store().diagram.frameworkId).toBe('frt');
   });
 });
