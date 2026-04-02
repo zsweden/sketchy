@@ -16,6 +16,8 @@ export function createDiagramNodeActions(
   | 'updateNodeText'
   | 'updateNodeTags'
   | 'updateNodeJunction'
+  | 'previewNodeColor'
+  | 'previewNodeTextColor'
   | 'updateNodeColor'
   | 'updateNodeTextColor'
   | 'updateNodeNotes'
@@ -82,6 +84,20 @@ export function createDiagramNodeActions(
           node.id === id ? { ...node, data: { ...node.data, junctionType: type } } : node
         ),
         { trackHistory: true },
+      );
+    },
+
+    previewNodeColor: (id, color) => {
+      updateNodes(
+        (node) => (node.id === id ? { ...node, data: { ...node.data, color } } : node),
+      );
+    },
+
+    previewNodeTextColor: (id, textColor) => {
+      updateNodes(
+        (node) => (
+          node.id === id ? { ...node, data: { ...node.data, textColor } } : node
+        ),
       );
     },
 

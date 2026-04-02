@@ -1,7 +1,7 @@
 import { RotateCcw, Settings } from 'lucide-react';
 import type { RefObject } from 'react';
+import { getStreamingChatMessageDisplayText, type ChatMentionTarget } from '../../../core/chat/mentions';
 import type { DisplayMessage } from '../../../store/chat-store';
-import { getStreamingChatMessageDisplayText, type ChatMentionTarget } from '../chat-mentions';
 import { AssistantMessageText } from './AssistantMessageText';
 import { ChatCopyButton } from './ChatCopyButton';
 

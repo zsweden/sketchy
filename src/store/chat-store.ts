@@ -7,8 +7,8 @@ import { useSettingsStore } from './settings-store';
 import { useDiagramStore } from './diagram-store';
 import { reportError } from '../core/monitoring/error-logging';
 import { findCausalLoops, labelCausalLoops } from '../core/graph/derived';
-import type { ParsedChatSegment } from '../components/panel/chat-mentions';
-import { buildChatMessageRenderData, remapCanonicalMentionIds } from '../components/panel/chat-mentions';
+import type { ParsedChatSegment } from '../core/chat/mentions';
+import { buildChatMessageRenderData, remapCanonicalMentionIds } from '../core/chat/mentions';
 
 export interface DisplayMessage {
   id: string;
@@ -166,6 +166,13 @@ function invalidateActiveRequest(options: { abort?: boolean } = {}): void {
 
 function isActiveRequest(requestId: number, diagramId: string): boolean {
   return activeRequestId === requestId && useDiagramStore.getState().diagram.id === diagramId;
+}
+
+function shouldAutoLayoutForModifications(mods: DiagramModification): boolean {
+  return mods.addNodes.length > 0
+    || mods.removeNodeIds.length > 0
+    || mods.addEdges.length > 0
+    || mods.removeEdgeIds.length > 0;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -405,6 +412,8 @@ function applyModifications(mods: DiagramModification): Map<string, string> {
   }
   useChatStore.setState({ aiModifiedNodeIds: modifiedIds });
 
-  void useDiagramStore.getState().runAutoLayout({ fitView: true });
+  if (shouldAutoLayoutForModifications(mods)) {
+    void useDiagramStore.getState().runAutoLayout({ fitView: true });
+  }
   return idMap;
 }

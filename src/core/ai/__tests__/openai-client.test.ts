@@ -148,6 +148,44 @@ describe('streamChatMessage', () => {
     vi.unstubAllGlobals();
   });
 
+  it('parses node styling fields from tool calls', async () => {
+    const { streamChatMessage } = await import('../openai-client');
+
+    let result: { text: string; modifications?: unknown } | null = null;
+
+    const toolCallArgs = JSON.stringify({
+      explanation: 'Styling a node',
+      updateNodes: [{
+        id: 'n1',
+        color: '#FDE68A',
+        textColor: null,
+      }],
+    });
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      mockSSEResponse([
+        JSON.stringify({ choices: [{ delta: { tool_calls: [{ index: 0, function: { name: 'modify_diagram', arguments: toolCallArgs } }] } }] }),
+      ]),
+    ));
+
+    await new Promise<void>((resolve) => {
+      streamChatMessage('key', 'https://api.test.com/v1', 'gpt-4o', makeDiagram(), mockFrameworkCRT, [], {
+        onToken: () => {},
+        onDone: (r) => { result = r; resolve(); },
+        onError: () => resolve(),
+      });
+    });
+
+    expect(result!.text).toBe('Styling a node');
+    const mods = result!.modifications as {
+      updateNodes: { id: string; color?: string | null; textColor?: string | null }[];
+    };
+    expect(mods.updateNodes).toEqual([
+      { id: 'n1', color: '#FDE68A', textColor: null },
+    ]);
+    vi.unstubAllGlobals();
+  });
+
   it('assembles streamed tool call arguments across chunks', async () => {
     const { streamChatMessage } = await import('../openai-client');
 

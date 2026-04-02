@@ -555,6 +555,7 @@ test('sets node background color via context menu color swatch', async ({ page }
 
   // Click the Blue swatch
   await bgSwatches.locator('.color-swatch[title="Blue"]').click();
+  await page.mouse.click(20, 20);
 
   // Verify persisted
   await page.waitForFunction(() => {
@@ -575,6 +576,7 @@ test('sets node text color via context menu and persists to store', async ({ pag
   // Click the Red text-color swatch (second .context-menu-colors block)
   const textSwatches = page.locator('.context-menu-colors').nth(1);
   await textSwatches.locator('.color-swatch[title="Red"]').click();
+  await page.mouse.click(20, 20);
 
   // Verify persisted
   await page.waitForFunction(() => {
@@ -593,6 +595,7 @@ test('reopen context menu reflects current node color as active swatch', async (
   await page.locator('.entity-node').first().click({ button: 'right' });
   await expect(page.locator('.context-menu')).toBeVisible();
   await page.locator('.context-menu-colors').first().locator('.color-swatch[title="Green"]').click();
+  await page.mouse.click(20, 20);
 
   // Re-open context menu
   await page.locator('.entity-node').first().click({ button: 'right' });
@@ -601,6 +604,55 @@ test('reopen context menu reflects current node color as active swatch', async (
   const bgSwatches = page.locator('.context-menu-colors').first();
   await expect(bgSwatches.locator('.color-swatch[title="Green"]')).toHaveAttribute('data-active', 'true');
   await expect(bgSwatches.locator('.color-swatch[title="Default"]')).toHaveAttribute('data-active', 'false');
+});
+
+test('custom node background color appears in the right-click palette after selection', async ({ page }) => {
+  await createNode(page, 200, 250);
+
+  await page.locator('.entity-node').first().click({ button: 'right' });
+  await expect(page.locator('.context-menu')).toBeVisible();
+
+  await page.getByLabel('Custom background color').evaluate((element) => {
+    const input = element as HTMLInputElement;
+    const setValue = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      'value',
+    )?.set;
+    setValue?.call(input, '#12abef');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await page.mouse.click(20, 20);
+
+  await page.waitForFunction(() => {
+    const raw = sessionStorage.getItem('sketchy_diagram');
+    if (!raw) return false;
+    return JSON.parse(raw).nodes?.[0]?.data?.color === '#12ABEF';
+  });
+
+  await page.locator('.entity-node').first().click({ button: 'right' });
+  await expect(page.locator('.context-menu')).toBeVisible();
+  await expect(
+    page.locator('.context-menu-colors').first().locator('.color-swatch[title="#12ABEF"]'),
+  ).toHaveAttribute('data-active', 'true');
+});
+
+test('pressing Escape in the node color menu discards pending colors', async ({ page }) => {
+  await createNode(page, 200, 250);
+
+  await page.locator('.entity-node').first().click({ button: 'right' });
+  await expect(page.locator('.context-menu')).toBeVisible();
+
+  await page.locator('.context-menu-colors').first().locator('.color-swatch[title="Green"]').click();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.context-menu')).toBeHidden();
+
+  await page.waitForTimeout(100);
+  const storedColor = await page.evaluate(() => {
+    const raw = sessionStorage.getItem('sketchy_diagram');
+    return raw ? JSON.parse(raw).nodes?.[0]?.data?.color : undefined;
+  });
+  expect(storedColor).toBeUndefined();
 });
 
 // --- 19. Select / pan toggle ---

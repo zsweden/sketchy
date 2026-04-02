@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { NamedCausalLoop } from '../../../core/graph/derived';
-import type { DiagramEdge, DiagramNode } from '../../../core/types';
 import {
   getChatMessageDisplayText,
   getStreamingChatMessageDisplayText,
   normalizeChatMessageMentions,
   parseChatMessageMentions,
-} from '../chat-mentions';
+} from '../../../core/chat/mentions';
+import type { DiagramEdge, DiagramNode } from '../../../core/types';
 
 const nodes: DiagramNode[] = [
   { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'Demand', tags: [], junctionType: 'or' } },

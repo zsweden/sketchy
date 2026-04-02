@@ -3,7 +3,7 @@ import { Check, PanelBottom, Rows2, Square, Trash2 } from 'lucide-react';
 import { useChatStore } from '../../store/chat-store';
 import { useSettingsStore, PROVIDERS } from '../../store/settings-store';
 import { useUIStore } from '../../store/ui-store';
-import type { ChatMentionTarget } from './chat-mentions';
+import type { ChatMentionTarget } from '../../core/chat/mentions';
 import { ChatComposer } from './chat/ChatComposer';
 import { ChatMessageList } from './chat/ChatMessageList';
 import { useChatComposer } from './chat/useChatComposer';

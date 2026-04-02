@@ -1,5 +1,5 @@
-import type { NamedCausalLoop } from '../../core/graph/derived';
-import type { DiagramEdge, DiagramNode } from '../../core/types';
+import type { NamedCausalLoop } from '../graph/derived';
+import type { DiagramEdge, DiagramNode } from '../types';
 
 export type ChatMentionKind = 'node' | 'edge' | 'loop';
 

@@ -1,5 +1,5 @@
 import { useCallback, type KeyboardEvent } from 'react';
-import type { ChatMentionTarget, ParsedChatSegment } from '../chat-mentions';
+import type { ChatMentionTarget, ParsedChatSegment } from '../../../core/chat/mentions';
 
 export function AssistantMessageText({
   segments,

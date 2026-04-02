@@ -67,4 +67,35 @@ describe('batchApply drops edges referencing non-existent nodes', () => {
     expect(edges[0].source).toBe(nodes.find((n) => n.data.label === 'Cause')!.id);
     expect(edges[0].target).toBe(nodes.find((n) => n.data.label === 'Effect')!.id);
   });
+
+  it('applies node background and text colors from batch mutations', () => {
+    useDiagramStore.getState().batchApply({
+      addNodes: [
+        {
+          id: 'new_1',
+          label: 'Styled node',
+          color: '#FDE68A',
+          textColor: '#1A1A1A',
+        },
+      ],
+    });
+
+    const node = useDiagramStore.getState().diagram.nodes[0];
+    expect(node.data.color).toBe('#FDE68A');
+    expect(node.data.textColor).toBe('#1A1A1A');
+
+    useDiagramStore.getState().batchApply({
+      updateNodes: [
+        {
+          id: node.id,
+          color: null,
+          textColor: '#2563EB',
+        },
+      ],
+    });
+
+    const updatedNode = useDiagramStore.getState().diagram.nodes[0];
+    expect(updatedNode.data.color).toBeUndefined();
+    expect(updatedNode.data.textColor).toBe('#2563EB');
+  });
 });

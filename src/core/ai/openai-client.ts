@@ -11,8 +11,22 @@ export interface ChatMessage {
 }
 
 export interface DiagramModification {
-  addNodes: { id: string; label: string; tags?: string[] }[];
-  updateNodes: { id: string; label?: string; tags?: string[]; notes?: string }[];
+  addNodes: {
+    id: string;
+    label: string;
+    tags?: string[];
+    notes?: string;
+    color?: string | null;
+    textColor?: string | null;
+  }[];
+  updateNodes: {
+    id: string;
+    label?: string;
+    tags?: string[];
+    notes?: string;
+    color?: string | null;
+    textColor?: string | null;
+  }[];
   removeNodeIds: string[];
   addEdges: {
     source: string;
@@ -65,6 +79,18 @@ const modifyDiagramTool = {
                 items: { type: 'string' },
                 description: 'Tag IDs to apply',
               },
+              notes: {
+                type: 'string',
+                description: 'Optional node notes or reasoning',
+              },
+              color: {
+                type: ['string', 'null'],
+                description: 'Optional node background color as a hex code like "#FDE68A"',
+              },
+              textColor: {
+                type: ['string', 'null'],
+                description: 'Optional node text color as a hex code like "#1A1A1A"',
+              },
             },
             required: ['id', 'label'],
           },
@@ -78,6 +104,14 @@ const modifyDiagramTool = {
               label: { type: 'string' },
               tags: { type: 'array', items: { type: 'string' } },
               notes: { type: 'string' },
+              color: {
+                type: ['string', 'null'],
+                description: 'Set the node background color with a hex code, or null to clear it',
+              },
+              textColor: {
+                type: ['string', 'null'],
+                description: 'Set the node text color with a hex code, or null to clear it',
+              },
             },
             required: ['id'],
           },
@@ -164,6 +198,8 @@ function buildSystemPrompt(diagram: Diagram, framework: Framework): string {
       const parts = [`id="${n.id}", label="${n.data.label}"`];
       if (n.data.tags.length) parts.push(`tags=[${n.data.tags.join(', ')}]`);
       if (n.data.notes) parts.push(`notes="${n.data.notes}"`);
+      if (n.data.color) parts.push(`color="${n.data.color}"`);
+      if (n.data.textColor) parts.push(`textColor="${n.data.textColor}"`);
       if (n.data.junctionType !== 'or') parts.push(`junction=${n.data.junctionType}`);
       return `  - ${parts.join(', ')}`;
     })
@@ -225,6 +261,7 @@ Rules for modifications:
 - When adding nodes, use IDs like "new_1", "new_2", etc.
 - When referencing existing nodes, use their exact IDs.
 - Available tags: ${tagList}.
+- Nodes may optionally set color and textColor using hex codes when the user asks for styling.
 - ${polarityRule}
 - Edges can also use confidence to express uncertainty: high (default, solid), medium (dashed), or low (dotted).
 - ${delayRule}

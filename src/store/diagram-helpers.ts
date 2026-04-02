@@ -174,6 +174,8 @@ export function batchAddNodes(
         tags: n.tags ?? [],
         junctionType: 'or',
         ...(n.notes ? { notes: n.notes } : {}),
+        ...(n.color ? { color: n.color } : {}),
+        ...(n.textColor ? { textColor: n.textColor } : {}),
       },
     });
   }
@@ -196,6 +198,8 @@ export function batchUpdateNodes(
           ...(upd.label !== undefined ? { label: upd.label } : {}),
           ...(upd.tags !== undefined ? { tags: upd.tags } : {}),
           ...(upd.notes !== undefined ? { notes: upd.notes || undefined } : {}),
+          ...(upd.color !== undefined ? { color: upd.color || undefined } : {}),
+          ...(upd.textColor !== undefined ? { textColor: upd.textColor || undefined } : {}),
         },
       };
     });

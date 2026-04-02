@@ -7,7 +7,7 @@ import { useChatStore } from '../../../store/chat-store';
 import { useDiagramStore } from '../../../store/diagram-store';
 import { useSettingsStore } from '../../../store/settings-store';
 import { useUIStore } from '../../../store/ui-store';
-import { buildChatMessageRenderData } from '../chat-mentions';
+import { buildChatMessageRenderData } from '../../../core/chat/mentions';
 
 function resetStore() {
   useChatStore.setState({

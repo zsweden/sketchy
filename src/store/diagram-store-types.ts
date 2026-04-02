@@ -12,8 +12,22 @@ import type { UndoRedoManager } from '../core/history/undo-redo';
 import type { SizedPositionedItem } from '../utils/align-distribute';
 
 export interface BatchMutations {
-  addNodes?: { id: string; label: string; tags?: string[]; notes?: string }[];
-  updateNodes?: { id: string; label?: string; tags?: string[]; notes?: string }[];
+  addNodes?: {
+    id: string;
+    label: string;
+    tags?: string[];
+    notes?: string;
+    color?: string | null;
+    textColor?: string | null;
+  }[];
+  updateNodes?: {
+    id: string;
+    label?: string;
+    tags?: string[];
+    notes?: string;
+    color?: string | null;
+    textColor?: string | null;
+  }[];
   removeNodeIds?: string[];
   addEdges?: {
     source: string;
@@ -51,6 +65,8 @@ export interface DiagramState {
   updateNodeText: (id: string, label: string) => void;
   updateNodeTags: (id: string, tags: string[]) => void;
   updateNodeJunction: (id: string, type: 'and' | 'or') => void;
+  previewNodeColor: (id: string, color: string | undefined) => void;
+  previewNodeTextColor: (id: string, textColor: string | undefined) => void;
   updateNodeColor: (id: string, color: string | undefined) => void;
   updateNodeTextColor: (id: string, textColor: string | undefined) => void;
   updateNodeNotes: (id: string, notes: string) => void;

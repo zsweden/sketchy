@@ -1,12 +1,14 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ReactFlowProvider } from '@xyflow/react';
 import ContextMenu from '../ContextMenu';
 import { useDiagramStore } from '../../../store/diagram-store';
+import { resetRecentColorsForTests } from '../../../store/color-history-store';
 import { useUIStore } from '../../../store/ui-store';
 
 function resetStores() {
+  resetRecentColorsForTests();
   useDiagramStore.getState().setFramework('crt');
   useDiagramStore.getState().newDiagram();
   useDiagramStore.setState((s) => ({ diagram: { ...s.diagram, nodes: [] } }));
@@ -94,7 +96,7 @@ describe('ContextMenu', () => {
       ).toEqual([]);
     });
 
-    it('applies a background color', async () => {
+    it('applies a background color immediately on swatch click', async () => {
       const user = userEvent.setup();
       renderContextMenu();
 
@@ -102,13 +104,45 @@ describe('ContextMenu', () => {
       const pinkSwatch = screen.getByTitle('Pink');
       await user.click(pinkSwatch);
 
+      // Color is applied immediately (live preview)
       expect(
         useDiagramStore.getState().diagram.nodes.find((n) => n.id === nodeId)?.data.color,
       ).toBe('#FBCFE8');
+      expect(pinkSwatch).toHaveAttribute('data-active', 'true');
+
+      // Closing commits the history-tracked update
+      fireEvent.pointerDown(document.body);
       expect(useUIStore.getState().contextMenu).toBeNull();
     });
 
-    it('applies a text color', async () => {
+    it('applies a custom background color immediately on picker change', () => {
+      renderContextMenu();
+
+      fireEvent.change(screen.getByLabelText('Custom background color'), {
+        target: { value: '#12abef' },
+      });
+
+      // Color is applied immediately (live preview)
+      expect(
+        useDiagramStore.getState().diagram.nodes.find((n) => n.id === nodeId)?.data.color,
+      ).toBe('#12ABEF');
+      expect(screen.getByTitle('Pick custom background color')).toHaveStyle({
+        background: '#12ABEF',
+      });
+
+      fireEvent.pointerDown(document.body);
+      expect(useUIStore.getState().contextMenu).toBeNull();
+
+      act(() => {
+        useUIStore.setState({
+          contextMenu: { x: 100, y: 200, nodeId, edgeId: undefined },
+        });
+      });
+      expect(screen.getByTitle('#12ABEF')).toHaveAttribute('data-active', 'true');
+      expect(screen.queryByTitle('Pink')).not.toBeInTheDocument();
+    });
+
+    it('applies a text color immediately on swatch click', async () => {
       const user = userEvent.setup();
       renderContextMenu();
 
@@ -116,9 +150,50 @@ describe('ContextMenu', () => {
       const whiteSwatch = screen.getByTitle('White');
       await user.click(whiteSwatch);
 
+      // Text color is applied immediately (live preview)
       expect(
         useDiagramStore.getState().diagram.nodes.find((n) => n.id === nodeId)?.data.textColor,
       ).toBe('#FFFFFF');
+    });
+
+    it('applies a custom text color immediately on picker change', () => {
+      renderContextMenu();
+
+      fireEvent.change(screen.getByLabelText('Custom text color'), {
+        target: { value: '#ab12ef' },
+      });
+
+      // Text color is applied immediately (live preview)
+      expect(
+        useDiagramStore.getState().diagram.nodes.find((n) => n.id === nodeId)?.data.textColor,
+      ).toBe('#AB12EF');
+    });
+
+    it('cancels pending color changes on Escape', async () => {
+      const user = userEvent.setup();
+      renderContextMenu();
+
+      await user.click(screen.getAllByTitle('Green')[0]);
+      fireEvent.keyDown(document, { key: 'Escape' });
+
+      expect(
+        useDiagramStore.getState().diagram.nodes.find((n) => n.id === nodeId)?.data.color,
+      ).toBeUndefined();
+      expect(useUIStore.getState().contextMenu).toBeNull();
+    });
+
+    it('keeps the menu open while the custom color picker is being activated', () => {
+      renderContextMenu();
+
+      const picker = screen.getByLabelText('Custom background color');
+      fireEvent.pointerDown(picker);
+      fireEvent.pointerDown(document.body);
+
+      expect(useUIStore.getState().contextMenu).not.toBeNull();
+
+      fireEvent.blur(picker);
+      fireEvent.pointerDown(document.body);
+      expect(useUIStore.getState().contextMenu).toBeNull();
     });
 
     it('toggles node lock', async () => {

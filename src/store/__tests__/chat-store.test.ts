@@ -3,6 +3,7 @@ import { useChatStore } from '../chat-store';
 import { useDiagramStore } from '../diagram-store';
 import { useSettingsStore } from '../settings-store';
 import { reportError } from '../../core/monitoring/error-logging';
+import { runElkAutoLayout } from '../../core/layout/run-elk-auto-layout';
 
 // Mock the streaming function to avoid real API calls
 const mockStreamChatMessage = vi.fn((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
@@ -44,6 +45,7 @@ describe('chat-store', () => {
       return new AbortController();
     });
     vi.mocked(reportError).mockClear();
+    vi.mocked(runElkAutoLayout).mockClear();
     // Ensure settings are configured
     useSettingsStore.setState({
       openaiApiKey: 'test-key',
@@ -295,6 +297,68 @@ describe('chat-store', () => {
         }),
         { type: 'text', text: '.' },
       ]);
+    });
+
+    it('skips auto-layout for attribute-only modifications', async () => {
+      const diagram = useDiagramStore.getState().diagram;
+      useDiagramStore.setState({
+        diagram: {
+          ...diagram,
+          nodes: [
+            { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'Demand', tags: [], junctionType: 'or' } },
+            { id: 'n2', type: 'entity', position: { x: 0, y: 100 }, data: { label: 'Growth', tags: [], junctionType: 'or' } },
+          ],
+          edges: [{ id: 'e1', source: 'n1', target: 'n2', notes: 'before' }],
+        },
+      });
+
+      mockStreamChatMessage.mockImplementationOnce((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
+        setTimeout(() => {
+          callbacks.onDone({
+            text: 'Updated the labels and edge notes.',
+            modifications: {
+              addNodes: [],
+              updateNodes: [{ id: 'n1', label: 'Demand spike' }],
+              removeNodeIds: [],
+              addEdges: [],
+              updateEdges: [{ id: 'e1', notes: 'after' }],
+              removeEdgeIds: [],
+            },
+          });
+        }, 0);
+        return new AbortController();
+      });
+
+      useChatStore.getState().sendMessage('Refine the wording');
+      await new Promise((r) => setTimeout(r, 50));
+
+      expect(vi.mocked(runElkAutoLayout)).not.toHaveBeenCalled();
+      expect(useDiagramStore.getState().diagram.nodes.find((node) => node.id === 'n1')?.data.label).toBe('Demand spike');
+      expect(useDiagramStore.getState().diagram.edges.find((edge) => edge.id === 'e1')?.notes).toBe('after');
+    });
+
+    it('runs auto-layout when structural modifications are applied', async () => {
+      mockStreamChatMessage.mockImplementationOnce((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
+        setTimeout(() => {
+          callbacks.onDone({
+            text: 'Added a new node.',
+            modifications: {
+              addNodes: [{ id: 'new_1', label: 'Revenue' }],
+              updateNodes: [],
+              removeNodeIds: [],
+              addEdges: [],
+              updateEdges: [],
+              removeEdgeIds: [],
+            },
+          });
+        }, 0);
+        return new AbortController();
+      });
+
+      useChatStore.getState().sendMessage('Add revenue');
+      await new Promise((r) => setTimeout(r, 50));
+
+      expect(vi.mocked(runElkAutoLayout)).toHaveBeenCalledTimes(1);
     });
 
     it('leaves malformed canonical mentions as plain text and logs them', async () => {
