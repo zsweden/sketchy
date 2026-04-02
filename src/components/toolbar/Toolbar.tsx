@@ -111,8 +111,14 @@ export default function Toolbar() {
   }, [diagram, addToast]);
 
   const handleLoad = useCallback(() => {
+    if (
+      hasDiagramWork &&
+      !window.confirm('Load a project? The current in-memory session will be replaced.')
+    ) {
+      return;
+    }
     fileInputRef.current?.click();
-  }, []);
+  }, [hasDiagramWork]);
 
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {

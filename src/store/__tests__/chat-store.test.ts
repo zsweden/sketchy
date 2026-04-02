@@ -140,6 +140,46 @@ describe('chat-store', () => {
       expect(assistant!.content).toBe('[Demand][node:n1] drives [Demand -> Growth][edge:e1].');
     });
 
+    it('renders empty node mentions with a node fallback label', async () => {
+      const diagram = useDiagramStore.getState().diagram;
+      useDiagramStore.setState({
+        diagram: {
+          ...diagram,
+          nodes: [
+            { id: 'n3', type: 'entity', position: { x: 0, y: 0 }, data: { label: '', tags: [], junctionType: 'or' } },
+          ],
+          edges: [],
+        },
+      });
+
+      mockStreamChatMessage.mockImplementationOnce((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
+        setTimeout(() => {
+          callbacks.onDone({ text: 'There is one [][node:n3].' });
+        }, 0);
+        return new AbortController();
+      });
+
+      useChatStore.getState().sendMessage('Hello');
+      await new Promise((r) => setTimeout(r, 50));
+
+      const assistant = useChatStore.getState().messages.find((message) => message.role === 'assistant');
+      expect(assistant).toBeDefined();
+      expect(assistant!.content).toBe('There is one [][node:n3].');
+      expect(assistant!.displayText).toBe('There is one node.');
+      expect(assistant!.segments).toEqual([
+        { type: 'text', text: 'There is one ' },
+        expect.objectContaining({
+          type: 'mention',
+          mention: expect.objectContaining({
+            kind: 'node',
+            id: 'n3',
+            displayText: 'node',
+          }),
+        }),
+        { type: 'text', text: '.' },
+      ]);
+    });
+
     it('remaps newly added node mentions to persisted node IDs', async () => {
       mockStreamChatMessage.mockImplementationOnce((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
         setTimeout(() => {

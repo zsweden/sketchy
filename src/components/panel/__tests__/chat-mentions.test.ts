@@ -11,6 +11,7 @@ import {
 const nodes: DiagramNode[] = [
   { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'Demand', tags: [], junctionType: 'or' } },
   { id: 'n2', type: 'entity', position: { x: 0, y: 80 }, data: { label: 'Growth', tags: [], junctionType: 'or' } },
+  { id: 'n3', type: 'entity', position: { x: 0, y: 160 }, data: { label: '', tags: [], junctionType: 'or' } },
 ];
 
 const edges: DiagramEdge[] = [
@@ -111,12 +112,31 @@ describe('parseChatMessageMentions', () => {
     expect(displayText).toBe('Demand drives Demand -> Growth in R1.');
   });
 
+  it('falls back to the object kind when a canonical mention has no label', () => {
+    const displayText = getChatMessageDisplayText(
+      'There is one [][node:n3].',
+      nodes,
+      edges,
+      loops,
+    );
+
+    expect(displayText).toBe('There is one node.');
+  });
+
   it('renders completed canonical mentions during streaming without raw IDs', () => {
     const displayText = getStreamingChatMessageDisplayText(
       'Added [Demand][node:n1] through [R1][loop:n1>n2].',
     );
 
     expect(displayText).toBe('Added Demand through R1.');
+  });
+
+  it('falls back to the object kind for empty canonical mentions during streaming', () => {
+    const displayText = getStreamingChatMessageDisplayText(
+      'Added [][node:n3].',
+    );
+
+    expect(displayText).toBe('Added node.');
   });
 
   it('hides trailing partial canonical mentions during streaming', () => {

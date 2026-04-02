@@ -236,6 +236,33 @@ describe('ChatPanel', () => {
     expect(useUIStore.getState().viewportFocusTrigger).toBe(3);
   });
 
+  it('renders empty node mentions with a node fallback label', async () => {
+    const user = userEvent.setup();
+
+    useDiagramStore.setState((state) => ({
+      diagram: {
+        ...state.diagram,
+        nodes: [
+          ...state.diagram.nodes,
+          { id: 'n3', type: 'entity', position: { x: 0, y: 200 }, data: { label: '', tags: [], junctionType: 'or' } },
+        ],
+      },
+    }));
+
+    useChatStore.setState({
+      messages: [
+        createAssistantMessage('a1', 'There is one [][node:n3].'),
+      ],
+    });
+
+    render(<ChatPanel />);
+
+    await user.click(screen.getByRole('button', { name: 'node' }));
+    expect(useUIStore.getState().selectedNodeIds).toEqual(['n3']);
+    expect(useUIStore.getState().viewportFocusTarget).toEqual({ kind: 'node', id: 'n3' });
+    expect(screen.queryByText('There is one [][node:n3].')).not.toBeInTheDocument();
+  });
+
   it('renders legacy inline syntax as plain text instead of clickable mentions', () => {
     useChatStore.setState({
       messages: [

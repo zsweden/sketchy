@@ -24,8 +24,41 @@ export interface ChatTextSegment {
 
 export type ParsedChatSegment = ChatMentionSegment | ChatTextSegment;
 
-const CANONICAL_MENTION_PATTERN = /\[([^\]]+)\]\[(node|edge|loop):([^\]]+)\]/g;
-const STREAMING_CANONICAL_MENTION_PREFIX_PATTERN = /^\[([^\]]+)\]\[/;
+const CANONICAL_MENTION_PATTERN = /\[([^\]]*)\]\[(node|edge|loop):([^\]]+)\]/g;
+const STREAMING_CANONICAL_MENTION_PREFIX_PATTERN = /^\[([^\]]*)\]\[/;
+
+function normalizeLabel(value: string | undefined): string {
+  return value?.trim() ?? '';
+}
+
+function getEdgeDisplayLabel(edge: DiagramEdge, nodesById: Map<string, DiagramNode>): string {
+  const sourceLabel = normalizeLabel(nodesById.get(edge.source)?.data.label) || 'node';
+  const targetLabel = normalizeLabel(nodesById.get(edge.target)?.data.label) || 'node';
+  return `${sourceLabel} -> ${targetLabel}`;
+}
+
+function resolveMentionDisplayText(
+  kind: ChatMentionKind,
+  rawDisplayText: string,
+  id: string,
+  nodesById: Map<string, DiagramNode>,
+  edgesById: Map<string, DiagramEdge>,
+  loopsById: Map<string, NamedCausalLoop>,
+): string {
+  const explicitDisplayText = normalizeLabel(rawDisplayText);
+  if (explicitDisplayText) return rawDisplayText;
+
+  switch (kind) {
+    case 'node':
+      return normalizeLabel(nodesById.get(id)?.data.label) || 'node';
+    case 'edge': {
+      const edge = edgesById.get(id);
+      return edge ? getEdgeDisplayLabel(edge, nodesById) : 'edge';
+    }
+    case 'loop':
+      return normalizeLabel(loopsById.get(id)?.label) || 'loop';
+  }
+}
 
 interface ParsedChatSegmentsResult {
   segments: ParsedChatSegment[];
@@ -58,6 +91,9 @@ function parseChatMessageMentionsDetailed(
   loops: NamedCausalLoop[],
 ): ParsedChatSegmentsResult {
   const mentionIds = getMentionIds(nodes, edges, loops);
+  const nodesById = new Map(nodes.map((node) => [node.id, node]));
+  const edgesById = new Map(edges.map((edge) => [edge.id, edge]));
+  const loopsById = new Map(loops.map((loop) => [loop.id, loop]));
   const segments: ParsedChatSegment[] = [];
   const malformedMentions: string[] = [];
   let cursor = 0;
@@ -78,11 +114,20 @@ function parseChatMessageMentionsDetailed(
       segments.push({ type: 'text', text: text.slice(cursor, matchIndex) });
     }
 
+    const resolvedDisplayText = resolveMentionDisplayText(
+      kind,
+      displayText,
+      id,
+      nodesById,
+      edgesById,
+      loopsById,
+    );
+
     segments.push({
       type: 'mention',
-      displayText,
+      displayText: resolvedDisplayText,
       rawText,
-      mention: { kind, id, displayText, rawText },
+      mention: { kind, id, displayText: resolvedDisplayText, rawText },
     });
     cursor = matchIndex + rawText.length;
   }
@@ -208,9 +253,9 @@ export function getStreamingChatMessageDisplayText(text: string): string {
 
     displayText += text.slice(cursor, nextMentionStart);
     const remainder = text.slice(nextMentionStart);
-    const mentionMatch = remainder.match(/^\[([^\]]+)\]\[(node|edge|loop):([^\]]+)\]/);
+    const mentionMatch = remainder.match(/^\[([^\]]*)\]\[(node|edge|loop):([^\]]+)\]/);
     if (mentionMatch) {
-      displayText += mentionMatch[1];
+      displayText += normalizeLabel(mentionMatch[1]) || mentionMatch[2];
       cursor = nextMentionStart + mentionMatch[0].length;
       continue;
     }

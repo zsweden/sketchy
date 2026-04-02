@@ -211,6 +211,40 @@ describe('Toolbar', () => {
     );
   });
 
+  it('confirms before opening the file picker when the diagram has work', async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const inputClickSpy = vi.spyOn(HTMLInputElement.prototype, 'click');
+    const nodeId = useDiagramStore.getState().addNode({ x: 1, y: 2 });
+    useDiagramStore.getState().updateNodeText(nodeId, 'Existing');
+
+    render(<Toolbar />);
+    await user.click(screen.getByRole('button', { name: 'Load' }));
+
+    expect(confirmSpy).toHaveBeenCalledWith(
+      'Load a project? The current in-memory session will be replaced.',
+    );
+    expect(inputClickSpy).not.toHaveBeenCalled();
+
+    inputClickSpy.mockRestore();
+    confirmSpy.mockRestore();
+  });
+
+  it('opens the file picker without confirmation when the diagram is empty', async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, 'confirm');
+    const inputClickSpy = vi.spyOn(HTMLInputElement.prototype, 'click');
+
+    render(<Toolbar />);
+    await user.click(screen.getByRole('button', { name: 'Load' }));
+
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(inputClickSpy).toHaveBeenCalledTimes(1);
+
+    inputClickSpy.mockRestore();
+    confirmSpy.mockRestore();
+  });
+
   it('shows save errors and toggles settings and the side panel', async () => {
     const user = userEvent.setup();
     mocks.saveSkyFile.mockRejectedValue(new Error('save failed'));
