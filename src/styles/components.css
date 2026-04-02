@@ -3,7 +3,13 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  height: 100dvh;
+  min-height: 100svh;
+  min-height: var(--app-viewport-height);
+  height: var(--app-viewport-height);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: max(env(safe-area-inset-top, 0px), var(--app-viewport-top-inset));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--app-viewport-bottom-inset));
 }
 
 .app-main {
@@ -298,7 +304,8 @@
 /* Toast */
 .toast-container {
   position: fixed;
-  bottom: 1.5rem;
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  bottom: calc(1.5rem + max(env(safe-area-inset-bottom, 0px), var(--app-viewport-bottom-inset)));
   left: 50%;
   transform: translateX(-50%);
   z-index: 60;

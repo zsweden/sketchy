@@ -8,6 +8,7 @@ import ToastContainer from './components/toast/ToastContainer';
 import { useAutoSave } from './hooks/useAutoSave';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useThemeEffect } from './hooks/useThemeEffect';
+import { useViewportInsets } from './hooks/useViewportInsets';
 import { loadDiagram } from './core/persistence/local-storage';
 import { useDiagramStore } from './store/diagram-store';
 import { useUIStore } from './store/ui-store';
@@ -16,6 +17,7 @@ export default function App() {
   useAutoSave();
   useKeyboardShortcuts();
   useThemeEffect();
+  useViewportInsets();
 
   // Load from localStorage on mount
   useEffect(() => {
