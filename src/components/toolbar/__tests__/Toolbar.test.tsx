@@ -115,7 +115,6 @@ describe('Toolbar', () => {
     render(<Toolbar />);
     await user.selectOptions(screen.getByLabelText('Framework'), 'frt');
 
-    expect(useDiagramStore.getState().framework.id).toBe('frt');
     expect(useDiagramStore.getState().diagram.frameworkId).toBe('frt');
     expect(useChatStore.getState().messages).toEqual([]);
     expect(useChatStore.getState().aiModifiedNodeIds.size).toBe(0);
@@ -314,72 +313,4 @@ describe('Toolbar', () => {
     expect(useUIStore.getState().sidePanelOpen).toBe(false);
   });
 
-  it('derives the next document, clears chat state, and requests fit view', async () => {
-    const user = userEvent.setup();
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-
-    const cause = useDiagramStore.getState().addNode({ x: 0, y: 0 });
-    const effect = useDiagramStore.getState().addNode({ x: 0, y: 100 });
-    useDiagramStore.getState().updateNodeText(cause, 'Root cause');
-    useDiagramStore.getState().updateNodeText(effect, 'Churn increases');
-    useDiagramStore.getState().updateNodeTags(effect, ['ude']);
-    useDiagramStore.getState().addEdge(cause, effect);
-    useChatStore.setState({
-      messages: [{ id: 'm1', role: 'assistant', content: 'Old chat' }],
-      aiModifiedNodeIds: new Set([cause]),
-    });
-    mocks.runElkAutoLayout.mockResolvedValue([
-      { id: cause, position: { x: 140, y: 40 } },
-      { id: effect, position: { x: 140, y: 180 } },
-    ]);
-
-    render(<Toolbar />);
-
-    expect(screen.getByRole('button', { name: 'to FRT' })).toHaveAttribute(
-      'title',
-      'Create FRT draft from current CRT',
-    );
-
-    await user.click(screen.getByRole('button', { name: 'to FRT' }));
-
-    expect(confirmSpy).toHaveBeenCalledTimes(1);
-    await waitFor(() => {
-      expect(useDiagramStore.getState().diagram.frameworkId).toBe('frt');
-    });
-    expect(useDiagramStore.getState().diagram.name).toBe('Untitled Diagram_FRT');
-    expect(useChatStore.getState().messages).toEqual([]);
-    expect(useChatStore.getState().aiModifiedNodeIds.size).toBe(0);
-    expect(useUIStore.getState().fitViewTrigger).toBe(1);
-
-    await user.click(screen.getByRole('button', { name: 'Save' }));
-    expect(mocks.saveSkyFile).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Untitled Diagram_FRT' }),
-    );
-
-    confirmSpy.mockRestore();
-  });
-
-  it('shows the next document button from the active framework even if diagram metadata is stale', () => {
-    useDiagramStore.setState((state) => ({
-      diagram: {
-        ...state.diagram,
-        frameworkId: 'stt',
-      },
-    }));
-
-    render(<Toolbar />);
-
-    expect(screen.getByRole('button', { name: 'to FRT' })).toHaveAttribute(
-      'title',
-      'Create FRT draft from current CRT',
-    );
-  });
-
-  it('hides next document when there is no canonical transition', () => {
-    useDiagramStore.getState().setFramework('stt');
-
-    render(<Toolbar />);
-
-    expect(screen.queryByRole('button', { name: /^to /i })).not.toBeInTheDocument();
-  });
 });

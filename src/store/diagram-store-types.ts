@@ -7,7 +7,6 @@ import type {
   EdgeConfidence,
   EdgePolarity,
 } from '../core/types';
-import type { Framework } from '../core/framework-types';
 import type { UndoRedoManager } from '../core/history/undo-redo';
 import type { SizedPositionedItem } from '../utils/align-distribute';
 
@@ -59,7 +58,6 @@ export interface NodePositionChange {
 
 export interface DiagramState {
   diagram: Diagram;
-  framework: Framework;
 
   addNode: (position: { x: number; y: number }) => string;
   updateNodeText: (id: string, label: string) => void;
@@ -99,7 +97,6 @@ export interface DiagramState {
   optimizeEdges: () => boolean;
   optimizeEdgesAfterLayout: () => void;
   runAutoLayout: (options?: { commitHistory?: boolean; fitView?: boolean }) => Promise<boolean>;
-  deriveNextDiagram: () => Promise<boolean>;
 
   setFramework: (frameworkId: string) => void;
   updateSettings: (settings: Partial<DiagramSettings>) => void;

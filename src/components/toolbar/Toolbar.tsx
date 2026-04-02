@@ -16,15 +16,12 @@ import { useSettingsStore } from '../../store/settings-store';
 import { useChatStore } from '../../store/chat-store';
 import { appVersion } from '../../core/app-version';
 import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
-import { getFrameworkSuffix, getNextDiagramTransition } from '../../transitions/registry';
 import { useNodeAlignmentActions } from '../../hooks/useNodeAlignmentActions';
 import FrameworkSelector from './FrameworkSelector';
 import SettingsPopover from './SettingsPopover';
 import { AlignHorizontalIcon, AlignVerticalIcon, DistributeHorizontalIcon, DistributeVerticalIcon } from '../icons/AlignDistributeIcons';
 
 export default function Toolbar() {
-  const diagram = useDiagramStore((s) => s.diagram);
-  const framework = useDiagramStore((s) => s.framework);
   const canUndo = useDiagramStore((s) => s.canUndo);
   const canRedo = useDiagramStore((s) => s.canRedo);
   const undo = useDiagramStore((s) => s.undo);
@@ -35,7 +32,9 @@ export default function Toolbar() {
   const loadDiagram = useDiagramStore((s) => s.loadDiagram);
   const optimizeEdges = useDiagramStore((s) => s.optimizeEdges);
   const runAutoLayout = useDiagramStore((s) => s.runAutoLayout);
-  const deriveNextDiagram = useDiagramStore((s) => s.deriveNextDiagram);
+  const nodes = useDiagramStore((s) => s.diagram.nodes);
+  const edges = useDiagramStore((s) => s.diagram.edges);
+  const edgeRoutingMode = useDiagramStore((s) => s.diagram.settings.edgeRoutingMode);
   const addToast = useUIStore((s) => s.addToast);
   const sidePanelOpen = useUIStore((s) => s.sidePanelOpen);
   const toggleSidePanel = useUIStore((s) => s.toggleSidePanel);
@@ -45,16 +44,10 @@ export default function Toolbar() {
   const setInteractionMode = useUIStore((s) => s.setInteractionMode);
   const { alignSelectedNodesHorizontally, alignSelectedNodesVertically } = useNodeAlignmentActions();
 
-  const nodes = useDiagramStore((s) => s.diagram.nodes);
   const selectedNodes = nodes.filter((n) => selectedNodeIds.includes(n.id));
   const canAlign = selectedNodes.length >= 2;
   const canDistribute = selectedNodes.length >= 3;
-  const canOptimizeEdges = diagram.settings.edgeRoutingMode === 'fixed';
-  const currentFrameworkId = framework.id;
-  const nextTransition = getNextDiagramTransition(currentFrameworkId);
-  const nextDocumentLabel = nextTransition
-    ? getFrameworkSuffix(nextTransition.targetFrameworkId)
-    : null;
+  const canOptimizeEdges = edgeRoutingMode === 'fixed';
 
   const handleAlignH = useCallback(() => {
     alignSelectedNodesHorizontally(selectedNodeIds);
@@ -77,9 +70,9 @@ export default function Toolbar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hasDiagramWork =
-    diagram.nodes.length > 1 ||
-    diagram.edges.length > 0 ||
-    diagram.nodes.some((n) => n.data.label !== '');
+    nodes.length > 1 ||
+    edges.length > 0 ||
+    nodes.some((n) => n.data.label !== '');
 
   const handleNew = useCallback(() => {
     if (
@@ -104,11 +97,11 @@ export default function Toolbar() {
 
   const handleSave = useCallback(async () => {
     try {
-      await saveSkyFile(diagram);
+      await saveSkyFile(useDiagramStore.getState().diagram);
     } catch {
       addToast('Failed to save the project. Try again.', 'error');
     }
-  }, [diagram, addToast]);
+  }, [addToast]);
 
   const handleLoad = useCallback(() => {
     if (
@@ -155,25 +148,6 @@ export default function Toolbar() {
   const handlePrint = useCallback(() => {
     addToast('Print is coming soon', 'info');
   }, [addToast]);
-
-  const handleNextDocument = useCallback(async () => {
-    if (!nextTransition) return;
-
-    if (
-      hasDiagramWork &&
-      !window.confirm(
-        `Create a ${getFrameworkSuffix(nextTransition.targetFrameworkId)} draft from this ${getFrameworkSuffix(currentFrameworkId)}? The current in-memory session will be replaced.`,
-      )
-    ) {
-      return;
-    }
-
-    const derived = await deriveNextDiagram();
-    if (!derived) return;
-
-    useChatStore.getState().clearMessages();
-    useChatStore.getState().clearAiModified();
-  }, [currentFrameworkId, deriveNextDiagram, hasDiagramWork, nextTransition]);
 
   return (
     <header className="app-header">
@@ -312,15 +286,6 @@ export default function Toolbar() {
         >
           Print
         </button>
-        {nextTransition && nextDocumentLabel ? (
-          <button
-            className="btn btn-secondary"
-            onClick={handleNextDocument}
-            title={`Create ${nextDocumentLabel} draft from current ${getFrameworkSuffix(currentFrameworkId)}`}
-          >
-            {`to ${nextDocumentLabel}`}
-          </button>
-        ) : null}
         <input
           ref={fileInputRef}
           type="file"

@@ -2,7 +2,6 @@ import { getFramework } from '../frameworks/registry';
 import { DEFAULT_EDGE_ROUTING_POLICY } from '../core/edge-routing';
 import { reportError } from '../core/monitoring/error-logging';
 import { runElkAutoLayout } from '../core/layout/run-elk-auto-layout';
-import { deriveDiagramFromTransition, getNextDiagramTransition } from '../transitions/registry';
 import { useUIStore } from './ui-store';
 import {
   getDefaultFramework,
@@ -16,6 +15,7 @@ import {
   batchRemoveEdges,
   snapshot,
   captureOptimizedEdgeSides,
+  resolveFramework,
 } from './diagram-helpers';
 import type { DiagramSettings } from '../core/types';
 import type { DiagramState, DiagramStoreContext } from './diagram-store-types';
@@ -26,7 +26,6 @@ export function createDiagramActions(
   DiagramState,
   | 'batchApply'
   | 'runAutoLayout'
-  | 'deriveNextDiagram'
   | 'setFramework'
   | 'updateSettings'
   | 'loadDiagram'
@@ -45,6 +44,7 @@ export function createDiagramActions(
   return {
     batchApply: (mutations) => {
       const state = get();
+      const framework = resolveFramework(state.diagram.frameworkId);
       pushHistorySnapshot();
 
       const idMap = new Map<string, string>();
@@ -59,10 +59,10 @@ export function createDiagramActions(
         idMap,
         nodes,
         edges,
-        state.framework,
+        framework,
         state.diagram.settings,
       ));
-      edges = batchUpdateEdges(mutations, edges, state.framework);
+      edges = batchUpdateEdges(mutations, edges, framework);
       edges = batchRemoveEdges(mutations, edges);
 
       set({
@@ -80,7 +80,7 @@ export function createDiagramActions(
       try {
         updates = await runElkAutoLayout(state.diagram.nodes, state.diagram.edges, {
           direction: state.diagram.settings.layoutDirection,
-          cyclic: state.framework.allowsCycles,
+          cyclic: resolveFramework(state.diagram.frameworkId).allowsCycles,
         });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -110,36 +110,6 @@ export function createDiagramActions(
       return true;
     },
 
-    deriveNextDiagram: async () => {
-      const state = get();
-      const transition = getNextDiagramTransition(state.framework.id);
-      if (!transition) {
-        return false;
-      }
-
-      const result = deriveDiagramFromTransition(state.diagram, transition.id);
-      const framework = getFramework(transition.targetFrameworkId);
-      if (!result || !framework) {
-        return false;
-      }
-
-      clearPendingNodeMove();
-      history.clear();
-      set({
-        diagram: result.diagram,
-        framework,
-        canUndo: false,
-        canRedo: false,
-      });
-
-      const laidOut = await get().runAutoLayout({ fitView: true });
-      if (!laidOut) {
-        useUIStore.getState().requestFitView();
-      }
-
-      return true;
-    },
-
     setFramework: (frameworkId) => {
       const framework = getFramework(frameworkId);
       if (!framework) return;
@@ -149,7 +119,6 @@ export function createDiagramActions(
 
       set({
         diagram,
-        framework,
         ...undoState,
       });
       focusInitialNode(diagram.nodes[0]?.id);
@@ -180,10 +149,8 @@ export function createDiagramActions(
     },
 
     loadDiagram: (diagram) => {
-      const state = get();
       pushHistorySnapshot();
 
-      const framework = getFramework(diagram.frameworkId) ?? state.framework;
       const settings: DiagramSettings = {
         layoutDirection: diagram.settings.layoutDirection,
         showGrid: diagram.settings.showGrid,
@@ -198,14 +165,13 @@ export function createDiagramActions(
             ? ensureFixedEdgeSides(diagram.edges, diagram.nodes, settings)
             : diagram.edges,
         },
-        framework,
         ...undoState,
       });
     },
 
     newDiagram: () => {
       pushHistorySnapshot();
-      const diagram = createDiagramForFramework(get().framework);
+      const diagram = createDiagramForFramework(resolveFramework(get().diagram.frameworkId));
 
       set({
         diagram,
