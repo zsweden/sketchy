@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { fetchAvailableModels, KNOWN_MODELS, type ModelInfo } from '../core/ai/model-fetcher';
+import { DEFAULT_EDGE_ROUTING_POLICY, type EdgeRoutingPolicy } from '../core/edge-routing';
 import {
   DEFAULT_ELK_EXPERIMENT_SETTINGS,
+  type ElkAlgorithm,
   type ElkExperimentSettings,
 } from '../core/layout/elk-options';
 import type { LayoutMetrics } from '../core/layout/layout-metrics';
@@ -62,11 +64,12 @@ interface SettingsState {
   modelsLoading: boolean;
   modelsError: string | null;
   elkExperimentSettings: ElkExperimentSettings;
+  edgeRoutingExperimentPolicy: EdgeRoutingPolicy;
   lastLayoutRun: {
     metrics: LayoutMetrics;
     score: number;
     durationMs: number;
-    algorithm: ElkExperimentSettings['algorithm'];
+    algorithm: ElkAlgorithm;
     direction: 'TB' | 'BT' | 'LR' | 'RL';
   } | null;
 
@@ -80,6 +83,7 @@ interface SettingsState {
   toggleLayoutLab: () => void;
   closeLayoutLab: () => void;
   updateElkExperimentSettings: (patch: Partial<ElkExperimentSettings>) => void;
+  setEdgeRoutingExperimentPolicy: (policy: EdgeRoutingPolicy) => void;
   resetElkExperimentSettings: () => void;
   setLastLayoutRun: (run: SettingsState['lastLayoutRun']) => void;
   refreshModels: () => void;
@@ -164,6 +168,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     modelsLoading: false,
     modelsError: null,
     elkExperimentSettings: DEFAULT_ELK_EXPERIMENT_SETTINGS,
+    edgeRoutingExperimentPolicy: DEFAULT_EDGE_ROUTING_POLICY,
     lastLayoutRun: null,
 
     setProvider: (providerId) => {
@@ -210,7 +215,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     updateElkExperimentSettings: (patch) => set((state) => ({
       elkExperimentSettings: { ...state.elkExperimentSettings, ...patch },
     })),
-    resetElkExperimentSettings: () => set({ elkExperimentSettings: DEFAULT_ELK_EXPERIMENT_SETTINGS }),
+    setEdgeRoutingExperimentPolicy: (policy) => set({ edgeRoutingExperimentPolicy: policy }),
+    resetElkExperimentSettings: () => set({
+      elkExperimentSettings: DEFAULT_ELK_EXPERIMENT_SETTINGS,
+      edgeRoutingExperimentPolicy: DEFAULT_EDGE_ROUTING_POLICY,
+    }),
     setLastLayoutRun: (run) => set({ lastLayoutRun: run }),
     refreshModels,
   };

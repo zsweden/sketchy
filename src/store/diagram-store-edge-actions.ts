@@ -4,6 +4,7 @@ import {
   resolveEdgeSides,
   captureOptimizedEdgeSides,
 } from './diagram-helpers';
+import { useSettingsStore } from './settings-store';
 import type { DiagramEdge } from '../core/types';
 import type { DiagramState, DiagramStoreContext } from './diagram-store-types';
 
@@ -148,11 +149,13 @@ export function createDiagramEdgeActions(
     optimizeEdges: () => {
       const state = get();
       if (state.diagram.settings.edgeRoutingMode !== 'fixed') return false;
+      const edgeRoutingPolicy = useSettingsStore.getState().edgeRoutingExperimentPolicy;
 
       const optimizedEdges = captureOptimizedEdgeSides(
         state.diagram.edges,
         state.diagram.nodes,
         state.diagram.settings,
+        edgeRoutingPolicy,
       );
       const changed = optimizedEdges.some((edge, index) => {
         const current = state.diagram.edges[index];
@@ -174,11 +177,13 @@ export function createDiagramEdgeActions(
     optimizeEdgesAfterLayout: () => {
       const state = get();
       if (state.diagram.settings.edgeRoutingMode !== 'fixed') return;
+      const edgeRoutingPolicy = useSettingsStore.getState().edgeRoutingExperimentPolicy;
 
       const optimizedEdges = captureOptimizedEdgeSides(
         state.diagram.edges,
         state.diagram.nodes,
         state.diagram.settings,
+        edgeRoutingPolicy,
       );
       setDiagram((diagram) => ({ ...diagram, edges: optimizedEdges }));
     },

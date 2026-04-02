@@ -24,6 +24,8 @@ import LayoutLabPopover from './LayoutLabPopover';
 import SettingsPopover from './SettingsPopover';
 import { AlignHorizontalIcon, AlignVerticalIcon, DistributeHorizontalIcon, DistributeVerticalIcon } from '../icons/AlignDistributeIcons';
 
+const SHOW_LAYOUT_LAB = false;
+
 export default function Toolbar() {
   const diagram = useDiagramStore((s) => s.diagram);
   const framework = useDiagramStore((s) => s.framework);
@@ -335,17 +337,19 @@ export default function Toolbar() {
       </div>
 
       <div className="toolbar-group toolbar-group-right">
-        <div style={{ position: 'relative' }}>
-          <button
-            className="btn btn-ghost btn-icon"
-            onClick={toggleLayoutLab}
-            title="Layout lab"
-            aria-label="Layout lab"
-          >
-            <Settings2 size={16} />
-          </button>
-          <LayoutLabPopover />
-        </div>
+        {SHOW_LAYOUT_LAB ? (
+          <div style={{ position: 'relative' }}>
+            <button
+              className="btn btn-ghost btn-icon"
+              onClick={toggleLayoutLab}
+              title="Layout lab"
+              aria-label="Layout lab"
+            >
+              <Settings2 size={16} />
+            </button>
+            <LayoutLabPopover />
+          </div>
+        ) : null}
 
         <div style={{ position: 'relative' }}>
           <button

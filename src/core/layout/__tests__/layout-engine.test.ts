@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { estimateHeight, MIN_NODE_HEIGHT } from '../layout-engine';
-import { resolveElkAlgorithm } from '../elk-engine';
+import { getDefaultElkAlgorithm, resolveElkAlgorithm } from '../elk-engine';
 
 describe('estimateHeight', () => {
   it('returns MIN_NODE_HEIGHT (60) for empty label', () => {
@@ -34,13 +34,16 @@ describe('estimateHeight', () => {
 });
 
 describe('resolveElkAlgorithm', () => {
-  it('preserves the requested algorithm for acyclic layouts', () => {
-    expect(resolveElkAlgorithm('layered', false)).toBe('layered');
-    expect(resolveElkAlgorithm('radial', false)).toBe('radial');
+  it('uses framework defaults when there is no override', () => {
+    expect(getDefaultElkAlgorithm(false)).toBe('layered');
+    expect(getDefaultElkAlgorithm(true)).toBe('force');
+    expect(resolveElkAlgorithm(null, false)).toBe('layered');
+    expect(resolveElkAlgorithm(null, true)).toBe('force');
   });
 
-  it('forces cyclic layouts onto the force algorithm', () => {
-    expect(resolveElkAlgorithm('layered', true)).toBe('force');
-    expect(resolveElkAlgorithm('stress', true)).toBe('force');
+  it('preserves explicit overrides on both cyclic and acyclic layouts', () => {
+    expect(resolveElkAlgorithm('radial', false)).toBe('radial');
+    expect(resolveElkAlgorithm('layered', true)).toBe('layered');
+    expect(resolveElkAlgorithm('stress', true)).toBe('stress');
   });
 });

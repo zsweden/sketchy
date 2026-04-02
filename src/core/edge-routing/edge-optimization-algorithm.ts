@@ -5,13 +5,14 @@ import {
   createPlacementCandidates,
   getPolylineLength,
   polylineIntersectsBox,
-  polylinesIntersect,
-  sharesEndpoint,
+  shouldRewardSharedEndpointCrossingAlignment,
+  shouldCountCrossingBetweenEdges,
 } from './shared';
 
 const EDGE_INTERSECTION_PENALTY = 10_000;
 const EDGE_NODE_OVERLAP_PENALTY = 2_000;
 const EDGE_LENGTH_PENALTY = 1;
+const EDGE_SAME_TYPE_BUFFER_ALIGNMENT_REWARD = 400;
 
 interface HandleUsage {
   incoming: number;
@@ -32,6 +33,8 @@ export function computeLegacyPlusEdgeRoutingPlacements({
   edges,
   nodeBoxes,
   layoutDirection,
+  policy,
+  nodeNeighborhoodPadding,
 }: EdgeRoutingInput): Map<string, EdgeRoutingPlacement> {
   const placements = new Map<string, EdgeRoutingPlacement>();
   const nodeBoxEntries = [...nodeBoxes.entries()];
@@ -83,13 +86,29 @@ export function computeLegacyPlusEdgeRoutingPlacements({
 
         for (const other of edges) {
           if (other.id === edge.id) continue;
-          if (sharesEndpoint(edge, other)) continue;
           const otherPlacement = placements.get(other.id);
           if (!otherPlacement) continue;
           const otherGeometry = selectedGeometryCache.get(other.id) ?? getGeometry(other, otherPlacement);
           if (otherGeometry.points.length === 0) continue;
-          if (polylinesIntersect(geometry.points, otherGeometry.points)) {
+          if (shouldCountCrossingBetweenEdges(
+            edge,
+            geometry.points,
+            other,
+            otherGeometry.points,
+            nodeBoxes,
+            { policy, nodeNeighborhoodPadding },
+          )) {
             score += EDGE_INTERSECTION_PENALTY;
+          }
+          if (shouldRewardSharedEndpointCrossingAlignment(
+            edge,
+            geometry.points,
+            other,
+            otherGeometry.points,
+            nodeBoxes,
+            { policy, nodeNeighborhoodPadding },
+          )) {
+            score -= EDGE_SAME_TYPE_BUFFER_ALIGNMENT_REWARD;
           }
         }
 

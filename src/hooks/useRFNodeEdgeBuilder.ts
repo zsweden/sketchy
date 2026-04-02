@@ -27,6 +27,7 @@ export function useRFNodeEdgeBuilder(
   const edgeRoutingMode = useDiagramStore((s) => s.diagram.settings.edgeRoutingMode);
   const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
   const themeId = useSettingsStore((s) => s.theme);
+  const edgeRoutingPolicy = useSettingsStore((s) => s.edgeRoutingExperimentPolicy);
   const activeTheme = useMemo(() => getTheme(themeId), [themeId]);
   const cachedOptimizedPlacements = useRef<Map<string, EdgeHandlePlacement>>(new Map());
 
@@ -45,11 +46,11 @@ export function useRFNodeEdgeBuilder(
         return cachedOptimizedPlacements.current;
       }
 
-      const placements = getOptimizedEdgePlacements(diagram.edges, diagram.nodes, diagram.settings);
+      const placements = getOptimizedEdgePlacements(diagram.edges, diagram.nodes, diagram.settings, edgeRoutingPolicy);
       cachedOptimizedPlacements.current = placements;
       return placements;
     },
-    [diagram.edges, diagram.nodes, diagram.settings, edgeRoutingMode, freezeDynamicRouting],
+    [diagram.edges, diagram.nodes, diagram.settings, edgeRoutingMode, edgeRoutingPolicy, freezeDynamicRouting],
   );
 
   const rfNodes: Node[] = useMemo(

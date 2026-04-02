@@ -1,4 +1,5 @@
 export type ElkAlgorithm = 'layered' | 'force' | 'stress' | 'radial';
+export type ElkAlgorithmOverride = ElkAlgorithm | null;
 
 export type ElkLayeringStrategy =
   | 'NETWORK_SIMPLEX'
@@ -32,8 +33,11 @@ export type ElkCycleBreakingStrategy =
 export type ElkWrappingStrategy = 'OFF' | 'SINGLE_EDGE' | 'MULTI_EDGE';
 
 export interface ElkExperimentSettings {
-  algorithm: ElkAlgorithm;
+  algorithmOverride: ElkAlgorithmOverride;
   aspectRatio: number;
+  nodeSpacing: number;
+  componentSpacing: number;
+  separateConnectedComponents: boolean;
   layeringStrategy: ElkLayeringStrategy;
   nodePlacementStrategy: ElkNodePlacementStrategy;
   cycleBreakingStrategy: ElkCycleBreakingStrategy;
@@ -45,8 +49,11 @@ export interface ElkExperimentSettings {
 }
 
 export const DEFAULT_ELK_EXPERIMENT_SETTINGS: ElkExperimentSettings = {
-  algorithm: 'layered',
+  algorithmOverride: null,
   aspectRatio: 2.5,
+  nodeSpacing: 40,
+  componentSpacing: 80,
+  separateConnectedComponents: true,
   layeringStrategy: 'NETWORK_SIMPLEX',
   nodePlacementStrategy: 'BRANDES_KOEPF',
   cycleBreakingStrategy: 'GREEDY',

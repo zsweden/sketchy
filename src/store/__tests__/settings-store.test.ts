@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { DEFAULT_EDGE_ROUTING_POLICY } from '../../core/edge-routing';
 
 const STORAGE_KEY = 'sketchy-settings';
 const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
@@ -62,6 +63,7 @@ describe('settings store', () => {
       expect(state.baseUrl).toBe(DEFAULT_BASE_URL);
       expect(state.model).toBe(DEFAULT_MODEL);
       expect(state.settingsOpen).toBe(false);
+      expect(state.edgeRoutingExperimentPolicy).toBe(DEFAULT_EDGE_ROUTING_POLICY);
     });
   });
 
@@ -191,6 +193,26 @@ describe('settings store', () => {
       useSettingsStore.getState().toggleSettings(); // open
       useSettingsStore.getState().toggleSettings(); // close
       expect(useSettingsStore.getState().settingsOpen).toBe(false);
+    });
+  });
+
+  describe('edge routing experiment policy', () => {
+    it('updates the local Layout Lab policy without persisting it', async () => {
+      const useSettingsStore = await importFreshStore();
+
+      useSettingsStore.getState().setEdgeRoutingExperimentPolicy('shared-endpoint-anywhere');
+
+      expect(useSettingsStore.getState().edgeRoutingExperimentPolicy).toBe('shared-endpoint-anywhere');
+      expect(mockStorage.getItem(STORAGE_KEY)).toBe(null);
+    });
+
+    it('resets the policy together with ELK experiment settings', async () => {
+      const useSettingsStore = await importFreshStore();
+
+      useSettingsStore.getState().setEdgeRoutingExperimentPolicy('reciprocal-only');
+      useSettingsStore.getState().resetElkExperimentSettings();
+
+      expect(useSettingsStore.getState().edgeRoutingExperimentPolicy).toBe(DEFAULT_EDGE_ROUTING_POLICY);
     });
   });
 

@@ -1,5 +1,4 @@
 import type { LayoutEngine } from './layout-engine';
-import { RANK_SEP, NODE_SEP } from './layout-engine';
 import { DEFAULT_ELK_EXPERIMENT_SETTINGS, type ElkAlgorithm } from './elk-options';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -20,11 +19,15 @@ const DIRECTION_MAP: Record<string, string> = {
   RL: 'LEFT',
 };
 
+export function getDefaultElkAlgorithm(cyclic?: boolean): ElkAlgorithm {
+  return cyclic ? 'force' : 'layered';
+}
+
 export function resolveElkAlgorithm(
-  algorithm: ElkAlgorithm,
+  algorithmOverride: ElkAlgorithm | null | undefined,
   cyclic?: boolean,
 ): ElkAlgorithm {
-  return cyclic ? 'force' : algorithm;
+  return algorithmOverride ?? getDefaultElkAlgorithm(cyclic);
 }
 
 function createElkEngine(algorithm: ElkAlgorithm): LayoutEngine {
@@ -39,13 +42,13 @@ function createElkEngine(algorithm: ElkAlgorithm): LayoutEngine {
       layoutOptions: {
         'elk.algorithm': algorithm,
         'elk.direction': DIRECTION_MAP[options.direction] ?? 'DOWN',
-        'elk.spacing.nodeNode': String(NODE_SEP),
-        'elk.separateConnectedComponents': 'true',
-        'elk.spacing.componentComponent': String(RANK_SEP),
+        'elk.spacing.nodeNode': String(elkOptions.nodeSpacing),
+        'elk.separateConnectedComponents': String(elkOptions.separateConnectedComponents),
+        'elk.spacing.componentComponent': String(elkOptions.componentSpacing),
         'elk.aspectRatio': String(elkOptions.aspectRatio),
         ...(isLayered && {
           'elk.edgeRouting': cyclic ? 'SPLINES' : 'ORTHOGONAL',
-          'elk.layered.spacing.nodeNodeBetweenLayers': String(RANK_SEP),
+          'elk.layered.spacing.nodeNodeBetweenLayers': String(elkOptions.componentSpacing),
           'elk.layered.layering.strategy': elkOptions.layeringStrategy,
           'elk.layered.nodePlacement.strategy': elkOptions.nodePlacementStrategy,
           'elk.layered.cycleBreaking.strategy': elkOptions.cycleBreakingStrategy,
@@ -108,7 +111,7 @@ export const elkRadialEngine = createElkEngine('radial');
 export const elkEngine: LayoutEngine = async (nodes, edges, options) =>
   createElkEngine(
     resolveElkAlgorithm(
-      options.elk?.algorithm ?? DEFAULT_ELK_EXPERIMENT_SETTINGS.algorithm,
+      options.elk?.algorithmOverride ?? DEFAULT_ELK_EXPERIMENT_SETTINGS.algorithmOverride,
       options.cyclic,
     ),
   )(

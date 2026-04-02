@@ -3,8 +3,11 @@ import { compareTieBreakScores } from '../edge-optimization-algorithm';
 import {
   buildEdgeRoutingGeometry,
   computeEdgeRoutingPlacements,
+  shouldRewardSharedEndpointCrossingAlignment,
+  shouldCountCrossingBetweenEdges,
   type EdgeRoutingEdge,
   type EdgeRoutingNodeBox,
+  type EdgeRoutingPolicy,
 } from '../index';
 
 function boxes(entries: Array<[string, number, number, number, number]>): Map<string, EdgeRoutingNodeBox> {
@@ -17,11 +20,13 @@ function boxes(entries: Array<[string, number, number, number, number]>): Map<st
 function route(
   nodeBoxes: ReadonlyMap<string, EdgeRoutingNodeBox>,
   edges: EdgeRoutingEdge[],
+  policy?: EdgeRoutingPolicy,
 ) {
   return computeEdgeRoutingPlacements({
     edges,
     nodeBoxes,
     layoutDirection: 'TB',
+    policy,
   });
 }
 
@@ -86,5 +91,201 @@ describe('edge routing', () => {
     expect(geometry.targetExitSide).toBe('top');
     expect(geometry.points[0]).toEqual({ x: 232, y: 48 });
     expect(geometry.points[1]).toEqual({ x: 232, y: 76 });
+  });
+
+  it('legacy mode exempts reciprocal crossings', () => {
+    const nodeBoxes = boxes([
+      ['a', 0, 0, 40, 40],
+      ['b', 200, 0, 240, 40],
+    ]);
+    const forward = { source: 'a', target: 'b' };
+    const reverse = { source: 'b', target: 'a' };
+
+    expect(shouldCountCrossingBetweenEdges(
+      forward,
+      [{ x: 20, y: 60 }, { x: 180, y: 60 }],
+      reverse,
+      [{ x: 120, y: 20 }, { x: 120, y: 100 }],
+      nodeBoxes,
+      { policy: 'legacy' },
+    )).toBe(false);
+  });
+
+  it('reciprocal-only mode penalizes reciprocal crossings', () => {
+    const nodeBoxes = boxes([
+      ['a', 0, 0, 40, 40],
+      ['b', 200, 0, 240, 40],
+    ]);
+    const forward = { source: 'a', target: 'b' };
+    const reverse = { source: 'b', target: 'a' };
+
+    expect(shouldCountCrossingBetweenEdges(
+      forward,
+      [{ x: 20, y: 60 }, { x: 180, y: 60 }],
+      reverse,
+      [{ x: 120, y: 20 }, { x: 120, y: 100 }],
+      nodeBoxes,
+      { policy: 'reciprocal-only' },
+    )).toBe(true);
+  });
+
+  it('shared-endpoint-outside-buffer ignores crossings inside node neighborhoods', () => {
+    const nodeBoxes = boxes([
+      ['a', 0, 0, 40, 40],
+      ['b', 200, 0, 240, 40],
+    ]);
+    const forward = { source: 'a', target: 'b' };
+    const reverse = { source: 'b', target: 'a' };
+
+    expect(shouldCountCrossingBetweenEdges(
+      forward,
+      [{ x: 20, y: 20 }, { x: 60, y: 20 }],
+      reverse,
+      [{ x: 60, y: -20 }, { x: 60, y: 60 }],
+      nodeBoxes,
+      { policy: 'shared-endpoint-outside-buffer' },
+    )).toBe(false);
+
+    expect(shouldCountCrossingBetweenEdges(
+      forward,
+      [{ x: 20, y: 60 }, { x: 180, y: 60 }],
+      reverse,
+      [{ x: 120, y: 20 }, { x: 120, y: 100 }],
+      nodeBoxes,
+      { policy: 'shared-endpoint-outside-buffer' },
+    )).toBe(true);
+  });
+
+  it('shared-endpoint-anywhere counts crossings even inside node neighborhoods', () => {
+    const nodeBoxes = boxes([
+      ['a', 0, 0, 40, 40],
+      ['b', 200, 0, 240, 40],
+    ]);
+    const forward = { source: 'a', target: 'b' };
+    const reverse = { source: 'b', target: 'a' };
+
+    expect(shouldCountCrossingBetweenEdges(
+      forward,
+      [{ x: 20, y: 20 }, { x: 60, y: 20 }],
+      reverse,
+      [{ x: 60, y: -20 }, { x: 60, y: 60 }],
+      nodeBoxes,
+      { policy: 'shared-endpoint-anywhere' },
+    )).toBe(true);
+  });
+
+  it('same-type-only buffer mode ignores same-direction crossings inside node neighborhoods', () => {
+    const nodeBoxes = boxes([
+      ['a', 0, 0, 40, 40],
+      ['b', 200, 0, 240, 40],
+      ['c', 0, 200, 40, 240],
+    ]);
+    const first = { source: 'a', target: 'b' };
+    const second = { source: 'a', target: 'c' };
+
+    expect(shouldCountCrossingBetweenEdges(
+      first,
+      [{ x: 20, y: 20 }, { x: 60, y: 20 }],
+      second,
+      [{ x: 60, y: -20 }, { x: 60, y: 60 }],
+      nodeBoxes,
+      { policy: 'shared-endpoint-outside-buffer-same-type-only' },
+    )).toBe(false);
+  });
+
+  it('same-type-only buffer mode penalizes mixed-direction crossings inside node neighborhoods', () => {
+    const nodeBoxes = boxes([
+      ['a', 0, 0, 40, 40],
+      ['b', 200, 0, 240, 40],
+    ]);
+    const forward = { source: 'a', target: 'b' };
+    const reverse = { source: 'b', target: 'a' };
+
+    expect(shouldCountCrossingBetweenEdges(
+      forward,
+      [{ x: 20, y: 20 }, { x: 60, y: 20 }],
+      reverse,
+      [{ x: 60, y: -20 }, { x: 60, y: 60 }],
+      nodeBoxes,
+      { policy: 'shared-endpoint-outside-buffer-same-type-only' },
+    )).toBe(true);
+  });
+
+  it('rewarded same-type buffer mode rewards same-direction crossings inside node neighborhoods', () => {
+    const nodeBoxes = boxes([
+      ['a', 0, 0, 40, 40],
+      ['b', 200, 0, 240, 40],
+      ['c', 0, 200, 40, 240],
+    ]);
+    const first = { source: 'a', target: 'b' };
+    const second = { source: 'a', target: 'c' };
+
+    expect(shouldCountCrossingBetweenEdges(
+      first,
+      [{ x: 20, y: 20 }, { x: 60, y: 20 }],
+      second,
+      [{ x: 60, y: -20 }, { x: 60, y: 60 }],
+      nodeBoxes,
+      { policy: 'shared-endpoint-outside-buffer-same-type-rewarded' },
+    )).toBe(false);
+    expect(shouldRewardSharedEndpointCrossingAlignment(
+      first,
+      [{ x: 20, y: 20 }, { x: 60, y: 20 }],
+      second,
+      [{ x: 60, y: -20 }, { x: 60, y: 60 }],
+      nodeBoxes,
+      { policy: 'shared-endpoint-outside-buffer-same-type-rewarded' },
+    )).toBe(true);
+  });
+
+  it('rewarded same-type buffer mode still penalizes mixed-direction crossings inside node neighborhoods', () => {
+    const nodeBoxes = boxes([
+      ['a', 0, 0, 40, 40],
+      ['b', 200, 0, 240, 40],
+    ]);
+    const forward = { source: 'a', target: 'b' };
+    const reverse = { source: 'b', target: 'a' };
+
+    expect(shouldCountCrossingBetweenEdges(
+      forward,
+      [{ x: 20, y: 20 }, { x: 60, y: 20 }],
+      reverse,
+      [{ x: 60, y: -20 }, { x: 60, y: 60 }],
+      nodeBoxes,
+      { policy: 'shared-endpoint-outside-buffer-same-type-rewarded' },
+    )).toBe(true);
+    expect(shouldRewardSharedEndpointCrossingAlignment(
+      forward,
+      [{ x: 20, y: 20 }, { x: 60, y: 20 }],
+      reverse,
+      [{ x: 60, y: -20 }, { x: 60, y: 60 }],
+      nodeBoxes,
+      { policy: 'shared-endpoint-outside-buffer-same-type-rewarded' },
+    )).toBe(false);
+  });
+
+  it('changes reciprocal edge placement when crossing policy is stricter', () => {
+    const nodeBoxes = boxes([
+      ['growth', -380, 176, -220, 236],
+      ['regulatory', -680, 376, -520, 436],
+      ['lower-cost', -380, 596, -220, 656],
+    ]);
+    const edges = [
+      { id: 'growth-regulatory', source: 'growth', target: 'regulatory' },
+      { id: 'regulatory-growth', source: 'regulatory', target: 'growth' },
+      { id: 'regulatory-lower-cost', source: 'regulatory', target: 'lower-cost' },
+    ];
+
+    const legacyPlacements = route(nodeBoxes, edges, 'legacy');
+    const strictPlacements = route(nodeBoxes, edges, 'shared-endpoint-anywhere');
+
+    expect(legacyPlacements.get('growth-regulatory')).toEqual({
+      sourceSide: 'bottomleft-bottom',
+      targetSide: 'topright-top',
+    });
+    expect(strictPlacements.get('growth-regulatory')).toEqual({
+      sourceSide: 'left',
+      targetSide: 'topright-top',
+    });
   });
 });

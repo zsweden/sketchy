@@ -28,10 +28,23 @@ export interface EdgeRoutingPlacement {
   targetSide: EdgeHandleSide;
 }
 
+export type EdgeRoutingPolicy =
+  | 'legacy'
+  | 'reciprocal-only'
+  | 'shared-endpoint-outside-buffer'
+  | 'shared-endpoint-outside-buffer-same-type-only'
+  | 'shared-endpoint-outside-buffer-same-type-rewarded'
+  | 'shared-endpoint-anywhere';
+
+export const DEFAULT_EDGE_ROUTING_POLICY: EdgeRoutingPolicy = 'shared-endpoint-outside-buffer-same-type-only';
+export const EDGE_ROUTING_NODE_NEIGHBORHOOD_PADDING = 36;
+
 export interface EdgeRoutingInput {
   edges: EdgeRoutingEdge[];
   nodeBoxes: ReadonlyMap<string, EdgeRoutingNodeBox>;
   layoutDirection: LayoutDirection;
+  policy?: EdgeRoutingPolicy;
+  nodeNeighborhoodPadding?: number;
 }
 
 export interface EdgeRoutingGeometry {
@@ -51,7 +64,14 @@ export interface EdgeRoutingObjectiveScore {
   cornerHandleCount: number;
 }
 
-type Point = { x: number; y: number };
+export type EdgeRoutingPoint = { x: number; y: number };
+
+interface EdgeRoutingCrossingOptions {
+  policy?: EdgeRoutingPolicy;
+  nodeNeighborhoodPadding?: number;
+}
+
+type Point = EdgeRoutingPoint;
 
 const EDGE_STUB = 28;
 const SIDE_VECTORS: Record<CardinalHandleSide, Point> = {
@@ -206,6 +226,79 @@ export function sharesEndpoint(
     || a.target === b.target;
 }
 
+export function isReciprocalEdgePair(
+  a: Pick<EdgeRoutingEdge, 'source' | 'target'>,
+  b: Pick<EdgeRoutingEdge, 'source' | 'target'>,
+): boolean {
+  return a.source === b.target && a.target === b.source;
+}
+
+export function shouldCountCrossingBetweenEdges(
+  a: Pick<EdgeRoutingEdge, 'source' | 'target'>,
+  aPoints: Point[],
+  b: Pick<EdgeRoutingEdge, 'source' | 'target'>,
+  bPoints: Point[],
+  nodeBoxes: ReadonlyMap<string, EdgeRoutingNodeBox>,
+  options?: EdgeRoutingCrossingOptions,
+): boolean {
+  if (!polylinesIntersect(aPoints, bPoints)) return false;
+
+  const policy = options?.policy ?? DEFAULT_EDGE_ROUTING_POLICY;
+  const sharedEndpoint = sharesEndpoint(a, b);
+
+  if (!sharedEndpoint) return true;
+
+  switch (policy) {
+    case 'legacy':
+      return false;
+    case 'reciprocal-only':
+      return isReciprocalEdgePair(a, b);
+    case 'shared-endpoint-anywhere':
+      return true;
+    case 'shared-endpoint-outside-buffer':
+      return polylinesIntersectOutsideBoxes(
+        aPoints,
+        bPoints,
+        getEndpointNeighborhoods([a, b], nodeBoxes, options?.nodeNeighborhoodPadding ?? EDGE_ROUTING_NODE_NEIGHBORHOOD_PADDING),
+      );
+    case 'shared-endpoint-outside-buffer-same-type-only':
+      return polylinesIntersectOutsideBoxes(
+        aPoints,
+        bPoints,
+        getEndpointNeighborhoods([a, b], nodeBoxes, options?.nodeNeighborhoodPadding ?? EDGE_ROUTING_NODE_NEIGHBORHOOD_PADDING),
+      ) || !sharedEndpointsHaveSameDirection(a, b);
+    case 'shared-endpoint-outside-buffer-same-type-rewarded':
+      return polylinesIntersectOutsideBoxes(
+        aPoints,
+        bPoints,
+        getEndpointNeighborhoods([a, b], nodeBoxes, options?.nodeNeighborhoodPadding ?? EDGE_ROUTING_NODE_NEIGHBORHOOD_PADDING),
+      ) || !sharedEndpointsHaveSameDirection(a, b);
+  }
+}
+
+export function shouldRewardSharedEndpointCrossingAlignment(
+  a: Pick<EdgeRoutingEdge, 'source' | 'target'>,
+  aPoints: Point[],
+  b: Pick<EdgeRoutingEdge, 'source' | 'target'>,
+  bPoints: Point[],
+  nodeBoxes: ReadonlyMap<string, EdgeRoutingNodeBox>,
+  options?: EdgeRoutingCrossingOptions,
+): boolean {
+  if ((options?.policy ?? DEFAULT_EDGE_ROUTING_POLICY) !== 'shared-endpoint-outside-buffer-same-type-rewarded') {
+    return false;
+  }
+  if (!sharesEndpoint(a, b) || !polylinesIntersect(aPoints, bPoints)) return false;
+
+  const endpointNeighborhoods = getEndpointNeighborhoods(
+    [a, b],
+    nodeBoxes,
+    options?.nodeNeighborhoodPadding ?? EDGE_ROUTING_NODE_NEIGHBORHOOD_PADDING,
+  );
+
+  return !polylinesIntersectOutsideBoxes(aPoints, bPoints, endpointNeighborhoods)
+    && sharedEndpointsHaveSameDirection(a, b);
+}
+
 export function compareEdgeRoutingObjectiveScores(
   a: EdgeRoutingObjectiveScore,
   b: EdgeRoutingObjectiveScore,
@@ -231,6 +324,7 @@ export function scoreObjectiveEdgeRouting(
   edges: EdgeRoutingEdge[],
   nodeBoxes: ReadonlyMap<string, EdgeRoutingNodeBox>,
   placements: ReadonlyMap<string, EdgeRoutingPlacement>,
+  options?: EdgeRoutingCrossingOptions,
 ): EdgeRoutingObjectiveScore {
   const geometries = edges.flatMap((edge) => {
     const placement = placements.get(edge.id);
@@ -244,8 +338,14 @@ export function scoreObjectiveEdgeRouting(
     for (let otherIndex = index + 1; otherIndex < geometries.length; otherIndex++) {
       const geometry = geometries[index];
       const other = geometries[otherIndex];
-      if (sharesEndpoint(geometry.edge, other.edge)) continue;
-      if (polylinesIntersect(geometry.points, other.points)) {
+      if (shouldCountCrossingBetweenEdges(
+        geometry.edge,
+        geometry.points,
+        other.edge,
+        other.points,
+        nodeBoxes,
+        options,
+      )) {
         crossings++;
       }
     }
@@ -322,6 +422,64 @@ function dedupePoints(points: Point[]): Point[] {
     || point.y !== points[index - 1].y);
 }
 
+function getEndpointNeighborhoods(
+  edges: ReadonlyArray<Pick<EdgeRoutingEdge, 'source' | 'target'>>,
+  nodeBoxes: ReadonlyMap<string, EdgeRoutingNodeBox>,
+  padding: number,
+): EdgeRoutingNodeBox[] {
+  const nodeIds = new Set(edges.flatMap((edge) => [edge.source, edge.target]));
+  return [...nodeIds].flatMap((nodeId) => {
+    const box = nodeBoxes.get(nodeId);
+    return box ? [expandBox(box, padding)] : [];
+  });
+}
+
+function sharedEndpointsHaveSameDirection(
+  a: Pick<EdgeRoutingEdge, 'source' | 'target'>,
+  b: Pick<EdgeRoutingEdge, 'source' | 'target'>,
+): boolean {
+  const sharedNodeIds = [
+    ...(a.source === b.source || a.source === b.target ? [a.source] : []),
+    ...(a.target !== a.source && (a.target === b.source || a.target === b.target) ? [a.target] : []),
+  ];
+
+  return sharedNodeIds.every((nodeId) => getEdgeDirectionAtNode(a, nodeId) === getEdgeDirectionAtNode(b, nodeId));
+}
+
+function getEdgeDirectionAtNode(
+  edge: Pick<EdgeRoutingEdge, 'source' | 'target'>,
+  nodeId: string,
+): 'incoming' | 'outgoing' | null {
+  if (edge.source === nodeId) return 'outgoing';
+  if (edge.target === nodeId) return 'incoming';
+  return null;
+}
+
+function expandBox(box: EdgeRoutingNodeBox, padding: number): EdgeRoutingNodeBox {
+  return {
+    left: box.left - padding,
+    top: box.top - padding,
+    right: box.right + padding,
+    bottom: box.bottom + padding,
+  };
+}
+
+function polylinesIntersectOutsideBoxes(
+  a: Point[],
+  b: Point[],
+  boxes: readonly EdgeRoutingNodeBox[],
+): boolean {
+  for (let i = 0; i < a.length - 1; i++) {
+    for (let j = 0; j < b.length - 1; j++) {
+      const samples = getSegmentIntersectionSamples(a[i], a[i + 1], b[j], b[j + 1]);
+      if (samples.some((sample) => !boxes.some((box) => pointInBox(sample, box)))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 function pointInBox(point: Point, box: EdgeRoutingNodeBox): boolean {
   return point.x >= box.left && point.x <= box.right && point.y >= box.top && point.y <= box.bottom;
 }
@@ -365,6 +523,51 @@ function segmentsIntersect(p1: Point, q1: Point, p2: Point, q2: Point): boolean 
   if (o3 === 0 && onSegment(p2, p1, q2)) return true;
   if (o4 === 0 && onSegment(p2, q1, q2)) return true;
   return false;
+}
+
+function getSegmentIntersectionSamples(
+  p1: Point,
+  q1: Point,
+  p2: Point,
+  q2: Point,
+): Point[] {
+  if (!segmentsIntersect(p1, q1, p2, q2)) return [];
+
+  const firstVertical = p1.x === q1.x;
+  const secondVertical = p2.x === q2.x;
+
+  if (firstVertical !== secondVertical) {
+    return [{
+      x: firstVertical ? p1.x : p2.x,
+      y: firstVertical ? p2.y : p1.y,
+    }];
+  }
+
+  if (firstVertical && secondVertical && p1.x === p2.x) {
+    const start = Math.max(Math.min(p1.y, q1.y), Math.min(p2.y, q2.y));
+    const end = Math.min(Math.max(p1.y, q1.y), Math.max(p2.y, q2.y));
+    return getOverlapSamples({ x: p1.x, y: start }, { x: p1.x, y: end });
+  }
+
+  if (!firstVertical && !secondVertical && p1.y === p2.y) {
+    const start = Math.max(Math.min(p1.x, q1.x), Math.min(p2.x, q2.x));
+    const end = Math.min(Math.max(p1.x, q1.x), Math.max(p2.x, q2.x));
+    return getOverlapSamples({ x: start, y: p1.y }, { x: end, y: p1.y });
+  }
+
+  return [p1];
+}
+
+function getOverlapSamples(start: Point, end: Point): Point[] {
+  if (start.x === end.x && start.y === end.y) return [start];
+  return [
+    start,
+    end,
+    {
+      x: (start.x + end.x) / 2,
+      y: (start.y + end.y) / 2,
+    },
+  ];
 }
 
 function isCornerHandle(side: EdgeHandleSide): boolean {

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { type EdgeRoutingPolicy } from '../../core/edge-routing';
 import {
   ELK_ALGORITHM_OPTIONS,
   ELK_CYCLE_BREAKING_OPTIONS,
@@ -8,19 +9,31 @@ import {
 } from '../../core/layout/elk-options';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useSettingsStore } from '../../store/settings-store';
+import { getDefaultElkAlgorithm, resolveElkAlgorithm } from '../../core/layout/elk-engine';
 
 function formatNumber(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }
 
+const EDGE_ROUTING_POLICY_OPTIONS: Array<{ value: EdgeRoutingPolicy; label: string }> = [
+  { value: 'legacy', label: 'Legacy' },
+  { value: 'reciprocal-only', label: 'Reciprocal crossings' },
+  { value: 'shared-endpoint-outside-buffer', label: 'Shared-endpoint crossings outside node buffer' },
+  { value: 'shared-endpoint-outside-buffer-same-type-only', label: 'Outside node buffer, or mixed endpoint direction inside buffer' },
+  { value: 'shared-endpoint-outside-buffer-same-type-rewarded', label: 'Reward same endpoint direction inside buffer; penalize mixed or outside' },
+  { value: 'shared-endpoint-anywhere', label: 'All shared-endpoint crossings' },
+];
+
 export default function LayoutLabPopover() {
   const open = useSettingsStore((s) => s.layoutLabOpen);
   const closeLayoutLab = useSettingsStore((s) => s.closeLayoutLab);
   const elkSettings = useSettingsStore((s) => s.elkExperimentSettings);
+  const edgeRoutingPolicy = useSettingsStore((s) => s.edgeRoutingExperimentPolicy);
   const updateElkExperimentSettings = useSettingsStore((s) => s.updateElkExperimentSettings);
+  const setEdgeRoutingExperimentPolicy = useSettingsStore((s) => s.setEdgeRoutingExperimentPolicy);
   const resetElkExperimentSettings = useSettingsStore((s) => s.resetElkExperimentSettings);
   const lastLayoutRun = useSettingsStore((s) => s.lastLayoutRun);
-  const forceLocked = useDiagramStore((s) => s.framework.allowsCycles === true);
+  const isCyclicFramework = useDiagramStore((s) => s.framework.allowsCycles === true);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,7 +51,8 @@ export default function LayoutLabPopover() {
 
   if (!open) return null;
 
-  const effectiveAlgorithm = forceLocked ? 'force' : elkSettings.algorithm;
+  const defaultAlgorithm = getDefaultElkAlgorithm(isCyclicFramework);
+  const effectiveAlgorithm = resolveElkAlgorithm(elkSettings.algorithmOverride, isCyclicFramework);
   const layeredOnly = effectiveAlgorithm !== 'layered';
 
   return (
@@ -62,18 +76,35 @@ export default function LayoutLabPopover() {
           <p className="section-label">Engine</p>
           <select
             className="input-text"
-            value={effectiveAlgorithm}
-            onChange={(event) => updateElkExperimentSettings({ algorithm: event.target.value as typeof elkSettings.algorithm })}
+            value={elkSettings.algorithmOverride ?? 'default'}
+            onChange={(event) => updateElkExperimentSettings({
+              algorithmOverride: event.target.value === 'default'
+                ? null
+                : event.target.value as NonNullable<typeof elkSettings.algorithmOverride>,
+            })}
             aria-label="ELK engine"
-            disabled={forceLocked}
           >
+            <option value="default">Default ({defaultAlgorithm})</option>
             {ELK_ALGORITHM_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>{option.label}</option>
             ))}
           </select>
-          {forceLocked ? (
-            <p className="layout-lab-copy">Cyclic diagrams always use Force.</p>
-          ) : null}
+          <p className="layout-lab-copy">Current page will use {effectiveAlgorithm}.</p>
+        </div>
+
+        <div className="settings-field">
+          <p className="section-label">Edge Routing Policy</p>
+          <select
+            className="input-text"
+            value={edgeRoutingPolicy}
+            onChange={(event) => setEdgeRoutingExperimentPolicy(event.target.value as EdgeRoutingPolicy)}
+            aria-label="Edge routing policy"
+          >
+            {EDGE_ROUTING_POLICY_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+          <p className="layout-lab-copy">Applies to optimized edge routing only and is not saved with the diagram.</p>
         </div>
 
         <div className="settings-field">
@@ -88,6 +119,48 @@ export default function LayoutLabPopover() {
             onChange={(event) => updateElkExperimentSettings({ aspectRatio: Number.parseFloat(event.target.value) || 0.25 })}
             aria-label="ELK aspect ratio"
           />
+        </div>
+
+        <div className="settings-field">
+          <p className="section-label">Node Spacing</p>
+          <input
+            className="input-text"
+            type="number"
+            min="0"
+            max="400"
+            step="5"
+            value={elkSettings.nodeSpacing}
+            onChange={(event) => updateElkExperimentSettings({ nodeSpacing: Number.parseInt(event.target.value || '0', 10) || 0 })}
+            aria-label="ELK node spacing"
+          />
+        </div>
+
+        <div className="settings-field">
+          <p className="section-label">Component Spacing</p>
+          <input
+            className="input-text"
+            type="number"
+            min="0"
+            max="600"
+            step="5"
+            value={elkSettings.componentSpacing}
+            onChange={(event) => updateElkExperimentSettings({ componentSpacing: Number.parseInt(event.target.value || '0', 10) || 0 })}
+            aria-label="ELK component spacing"
+          />
+        </div>
+
+        <div className="control-row split-row">
+          <p className="section-label">Separate Components</p>
+          <button
+            className="toggle-track"
+            data-active={elkSettings.separateConnectedComponents}
+            onClick={() => updateElkExperimentSettings({
+              separateConnectedComponents: !elkSettings.separateConnectedComponents,
+            })}
+            aria-label="Toggle separate connected components"
+          >
+            <div className="toggle-thumb" />
+          </button>
         </div>
       </div>
 

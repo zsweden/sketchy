@@ -2,9 +2,9 @@ import {
   buildEdgeRoutingGeometry,
   computeEdgeRoutingPlacements,
   polylineIntersectsBox,
-  polylinesIntersect,
-  sharesEndpoint,
+  shouldCountCrossingBetweenEdges,
   type EdgeRoutingPlacement,
+  type EdgeRoutingPolicy,
 } from '../edge-routing';
 import type { LayoutDirection } from '../framework-types';
 import { VISIBLE_HANDLE_SIDES } from '../graph/ports';
@@ -35,7 +35,11 @@ export function computeLayoutMetrics(
   nodes: LayoutInput[],
   edges: LayoutEdgeInput[],
   positions: ReadonlyMap<string, PositionLike>,
-  options?: { layoutDirection?: LayoutDirection },
+  options?: {
+    layoutDirection?: LayoutDirection;
+    edgeRoutingPolicy?: EdgeRoutingPolicy;
+    nodeNeighborhoodPadding?: number;
+  },
 ): LayoutMetrics {
   const boxes = new Map(nodes.map((node) => [node.id, getBox(node, positions)]));
   const geometries = computeRoutedEdgeGeometries(nodes, edges, positions, options);
@@ -56,8 +60,17 @@ export function computeLayoutMetrics(
     for (let j = i + 1; j < geometries.length; j++) {
       const a = geometries[i];
       const b = geometries[j];
-      if (sharesEndpoint(a.edge, b.edge)) continue;
-      if (polylinesIntersect(a.points, b.points)) {
+      if (shouldCountCrossingBetweenEdges(
+        a.edge,
+        a.points,
+        b.edge,
+        b.points,
+        boxes,
+        {
+          policy: options?.edgeRoutingPolicy,
+          nodeNeighborhoodPadding: options?.nodeNeighborhoodPadding,
+        },
+      )) {
         edgeCrossings++;
       }
     }
@@ -132,7 +145,11 @@ export function computeRoutedEdgeGeometries(
   nodes: LayoutInput[],
   edges: LayoutEdgeInput[],
   positions: ReadonlyMap<string, PositionLike>,
-  options?: { layoutDirection?: LayoutDirection },
+  options?: {
+    layoutDirection?: LayoutDirection;
+    edgeRoutingPolicy?: EdgeRoutingPolicy;
+    nodeNeighborhoodPadding?: number;
+  },
 ): RoutedEdgeGeometry[] {
   const boxes = new Map(nodes.map((node) => [node.id, getBox(node, positions)]));
   const preparedEdges = edges.map((edge, index) => ({
@@ -153,6 +170,8 @@ export function computeRoutedEdgeGeometries(
       edges: preparedEdges,
       nodeBoxes: boxes,
       layoutDirection: options?.layoutDirection ?? 'TB',
+      policy: options?.edgeRoutingPolicy,
+      nodeNeighborhoodPadding: options?.nodeNeighborhoodPadding,
     });
 
   return edges.flatMap((edge, index) => {

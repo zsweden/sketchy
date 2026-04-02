@@ -152,6 +152,12 @@ describe('Toolbar', () => {
     );
   });
 
+  it('hides layout lab controls from the toolbar', () => {
+    render(<Toolbar />);
+
+    expect(screen.queryByRole('button', { name: 'Layout lab' })).not.toBeInTheDocument();
+  });
+
   it('reports force as the last-run algorithm for cyclic frameworks', async () => {
     const user = userEvent.setup();
     useDiagramStore.getState().setFramework('cld');
