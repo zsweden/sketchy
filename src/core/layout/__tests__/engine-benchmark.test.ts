@@ -7,7 +7,6 @@ import {
   elkRadialEngine,
   elkStressEngine,
 } from '../elk-engine';
-import { graphologyForceAtlas2Engine } from '../graphology-forceatlas2-engine';
 import { prepareLayoutEdges, prepareLayoutNodes } from '../layout-inputs';
 import { computeLayoutMetrics, scoreLayoutMetrics } from '../layout-metrics';
 import { getLayoutPerfFixtures } from '../../../test/layout-benchmark-fixtures';
@@ -42,7 +41,6 @@ const engines = [
   { id: 'elk-force', engine: elkForceEngine, useAutoLayout: false },
   { id: 'elk-stress', engine: elkStressEngine, useAutoLayout: false },
   { id: 'elk-radial', engine: elkRadialEngine, useAutoLayout: false },
-  { id: 'graphology-forceatlas2', engine: graphologyForceAtlas2Engine, useAutoLayout: false },
 ] as const;
 
 function getEngineBenchmarkFixtures() {
