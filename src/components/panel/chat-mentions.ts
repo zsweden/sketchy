@@ -31,9 +31,19 @@ function normalizeLabel(value: string | undefined): string {
   return value?.trim() ?? '';
 }
 
+function isMeaningfulMentionDisplayText(kind: ChatMentionKind, rawDisplayText: string): boolean {
+  const normalizedDisplayText = normalizeLabel(rawDisplayText);
+  if (!normalizedDisplayText) return false;
+  if (kind === 'edge' && normalizedDisplayText === '->') return false;
+  return true;
+}
+
 function getEdgeDisplayLabel(edge: DiagramEdge, nodesById: Map<string, DiagramNode>): string {
-  const sourceLabel = normalizeLabel(nodesById.get(edge.source)?.data.label) || 'node';
-  const targetLabel = normalizeLabel(nodesById.get(edge.target)?.data.label) || 'node';
+  const sourceLabel = normalizeLabel(nodesById.get(edge.source)?.data.label);
+  const targetLabel = normalizeLabel(nodesById.get(edge.target)?.data.label);
+  if (!sourceLabel && !targetLabel) return 'edge';
+  if (!sourceLabel) return `node -> ${targetLabel}`;
+  if (!targetLabel) return `${sourceLabel} -> node`;
   return `${sourceLabel} -> ${targetLabel}`;
 }
 
@@ -45,8 +55,7 @@ function resolveMentionDisplayText(
   edgesById: Map<string, DiagramEdge>,
   loopsById: Map<string, NamedCausalLoop>,
 ): string {
-  const explicitDisplayText = normalizeLabel(rawDisplayText);
-  if (explicitDisplayText) return rawDisplayText;
+  if (isMeaningfulMentionDisplayText(kind, rawDisplayText)) return rawDisplayText;
 
   switch (kind) {
     case 'node':
@@ -255,7 +264,10 @@ export function getStreamingChatMessageDisplayText(text: string): string {
     const remainder = text.slice(nextMentionStart);
     const mentionMatch = remainder.match(/^\[([^\]]*)\]\[(node|edge|loop):([^\]]+)\]/);
     if (mentionMatch) {
-      displayText += normalizeLabel(mentionMatch[1]) || mentionMatch[2];
+      const kind = mentionMatch[2] as ChatMentionKind;
+      displayText += isMeaningfulMentionDisplayText(kind, mentionMatch[1])
+        ? mentionMatch[1]
+        : kind;
       cursor = nextMentionStart + mentionMatch[0].length;
       continue;
     }

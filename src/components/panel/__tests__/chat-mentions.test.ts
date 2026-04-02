@@ -16,6 +16,7 @@ const nodes: DiagramNode[] = [
 
 const edges: DiagramEdge[] = [
   { id: 'e1', source: 'n1', target: 'n2' },
+  { id: 'e2', source: 'n3', target: 'n3' },
 ];
 
 const loops: NamedCausalLoop[] = [
@@ -123,6 +124,17 @@ describe('parseChatMessageMentions', () => {
     expect(displayText).toBe('There is one node.');
   });
 
+  it('falls back to edge when an edge mention is empty on both sides', () => {
+    const displayText = getChatMessageDisplayText(
+      'There is one [ -> ][edge:e2].',
+      nodes,
+      edges,
+      loops,
+    );
+
+    expect(displayText).toBe('There is one edge.');
+  });
+
   it('renders completed canonical mentions during streaming without raw IDs', () => {
     const displayText = getStreamingChatMessageDisplayText(
       'Added [Demand][node:n1] through [R1][loop:n1>n2].',
@@ -137,6 +149,14 @@ describe('parseChatMessageMentions', () => {
     );
 
     expect(displayText).toBe('Added node.');
+  });
+
+  it('falls back to edge for empty edge mentions during streaming', () => {
+    const displayText = getStreamingChatMessageDisplayText(
+      'Added [ -> ][edge:e2].',
+    );
+
+    expect(displayText).toBe('Added edge.');
   });
 
   it('hides trailing partial canonical mentions during streaming', () => {
