@@ -8,6 +8,7 @@ import {
   MousePointer2,
   Hand,
   Settings,
+  CircleOff,
 } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 import { useDiagramStore } from '../../store/diagram-store';
@@ -41,11 +42,14 @@ export default function Toolbar() {
   const toggleSidePanel = useUIStore((s) => s.toggleSidePanel);
   const requestFitView = useUIStore((s) => s.requestFitView);
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
+  const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
+  const selectedLoopId = useUIStore((s) => s.selectedLoopId);
   const interactionMode = useUIStore((s) => s.interactionMode);
   const setInteractionMode = useUIStore((s) => s.setInteractionMode);
 
   const nodes = useDiagramStore((s) => s.diagram.nodes);
   const selectedNodes = nodes.filter((n) => selectedNodeIds.includes(n.id));
+  const hasSelection = selectedNodeIds.length > 0 || selectedEdgeIds.length > 0 || selectedLoopId !== null;
   const canAlign = selectedNodes.length >= 2;
   const canDistribute = selectedNodes.length >= 3;
   const canOptimizeEdges = diagram.settings.edgeRoutingMode === 'fixed';
@@ -70,6 +74,10 @@ export default function Toolbar() {
     distributeNodesVertically(selectedNodeIds);
   }, [distributeNodesVertically, selectedNodeIds]);
 
+  const requestClearSelection = useUIStore((s) => s.requestClearSelection);
+  const handleClearSelection = useCallback(() => {
+    requestClearSelection();
+  }, [requestClearSelection]);
   const toggleSettings = useSettingsStore((s) => s.toggleSettings);
 
   const fileInputRef = useRef<HTMLInputElement>(null);

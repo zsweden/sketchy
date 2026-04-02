@@ -104,6 +104,13 @@ describe('validateEdge', () => {
     const result = validateEdge(edges, 'c', 'a', { allowCycles: true });
     expect(result.valid).toBe(true);
   });
+
+  it('rejects new edges when the resulting graph is already cyclic', () => {
+    const edges = [edge('1', 'a', 'b'), edge('2', 'b', 'c'), edge('3', 'c', 'a')];
+    const result = validateEdge(edges, 'd', 'e');
+    expect(result.valid).toBe(false);
+    expect(result.reason).toContain('cycle');
+  });
 });
 
 describe('validateGraph', () => {

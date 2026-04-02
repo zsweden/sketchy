@@ -60,6 +60,44 @@ export function wouldCreateCycle(
   return false;
 }
 
+function hasCycle(edges: DiagramEdge[]): boolean {
+  const adjacency = new Map<string, string[]>();
+  const visited = new Set<string>();
+  const visiting = new Set<string>();
+
+  for (const edge of edges) {
+    const neighbors = adjacency.get(edge.source);
+    if (neighbors) {
+      neighbors.push(edge.target);
+    } else {
+      adjacency.set(edge.source, [edge.target]);
+    }
+  }
+
+  const visit = (nodeId: string): boolean => {
+    if (visiting.has(nodeId)) return true;
+    if (visited.has(nodeId)) return false;
+
+    visiting.add(nodeId);
+    for (const neighbor of adjacency.get(nodeId) ?? []) {
+      if (visit(neighbor)) {
+        return true;
+      }
+    }
+    visiting.delete(nodeId);
+    visited.add(nodeId);
+    return false;
+  };
+
+  for (const nodeId of adjacency.keys()) {
+    if (visit(nodeId)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export interface ValidationResult {
   valid: boolean;
   reason?: string;
@@ -77,7 +115,7 @@ export function validateEdge(
   if (isDuplicateEdge(edges, source, target)) {
     return { valid: false, reason: 'Connection already exists' };
   }
-  if (!options.allowCycles && wouldCreateCycle(edges, source, target)) {
+  if (!options.allowCycles && hasCycle([...edges, { id: '__validation__', source, target }])) {
     return { valid: false, reason: 'Cannot connect: would create a cycle' };
   }
   return { valid: true };
