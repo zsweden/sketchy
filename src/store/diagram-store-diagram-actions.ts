@@ -35,6 +35,10 @@ export function createDiagramActions(
   | 'commitToHistory'
 > {
   const { get, history, moveNodes, pushHistorySnapshot, set, undoState, clearPendingNodeMove } = context;
+  const focusInitialNode = (nodeId?: string) => {
+    if (!nodeId) return;
+    useUIStore.getState().focusGraphObject({ kind: 'node', id: nodeId });
+  };
 
   return {
     batchApply: (mutations) => {
@@ -130,12 +134,14 @@ export function createDiagramActions(
       if (!framework) return;
 
       pushHistorySnapshot();
+      const diagram = createDiagramForFramework(framework);
 
       set({
-        diagram: createDiagramForFramework(framework),
+        diagram,
         framework,
         ...undoState,
       });
+      focusInitialNode(diagram.nodes[0]?.id);
     },
 
     updateSettings: (settings) => {
@@ -183,11 +189,13 @@ export function createDiagramActions(
 
     newDiagram: () => {
       pushHistorySnapshot();
+      const diagram = createDiagramForFramework(get().framework);
 
-      set((state) => ({
-        diagram: createDiagramForFramework(state.framework),
+      set({
+        diagram,
         ...undoState,
-      }));
+      });
+      focusInitialNode(diagram.nodes[0]?.id);
     },
 
     setDiagramName: (name) => {

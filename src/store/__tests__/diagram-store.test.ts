@@ -1,11 +1,27 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useDiagramStore } from '../diagram-store';
 import { getOptimizedEdgePlacements } from '../diagram-helpers';
+import { useUIStore } from '../ui-store';
 
 function resetStore() {
   useDiagramStore.getState().setFramework('crt');
   useDiagramStore.getState().newDiagram();
-  // Clear undo history by making a fresh start
+  useDiagramStore.setState((s) => ({ diagram: { ...s.diagram, nodes: [] } }));
+  useUIStore.setState({
+    selectedNodeIds: [],
+    selectedEdgeIds: [],
+    selectedLoopId: null,
+    contextMenu: null,
+    toasts: [],
+    sidePanelOpen: true,
+    chatPanelMode: 'shared',
+    interactionMode: 'select',
+    fitViewTrigger: 0,
+    clearSelectionTrigger: 0,
+    selectionSyncTrigger: 0,
+    viewportFocusTarget: null,
+    viewportFocusTrigger: 0,
+  });
 }
 
 function getPlacementSnapshot() {
@@ -29,6 +45,15 @@ function getStoredSnapshot() {
 describe('diagram store', () => {
   beforeEach(() => {
     resetStore();
+  });
+
+  it('focuses the initial node when creating a new diagram', () => {
+    useDiagramStore.getState().newDiagram();
+
+    const initialNodeId = useDiagramStore.getState().diagram.nodes[0]?.id;
+    expect(initialNodeId).toBeTruthy();
+    expect(useUIStore.getState().viewportFocusTarget).toEqual({ kind: 'node', id: initialNodeId! });
+    expect(useUIStore.getState().viewportFocusTrigger).toBe(1);
   });
 
   describe('addNode', () => {
