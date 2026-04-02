@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { findCausalLoops, labelCausalLoops, summarizeCausalLoops } from '../../core/graph/derived';
@@ -18,12 +18,32 @@ export default function SettingsPanel() {
   );
   const loopSummary = summarizeCausalLoops(loops);
   const nodeLabels = new Map(nodes.map((node) => [node.id, node.data.label || node.id]));
+  const [nameDraft, setNameDraft] = useState(diagramName);
 
   useEffect(() => {
     if (selectedLoopId && !loops.some((loop) => loop.id === selectedLoopId)) {
       setSelectedLoop(null);
     }
   }, [loops, selectedLoopId, setSelectedLoop]);
+
+  useEffect(() => {
+    // Keep the name draft aligned when the diagram name changes externally.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNameDraft(diagramName);
+  }, [diagramName]);
+
+  const handleNameBlur = useCallback(() => {
+    if (nameDraft !== diagramName) {
+      setDiagramName(nameDraft);
+    }
+  }, [diagramName, nameDraft, setDiagramName]);
+
+  const handleNameKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.currentTarget.blur();
+    }
+  }, []);
 
   return (
     <div className="section-stack">
@@ -35,8 +55,10 @@ export default function SettingsPanel() {
         <input
           className="input-text"
           type="text"
-          value={diagramName}
-          onChange={(e) => setDiagramName(e.target.value)}
+          value={nameDraft}
+          onChange={(e) => setNameDraft(e.target.value)}
+          onBlur={handleNameBlur}
+          onKeyDown={handleNameKeyDown}
           placeholder="Untitled Diagram"
           aria-label="Diagram name"
         />

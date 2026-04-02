@@ -47,6 +47,24 @@ describe('SidePanel', () => {
     ).toBeInTheDocument();
   });
 
+  it('keeps diagram name edits local until blur', async () => {
+    const user = userEvent.setup();
+    render(<SidePanel />);
+
+    const nameField = screen.getByLabelText('Diagram name');
+    const initialName = useDiagramStore.getState().diagram.name;
+    await user.clear(nameField);
+    await user.type(nameField, 'Systems Map');
+
+    expect(useDiagramStore.getState().diagram.name).toBe(initialName);
+
+    fireEvent.blur(nameField);
+
+    await waitFor(() => {
+      expect(useDiagramStore.getState().diagram.name).toBe('Systems Map');
+    });
+  });
+
   it('renders the node inspector and persists node edits', async () => {
     const user = userEvent.setup();
     const nodeId = useDiagramStore.getState().addNode({ x: 0, y: 0 });

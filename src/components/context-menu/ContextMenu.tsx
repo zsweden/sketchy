@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Plus, Trash2, Check, Lock, Unlock } from 'lucide-react';
+import { useReactFlow } from '@xyflow/react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { computeNodeDegrees } from '../../core/graph/derived';
@@ -30,6 +31,7 @@ const TEXT_COLORS = [
 export default function ContextMenu() {
   const contextMenu = useUIStore((s) => s.contextMenu);
   const closeContextMenu = useUIStore((s) => s.closeContextMenu);
+  const { screenToFlowPosition } = useReactFlow();
 
   const framework = useDiagramStore((s) => s.framework);
   const diagram = useDiagramStore((s) => s.diagram);
@@ -281,7 +283,7 @@ export default function ContextMenu() {
         <button
           className="context-menu-item"
           onClick={() => {
-            addNode({ x: 0, y: 0 });
+            addNode(screenToFlowPosition({ x: contextMenu.x, y: contextMenu.y }));
             closeContextMenu();
           }}
         >

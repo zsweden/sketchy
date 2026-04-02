@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { ReactFlowProvider } from '@xyflow/react';
 import ContextMenu from '../ContextMenu';
 import { useDiagramStore } from '../../../store/diagram-store';
 import { useUIStore } from '../../../store/ui-store';
@@ -21,13 +22,21 @@ function resetStores() {
   });
 }
 
+function renderContextMenu() {
+  return render(
+    <ReactFlowProvider>
+      <ContextMenu />
+    </ReactFlowProvider>,
+  );
+}
+
 describe('ContextMenu', () => {
   beforeEach(() => {
     resetStores();
   });
 
   it('renders nothing when context menu is not open', () => {
-    const { container } = render(<ContextMenu />);
+    const { container } = renderContextMenu();
     expect(container).toBeEmptyDOMElement();
   });
 
@@ -36,12 +45,13 @@ describe('ContextMenu', () => {
     useUIStore.setState({
       contextMenu: { x: 100, y: 200, nodeId: undefined, edgeId: undefined },
     });
-    render(<ContextMenu />);
+    renderContextMenu();
 
     expect(screen.getByText('Add node')).toBeInTheDocument();
 
     await user.click(screen.getByText('Add node'));
     expect(useDiagramStore.getState().diagram.nodes).toHaveLength(1);
+    expect(useDiagramStore.getState().diagram.nodes[0]?.position).toEqual({ x: 100, y: 200 });
     expect(useUIStore.getState().contextMenu).toBeNull();
   });
 
@@ -58,13 +68,13 @@ describe('ContextMenu', () => {
     });
 
     it('shows tag options for CRT framework', () => {
-      render(<ContextMenu />);
+      renderContextMenu();
       expect(screen.getByText('Undesirable Effect')).toBeInTheDocument();
     });
 
     it('applies a tag', async () => {
       const user = userEvent.setup();
-      render(<ContextMenu />);
+      renderContextMenu();
 
       await user.click(screen.getByText('Undesirable Effect'));
       expect(
@@ -76,7 +86,7 @@ describe('ContextMenu', () => {
     it('removes a tag when already applied', async () => {
       const user = userEvent.setup();
       useDiagramStore.getState().updateNodeTags(nodeId, ['ude']);
-      render(<ContextMenu />);
+      renderContextMenu();
 
       await user.click(screen.getByText('Undesirable Effect'));
       expect(
@@ -86,7 +96,7 @@ describe('ContextMenu', () => {
 
     it('applies a background color', async () => {
       const user = userEvent.setup();
-      render(<ContextMenu />);
+      renderContextMenu();
 
       // Pink only exists in background colors
       const pinkSwatch = screen.getByTitle('Pink');
@@ -100,7 +110,7 @@ describe('ContextMenu', () => {
 
     it('applies a text color', async () => {
       const user = userEvent.setup();
-      render(<ContextMenu />);
+      renderContextMenu();
 
       // White only exists in text colors
       const whiteSwatch = screen.getByTitle('White');
@@ -113,7 +123,7 @@ describe('ContextMenu', () => {
 
     it('toggles node lock', async () => {
       const user = userEvent.setup();
-      render(<ContextMenu />);
+      renderContextMenu();
 
       await user.click(screen.getByText('Unlocked'));
       expect(
@@ -123,7 +133,7 @@ describe('ContextMenu', () => {
 
     it('deletes the node', async () => {
       const user = userEvent.setup();
-      render(<ContextMenu />);
+      renderContextMenu();
 
       await user.click(screen.getByText('Delete'));
       expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
@@ -141,7 +151,7 @@ describe('ContextMenu', () => {
       useUIStore.setState({
         contextMenu: { x: 100, y: 200, nodeId, edgeId: undefined },
       });
-      render(<ContextMenu />);
+      renderContextMenu();
 
       const junctionButton = screen.getByText(/Junction:/);
       expect(junctionButton).toBeInTheDocument();
@@ -152,7 +162,7 @@ describe('ContextMenu', () => {
     });
 
     it('does not show junction toggle when indegree < 2', () => {
-      render(<ContextMenu />);
+      renderContextMenu();
       expect(screen.queryByText(/Junction:/)).not.toBeInTheDocument();
     });
   });
@@ -173,7 +183,7 @@ describe('ContextMenu', () => {
     });
 
     it('shows confidence options', () => {
-      render(<ContextMenu />);
+      renderContextMenu();
       expect(screen.getByText('High')).toBeInTheDocument();
       expect(screen.getByText('Medium')).toBeInTheDocument();
       expect(screen.getByText('Low')).toBeInTheDocument();
@@ -181,7 +191,7 @@ describe('ContextMenu', () => {
 
     it('changes edge confidence', async () => {
       const user = userEvent.setup();
-      render(<ContextMenu />);
+      renderContextMenu();
 
       await user.click(screen.getByText('Low'));
       expect(useDiagramStore.getState().diagram.edges[0].confidence).toBe('low');
@@ -190,14 +200,14 @@ describe('ContextMenu', () => {
 
     it('deletes the edge', async () => {
       const user = userEvent.setup();
-      render(<ContextMenu />);
+      renderContextMenu();
 
       await user.click(screen.getByText('Delete connection'));
       expect(useDiagramStore.getState().diagram.edges).toHaveLength(0);
     });
 
     it('does not show polarity in CRT (non-CLD framework)', () => {
-      render(<ContextMenu />);
+      renderContextMenu();
       expect(screen.queryByText('Polarity')).not.toBeInTheDocument();
       expect(screen.queryByText(/Delay/)).not.toBeInTheDocument();
     });
@@ -213,7 +223,7 @@ describe('ContextMenu', () => {
       useUIStore.setState({
         contextMenu: { x: 100, y: 200, nodeId: undefined, edgeId: cldEdgeId },
       });
-      render(<ContextMenu />);
+      renderContextMenu();
 
       expect(screen.getByText('Polarity')).toBeInTheDocument();
       expect(screen.getByText('Positive (+)')).toBeInTheDocument();
@@ -234,7 +244,7 @@ describe('ContextMenu', () => {
       useUIStore.setState({
         contextMenu: { x: 100, y: 200, nodeId: undefined, edgeId: cldEdgeId },
       });
-      render(<ContextMenu />);
+      renderContextMenu();
 
       await user.click(screen.getByText('Add Delay'));
       expect(useDiagramStore.getState().diagram.edges[0].delay).toBe(true);
@@ -248,7 +258,7 @@ describe('ContextMenu', () => {
     useUIStore.setState({
       contextMenu: { x: 100, y: 200, nodeId, edgeId: undefined },
     });
-    render(<ContextMenu />);
+    renderContextMenu();
 
     expect(screen.getByText('Delete')).toBeInTheDocument();
     fireEvent.keyDown(document, { key: 'Escape' });
@@ -260,7 +270,7 @@ describe('ContextMenu', () => {
     useUIStore.setState({
       contextMenu: { x: 100, y: 200, nodeId, edgeId: undefined },
     });
-    render(<ContextMenu />);
+    renderContextMenu();
 
     fireEvent.pointerDown(document.body);
     expect(useUIStore.getState().contextMenu).toBeNull();
