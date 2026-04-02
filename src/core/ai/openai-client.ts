@@ -219,7 +219,7 @@ function buildSystemPrompt(diagram: Diagram, framework: Framework): string {
   const edgeVerb = framework.edgeLabel ?? 'causes';
 
   const tagList = framework.nodeTags.length > 0
-    ? framework.nodeTags.map((t) => `${t.id} (${t.name})`).join(', ')
+    ? framework.nodeTags.map((t) => `${t.id} (${t.name} — ${t.description})`).join(', ')
     : 'none';
   const graphRule = framework.allowsCycles
     ? 'Cycles and feedback loops are allowed when they reflect real system behavior.'
@@ -237,6 +237,14 @@ function buildSystemPrompt(diagram: Diagram, framework: Framework): string {
     ? 'When loops are present, refer to them by the provided R#/B# names, explain whether each loop is reinforcing or balancing from its signed edges, and suggest flywheel rewrites or simplifications when the structure is overly redundant.'
     : 'Focus on causes, dependencies, and missing links rather than feedback loops.';
 
+  const confidenceRule = framework.supportsEdgePolarity
+    ? '\n- Edges can also use confidence to express uncertainty: high (default, solid), medium (dashed), or low (dotted).'
+    : '';
+  const junctionRule = framework.supportsJunctions
+    ? "\n- When multiple edges point to the same target, the junction type determines how causes combine: 'and' means all sources are needed together, 'or' (default) means each source independently causes the target."
+    : '';
+  const loopSection = loopAnalysis ? `\n${loopAnalysis}\n` : '';
+
   return `You are an AI assistant for Sketchy, a thinking-frameworks diagram editor.
 
 The user is working on a "${framework.name}" diagram called "${diagram.name}".
@@ -248,12 +256,12 @@ ${nodesDesc || '  (none)'}
 
 Edges (source ${edgeVerb} target):
 ${edgesDesc || '  (none)'}
-
-${loopAnalysis}
-
+${loopSection}
 You can either:
 1. Answer questions about the diagram — analyze the structure, identify issues, suggest improvements.
 2. Make changes by calling the modify_diagram tool — add/update/remove nodes and edges.
+
+Only modify what the user asks for. Do not add, remove, or restructure parts of the diagram the user didn't mention.
 
 Rules for modifications:
 - ${graphRule}
@@ -261,19 +269,12 @@ Rules for modifications:
 - When adding nodes, use IDs like "new_1", "new_2", etc.
 - When referencing existing nodes, use their exact IDs.
 - Available tags: ${tagList}.
-- Nodes may optionally set color and textColor using hex codes when the user asks for styling.
-- ${polarityRule}
-- Edges can also use confidence to express uncertainty: high (default, solid), medium (dashed), or low (dotted).
+- Do NOT set color or textColor on nodes unless the user explicitly asks for colors or styling. Leave them unset by default.${junctionRule}
+- ${polarityRule}${confidenceRule}
 - ${delayRule}
 - ${loopReasoningRule}
 - Edges can have notes — use them to explain the causal reasoning behind the connection.
-- When mentioning an existing node in prose, use exactly this format: [Current label][node:<node-id>].
-- When mentioning an existing edge in prose, use exactly this format: [Current Source -> Current Target][edge:<edge-id>].
-- When mentioning an existing loop in prose, use exactly this format: [R1][loop:<loop-id>] or [B1][loop:<loop-id>] using the loop labels provided above.
-- Examples: [Demand][node:n1], [Demand -> Growth][edge:e1], [R1][loop:n1>n2>n3].
-- Use only the exact two-bracket format above for typed mentions. Do not use legacy forms like Demand[node:n1] or R1[loop:n1>n2>n3].
-- Never put punctuation inside the kind:id bracket.
-- If you cannot form a valid typed mention, fall back to plain text rather than inventing IDs.
+- When mentioning diagram elements in prose, use this format: [Label][kind:id]. Examples: [Demand][node:n1], [Demand -> Growth][edge:e1], [R1][loop:n1>n2>n3]. Never put punctuation inside the kind:id bracket. If you cannot form a valid mention, fall back to plain text rather than inventing IDs.
 - Reply in plain text only. Do not use Markdown formatting such as headings, bullet lists, tables, bold, or code fences.
 - Always explain your reasoning.`;
 }

@@ -436,11 +436,11 @@ describe('buildSystemPrompt framework-agnostic', () => {
     });
 
     expect(systemContent).toContain('Current Reality Tree');
-    expect(systemContent).toContain('ude (Undesirable Effect)');
+    expect(systemContent).toContain('ude (Undesirable Effect — Bad thing)');
     expect(systemContent).toContain('source causes target');
-    expect(systemContent).toContain('[Current label][node:<node-id>]');
-    expect(systemContent).toContain('[Current Source -> Current Target][edge:<edge-id>]');
-    expect(systemContent).toContain('[R1][loop:<loop-id>]');
+    expect(systemContent).toContain('[Demand][node:n1]');
+    expect(systemContent).toContain('[Demand -> Growth][edge:e1]');
+    expect(systemContent).toContain('[R1][loop:n1>n2>n3]');
     expect(systemContent).toContain('Reply in plain text only. Do not use Markdown formatting');
     vi.unstubAllGlobals();
   });
@@ -470,11 +470,11 @@ describe('buildSystemPrompt framework-agnostic', () => {
     });
 
     expect(systemContent).toContain('Future Reality Tree');
-    expect(systemContent).toContain('injection (Injection)');
-    expect(systemContent).toContain('de (Desirable Effect)');
+    expect(systemContent).toContain('injection (Injection — A change)');
+    expect(systemContent).toContain('de (Desirable Effect — Good thing)');
     expect(systemContent).toContain('source leads to target');
     // "Available tags" line should NOT mention UDE
-    expect(systemContent).not.toContain('ude (Undesirable Effect)');
+    expect(systemContent).not.toContain('ude (Undesirable Effect');
     vi.unstubAllGlobals();
   });
 
