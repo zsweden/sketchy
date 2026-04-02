@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Handle, Position, useConnection, type NodeProps } from '@xyflow/react';
-import { useDiagramStore } from '../../store/diagram-store';
+import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
 import { getDerivedIndicators } from '../../core/graph/derived';
 import {
@@ -74,7 +74,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
 
   const commitNodeText = useDiagramStore((s) => s.commitNodeText);
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
-  const framework = useDiagramStore((s) => s.framework);
+  const framework = useFramework();
   const isAiModified = useChatStore((s) => s.aiModifiedNodeIds.has(id));
   const connection = useConnection();
   const isConnectionInProgress = connection.inProgress;

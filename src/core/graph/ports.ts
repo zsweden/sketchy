@@ -71,32 +71,6 @@ function opposite(side: CardinalHandleSide): CardinalHandleSide {
   }
 }
 
-export function getOppositeHandleSide(side: HandleSide): HandleSide {
-  switch (side) {
-    case 'top':
-    case 'right':
-    case 'bottom':
-    case 'left':
-      return opposite(side);
-    case 'topleft-top':
-      return 'bottomleft-bottom';
-    case 'topleft-left':
-      return 'topright-right';
-    case 'topright-top':
-      return 'bottomright-bottom';
-    case 'topright-right':
-      return 'topleft-left';
-    case 'bottomright-right':
-      return 'bottomleft-left';
-    case 'bottomright-bottom':
-      return 'topright-top';
-    case 'bottomleft-bottom':
-      return 'topleft-top';
-    case 'bottomleft-left':
-      return 'bottomright-right';
-  }
-}
-
 export function isHorizontalCardinalSide(side: CardinalHandleSide): boolean {
   return side === 'left' || side === 'right';
 }
@@ -174,12 +148,6 @@ export function getEdgeHandlePlacement(
     sourceSide: getDirectionalHandleSide(sourceBaseSide, dx, dy),
     targetSide: getDirectionalHandleSide(targetBaseSide, -dx, -dy),
   };
-}
-
-export function getEffectiveHandleSide(side: HandleSide, dx: number, dy: number): CardinalHandleSide {
-  void dx;
-  void dy;
-  return getBaseHandleSide(side);
 }
 
 export function getSourceHandleId(side: HandleSide): string {

@@ -182,15 +182,6 @@ export function getChatMessageDisplayText(
   );
 }
 
-export function countMalformedCanonicalMentions(
-  text: string,
-  nodes: DiagramNode[],
-  edges: DiagramEdge[],
-  loops: NamedCausalLoop[],
-): number {
-  return parseChatMessageMentionsDetailed(text, nodes, edges, loops).malformedMentions.length;
-}
-
 export function getNormalizedChatMessageTextFromSegments(segments: ParsedChatSegment[]): string {
   return segments
     .map((segment) => segment.type === 'mention' ? segment.rawText : segment.text)

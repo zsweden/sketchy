@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Lock, Unlock } from 'lucide-react';
 import type { DiagramNode } from '../../core/types';
-import { useDiagramStore } from '../../store/diagram-store';
+import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
 import FormField from '../form/FormField';
 import ButtonGroup from '../form/ButtonGroup';
@@ -22,7 +22,7 @@ export default function NodePanel({ node }: Props) {
   const [text, setText] = useState(node.data.label);
   const [notes, setNotes] = useState(node.data.notes ?? '');
 
-  const framework = useDiagramStore((s) => s.framework);
+  const framework = useFramework();
   const nodes = useDiagramStore((s) => s.diagram.nodes);
   const edges = useDiagramStore((s) => s.diagram.edges);
   const commitNodeText = useDiagramStore((s) => s.commitNodeText);

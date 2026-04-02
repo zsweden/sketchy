@@ -1,10 +1,11 @@
 import { create } from 'zustand';
-import { createDiagramForFramework } from './diagram-helpers';
+import { createDiagramForFramework, resolveFramework } from './diagram-helpers';
 import { createDiagramStoreContext } from './diagram-store-context';
 import { createDiagramActions, initialFramework } from './diagram-store-diagram-actions';
 import { createDiagramEdgeActions } from './diagram-store-edge-actions';
 import { createDiagramNodeActions } from './diagram-store-node-actions';
 import type { DiagramState } from './diagram-store-types';
+import type { Framework } from '../core/framework-types';
 
 export type { BatchMutations, DiagramState } from './diagram-store-types';
 
@@ -13,7 +14,6 @@ export const useDiagramStore = create<DiagramState>((set, get) => {
 
   return {
     diagram: createDiagramForFramework(initialFramework),
-    framework: initialFramework,
     ...createDiagramNodeActions(context),
     ...createDiagramEdgeActions(context),
     ...createDiagramActions(context),
@@ -21,6 +21,11 @@ export const useDiagramStore = create<DiagramState>((set, get) => {
     canRedo: false,
   };
 });
+
+/** Selector hook — derives framework from diagram.frameworkId via the registry. */
+export function useFramework(): Framework {
+  return useDiagramStore((s) => resolveFramework(s.diagram.frameworkId));
+}
 
 if (import.meta.env.DEV && typeof window !== 'undefined') {
   (window as unknown as Record<string, unknown>).__diagramStore = useDiagramStore;

@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { MarkerType, type Edge, type Node } from '@xyflow/react';
 import { DEFAULT_EDGE_ROUTING_POLICY } from '../core/edge-routing';
-import { useDiagramStore } from '../store/diagram-store';
+import { useDiagramStore, useFramework } from '../store/diagram-store';
 import { useUIStore } from '../store/ui-store';
 import { useSettingsStore } from '../store/settings-store';
 import { getSourceHandleId, getTargetHandleId, type EdgeHandlePlacement } from '../core/graph/ports';
@@ -23,9 +23,11 @@ export function useRFNodeEdgeBuilder(
   degreesMap: Map<string, NodeDegrees>,
   freezeDynamicRouting = false,
 ): BuilderResult {
-  const diagram = useDiagramStore((s) => s.diagram);
-  const framework = useDiagramStore((s) => s.framework);
-  const edgeRoutingMode = useDiagramStore((s) => s.diagram.settings.edgeRoutingMode);
+  const nodes = useDiagramStore((s) => s.diagram.nodes);
+  const edges = useDiagramStore((s) => s.diagram.edges);
+  const settings = useDiagramStore((s) => s.diagram.settings);
+  const framework = useFramework();
+  const edgeRoutingMode = settings.edgeRoutingMode;
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
   const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
   const themeId = useSettingsStore((s) => s.theme);
@@ -48,20 +50,20 @@ export function useRFNodeEdgeBuilder(
       }
 
       const placements = getOptimizedEdgePlacements(
-        diagram.edges,
-        diagram.nodes,
-        diagram.settings,
+        edges,
+        nodes,
+        settings,
         DEFAULT_EDGE_ROUTING_POLICY,
       );
       cachedOptimizedPlacements.current = placements;
       return placements;
     },
-    [diagram.edges, diagram.nodes, diagram.settings, edgeRoutingMode, freezeDynamicRouting],
+    [edges, nodes, settings, edgeRoutingMode, freezeDynamicRouting],
   );
 
   const rfNodes: Node[] = useMemo(
     () =>
-      diagram.nodes.map((n) => {
+      nodes.map((n) => {
         let highlightState: 'highlighted' | 'dimmed' | 'none' = 'none';
 
         if (highlightSets) {
@@ -93,15 +95,15 @@ export function useRFNodeEdgeBuilder(
           },
         };
       }),
-    [diagram.nodes, degreesMap, highlightSets, selectedLoop, selectedEdgeIds, selectedNodeIds],
+    [nodes, degreesMap, highlightSets, selectedLoop, selectedEdgeIds, selectedNodeIds],
   );
 
   const rfEdges: Edge[] = useMemo(
     () => {
-      return diagram.edges.map((e) => {
+      return edges.map((e) => {
         const { sourceSide, targetSide } = edgeRoutingMode === 'fixed'
-          ? getStoredOrAutomaticEdgeSides(e, diagram.nodes, diagram.settings)
-          : optimizedPlacements.get(e.id) ?? getAutomaticEdgeSides(e.source, e.target, diagram.nodes, diagram.settings);
+          ? getStoredOrAutomaticEdgeSides(e, nodes, settings)
+          : optimizedPlacements.get(e.id) ?? getAutomaticEdgeSides(e.source, e.target, nodes, settings);
 
         return {
           id: e.id,
@@ -145,7 +147,7 @@ export function useRFNodeEdgeBuilder(
         };
       });
     },
-    [diagram.edges, diagram.nodes, diagram.settings, edgeRoutingMode, framework, highlightSets, selectedLoop, selectedEdgeIds, activeTheme, optimizedPlacements],
+    [edges, nodes, settings, edgeRoutingMode, framework, highlightSets, selectedLoop, selectedEdgeIds, activeTheme, optimizedPlacements],
   );
 
   return { rfNodes, rfEdges, defaultEdgeOptions, activeTheme };

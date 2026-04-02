@@ -4,6 +4,7 @@ import {
   getDefaultEdgeFields,
   resolveEdgeSides,
   captureOptimizedEdgeSides,
+  resolveFramework,
 } from './diagram-helpers';
 import type { DiagramEdge } from '../core/types';
 import type { DiagramState, DiagramStoreContext } from './diagram-store-types';
@@ -58,8 +59,9 @@ export function createDiagramEdgeActions(
         return { success: true, reason: 'Edge moved' };
       }
 
+      const framework = resolveFramework(state.diagram.frameworkId);
       const result = validateEdge(state.diagram.edges, source, target, {
-        allowCycles: state.framework.allowsCycles,
+        allowCycles: framework.allowsCycles,
       });
 
       if (!result.valid) {
@@ -75,7 +77,7 @@ export function createDiagramEdgeActions(
         ...(state.diagram.settings.edgeRoutingMode === 'fixed'
           ? resolveEdgeSides(source, target, state.diagram.nodes, state.diagram.settings, handles)
           : {}),
-        ...getDefaultEdgeFields(state.framework),
+        ...getDefaultEdgeFields(framework),
       };
 
       const targetIncomingCount =
@@ -83,7 +85,7 @@ export function createDiagramEdgeActions(
 
       set((storeState) => {
         let nodes = storeState.diagram.nodes;
-        if (state.framework.supportsJunctions && targetIncomingCount === 2) {
+        if (framework.supportsJunctions && targetIncomingCount === 2) {
           nodes = nodes.map((node) =>
             node.id === target ? { ...node, data: { ...node.data, junctionType: 'or' as const } } : node,
           );

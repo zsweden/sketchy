@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDiagramStore } from '../../store/diagram-store';
+import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { findCausalLoops, labelCausalLoops, summarizeCausalLoops } from '../../core/graph/derived';
 import LoopCard from '../form/LoopCard';
@@ -11,7 +11,7 @@ export default function SettingsPanel() {
   const setDiagramName = useDiagramStore((s) => s.setDiagramName);
   const selectedLoopId = useUIStore((s) => s.selectedLoopId);
   const setSelectedLoop = useUIStore((s) => s.setSelectedLoop);
-  const framework = useDiagramStore((s) => s.framework);
+  const framework = useFramework();
   const loops = useMemo(
     () => (framework.allowsCycles ? labelCausalLoops(findCausalLoops(edges)) : []),
     [edges, framework.allowsCycles],

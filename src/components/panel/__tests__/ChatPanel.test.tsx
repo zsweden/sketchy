@@ -5,6 +5,7 @@ import ChatPanel from '../ChatPanel';
 import { findCausalLoops, labelCausalLoops } from '../../../core/graph/derived';
 import { useChatStore } from '../../../store/chat-store';
 import { useDiagramStore } from '../../../store/diagram-store';
+import { resolveFramework } from '../../../store/diagram-helpers';
 import { useSettingsStore } from '../../../store/settings-store';
 import { useUIStore } from '../../../store/ui-store';
 import { buildChatMessageRenderData } from '../../../core/chat/mentions';
@@ -55,7 +56,8 @@ function resetStore() {
 }
 
 function createAssistantMessage(id: string, content: string) {
-  const { diagram, framework } = useDiagramStore.getState();
+  const { diagram } = useDiagramStore.getState();
+  const framework = resolveFramework(diagram.frameworkId);
   const loops = framework.allowsCycles ? labelCausalLoops(findCausalLoops(diagram.edges)) : [];
   const renderData = buildChatMessageRenderData(content, diagram.nodes, diagram.edges, loops);
 

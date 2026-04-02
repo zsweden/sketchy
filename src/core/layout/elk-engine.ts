@@ -103,7 +103,6 @@ function createElkEngine(algorithm: ElkAlgorithm): LayoutEngine {
   };
 }
 
-export const elkLayeredEngine = createElkEngine('layered');
 export const elkForceEngine = createElkEngine('force');
 export const elkStressEngine = createElkEngine('stress');
 export const elkRadialEngine = createElkEngine('radial');

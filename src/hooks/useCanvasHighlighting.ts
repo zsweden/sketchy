@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useUIStore } from '../store/ui-store';
-import { useDiagramStore } from '../store/diagram-store';
+import { useDiagramStore, useFramework } from '../store/diagram-store';
 import {
   computeNodeDegrees,
   findCausalLoops,
@@ -20,7 +20,7 @@ interface CanvasHighlighting {
 
 export function useCanvasHighlighting(): CanvasHighlighting {
   const edges = useDiagramStore((s) => s.diagram.edges);
-  const framework = useDiagramStore((s) => s.framework);
+  const framework = useFramework();
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
   const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
   const selectedLoopId = useUIStore((s) => s.selectedLoopId);

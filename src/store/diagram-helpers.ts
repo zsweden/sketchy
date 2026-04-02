@@ -30,6 +30,13 @@ export function getDefaultFramework(): Framework {
   return fw;
 }
 
+const _defaultFramework = getDefaultFramework();
+
+/** Resolve framework from a frameworkId, falling back to the default. */
+export function resolveFramework(frameworkId: string): Framework {
+  return getFramework(frameworkId) ?? _defaultFramework;
+}
+
 export function createDiagramForFramework(framework: Framework): Diagram {
   const diagram = createEmptyDiagram(framework.id);
   return {

@@ -5,6 +5,7 @@ import type { ChatMessage, DiagramModification } from '../core/ai/openai-client'
 import { streamChatMessage } from '../core/ai/openai-client';
 import { useSettingsStore } from './settings-store';
 import { useDiagramStore } from './diagram-store';
+import { resolveFramework } from './diagram-helpers';
 import { reportError } from '../core/monitoring/error-logging';
 import { findCausalLoops, labelCausalLoops } from '../core/graph/derived';
 import type { ParsedChatSegment } from '../core/chat/mentions';
@@ -211,7 +212,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       streamingContent: '',
     }));
 
-    const { diagram, framework } = useDiagramStore.getState();
+    const { diagram } = useDiagramStore.getState();
+    const framework = resolveFramework(diagram.frameworkId);
     const requestId = activeRequestId + 1;
     const requestDiagramId = diagram.id;
     activeRequestId = requestId;

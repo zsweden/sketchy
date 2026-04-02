@@ -14,68 +14,31 @@ import {
   type Node,
   applyNodeChanges,
   applyEdgeChanges,
-  type Rect,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import EntityNode from './EntityNode';
-import { useDiagramStore } from '../../store/diagram-store';
+import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { FIT_VIEW_OPTIONS } from '../../core/layout/fit-view-options';
-import { findCausalLoops, getDerivedIndicators } from '../../core/graph/derived';
-import { GRID_SIZE, DEFAULT_NODE_WIDTH, DEFAULT_NODE_HEIGHT } from '../../constants/layout';
+import { getDerivedIndicators } from '../../core/graph/derived';
+import { DEFAULT_NODE_WIDTH, DEFAULT_NODE_HEIGHT, snapNodePositionToGrid } from '../../constants/layout';
 import { useCanvasHighlighting } from '../../hooks/useCanvasHighlighting';
 import { useRFNodeEdgeBuilder } from '../../hooks/useRFNodeEdgeBuilder';
-import type { GraphObjectTarget } from '../../store/ui-store';
+import { useViewportFocus } from '../../hooks/useViewportFocus';
+import { useTouchGestures } from '../../hooks/useTouchGestures';
 
 const nodeTypes = { entity: EntityNode };
 
-function unionRects(rects: Rect[]): Rect | null {
-  if (rects.length === 0) return null;
-
-  const minX = Math.min(...rects.map((rect) => rect.x));
-  const minY = Math.min(...rects.map((rect) => rect.y));
-  const maxX = Math.max(...rects.map((rect) => rect.x + rect.width));
-  const maxY = Math.max(...rects.map((rect) => rect.y + rect.height));
-
-  return {
-    x: minX,
-    y: minY,
-    width: maxX - minX,
-    height: maxY - minY,
-  };
-}
-
-function rectsIntersect(a: Rect, b: Rect): boolean {
-  return (
-    a.x < b.x + b.width
-    && a.x + a.width > b.x
-    && a.y < b.y + b.height
-    && a.y + a.height > b.y
-  );
-}
-
-function rectContains(outer: Rect, inner: Rect): boolean {
-  return (
-    inner.x >= outer.x
-    && inner.y >= outer.y
-    && inner.x + inner.width <= outer.x + outer.width
-    && inner.y + inner.height <= outer.y + outer.height
-  );
-}
-
 export default function DiagramCanvas() {
-  const TOUCH_DOUBLE_TAP_MS = 320;
-  const TOUCH_LONG_PRESS_MS = 550;
-  const TOUCH_MOVE_TOLERANCE_PX = 14;
-  const { screenToFlowPosition, fitView, getViewport, getInternalNode, setCenter, viewportInitialized } = useReactFlow();
+  const { screenToFlowPosition } = useReactFlow();
 
-  const diagram = useDiagramStore((s) => s.diagram);
+  const showGrid = useDiagramStore((s) => s.diagram.settings.showGrid);
   const addNode = useDiagramStore((s) => s.addNode);
   const addEdgeStore = useDiagramStore((s) => s.addEdge);
   const batchApply = useDiagramStore((s) => s.batchApply);
   const dragNodes = useDiagramStore((s) => s.dragNodes);
   const commitDraggedNodes = useDiagramStore((s) => s.commitDraggedNodes);
-  const framework = useDiagramStore((s) => s.framework);
+  const framework = useFramework();
   const snapToGrid = useDiagramStore((s) => s.diagram.settings.snapToGrid);
   const updateSettings = useDiagramStore((s) => s.updateSettings);
 
@@ -102,36 +65,12 @@ export default function DiagramCanvas() {
   const [localNodes, setLocalNodes] = useState<Node[]>(rfNodes);
   const [localEdges, setLocalEdges] = useState<Edge[]>(rfEdges);
   const canvasRef = useRef<HTMLDivElement>(null);
-  const touchGestureRef = useRef<{
-    pointerId: number;
-    startX: number;
-    startY: number;
-    clientX: number;
-    clientY: number;
-    moved: boolean;
-    longPressTriggered: boolean;
-    nodeId?: string;
-    onPane: boolean;
-  } | null>(null);
-  const longPressTimerRef = useRef<number | null>(null);
-  const lastTapRef = useRef<{
-    timestamp: number;
-    x: number;
-    y: number;
-    onPane: boolean;
-  } | null>(null);
-  const ignoreNextPaneClickRef = useRef(false);
-  const suppressSelectionUntilRef = useRef(0);
   const pendingRemovedNodeIdsRef = useRef<Set<string>>(new Set());
   const pendingRemovedEdgeIdsRef = useRef<Set<string>>(new Set());
   const removalFlushScheduledRef = useRef(false);
 
-  const clearLongPressTimer = useCallback(() => {
-    if (longPressTimerRef.current != null) {
-      window.clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-  }, []);
+  // Viewport focus & fit-view (extracted hook)
+  const { tryFitViewOnDimensions } = useViewportFocus(canvasRef);
 
   // Sync store -> local when diagram DATA changes (preserving RF selection)
   useEffect(() => {
@@ -192,100 +131,29 @@ export default function DiagramCanvas() {
     queueMicrotask(flushPendingRemovals);
   }, [flushPendingRemovals]);
 
-  const viewportFocusTrigger = useUIStore((s) => s.viewportFocusTrigger);
-  useEffect(() => {
-    if (viewportFocusTrigger === 0 || !viewportInitialized) return;
+  const clearCanvasSelection = useCallback(() => {
+    setSelectedLoop(null);
+    setSelectedNodes([]);
+    setSelectedEdges([]);
+    setLocalNodes((nds) => nds.map((node) => ({ ...node, selected: false })));
+    setLocalEdges((eds) => eds.map((edge) => ({ ...edge, selected: false })));
+  }, [setSelectedEdges, setSelectedLoop, setSelectedNodes]);
 
-    const target = useUIStore.getState().viewportFocusTarget;
-    if (!target) return;
-
-    const currentDiagram = useDiagramStore.getState().diagram;
-    const getNodeRect = (nodeId: string): Rect | null => {
-      const node = currentDiagram.nodes.find((candidate) => candidate.id === nodeId);
-      if (!node) return null;
-
-      const internalNode = getInternalNode(nodeId);
-      const width = internalNode?.measured?.width ?? internalNode?.width ?? DEFAULT_NODE_WIDTH;
-      const height = internalNode?.measured?.height ?? internalNode?.height ?? DEFAULT_NODE_HEIGHT;
-
-      return {
-        x: node.position.x,
-        y: node.position.y,
-        width,
-        height,
-      };
-    };
-
-    const getObjectRect = (focusTarget: GraphObjectTarget): Rect | null => {
-      if (focusTarget.kind === 'node') {
-        return getNodeRect(focusTarget.id);
-      }
-
-      if (focusTarget.kind === 'edge') {
-        const edge = currentDiagram.edges.find((candidate) => candidate.id === focusTarget.id);
-        if (!edge) return null;
-
-        const rects = [getNodeRect(edge.source), getNodeRect(edge.target)]
-          .filter((rect): rect is Rect => rect != null);
-        return unionRects(rects);
-      }
-
-      const loop = findCausalLoops(currentDiagram.edges)
-        .find((candidate) => candidate.id === focusTarget.id);
-      if (!loop) return null;
-
-      const rects = loop.nodeIds
-        .map((nodeId) => getNodeRect(nodeId))
-        .filter((rect): rect is Rect => rect != null);
-      return unionRects(rects);
-    };
-
-    const targetRect = getObjectRect(target);
-    if (!targetRect) return;
-
-    const canvasBounds = canvasRef.current?.getBoundingClientRect();
-    const viewportWidth = canvasBounds?.width || canvasRef.current?.clientWidth || window.innerWidth;
-    const viewportHeight = canvasBounds?.height || canvasRef.current?.clientHeight || window.innerHeight;
-    if (viewportWidth <= 0 || viewportHeight <= 0) return;
-
-    const viewport = getViewport();
-    const visibleRect: Rect = {
-      x: -viewport.x / viewport.zoom,
-      y: -viewport.y / viewport.zoom,
-      width: viewportWidth / viewport.zoom,
-      height: viewportHeight / viewport.zoom,
-    };
-
-    const isVisible = target.kind === 'loop'
-      ? rectContains(visibleRect, targetRect)
-      : rectsIntersect(targetRect, visibleRect);
-    if (isVisible) return;
-
-    const centerX = targetRect.x + targetRect.width / 2;
-    const centerY = targetRect.y + targetRect.height / 2;
-    void setCenter(centerX, centerY, { zoom: viewport.zoom });
-  }, [getInternalNode, getViewport, setCenter, viewportFocusTrigger, viewportInitialized]);
-
-  // Fit view when requested
-  const fitViewTrigger = useUIStore((s) => s.fitViewTrigger);
-  const pendingFitView = useRef(false);
-  useEffect(() => {
-    if (fitViewTrigger === 0) return;
-    pendingFitView.current = true;
-    let frame2 = 0;
-    const frame1 = requestAnimationFrame(() => {
-      frame2 = requestAnimationFrame(() => {
-        if (pendingFitView.current) {
-          pendingFitView.current = false;
-          fitView(FIT_VIEW_OPTIONS);
-        }
-      });
-    });
-    return () => {
-      cancelAnimationFrame(frame1);
-      cancelAnimationFrame(frame2);
-    };
-  }, [fitViewTrigger, fitView]);
+  // Touch gestures (extracted hook)
+  const {
+    onPointerDownCapture,
+    onPointerMoveCapture,
+    onPointerUpCapture,
+    onPointerCancelCapture,
+    ignoreNextPaneClickRef,
+    suppressSelectionUntilRef,
+  } = useTouchGestures({
+    openContextMenu,
+    addNode,
+    screenToFlowPosition,
+    clearCanvasSelection,
+    closeContextMenu,
+  });
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -295,12 +163,7 @@ export default function DiagramCanvas() {
             const node = localNodes.find((n) => n.id === c.id);
             const w = node?.measured?.width ?? DEFAULT_NODE_WIDTH;
             const h = node?.measured?.height ?? DEFAULT_NODE_HEIGHT;
-            const cx = c.position.x + w / 2;
-            const cy = c.position.y + h / 2;
-            c.position = {
-              x: Math.round(cx / GRID_SIZE) * GRID_SIZE - w / 2,
-              y: Math.round(cy / GRID_SIZE) * GRID_SIZE - h / 2,
-            };
+            c.position = snapNodePositionToGrid(c.position.x, c.position.y, w, h);
           }
         }
       }
@@ -323,15 +186,11 @@ export default function DiagramCanvas() {
         scheduleRemovalFlush();
       }
 
-      if (pendingFitView.current) {
-        const hasDimensions = changes.some((c) => c.type === 'dimensions');
-        if (hasDimensions) {
-          pendingFitView.current = false;
-          requestAnimationFrame(() => fitView(FIT_VIEW_OPTIONS));
-        }
+      if (changes.some((c) => c.type === 'dimensions')) {
+        tryFitViewOnDimensions();
       }
     },
-    [dragNodes, fitView, snapToGrid, localNodes, scheduleRemovalFlush],
+    [dragNodes, snapToGrid, localNodes, scheduleRemovalFlush, tryFitViewOnDimensions],
   );
 
   const onEdgesChange = useCallback(
@@ -356,14 +215,6 @@ export default function DiagramCanvas() {
     setIsNodeDragging(false);
     commitDraggedNodes();
   }, [commitDraggedNodes]);
-
-  const clearCanvasSelection = useCallback(() => {
-    setSelectedLoop(null);
-    setSelectedNodes([]);
-    setSelectedEdges([]);
-    setLocalNodes((nds) => nds.map((node) => ({ ...node, selected: false })));
-    setLocalEdges((eds) => eds.map((edge) => ({ ...edge, selected: false })));
-  }, [setSelectedEdges, setSelectedLoop, setSelectedNodes]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -394,7 +245,7 @@ export default function DiagramCanvas() {
     }
     clearCanvasSelection();
     closeContextMenu();
-  }, [clearCanvasSelection, closeContextMenu]);
+  }, [clearCanvasSelection, closeContextMenu, ignoreNextPaneClickRef]);
 
   const onCanvasDoubleClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -407,7 +258,7 @@ export default function DiagramCanvas() {
       const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
       addNode(position);
     },
-    [addNode, clearCanvasSelection, closeContextMenu, screenToFlowPosition],
+    [addNode, clearCanvasSelection, closeContextMenu, screenToFlowPosition, suppressSelectionUntilRef],
   );
 
   const onSelectionChange = useCallback(
@@ -419,7 +270,7 @@ export default function DiagramCanvas() {
       setSelectedNodes(nodes.map((n) => n.id));
       setSelectedEdges(edges.map((e) => e.id));
     },
-    [setSelectedEdges, setSelectedLoop, setSelectedNodes],
+    [setSelectedEdges, setSelectedLoop, setSelectedNodes, suppressSelectionUntilRef],
   );
 
   const onPaneContextMenu = useCallback(
@@ -451,97 +302,6 @@ export default function DiagramCanvas() {
     },
     [openContextMenu],
   );
-
-  const onPointerDownCapture = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType !== 'touch') return;
-
-    const target = event.target instanceof Element ? event.target : null;
-    const nodeId = target?.closest<HTMLElement>('[data-node-id]')?.dataset.nodeId;
-    const onPane = Boolean(
-      target?.closest('.react-flow__pane') &&
-      !target?.closest('.react-flow__node, .react-flow__edge'),
-    );
-
-    touchGestureRef.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      clientX: event.clientX,
-      clientY: event.clientY,
-      moved: false,
-      longPressTriggered: false,
-      nodeId,
-      onPane,
-    };
-
-    clearLongPressTimer();
-
-    if (!nodeId && !onPane) return;
-
-    longPressTimerRef.current = window.setTimeout(() => {
-      const gesture = touchGestureRef.current;
-      if (!gesture || gesture.pointerId !== event.pointerId || gesture.moved) return;
-      gesture.longPressTriggered = true;
-      ignoreNextPaneClickRef.current = true;
-      openContextMenu(gesture.clientX, gesture.clientY, gesture.nodeId);
-      lastTapRef.current = null;
-    }, TOUCH_LONG_PRESS_MS);
-  }, [clearLongPressTimer, openContextMenu]);
-
-  const onPointerMoveCapture = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    const gesture = touchGestureRef.current;
-    if (event.pointerType !== 'touch' || !gesture || gesture.pointerId !== event.pointerId) return;
-
-    gesture.clientX = event.clientX;
-    gesture.clientY = event.clientY;
-
-    if (
-      !gesture.moved &&
-      Math.hypot(event.clientX - gesture.startX, event.clientY - gesture.startY) > TOUCH_MOVE_TOLERANCE_PX
-    ) {
-      gesture.moved = true;
-      clearLongPressTimer();
-    }
-  }, [clearLongPressTimer]);
-
-  const onPointerUpCapture = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    const gesture = touchGestureRef.current;
-    if (event.pointerType !== 'touch' || !gesture || gesture.pointerId !== event.pointerId) return;
-
-    clearLongPressTimer();
-    touchGestureRef.current = null;
-
-    if (gesture.moved || gesture.longPressTriggered || !gesture.onPane) return;
-
-    const now = Date.now();
-    const lastTap = lastTapRef.current;
-    if (
-      lastTap &&
-      lastTap.onPane &&
-      now - lastTap.timestamp <= TOUCH_DOUBLE_TAP_MS &&
-      Math.hypot(gesture.clientX - lastTap.x, gesture.clientY - lastTap.y) <= TOUCH_MOVE_TOLERANCE_PX
-    ) {
-      lastTapRef.current = null;
-      suppressSelectionUntilRef.current = now + 250;
-      clearCanvasSelection();
-      closeContextMenu();
-      addNode(screenToFlowPosition({ x: gesture.clientX, y: gesture.clientY }));
-      return;
-    }
-
-    lastTapRef.current = {
-      timestamp: now,
-      x: gesture.clientX,
-      y: gesture.clientY,
-      onPane: true,
-    };
-  }, [addNode, clearCanvasSelection, clearLongPressTimer, closeContextMenu, screenToFlowPosition]);
-
-  const onPointerCancelCapture = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    if (touchGestureRef.current?.pointerId !== event.pointerId) return;
-    clearLongPressTimer();
-    touchGestureRef.current = null;
-  }, [clearLongPressTimer]);
 
   return (
     <div
@@ -584,7 +344,7 @@ export default function DiagramCanvas() {
         proOptions={{ hideAttribution: true }}
         className={isPanMode ? 'pan-mode' : ''}
       >
-        {diagram.settings.showGrid && (
+        {showGrid && (
           <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
         )}
         <Controls fitViewOptions={FIT_VIEW_OPTIONS} showInteractive={false} />

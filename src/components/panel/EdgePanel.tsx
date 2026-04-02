@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { DiagramEdge, EdgeConfidence, EdgePolarity } from '../../core/types';
-import { useDiagramStore } from '../../store/diagram-store';
+import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import FormField from '../form/FormField';
 import ButtonGroup from '../form/ButtonGroup';
 
@@ -23,7 +23,7 @@ export default function EdgePanel({ edge }: Props) {
   const [notes, setNotes] = useState(edge.notes ?? '');
 
   const nodes = useDiagramStore((s) => s.diagram.nodes);
-  const framework = useDiagramStore((s) => s.framework);
+  const framework = useFramework();
   const setEdgeConfidence = useDiagramStore((s) => s.setEdgeConfidence);
   const setEdgePolarity = useDiagramStore((s) => s.setEdgePolarity);
   const setEdgeDelay = useDiagramStore((s) => s.setEdgeDelay);

@@ -2,7 +2,6 @@ import { computeLegacyPlusEdgeRoutingPlacements } from './edge-optimization-algo
 import type { EdgeRoutingInput, EdgeRoutingPlacement } from './shared';
 
 export const DEFAULT_EDGE_ROUTING_ALGORITHM = 'legacy-plus';
-export type EdgeRoutingAlgorithmId = typeof DEFAULT_EDGE_ROUTING_ALGORITHM;
 
 export function computeEdgeRoutingPlacements(
   input: EdgeRoutingInput,

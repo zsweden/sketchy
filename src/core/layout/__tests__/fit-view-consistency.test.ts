@@ -22,7 +22,7 @@ describe('fitView consistency', () => {
   });
 
   describe('all fitView call sites use FIT_VIEW_OPTIONS', () => {
-    // Read DiagramCanvas source to verify no inline fitView options exist.
+    // Read DiagramCanvas and its viewport hook to verify no inline fitView options exist.
     // This prevents future regressions where someone adds a fitView call
     // with different options, causing zoom mismatches between auto-layout
     // and the Controls fit-view button.
@@ -31,19 +31,24 @@ describe('fitView consistency', () => {
       join(__dirname, '../../../components/canvas/DiagramCanvas.tsx'),
       'utf-8',
     );
+    const viewportHookSource = readFileSync(
+      join(__dirname, '../../../hooks/useViewportFocus.ts'),
+      'utf-8',
+    );
+    const combinedSource = canvasSource + '\n' + viewportHookSource;
 
     it('imports FIT_VIEW_OPTIONS', () => {
-      expect(canvasSource).toContain("import { FIT_VIEW_OPTIONS }");
+      expect(combinedSource).toContain("import { FIT_VIEW_OPTIONS }");
     });
 
     it('does not contain inline fitView options objects', () => {
       // Match fitView({ ... }) with inline object — these should all use FIT_VIEW_OPTIONS
-      const inlineFitViewCalls = canvasSource.match(/fitView\(\s*\{/g);
+      const inlineFitViewCalls = combinedSource.match(/fitView\(\s*\{/g);
       expect(inlineFitViewCalls).toBeNull();
     });
 
     it('passes FIT_VIEW_OPTIONS to fitView calls', () => {
-      const fitViewCalls = canvasSource.match(/fitView\(FIT_VIEW_OPTIONS\)/g);
+      const fitViewCalls = combinedSource.match(/fitView\(FIT_VIEW_OPTIONS\)/g);
       expect(fitViewCalls).not.toBeNull();
       expect(fitViewCalls!.length).toBeGreaterThanOrEqual(1);
     });
@@ -58,7 +63,7 @@ describe('fitView consistency', () => {
 
     it('has no other padding or maxZoom literals near fitView', () => {
       // Ensure no one sneaks in a different padding/maxZoom value
-      const lines = canvasSource.split('\n');
+      const lines = combinedSource.split('\n');
       for (const line of lines) {
         if (line.includes('fitView') || line.includes('fitViewOptions')) {
           // These lines should reference FIT_VIEW_OPTIONS, not contain raw numbers

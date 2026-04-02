@@ -3,7 +3,7 @@ import { useDiagramStore } from '../../store/diagram-store';
 import { listFrameworks } from '../../frameworks/registry';
 
 export default function FrameworkSelector() {
-  const currentId = useDiagramStore((s) => s.framework.id);
+  const currentId = useDiagramStore((s) => s.diagram.frameworkId);
   const setFramework = useDiagramStore((s) => s.setFramework);
   const hasDiagramWork = useDiagramStore((s) =>
     s.diagram.nodes.length > 1 ||

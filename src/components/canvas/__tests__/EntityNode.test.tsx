@@ -2,7 +2,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDiagramStore } from '../../../store/diagram-store';
 import { useChatStore } from '../../../store/chat-store';
-import type { Framework } from '../../../core/framework-types';
 
 let mockConnectionState = {
   inProgress: false,
@@ -31,39 +30,12 @@ import EntityNodeRaw from '../EntityNode';
 // memo wraps the component — unwrap for testing
 const EntityNode = EntityNodeRaw;
 
-const crtFramework: Framework = {
-  id: 'crt',
-  name: 'Current Reality Tree',
-  description: 'CRT',
-  defaultLayoutDirection: 'BT',
-  supportsJunctions: true,
-  nodeTags: [
-    { id: 'ude', name: 'Undesirable Effect', shortName: 'UDE', color: '#E57373', description: '', exclusive: false },
-  ],
-  derivedIndicators: [
-    { id: 'root-cause', name: 'Root Cause', shortName: 'Root', color: '#5C8DB5', condition: 'indegree-zero', description: '' },
-    { id: 'intermediate', name: 'Intermediate', shortName: 'Inter', color: '#9E9E9E', condition: 'indegree-and-outdegree', description: '' },
-  ],
-};
-
-const noJunctionFramework: Framework = {
-  id: 'test',
-  name: 'Test',
-  description: '',
-  defaultLayoutDirection: 'TB',
-  supportsJunctions: false,
-  nodeTags: [],
-  derivedIndicators: [],
-};
-
 function resetStores() {
   mockConnectionState = {
     inProgress: false,
     fromHandle: null,
   };
-  useDiagramStore.setState({
-    framework: crtFramework,
-  });
+  useDiagramStore.getState().setFramework('crt');
   useChatStore.setState({
     aiModifiedNodeIds: new Set(),
   });
@@ -289,7 +261,7 @@ describe('EntityNode', () => {
     });
 
     it('does not show junction handle when framework does not support junctions', () => {
-      useDiagramStore.setState({ framework: noJunctionFramework });
+      useDiagramStore.getState().setFramework('cld');
       const degreesMap = new Map([['n1', { indegree: 2, outdegree: 0 }]]);
       renderNode({ degreesMap });
       const handle = screen.getByTestId('target-top');

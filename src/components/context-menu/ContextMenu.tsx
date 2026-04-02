@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { Pipette, Plus, Trash2, Check, Lock, Unlock } from 'lucide-react';
 import { useReactFlow } from '@xyflow/react';
-import { useDiagramStore } from '../../store/diagram-store';
+import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import type { DiagramNode } from '../../core/types';
 import {
@@ -343,8 +343,9 @@ export default function ContextMenu() {
   const closeContextMenu = useUIStore((s) => s.closeContextMenu);
   const { screenToFlowPosition } = useReactFlow();
 
-  const framework = useDiagramStore((s) => s.framework);
-  const diagram = useDiagramStore((s) => s.diagram);
+  const framework = useFramework();
+  const nodes = useDiagramStore((s) => s.diagram.nodes);
+  const edges = useDiagramStore((s) => s.diagram.edges);
   const addNode = useDiagramStore((s) => s.addNode);
   const deleteNodes = useDiagramStore((s) => s.deleteNodes);
   const deleteEdges = useDiagramStore((s) => s.deleteEdges);
@@ -395,14 +396,14 @@ export default function ContextMenu() {
   }, [contextMenu, closeContextMenu]);
 
   const node = contextMenu?.nodeId
-    ? diagram.nodes.find((n) => n.id === contextMenu.nodeId)
+    ? nodes.find((n) => n.id === contextMenu.nodeId)
     : null;
 
   const edge = contextMenu?.edgeId
-    ? diagram.edges.find((e) => e.id === contextMenu.edgeId)
+    ? edges.find((e) => e.id === contextMenu.edgeId)
     : null;
 
-  const degreesMap = node ? computeNodeDegrees(diagram.edges) : null;
+  const degreesMap = node ? computeNodeDegrees(edges) : null;
   const degrees = node && degreesMap
     ? degreesMap.get(node.id) ?? { indegree: 0, outdegree: 0 }
     : null;
