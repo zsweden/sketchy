@@ -11,11 +11,25 @@ import { useSettingsStore, PROVIDERS } from '../../../store/settings-store';
 import { useUIStore } from '../../../store/ui-store';
 import { getWebStorage } from '../../../utils/web-storage';
 
+const rfMocks = vi.hoisted(() => ({
+  getInternalNode: vi.fn(() => undefined),
+}));
+
 const mocks = vi.hoisted(() => ({
   runElkAutoLayout: vi.fn(),
   saveSkyFile: vi.fn(),
   loadSkyFile: vi.fn(),
 }));
+
+vi.mock('@xyflow/react', async () => {
+  const actual = await vi.importActual<typeof import('@xyflow/react')>('@xyflow/react');
+  return {
+    ...actual,
+    useReactFlow: () => ({
+      getInternalNode: rfMocks.getInternalNode,
+    }),
+  };
+});
 
 vi.mock('../../../core/layout/run-elk-auto-layout', () => ({
   runElkAutoLayout: mocks.runElkAutoLayout,
@@ -66,6 +80,8 @@ describe('Toolbar', () => {
   beforeEach(() => {
     resetStores();
     vi.clearAllMocks();
+    rfMocks.getInternalNode.mockReset();
+    rfMocks.getInternalNode.mockReturnValue(undefined);
     mocks.runElkAutoLayout.mockResolvedValue([]);
     mocks.saveSkyFile.mockResolvedValue(undefined);
   });
@@ -172,6 +188,29 @@ describe('Toolbar', () => {
     render(<Toolbar />);
 
     expect(screen.getByRole('button', { name: 'Auto edges' })).toBeDisabled();
+  });
+
+  it('aligns selected node centers horizontally using measured bounds', async () => {
+    const user = userEvent.setup();
+    const nodeA = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+    const nodeB = useDiagramStore.getState().addNode({ x: 220, y: 120 });
+    useUIStore.setState({ selectedNodeIds: [nodeA, nodeB], selectedEdgeIds: [] });
+    rfMocks.getInternalNode.mockImplementation((id: string) => {
+      if (id === nodeA) return { measured: { width: 160, height: 60 } };
+      if (id === nodeB) return { measured: { width: 160, height: 120 } };
+      return undefined;
+    });
+
+    render(<Toolbar />);
+    await user.click(screen.getByRole('button', { name: 'Align horizontally' }));
+
+    const nodes = useDiagramStore.getState().diagram.nodes;
+    const updatedA = nodes.find((node) => node.id === nodeA)!;
+    const updatedB = nodes.find((node) => node.id === nodeB)!;
+
+    expect(updatedA.position.x).toBe(0);
+    expect(updatedB.position.x).toBe(220);
+    expect(updatedA.position.y + 30).toBeCloseTo(updatedB.position.y + 60);
   });
 
   it('loads a project file, clears chat history, and surfaces warnings', async () => {

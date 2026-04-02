@@ -41,6 +41,15 @@ async function updateNodeText(page: import('@playwright/test').Page, nodeId: str
   );
 }
 
+async function getNodeCenter(page: import('@playwright/test').Page, nodeId: string) {
+  const box = await page.locator(`[data-node-id="${nodeId}"]`).boundingBox();
+  expect(box).not.toBeNull();
+  return {
+    x: box!.x + box!.width / 2,
+    y: box!.y + box!.height / 2,
+  };
+}
+
 // --- Existing tests ---
 
 test('creates a node, edits it from the inspector, and restores it after reload', async ({ page }) => {
@@ -627,6 +636,52 @@ test('align buttons are disabled until two nodes are selected', async ({ page })
   // Now enabled
   await expect(alignH).toBeEnabled();
   await expect(alignV).toBeEnabled();
+});
+
+test('aligns selected nodes horizontally by rendered center', async ({ page }) => {
+  await createNode(page, 150, 140);
+  await createNode(page, 420, 320);
+
+  const ids = await getNodeIds(page);
+  await updateNodeText(page, ids[0], 'Short');
+  await updateNodeText(
+    page,
+    ids[1],
+    'This is a much longer node label that wraps across multiple lines and increases the node height.',
+  );
+  await expect(page.locator(`[data-node-id="${ids[1]}"]`)).toContainText('This is a much longer');
+
+  await page.locator('.react-flow__node').nth(0).click();
+  await page.locator('.react-flow__node').nth(1).click({ modifiers: ['Shift'] });
+  await page.locator('header').getByLabel('Align horizontally').click();
+  await page.waitForTimeout(100);
+
+  const firstCenter = await getNodeCenter(page, ids[0]);
+  const secondCenter = await getNodeCenter(page, ids[1]);
+  expect(Math.abs(firstCenter.y - secondCenter.y)).toBeLessThan(1);
+});
+
+test('aligns selected nodes vertically by rendered center', async ({ page }) => {
+  await createNode(page, 120, 140);
+  await createNode(page, 360, 180);
+
+  const ids = await getNodeIds(page);
+  await updateNodeText(page, ids[0], 'Short');
+  await updateNodeText(
+    page,
+    ids[1],
+    'This is another long label that wraps so the node size differs before alignment.',
+  );
+  await expect(page.locator(`[data-node-id="${ids[1]}"]`)).toContainText('This is another long');
+
+  await page.locator('.react-flow__node').nth(0).click();
+  await page.locator('.react-flow__node').nth(1).click({ modifiers: ['Shift'] });
+  await page.locator('header').getByLabel('Align vertically').click();
+  await page.waitForTimeout(100);
+
+  const firstCenter = await getNodeCenter(page, ids[0]);
+  const secondCenter = await getNodeCenter(page, ids[1]);
+  expect(Math.abs(firstCenter.x - secondCenter.x)).toBeLessThan(1);
 });
 
 // --- 21. Distribute buttons ---

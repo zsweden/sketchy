@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Lock, Unlock } from 'lucide-react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
+import { useNodeAlignmentActions } from '../../hooks/useNodeAlignmentActions';
 import NodePanel from './NodePanel';
 import EdgePanel from './EdgePanel';
 import SettingsPanel from './SettingsPanel';
@@ -17,10 +18,9 @@ export default function SidePanel() {
   const edges = useDiagramStore((s) => s.diagram.edges);
   const deleteNodes = useDiagramStore((s) => s.deleteNodes);
   const toggleNodeLocked = useDiagramStore((s) => s.toggleNodeLocked);
-  const alignNodesHorizontally = useDiagramStore((s) => s.alignNodesHorizontally);
-  const alignNodesVertically = useDiagramStore((s) => s.alignNodesVertically);
   const distributeNodesHorizontally = useDiagramStore((s) => s.distributeNodesHorizontally);
   const distributeNodesVertically = useDiagramStore((s) => s.distributeNodesVertically);
+  const { alignSelectedNodesHorizontally, alignSelectedNodesVertically } = useNodeAlignmentActions();
 
   const getPanelWidthBounds = useCallback(() => {
     const viewportWidth = typeof window === 'undefined' ? 1440 : window.innerWidth;
@@ -154,7 +154,7 @@ export default function SidePanel() {
                   className="btn btn-secondary btn-xs"
                   title="Align to same row"
                   aria-label="Align horizontally"
-                  onClick={() => alignNodesHorizontally(selectedNodeIds)}
+                  onClick={() => alignSelectedNodesHorizontally(selectedNodeIds)}
                 >
                   <AlignHorizontalIcon />
                 </button>
@@ -162,7 +162,7 @@ export default function SidePanel() {
                   className="btn btn-secondary btn-xs"
                   title="Align to same column"
                   aria-label="Align vertically"
-                  onClick={() => alignNodesVertically(selectedNodeIds)}
+                  onClick={() => alignSelectedNodesVertically(selectedNodeIds)}
                 >
                   <AlignVerticalIcon />
                 </button>

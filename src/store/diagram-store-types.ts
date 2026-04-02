@@ -9,6 +9,7 @@ import type {
 } from '../core/types';
 import type { Framework } from '../core/framework-types';
 import type { UndoRedoManager } from '../core/history/undo-redo';
+import type { SizedPositionedItem } from '../utils/align-distribute';
 
 export interface BatchMutations {
   addNodes?: { id: string; label: string; tags?: string[]; notes?: string }[];
@@ -60,8 +61,8 @@ export interface DiagramState {
   dragNodes: (changes: NodePositionChange[]) => void;
   commitDraggedNodes: () => void;
   deleteNodes: (ids: string[]) => void;
-  alignNodesHorizontally: (ids: string[]) => void;
-  alignNodesVertically: (ids: string[]) => void;
+  alignNodesHorizontally: (items: SizedPositionedItem[]) => void;
+  alignNodesVertically: (items: SizedPositionedItem[]) => void;
   distributeNodesHorizontally: (ids: string[]) => void;
   distributeNodesVertically: (ids: string[]) => void;
 
@@ -126,6 +127,10 @@ export interface DiagramStoreContext {
     options?: { trackHistory?: boolean },
   ) => void;
   getNodesByIds: (ids: string[]) => DiagramNode[];
+  applyNodePositionChanges: (
+    changes: NodePositionChange[],
+    options?: { trackHistory?: boolean },
+  ) => void;
   applyNodePositionTransform: (
     ids: string[],
     transform: (nodes: DiagramNode[]) => NodePositionChange[],

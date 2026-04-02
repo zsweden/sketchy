@@ -18,6 +18,7 @@ import { useChatStore } from '../../store/chat-store';
 import { appVersion } from '../../core/app-version';
 import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import { getFrameworkSuffix, getNextDiagramTransition } from '../../transitions/registry';
+import { useNodeAlignmentActions } from '../../hooks/useNodeAlignmentActions';
 import FrameworkSelector from './FrameworkSelector';
 import LayoutLabPopover from './LayoutLabPopover';
 import SettingsPopover from './SettingsPopover';
@@ -31,8 +32,6 @@ export default function Toolbar() {
   const undo = useDiagramStore((s) => s.undo);
   const redo = useDiagramStore((s) => s.redo);
   const newDiagram = useDiagramStore((s) => s.newDiagram);
-  const alignNodesHorizontally = useDiagramStore((s) => s.alignNodesHorizontally);
-  const alignNodesVertically = useDiagramStore((s) => s.alignNodesVertically);
   const distributeNodesHorizontally = useDiagramStore((s) => s.distributeNodesHorizontally);
   const distributeNodesVertically = useDiagramStore((s) => s.distributeNodesVertically);
   const loadDiagram = useDiagramStore((s) => s.loadDiagram);
@@ -47,6 +46,7 @@ export default function Toolbar() {
   const interactionMode = useUIStore((s) => s.interactionMode);
   const setInteractionMode = useUIStore((s) => s.setInteractionMode);
   const toggleLayoutLab = useSettingsStore((s) => s.toggleLayoutLab);
+  const { alignSelectedNodesHorizontally, alignSelectedNodesVertically } = useNodeAlignmentActions();
 
   const nodes = useDiagramStore((s) => s.diagram.nodes);
   const selectedNodes = nodes.filter((n) => selectedNodeIds.includes(n.id));
@@ -60,12 +60,12 @@ export default function Toolbar() {
     : null;
 
   const handleAlignH = useCallback(() => {
-    alignNodesHorizontally(selectedNodeIds);
-  }, [alignNodesHorizontally, selectedNodeIds]);
+    alignSelectedNodesHorizontally(selectedNodeIds);
+  }, [alignSelectedNodesHorizontally, selectedNodeIds]);
 
   const handleAlignV = useCallback(() => {
-    alignNodesVertically(selectedNodeIds);
-  }, [alignNodesVertically, selectedNodeIds]);
+    alignSelectedNodesVertically(selectedNodeIds);
+  }, [alignSelectedNodesVertically, selectedNodeIds]);
 
   const handleDistributeH = useCallback(() => {
     distributeNodesHorizontally(selectedNodeIds);

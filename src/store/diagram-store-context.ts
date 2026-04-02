@@ -101,25 +101,31 @@ export function createDiagramStoreContext(
     set(undoState);
   };
 
+  const applyNodePositionChanges: DiagramStoreContext['applyNodePositionChanges'] = (
+    changes,
+    options = {},
+  ) => {
+    if (changes.length === 0) return;
+    const positions = new Map(changes.map((change) => [change.id, change.position]));
+    applyDiagramChange(
+      (diagram) => ({
+        ...diagram,
+        nodes: diagram.nodes.map((node) => {
+          const position = positions.get(node.id);
+          return position ? { ...node, position } : node;
+        }),
+      }),
+      options,
+    );
+  };
+
   const applyNodePositionTransform = (
     ids: string[],
     transform: (nodes: DiagramNode[]) => NodePositionChange[],
   ) => {
     const selectedNodes = getNodesByIds(ids);
     if (selectedNodes.length < 2) return;
-    applyDiagramChange(
-      (diagram) => {
-        const positions = new Map(transform(selectedNodes).map((change) => [change.id, change.position]));
-        return {
-          ...diagram,
-          nodes: diagram.nodes.map((node) => {
-            const position = positions.get(node.id);
-            return position ? { ...node, position } : node;
-          }),
-        };
-      },
-      { trackHistory: true },
-    );
+    applyNodePositionChanges(transform(selectedNodes), { trackHistory: true });
   };
 
   return {
@@ -134,6 +140,7 @@ export function createDiagramStoreContext(
     updateNodes,
     updateEdges,
     getNodesByIds,
+    applyNodePositionChanges,
     applyNodePositionTransform,
     moveNodes,
     dragNodes,

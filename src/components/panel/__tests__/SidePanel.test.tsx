@@ -1,12 +1,26 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import SidePanel from '../SidePanel';
 import { useChatStore } from '../../../store/chat-store';
 import { useDiagramStore } from '../../../store/diagram-store';
 import { useUIStore } from '../../../store/ui-store';
 import { useSettingsStore } from '../../../store/settings-store';
 import { getWebStorage } from '../../../utils/web-storage';
+
+const rfMocks = vi.hoisted(() => ({
+  getInternalNode: vi.fn(() => undefined),
+}));
+
+vi.mock('@xyflow/react', async () => {
+  const actual = await vi.importActual<typeof import('@xyflow/react')>('@xyflow/react');
+  return {
+    ...actual,
+    useReactFlow: () => ({
+      getInternalNode: rfMocks.getInternalNode,
+    }),
+  };
+});
 
 function resetStores() {
   getWebStorage('localStorage')?.removeItem('sketchy-settings');
@@ -36,6 +50,8 @@ function resetStores() {
 describe('SidePanel', () => {
   beforeEach(() => {
     resetStores();
+    rfMocks.getInternalNode.mockReset();
+    rfMocks.getInternalNode.mockReturnValue(undefined);
   });
 
   it('shows settings and chat when nothing is selected', () => {
@@ -127,6 +143,29 @@ describe('SidePanel', () => {
     await user.click(screen.getByRole('button', { name: 'Delete All' }));
 
     expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
+  });
+
+  it('aligns selected node centers vertically using measured bounds', async () => {
+    const user = userEvent.setup();
+    const nodeA = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+    const nodeB = useDiagramStore.getState().addNode({ x: 220, y: 100 });
+    useUIStore.setState({ selectedNodeIds: [nodeA, nodeB], selectedEdgeIds: [] });
+    rfMocks.getInternalNode.mockImplementation((id: string) => {
+      if (id === nodeA) return { measured: { width: 100, height: 60 } };
+      if (id === nodeB) return { measured: { width: 220, height: 60 } };
+      return undefined;
+    });
+
+    render(<SidePanel />);
+    await user.click(screen.getByRole('button', { name: 'Align vertically' }));
+
+    const nodes = useDiagramStore.getState().diagram.nodes;
+    const updatedA = nodes.find((node) => node.id === nodeA)!;
+    const updatedB = nodes.find((node) => node.id === nodeB)!;
+
+    expect(updatedA.position.y).toBe(0);
+    expect(updatedB.position.y).toBe(100);
+    expect(updatedA.position.x + 50).toBeCloseTo(updatedB.position.x + 110);
   });
 
   it('returns nothing when the side panel is closed', () => {

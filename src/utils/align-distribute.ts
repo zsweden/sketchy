@@ -1,21 +1,32 @@
-interface PositionedItem {
+export interface PositionedItem {
   id: string;
   position: { x: number; y: number };
 }
 
-interface PositionUpdate {
+export interface SizedPositionedItem extends PositionedItem {
+  width: number;
+  height: number;
+}
+
+export interface PositionUpdate {
   id: string;
   position: { x: number; y: number };
 }
 
-export function alignHorizontal(items: PositionedItem[]): PositionUpdate[] {
-  const avgY = items.reduce((sum, n) => sum + n.position.y, 0) / items.length;
-  return items.map((n) => ({ id: n.id, position: { x: n.position.x, y: avgY } }));
+export function alignHorizontal(items: SizedPositionedItem[]): PositionUpdate[] {
+  const avgCenterY = items.reduce((sum, n) => sum + n.position.y + n.height / 2, 0) / items.length;
+  return items.map((n) => ({
+    id: n.id,
+    position: { x: n.position.x, y: avgCenterY - n.height / 2 },
+  }));
 }
 
-export function alignVertical(items: PositionedItem[]): PositionUpdate[] {
-  const avgX = items.reduce((sum, n) => sum + n.position.x, 0) / items.length;
-  return items.map((n) => ({ id: n.id, position: { x: avgX, y: n.position.y } }));
+export function alignVertical(items: SizedPositionedItem[]): PositionUpdate[] {
+  const avgCenterX = items.reduce((sum, n) => sum + n.position.x + n.width / 2, 0) / items.length;
+  return items.map((n) => ({
+    id: n.id,
+    position: { x: avgCenterX - n.width / 2, y: n.position.y },
+  }));
 }
 
 export function distributeHorizontal(items: PositionedItem[]): PositionUpdate[] {

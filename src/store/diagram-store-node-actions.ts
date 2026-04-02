@@ -1,5 +1,11 @@
 import type { DiagramNode } from '../core/types';
-import { alignHorizontal, alignVertical, distributeHorizontal, distributeVertical } from '../utils/align-distribute';
+import {
+  alignHorizontal,
+  alignVertical,
+  distributeHorizontal,
+  distributeVertical,
+  type SizedPositionedItem,
+} from '../utils/align-distribute';
 import type { DiagramState, DiagramStoreContext } from './diagram-store-types';
 
 export function createDiagramNodeActions(
@@ -25,7 +31,15 @@ export function createDiagramNodeActions(
   | 'distributeNodesHorizontally'
   | 'distributeNodesVertically'
 > {
-  const { applyDiagramChange, applyNodePositionTransform, moveNodes, dragNodes, commitDraggedNodes, updateNodes } = context;
+  const {
+    applyDiagramChange,
+    applyNodePositionChanges,
+    applyNodePositionTransform,
+    moveNodes,
+    dragNodes,
+    commitDraggedNodes,
+    updateNodes,
+  } = context;
 
   return {
     addNode: (position) => {
@@ -141,12 +155,14 @@ export function createDiagramNodeActions(
       );
     },
 
-    alignNodesHorizontally: (ids) => {
-      applyNodePositionTransform(ids, alignHorizontal);
+    alignNodesHorizontally: (items: SizedPositionedItem[]) => {
+      if (items.length < 2) return;
+      applyNodePositionChanges(alignHorizontal(items), { trackHistory: true });
     },
 
-    alignNodesVertically: (ids) => {
-      applyNodePositionTransform(ids, alignVertical);
+    alignNodesVertically: (items: SizedPositionedItem[]) => {
+      if (items.length < 2) return;
+      applyNodePositionChanges(alignVertical(items), { trackHistory: true });
     },
 
     distributeNodesHorizontally: (ids) => {
