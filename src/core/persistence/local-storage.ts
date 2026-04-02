@@ -1,11 +1,15 @@
 import type { Diagram } from '../types';
 import { migrateDiagramShape, normalizeLoadedDiagram } from './load-helpers';
+import { getWebStorage } from '../../utils/web-storage';
 
 const STORAGE_KEY = 'sketchy_diagram';
 
 export function saveDiagram(diagram: Diagram): void {
+  const storage = getWebStorage('sessionStorage');
+  if (!storage) return;
+
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(diagram));
+    storage.setItem(STORAGE_KEY, JSON.stringify(diagram));
   } catch {
     // Storage full or unavailable — silently fail
   }
@@ -18,7 +22,8 @@ export interface LoadResult {
 }
 
 export function loadDiagram(): LoadResult {
-  const raw = sessionStorage.getItem(STORAGE_KEY);
+  const storage = getWebStorage('sessionStorage');
+  const raw = storage?.getItem(STORAGE_KEY);
   if (!raw) return { diagram: null };
 
   try {
@@ -53,12 +58,15 @@ export function loadDiagram(): LoadResult {
 }
 
 export function clearDiagram(): void {
-  sessionStorage.removeItem(STORAGE_KEY);
+  getWebStorage('sessionStorage')?.removeItem(STORAGE_KEY);
 }
 
 function backupCorrupted(raw: string): void {
+  const storage = getWebStorage('localStorage');
+  if (!storage) return;
+
   try {
-    localStorage.setItem(`sketchy_backup_${Date.now()}`, raw);
+    storage.setItem(`sketchy_backup_${Date.now()}`, raw);
   } catch {
     // If backup also fails (storage full), we can't do anything
   }

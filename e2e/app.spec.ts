@@ -33,6 +33,14 @@ async function addEdge(page: import('@playwright/test').Page, sourceId: string, 
   );
 }
 
+async function updateNodeText(page: import('@playwright/test').Page, nodeId: string, label: string) {
+  await page.evaluate(
+    ([id, text]) => // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__diagramStore.getState().updateNodeText(id, text),
+    [nodeId, label],
+  );
+}
+
 // --- Existing tests ---
 
 test('creates a node, edits it from the inspector, and restores it after reload', async ({ page }) => {
@@ -116,6 +124,28 @@ test('retains chat messages after browser refresh', async ({ page }) => {
   await expect(
     page.getByText('Please configure your API endpoint and model in settings (cog icon in the toolbar).'),
   ).toBeVisible();
+});
+
+test('shows a recovery toast and backs up corrupted session data after reload', async ({ page }) => {
+  const corrupted = '{not valid json!!!';
+
+  await page.evaluate((raw) => {
+    sessionStorage.setItem('sketchy_diagram', raw);
+  }, corrupted);
+
+  await page.reload();
+  await page.waitForSelector('[data-testid="diagram-flow"]');
+
+  await expect(page.locator('.entity-node')).toHaveCount(0);
+  await expect(page.getByLabel('Diagram name')).toBeVisible();
+
+  const backup = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((entry) => entry.startsWith('sketchy_backup_'));
+    return key ? { key, value: localStorage.getItem(key) } : null;
+  });
+
+  expect(backup).toBeTruthy();
+  expect(backup?.value).toBe(corrupted);
 });
 
 // --- 1. Edge creation & confidence ---
@@ -435,6 +465,43 @@ test('CLD framework supports edge polarity and delay via context menu', async ({
     if (!raw) return false;
     return JSON.parse(raw).edges?.[0]?.delay === true;
   });
+});
+
+test('CLD feedback loops appear in the diagram panel and can be toggled', async ({ page }) => {
+  await page.getByLabel('Framework').selectOption('cld');
+
+  await createNode(page, 140, 180);
+  await createNode(page, 320, 180);
+  await createNode(page, 230, 340);
+
+  const ids = await getNodeIds(page);
+  await updateNodeText(page, ids[0], 'Demand');
+  await updateNodeText(page, ids[1], 'Capacity');
+  await updateNodeText(page, ids[2], 'Growth');
+
+  await addEdge(page, ids[0], ids[1]);
+  await addEdge(page, ids[1], ids[2]);
+  await addEdge(page, ids[2], ids[0]);
+
+  await expect(page.getByText('Feedback Loops')).toBeVisible();
+  await expect(page.getByText('1 Total')).toBeVisible();
+  await expect(page.getByText('1 Reinforcing')).toBeVisible();
+
+  const loopButton = page.getByRole('button', { name: /R1/ });
+  await expect(loopButton).toHaveAttribute('aria-pressed', 'false');
+  await expect(loopButton).toContainText('Demand');
+  await expect(loopButton).toContainText('Capacity');
+  await expect(loopButton).toContainText('Growth');
+
+  await loopButton.click();
+
+  await expect(loopButton).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.entity-node.loop-focused')).toHaveCount(3);
+
+  await loopButton.click();
+
+  await expect(loopButton).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('.entity-node.loop-focused')).toHaveCount(0);
 });
 
 // --- 15. AI not-configured state ---

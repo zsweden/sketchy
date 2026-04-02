@@ -6,10 +6,11 @@ import { useChatStore } from '../../../store/chat-store';
 import { useDiagramStore } from '../../../store/diagram-store';
 import { useUIStore } from '../../../store/ui-store';
 import { useSettingsStore } from '../../../store/settings-store';
+import { getWebStorage } from '../../../utils/web-storage';
 
 function resetStores() {
-  window.localStorage?.removeItem?.('sketchy-settings');
-  window.sessionStorage?.removeItem?.('sketchy_diagram');
+  getWebStorage('localStorage')?.removeItem('sketchy-settings');
+  getWebStorage('sessionStorage')?.removeItem('sketchy_diagram');
   useDiagramStore.getState().setFramework('crt');
   useDiagramStore.getState().newDiagram();
   useDiagramStore.setState((s) => ({ diagram: { ...s.diagram, nodes: [] } }));

@@ -6,13 +6,14 @@ import { useSettingsStore } from '../../../store/settings-store';
 import { useDiagramStore } from '../../../store/diagram-store';
 import { useUIStore } from '../../../store/ui-store';
 import { THEMES } from '../../../styles/themes';
+import { getWebStorage } from '../../../utils/web-storage';
 
 vi.mock('../../../core/layout/run-elk-auto-layout', () => ({
   runElkAutoLayout: vi.fn().mockResolvedValue([]),
 }));
 
 function resetStores() {
-  window.localStorage?.removeItem?.('sketchy-settings');
+  getWebStorage('localStorage')?.removeItem('sketchy-settings');
   useSettingsStore.setState({
     settingsOpen: true,
     provider: 'openai',

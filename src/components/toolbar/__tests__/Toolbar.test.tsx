@@ -8,6 +8,7 @@ import { useChatStore } from '../../../store/chat-store';
 import { useDiagramStore } from '../../../store/diagram-store';
 import { useSettingsStore, PROVIDERS } from '../../../store/settings-store';
 import { useUIStore } from '../../../store/ui-store';
+import { getWebStorage } from '../../../utils/web-storage';
 
 const mocks = vi.hoisted(() => ({
   runElkAutoLayout: vi.fn(),
@@ -25,8 +26,8 @@ vi.mock('../../../core/persistence/sky-io', () => ({
 }));
 
 function resetStores() {
-  window.localStorage?.removeItem?.('sketchy-settings');
-  window.sessionStorage?.removeItem?.('sketchy_diagram');
+  getWebStorage('localStorage')?.removeItem('sketchy-settings');
+  getWebStorage('sessionStorage')?.removeItem('sketchy_diagram');
   useDiagramStore.getState().setFramework('crt');
   useDiagramStore.getState().newDiagram();
   useChatStore.setState({

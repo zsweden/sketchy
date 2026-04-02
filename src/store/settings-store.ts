@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { fetchAvailableModels, KNOWN_MODELS, type ModelInfo } from '../core/ai/model-fetcher';
 import { DEFAULT_THEME, type ThemeId } from '../styles/themes';
+import { getWebStorage } from '../utils/web-storage';
 
 const STORAGE_KEY = 'sketchy-settings';
 
@@ -36,6 +37,14 @@ interface StoredSettings {
   theme?: string;
 }
 
+const DEFAULT_SETTINGS: StoredSettings = {
+  apiKey: '',
+  baseUrl: PROVIDERS[0].baseUrl,
+  model: '',
+  provider: PROVIDERS[0].id,
+  theme: DEFAULT_THEME,
+};
+
 interface SettingsState {
   provider: string;
   theme: ThemeId;
@@ -58,8 +67,11 @@ interface SettingsState {
 }
 
 function loadSettings(): StoredSettings {
+  const storage = getWebStorage('localStorage');
+  if (!storage) return DEFAULT_SETTINGS;
+
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = storage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       const baseUrl = parsed.baseUrl ?? PROVIDERS[0].baseUrl;
@@ -72,14 +84,17 @@ function loadSettings(): StoredSettings {
       };
     }
   } catch { /* ignore */ }
-  return { apiKey: '', baseUrl: PROVIDERS[0].baseUrl, model: '', provider: PROVIDERS[0].id, theme: DEFAULT_THEME };
+  return DEFAULT_SETTINGS;
 }
 
 function saveSettings(patch: Partial<StoredSettings>) {
+  const storage = getWebStorage('localStorage');
+  if (!storage) return;
+
   try {
     const current = loadSettings();
     const next = { ...current, ...patch };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    storage.setItem(STORAGE_KEY, JSON.stringify(next));
   } catch { /* ignore */ }
 }
 

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createEmptyDiagram } from '../core/types';
 import { useDiagramStore } from '../store/diagram-store';
 import { useUIStore } from '../store/ui-store';
+import { getWebStorage } from '../utils/web-storage';
 
 const mocks = vi.hoisted(() => ({
   useAutoSave: vi.fn(),
@@ -45,9 +46,9 @@ vi.mock('../components/toast/ToastContainer', () => ({
 import App from '../App';
 
 function resetStores() {
-  window.localStorage?.removeItem?.('sketchy-settings');
-  window.sessionStorage?.removeItem?.('sketchy_diagram');
-  window.sessionStorage?.removeItem?.('sketchy_chat');
+  getWebStorage('localStorage')?.removeItem('sketchy-settings');
+  getWebStorage('sessionStorage')?.removeItem('sketchy_diagram');
+  getWebStorage('sessionStorage')?.removeItem('sketchy_chat');
   useDiagramStore.getState().setFramework('crt');
   useDiagramStore.getState().newDiagram();
   useUIStore.setState({
