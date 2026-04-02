@@ -227,7 +227,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
       className={[
         'entity-node',
         selected ? 'selected' : '',
-        (handlesVisible || selected || editing) ? 'handles-visible' : '',
+        (handlesVisible || editing) ? 'handles-visible' : '',
         isConnectionInProgress ? 'connection-in-progress' : '',
         isConnectionSourceNode ? 'connection-source-node' : '',
         nodeData.highlightState === 'highlighted' ? 'highlighted' : '',

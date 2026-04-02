@@ -426,6 +426,14 @@ describe('EntityNode', () => {
       expect(nodeEl.className).not.toContain('handles-visible');
     });
 
+    it('does not reveal handles just because the node is selected', () => {
+      renderNode({ selected: true });
+      const nodeEl = document.querySelector('.entity-node') as HTMLDivElement;
+
+      expect(nodeEl.className).toContain('selected');
+      expect(nodeEl.className).not.toContain('handles-visible');
+    });
+
     it('hides overlapping source handles on non-source nodes while connecting', () => {
       mockConnectionState = {
         inProgress: true,
