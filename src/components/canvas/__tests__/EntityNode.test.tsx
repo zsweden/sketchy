@@ -191,6 +191,18 @@ describe('EntityNode', () => {
     });
   });
 
+  describe('highlight styling', () => {
+    it('adds a highlight class when connected through a highlighted edge', () => {
+      renderNode({ highlightState: 'highlighted' });
+      expect(document.querySelector('.entity-node')).toHaveClass('highlighted');
+    });
+
+    it('adds loop focus classes for highlighted loop nodes', () => {
+      renderNode({ highlightState: 'highlighted', loopKind: 'reinforcing' });
+      expect(document.querySelector('.entity-node')).toHaveClass('highlighted', 'loop-focused', 'loop-reinforcing');
+    });
+  });
+
   describe('inline editing', () => {
     it('enters edit mode on double-click', async () => {
       renderNode({ label: 'Edit me' });

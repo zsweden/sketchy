@@ -230,6 +230,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
         (handlesVisible || selected || editing) ? 'handles-visible' : '',
         isConnectionInProgress ? 'connection-in-progress' : '',
         isConnectionSourceNode ? 'connection-source-node' : '',
+        nodeData.highlightState === 'highlighted' ? 'highlighted' : '',
         nodeData.highlightState === 'dimmed' ? 'dimmed' : '',
         nodeData.highlightState === 'highlighted' && nodeData.loopKind
           ? `loop-focused loop-${nodeData.loopKind}`
