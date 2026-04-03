@@ -320,34 +320,13 @@ describe('DiagramCanvas', () => {
     expect(useDiagramStore.getState().diagram.settings.edgeRoutingMode).toBe('fixed');
   });
 
-  it('freezes dynamic routing while a node drag is in progress and unfreezes on drop', async () => {
-    const user = userEvent.setup();
-
+  it('passes highlight data to useRFNodeEdgeBuilder', () => {
     render(<DiagramCanvas />);
 
     expect(mocks.useRFNodeEdgeBuilder).toHaveBeenLastCalledWith(
       mocks.highlightSets,
       null,
       mocks.degreesMap,
-      false,
-    );
-
-    await user.click(screen.getByTestId('trigger-node-drag-start'));
-
-    expect(mocks.useRFNodeEdgeBuilder).toHaveBeenLastCalledWith(
-      mocks.highlightSets,
-      null,
-      mocks.degreesMap,
-      true,
-    );
-
-    await user.click(screen.getByTestId('trigger-node-drag-stop'));
-
-    expect(mocks.useRFNodeEdgeBuilder).toHaveBeenLastCalledWith(
-      mocks.highlightSets,
-      null,
-      mocks.degreesMap,
-      false,
     );
   });
 

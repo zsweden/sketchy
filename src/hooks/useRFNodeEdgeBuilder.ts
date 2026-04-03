@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { MarkerType, type Edge, type Node } from '@xyflow/react';
 import { DEFAULT_EDGE_ROUTING_POLICY } from '../core/edge-routing';
 import { useDiagramStore, useFramework } from '../store/diagram-store';
@@ -21,7 +21,6 @@ export function useRFNodeEdgeBuilder(
   highlightSets: ConnectedSubgraph | null,
   selectedLoop: NamedCausalLoop | null,
   degreesMap: Map<string, NodeDegrees>,
-  freezeDynamicRouting = false,
 ): BuilderResult {
   const nodes = useDiagramStore((s) => s.diagram.nodes);
   const edges = useDiagramStore((s) => s.diagram.edges);
@@ -32,34 +31,18 @@ export function useRFNodeEdgeBuilder(
   const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
   const themeId = useSettingsStore((s) => s.theme);
   const activeTheme = useMemo(() => getTheme(themeId), [themeId]);
-  const cachedOptimizedPlacements = useRef<Map<string, EdgeHandlePlacement>>(new Map());
+  const optimizedPlacements = useMemo(() => {
+    if (edgeRoutingMode !== 'dynamic') {
+      return new Map<string, EdgeHandlePlacement>();
+    }
+    return getOptimizedEdgePlacements(edges, nodes, settings, DEFAULT_EDGE_ROUTING_POLICY);
+  }, [edges, nodes, settings, edgeRoutingMode]);
 
   const defaultEdgeOptions = useMemo(() => ({
     type: 'smoothstep',
     markerEnd: { type: MarkerType.ArrowClosed, width: ARROW_MARKER_SIZE, height: ARROW_MARKER_SIZE, color: activeTheme.js.arrowColor },
     style: { strokeWidth: 2 },
   }), [activeTheme]);
-
-  const optimizedPlacements = useMemo(
-    () => {
-      if (edgeRoutingMode !== 'dynamic') {
-        return cachedOptimizedPlacements.current;
-      }
-      if (freezeDynamicRouting) {
-        return cachedOptimizedPlacements.current;
-      }
-
-      const placements = getOptimizedEdgePlacements(
-        edges,
-        nodes,
-        settings,
-        DEFAULT_EDGE_ROUTING_POLICY,
-      );
-      cachedOptimizedPlacements.current = placements;
-      return placements;
-    },
-    [edges, nodes, settings, edgeRoutingMode, freezeDynamicRouting],
-  );
 
   const rfNodes: Node[] = useMemo(
     () =>
