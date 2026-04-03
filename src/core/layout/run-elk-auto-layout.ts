@@ -1,14 +1,11 @@
 import type { DiagramEdge, DiagramNode } from '../types';
-import type { AutoLayoutOptions, NodePositionUpdate } from './auto-layout';
+import { autoLayout, type AutoLayoutOptions, type NodePositionUpdate } from './auto-layout';
+import { elkEngine } from './elk-engine';
 
 export async function runElkAutoLayout(
   nodes: DiagramNode[],
   edges: DiagramEdge[],
   options: AutoLayoutOptions,
 ): Promise<NodePositionUpdate[]> {
-  const [{ autoLayout }, { elkEngine }] = await Promise.all([
-    import('./auto-layout'),
-    import('./elk-engine'),
-  ]);
   return autoLayout(nodes, edges, options, elkEngine);
 }

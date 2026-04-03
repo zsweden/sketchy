@@ -1,16 +1,9 @@
 import type { LayoutEngine } from './layout-engine';
 import { DEFAULT_ELK_EXPERIMENT_SETTINGS, type ElkAlgorithm } from './elk-options';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let elkInstance: any = null;
+import ELK from 'elkjs/lib/elk.bundled.js';
 
-async function getElk() {
-  if (!elkInstance) {
-    const ELK = (await import('elkjs/lib/elk.bundled.js')).default;
-    elkInstance = new ELK();
-  }
-  return elkInstance;
-}
+const elkInstance = new ELK();
 
 const DIRECTION_MAP: Record<string, string> = {
   TB: 'DOWN',
@@ -83,7 +76,7 @@ function createElkEngine(algorithm: ElkAlgorithm): LayoutEngine {
       })),
     };
 
-    const elk = await getElk();
+    const elk = elkInstance;
 
     let laid;
     try {
@@ -94,11 +87,11 @@ function createElkEngine(algorithm: ElkAlgorithm): LayoutEngine {
     }
 
     return (laid.children ?? [])
-      .filter((child: { x?: number; y?: number }) => child.x !== undefined && child.y !== undefined)
-      .map((child: { id: string; x: number; y: number }) => ({
+      .filter((child) => child.x !== undefined && child.y !== undefined)
+      .map((child) => ({
         id: child.id,
-        x: child.x,
-        y: child.y,
+        x: child.x!,
+        y: child.y!,
       }));
   };
 }
