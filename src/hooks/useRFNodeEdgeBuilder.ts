@@ -1,10 +1,9 @@
 import { useMemo } from 'react';
 import { MarkerType, type Edge, type Node } from '@xyflow/react';
-import { DEFAULT_EDGE_ROUTING_POLICY, type EdgeRoutingConfig } from '../core/edge-routing';
+import { DEFAULT_EDGE_ROUTING_CONFIG, DEFAULT_EDGE_ROUTING_POLICY } from '../core/edge-routing';
 import { useDiagramStore, useFramework } from '../store/diagram-store';
 import { useUIStore } from '../store/ui-store';
 import { useSettingsStore } from '../store/settings-store';
-import { useEdgeRoutingStore } from '../store/edge-routing-store';
 import { getSourceHandleId, getTargetHandleId, type EdgeHandlePlacement } from '../core/graph/ports';
 import { getAutomaticEdgeSides, getOptimizedEdgePlacements, getStoredOrAutomaticEdgeSides } from '../store/diagram-helpers';
 import { getTheme } from '../styles/themes';
@@ -32,20 +31,11 @@ export function useRFNodeEdgeBuilder(
   const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
   const themeId = useSettingsStore((s) => s.theme);
   const activeTheme = useMemo(() => getTheme(themeId), [themeId]);
-  const erCrossingPenalty = useEdgeRoutingStore((s) => s.edgeCrossingPenalty);
-  const erNodeOverlapPenalty = useEdgeRoutingStore((s) => s.edgeNodeOverlapPenalty);
-  const erLengthSquared = useEdgeRoutingStore((s) => s.edgeLengthSquared);
-  const erFlowBonus = useEdgeRoutingStore((s) => s.flowAlignedBonus);
-  const erCrossingPolicy = useEdgeRoutingStore((s) => s.crossingPolicy);
-  const erMixedDirPenalty = useEdgeRoutingStore((s) => s.mixedDirectionPenalty);
-  const edgeRoutingConfig = useMemo<EdgeRoutingConfig>(() => ({
-    edgeCrossingPenalty: erCrossingPenalty,
-    edgeNodeOverlapPenalty: erNodeOverlapPenalty,
-    edgeLengthSquared: erLengthSquared,
-    flowAlignedBonus: framework.allowsCycles ? 0 : erFlowBonus,
-    crossingPolicy: erCrossingPolicy,
-    mixedDirectionPenalty: erMixedDirPenalty,
-  }), [erCrossingPenalty, erNodeOverlapPenalty, erLengthSquared, erFlowBonus, erCrossingPolicy, erMixedDirPenalty, framework.allowsCycles]);
+  const edgeRoutingConfig = useMemo(() => (
+    framework.allowsCycles
+      ? { ...DEFAULT_EDGE_ROUTING_CONFIG, flowAlignedBonus: 0 }
+      : DEFAULT_EDGE_ROUTING_CONFIG
+  ), [framework.allowsCycles]);
   const optimizedPlacements = useMemo(() => {
     if (edgeRoutingMode !== 'dynamic') {
       return new Map<string, EdgeHandlePlacement>();

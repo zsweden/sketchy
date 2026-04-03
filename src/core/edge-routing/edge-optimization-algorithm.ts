@@ -79,7 +79,7 @@ export function computeLegacyPlusEdgeRoutingPlacements({
         if (geometry.points.length === 0) continue;
 
         const length = getPolylineLength(geometry.points);
-        let score = (config.edgeLengthSquared ? length * length : length) * EDGE_LENGTH_PENALTY;
+        let score = length * EDGE_LENGTH_PENALTY;
 
         for (const [nodeId, box] of nodeBoxEntries) {
           if (nodeId === edge.source || nodeId === edge.target) continue;

@@ -339,8 +339,9 @@ describe('diagram store', () => {
       useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });
 
       const edge = useDiagramStore.getState().diagram.edges[0];
-      expect(edge.sourceSide).toBe('bottom');
-      expect(edge.targetSide).toBe('top');
+      // BT flow bonus prefers top/bottom over geometry-based bottom/top
+      expect(edge.sourceSide).toBe('top');
+      expect(edge.targetSide).toBe('bottom');
     });
 
     it('preserves stored fixed edge sides when loading a fixed diagram', () => {
@@ -481,8 +482,9 @@ describe('diagram store', () => {
 
       expect(optimized).toBe(true);
       const edge = useDiagramStore.getState().diagram.edges[0];
-      expect(edge.sourceSide).toBe('bottom');
-      expect(edge.targetSide).toBe('top');
+      // BT flow bonus prefers top/bottom over geometry-based bottom/top
+      expect(edge.sourceSide).toBe('top');
+      expect(edge.targetSide).toBe('bottom');
     });
 
     it('switching to dynamic after auto edges keeps the same placements', () => {
@@ -527,13 +529,14 @@ describe('diagram store', () => {
       // canUndo should not have changed (no extra history push)
       expect(useDiagramStore.getState().canUndo).toBe(canUndoBefore);
 
-      // Edges should be optimized
+      // Edges should be optimized (BT flow bonus prefers top/bottom)
       const edge = useDiagramStore.getState().diagram.edges[0];
-      expect(edge.sourceSide).toBe('bottom');
-      expect(edge.targetSide).toBe('top');
+      expect(edge.sourceSide).toBe('top');
+      expect(edge.targetSide).toBe('bottom');
     });
 
     it('optimizeEdgesAfterLayout is a no-op in dynamic mode', () => {
+      useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'dynamic' });
       const sourceId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
       const targetId = useDiagramStore.getState().addNode({ x: 0, y: 200 });
       useDiagramStore.getState().addEdge(sourceId, targetId);

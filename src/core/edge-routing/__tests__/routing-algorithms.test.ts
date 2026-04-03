@@ -66,7 +66,7 @@ describe('edge routing', () => {
     )).toBeLessThan(0);
   });
 
-  it('uses right-exiting split corner handles for mostly horizontal adjacency', () => {
+  it('uses flow-aligned corner handles for mostly horizontal adjacency', () => {
     const nodeBoxes = boxes([
       ['a', 0, 100, 240, 148],
       ['b', 320, 0, 560, 48],
@@ -74,8 +74,8 @@ describe('edge routing', () => {
     const placements = route(nodeBoxes, [{ id: 'ab', source: 'a', target: 'b' }]);
 
     expect(placements.get('ab')).toEqual({
-      sourceSide: 'topright-right',
-      targetSide: 'bottomleft-left',
+      sourceSide: 'bottomright-bottom',
+      targetSide: 'topleft-top',
     });
   });
 
@@ -289,7 +289,7 @@ describe('edge routing', () => {
     });
     expect(strictPlacements.get('growth-regulatory')).toEqual({
       sourceSide: 'bottomleft-bottom',
-      targetSide: 'right',
+      targetSide: 'topright-top',
     });
   });
 
@@ -322,7 +322,7 @@ describe('edge routing', () => {
     expect(length).toBe(20);
   });
 
-  it('prefers flow-aligned handles for reciprocal edges on close nodes', () => {
+  it('forgives reciprocal edge crossings at shared endpoints with default policy', () => {
     const nodeBoxes = boxes([
       ['a', 0, 0, 160, 60],
       ['b', 0, 80, 160, 140],
@@ -340,11 +340,13 @@ describe('edge routing', () => {
 
     const ab = placements.get('a-b')!;
     const ba = placements.get('b-a')!;
-    // Both should use vertical exits (bottom/top), not detour through right/left
-    expect(['bottom', 'bottomleft-bottom', 'bottomright-bottom']).toContain(ab.sourceSide);
-    expect(['top', 'topleft-top', 'topright-top']).toContain(ab.targetSide);
-    expect(['top', 'topleft-top', 'topright-top']).toContain(ba.sourceSide);
-    expect(['bottom', 'bottomleft-bottom', 'bottomright-bottom']).toContain(ba.targetSide);
+    // With shared-endpoint-same-type-forgiven policy and flow bonus,
+    // both edges prefer flow-aligned sides (bottom/top in TB layout)
+    // even for the reverse edge, since crossings are forgiven
+    expect(ab.sourceSide).toBe('bottom');
+    expect(ab.targetSide).toBe('top');
+    expect(ba.sourceSide).toBe('bottom');
+    expect(ba.targetSide).toBe('top');
   });
 
   it('flow-aligned candidate ordering puts flow-direction sides first in TB', () => {

@@ -1,4 +1,4 @@
-import { DEFAULT_EDGE_ROUTING_POLICY } from '../core/edge-routing';
+import { DEFAULT_EDGE_ROUTING_CONFIG, DEFAULT_EDGE_ROUTING_POLICY } from '../core/edge-routing';
 import { findExistingEdge, validateEdge } from '../core/graph/validation';
 import {
   getDefaultEdgeFields,
@@ -6,7 +6,6 @@ import {
   captureOptimizedEdgeSides,
   resolveFramework,
 } from './diagram-helpers';
-import { useEdgeRoutingStore } from './edge-routing-store';
 import type { DiagramEdge } from '../core/types';
 import type { DiagramState, DiagramStoreContext } from './diagram-store-types';
 
@@ -153,9 +152,10 @@ export function createDiagramEdgeActions(
       const state = get();
       if (state.diagram.settings.edgeRoutingMode !== 'fixed') return false;
 
-      const config = useEdgeRoutingStore.getState().getConfig();
       const fw = resolveFramework(state.diagram.frameworkId);
-      if (fw.allowsCycles) config.flowAlignedBonus = 0;
+      const config = fw.allowsCycles
+        ? { ...DEFAULT_EDGE_ROUTING_CONFIG, flowAlignedBonus: 0 }
+        : DEFAULT_EDGE_ROUTING_CONFIG;
 
       const optimizedEdges = captureOptimizedEdgeSides(
         state.diagram.edges,
@@ -185,9 +185,10 @@ export function createDiagramEdgeActions(
       const state = get();
       if (state.diagram.settings.edgeRoutingMode !== 'fixed') return;
 
-      const config = useEdgeRoutingStore.getState().getConfig();
       const fw = resolveFramework(state.diagram.frameworkId);
-      if (fw.allowsCycles) config.flowAlignedBonus = 0;
+      const config = fw.allowsCycles
+        ? { ...DEFAULT_EDGE_ROUTING_CONFIG, flowAlignedBonus: 0 }
+        : DEFAULT_EDGE_ROUTING_CONFIG;
 
       const optimizedEdges = captureOptimizedEdgeSides(
         state.diagram.edges,

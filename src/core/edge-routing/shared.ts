@@ -52,19 +52,17 @@ export const EDGE_ROUTING_NODE_NEIGHBORHOOD_PADDING = 36;
 export interface EdgeRoutingConfig {
   edgeCrossingPenalty: number;
   edgeNodeOverlapPenalty: number;
-  edgeLengthSquared: boolean;
   flowAlignedBonus: number;
   crossingPolicy: EdgeRoutingPolicy;
   mixedDirectionPenalty: number;
 }
 
 export const DEFAULT_EDGE_ROUTING_CONFIG: EdgeRoutingConfig = {
-  edgeCrossingPenalty: 10_000,
-  edgeNodeOverlapPenalty: 2_000,
-  edgeLengthSquared: false,
-  flowAlignedBonus: 0,
-  crossingPolicy: DEFAULT_EDGE_ROUTING_POLICY,
-  mixedDirectionPenalty: 0,
+  edgeCrossingPenalty: 1_000,
+  edgeNodeOverlapPenalty: 100_000,
+  flowAlignedBonus: 1_000,
+  crossingPolicy: 'shared-endpoint-same-type-forgiven',
+  mixedDirectionPenalty: 1_000,
 };
 
 export interface EdgeRoutingInput {
