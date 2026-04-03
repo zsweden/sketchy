@@ -143,7 +143,7 @@ export function convertSkyJson(data: SkyJson): { diagram: Diagram; needsLayout: 
       showGrid: data.showGrid ?? true,
       snapToGrid: data.snapToGrid ?? false,
       edgeRoutingMode: data.edgeRoutingMode ?? 'dynamic',
-      showActiveAttachments: data.showActiveAttachments ?? false,
+      showActiveAttachments: data.showActiveAttachments ?? true,
     },
     nodes,
     edges,

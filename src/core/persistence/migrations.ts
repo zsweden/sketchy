@@ -84,7 +84,7 @@ export const migrations: Record<
       schemaVersion: 5,
       settings: {
         ...settings,
-        showActiveAttachments: settings.showActiveAttachments ?? false,
+        showActiveAttachments: settings.showActiveAttachments ?? true,
       },
     };
   },

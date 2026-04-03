@@ -124,9 +124,15 @@ function segmentsIntersect(p1: Point, q1: Point, p2: Point, q2: Point): boolean 
   const o3 = orientation(p2, q2, p1);
   const o4 = orientation(p2, q2, q1);
 
+  // True crossing: segments pass through each other
   if ((o1 > 0 && o2 < 0 || o1 < 0 && o2 > 0) && (o3 > 0 && o4 < 0 || o3 < 0 && o4 > 0)) {
     return true;
   }
+  // Collinear overlap: segments lie on the same line — not a crossing
+  if (o1 === 0 && o2 === 0 && o3 === 0 && o4 === 0) {
+    return false;
+  }
+  // T-intersection: one endpoint touches the other segment
   if (o1 === 0 && onSegment(p1, p2, q1)) return true;
   if (o2 === 0 && onSegment(p1, q2, q1)) return true;
   if (o3 === 0 && onSegment(p2, p1, q2)) return true;

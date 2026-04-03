@@ -156,7 +156,7 @@ export function createDiagramActions(
         showGrid: diagram.settings.showGrid,
         snapToGrid: diagram.settings.snapToGrid ?? false,
         edgeRoutingMode: diagram.settings.edgeRoutingMode ?? 'dynamic',
-        showActiveAttachments: diagram.settings.showActiveAttachments ?? false,
+        showActiveAttachments: diagram.settings.showActiveAttachments ?? true,
       };
       set({
         diagram: {

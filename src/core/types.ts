@@ -72,7 +72,7 @@ export function createEmptyDiagram(frameworkId: string, id?: string): Diagram {
       showGrid: true,
       snapToGrid: false,
       edgeRoutingMode: 'fixed',
-      showActiveAttachments: false,
+      showActiveAttachments: true,
     },
     nodes: [],
     edges: [],

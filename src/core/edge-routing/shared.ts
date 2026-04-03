@@ -140,13 +140,25 @@ export function createPlacementCandidates(
       : { sourceSide: 'top' as const, targetSide: 'bottom' as const })
     : getPrimaryFlowSides(layoutDirection);
 
+  const flowSides = getPrimaryFlowSides(layoutDirection);
+  const flowSourceBase = flowSides.sourceSide;
+  const flowTargetBase = flowSides.targetSide;
+
+  const sortedSides = [...VISIBLE_HANDLE_SIDES].sort((a, b) => {
+    const aFlow = getBaseHandleSide(a) === flowSourceBase || getBaseHandleSide(a) === flowTargetBase;
+    const bFlow = getBaseHandleSide(b) === flowSourceBase || getBaseHandleSide(b) === flowTargetBase;
+    if (aFlow && !bFlow) return -1;
+    if (!aFlow && bFlow) return 1;
+    return 0;
+  });
+
   const seen = new Set<string>();
   const candidates = [
     automatic,
     baseHorizontal,
     baseVertical,
-    ...VISIBLE_HANDLE_SIDES.flatMap((sourceSide) =>
-      VISIBLE_HANDLE_SIDES.map((targetSide) => ({ sourceSide, targetSide })),
+    ...sortedSides.flatMap((sourceSide) =>
+      sortedSides.map((targetSide) => ({ sourceSide, targetSide })),
     ),
   ];
 
@@ -180,8 +192,23 @@ export function buildEdgeRoutingGeometry(
   const end = getHandlePoint(targetBox, placement.targetSide);
   const sourceExitSide = getBaseHandleSide(placement.sourceSide);
   const targetExitSide = getBaseHandleSide(placement.targetSide);
-  const startStub = offsetPoint(start, sourceExitSide, EDGE_STUB);
-  const endStub = offsetPoint(end, targetExitSide, EDGE_STUB);
+
+  // Shrink stubs when handles face each other and nodes are close,
+  // so the polyline length reflects actual visual distance.
+  let stubLength = EDGE_STUB;
+  const sourceHoriz = isHorizontalCardinalSide(sourceExitSide);
+  const targetHoriz = isHorizontalCardinalSide(targetExitSide);
+  if (sourceHoriz === targetHoriz) {
+    const gap = sourceHoriz
+      ? Math.abs(end.x - start.x)
+      : Math.abs(end.y - start.y);
+    if (gap < EDGE_STUB * 2) {
+      stubLength = Math.max(4, gap / 2);
+    }
+  }
+
+  const startStub = offsetPoint(start, sourceExitSide, stubLength);
+  const endStub = offsetPoint(end, targetExitSide, stubLength);
   const points: Point[] = [start, startStub];
 
   const sourceHorizontal = isHorizontalCardinalSide(sourceExitSide);

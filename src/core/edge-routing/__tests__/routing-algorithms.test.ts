@@ -285,8 +285,8 @@ describe('edge routing', () => {
       targetSide: 'topright-top',
     });
     expect(strictPlacements.get('growth-regulatory')).toEqual({
-      sourceSide: 'left',
-      targetSide: 'topright-top',
+      sourceSide: 'bottomleft-bottom',
+      targetSide: 'right',
     });
   });
 });
