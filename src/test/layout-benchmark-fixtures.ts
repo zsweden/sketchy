@@ -87,30 +87,3 @@ export function buildDenseGraph(
   return { nodes, edges };
 }
 
-export interface LayoutPerfFixture {
-  id: string;
-  direction: 'TB' | 'BT' | 'LR' | 'RL';
-  cyclic?: boolean;
-  nodes: DiagramNode[];
-  edges: DiagramEdge[];
-}
-
-export function getLayoutPerfFixtures(): LayoutPerfFixture[] {
-  const chain50 = buildChain(50);
-  const chain100 = buildChain(100);
-  const chain500 = buildChain(500);
-  const tree127 = buildTree(7, 2);
-  const dense100 = buildDenseGraph(100, 3);
-  const cyclic8 = buildCyclicGraph(8, 4);
-  const cyclic12 = buildCyclicGraph(12, 4);
-
-  return [
-    { id: 'layout-50-chain', direction: 'BT', ...chain50 },
-    { id: 'layout-100-chain', direction: 'BT', ...chain100 },
-    { id: 'layout-500-chain', direction: 'BT', ...chain500 },
-    { id: 'layout-127-tree', direction: 'TB', ...tree127 },
-    { id: 'layout-100-dense', direction: 'TB', ...dense100 },
-    { id: 'layout-8-cyclic', direction: 'TB', cyclic: true, ...cyclic8 },
-    { id: 'layout-12-cyclic', direction: 'TB', cyclic: true, ...cyclic12 },
-  ];
-}
