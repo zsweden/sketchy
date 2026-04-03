@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import { MarkerType, type Edge, type Node } from '@xyflow/react';
-import { DEFAULT_EDGE_ROUTING_POLICY } from '../core/edge-routing';
+import { DEFAULT_EDGE_ROUTING_POLICY, type EdgeRoutingConfig } from '../core/edge-routing';
 import { useDiagramStore, useFramework } from '../store/diagram-store';
 import { useUIStore } from '../store/ui-store';
 import { useSettingsStore } from '../store/settings-store';
+import { useEdgeRoutingStore } from '../store/edge-routing-store';
 import { getSourceHandleId, getTargetHandleId, type EdgeHandlePlacement } from '../core/graph/ports';
 import { getAutomaticEdgeSides, getOptimizedEdgePlacements, getStoredOrAutomaticEdgeSides } from '../store/diagram-helpers';
 import { getTheme } from '../styles/themes';
@@ -31,18 +32,46 @@ export function useRFNodeEdgeBuilder(
   const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
   const themeId = useSettingsStore((s) => s.theme);
   const activeTheme = useMemo(() => getTheme(themeId), [themeId]);
+  const erCrossingPenalty = useEdgeRoutingStore((s) => s.edgeCrossingPenalty);
+  const erNodeOverlapPenalty = useEdgeRoutingStore((s) => s.edgeNodeOverlapPenalty);
+  const erLengthSquared = useEdgeRoutingStore((s) => s.edgeLengthSquared);
+  const erFlowBonus = useEdgeRoutingStore((s) => s.flowAlignedBonus);
+  const erCrossingPolicy = useEdgeRoutingStore((s) => s.crossingPolicy);
+  const erMixedDirPenalty = useEdgeRoutingStore((s) => s.mixedDirectionPenalty);
+  const edgeRoutingConfig = useMemo<EdgeRoutingConfig>(() => ({
+    edgeCrossingPenalty: erCrossingPenalty,
+    edgeNodeOverlapPenalty: erNodeOverlapPenalty,
+    edgeLengthSquared: erLengthSquared,
+    flowAlignedBonus: framework.allowsCycles ? 0 : erFlowBonus,
+    crossingPolicy: erCrossingPolicy,
+    mixedDirectionPenalty: erMixedDirPenalty,
+  }), [erCrossingPenalty, erNodeOverlapPenalty, erLengthSquared, erFlowBonus, erCrossingPolicy, erMixedDirPenalty, framework.allowsCycles]);
   const optimizedPlacements = useMemo(() => {
     if (edgeRoutingMode !== 'dynamic') {
       return new Map<string, EdgeHandlePlacement>();
     }
-    return getOptimizedEdgePlacements(edges, nodes, settings, DEFAULT_EDGE_ROUTING_POLICY);
-  }, [edges, nodes, settings, edgeRoutingMode]);
+    return getOptimizedEdgePlacements(edges, nodes, settings, DEFAULT_EDGE_ROUTING_POLICY, edgeRoutingConfig);
+  }, [edges, nodes, settings, edgeRoutingMode, edgeRoutingConfig]);
 
   const defaultEdgeOptions = useMemo(() => ({
     type: 'smoothstep',
     markerEnd: { type: MarkerType.ArrowClosed, width: ARROW_MARKER_SIZE, height: ARROW_MARKER_SIZE, color: activeTheme.js.arrowColor },
     style: { strokeWidth: 2 },
   }), [activeTheme]);
+
+  const activeHandlesByNode = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    for (const e of edges) {
+      const { sourceSide, targetSide } = edgeRoutingMode === 'fixed'
+        ? getStoredOrAutomaticEdgeSides(e, nodes, settings)
+        : optimizedPlacements.get(e.id) ?? getAutomaticEdgeSides(e.source, e.target, nodes, settings);
+      if (!map.has(e.source)) map.set(e.source, new Set());
+      map.get(e.source)!.add(`source-${sourceSide}`);
+      if (!map.has(e.target)) map.set(e.target, new Set());
+      map.get(e.target)!.add(`target-${targetSide}`);
+    }
+    return map;
+  }, [edges, nodes, settings, edgeRoutingMode, optimizedPlacements]);
 
   const rfNodes: Node[] = useMemo(
     () =>
@@ -71,6 +100,7 @@ export function useRFNodeEdgeBuilder(
           data: {
             ...n.data,
             degreesMap,
+            activeHandles: activeHandlesByNode.get(n.id),
             highlightState,
             loopKind: selectedLoop && highlightSets?.nodeIds.has(n.id)
               ? selectedLoop.kind
@@ -78,7 +108,7 @@ export function useRFNodeEdgeBuilder(
           },
         };
       }),
-    [nodes, degreesMap, highlightSets, selectedLoop, selectedEdgeIds, selectedNodeIds],
+    [nodes, degreesMap, activeHandlesByNode, highlightSets, selectedLoop, selectedEdgeIds, selectedNodeIds],
   );
 
   const rfEdges: Edge[] = useMemo(

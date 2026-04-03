@@ -45,6 +45,7 @@ export const migrations: Record<
     };
   },
   3: (data) => {
+    // Migration 3→4 adds handle side normalization for edges
     const nodes = (data.nodes as Array<Record<string, unknown>>) ?? [];
     const edges = (data.edges as Array<Record<string, unknown>>) ?? [];
     const positions = new Map(nodes.map((node) => [String(node.id ?? ''), getPosition(node)]));
@@ -74,6 +75,17 @@ export const migrations: Record<
           ...(targetSide ? { targetSide } : {}),
         };
       }),
+    };
+  },
+  4: (data) => {
+    const settings = (data.settings as Record<string, unknown> | undefined) ?? {};
+    return {
+      ...data,
+      schemaVersion: 5,
+      settings: {
+        ...settings,
+        showActiveAttachments: settings.showActiveAttachments ?? false,
+      },
     };
   },
 };

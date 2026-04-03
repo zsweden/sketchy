@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { useDiagramStore } from '../store/diagram-store';
 import { saveDiagram, loadDiagram, clearDiagram } from '../core/persistence/local-storage';
 import { diagramToSkyJson, convertSkyJson } from '../core/persistence/causal-json';
-import { createEmptyDiagram } from '../core/types';
+import { createEmptyDiagram, SCHEMA_VERSION } from '../core/types';
 import { migrate } from '../core/persistence/schema';
 
 describe('e2e: sessionStorage persistence', () => {
@@ -229,7 +229,7 @@ describe('e2e: schema migration path', () => {
     };
 
     const migrated = migrate(v1Data);
-    expect(migrated.schemaVersion).toBe(4);
+    expect(migrated.schemaVersion).toBe(SCHEMA_VERSION);
     expect(migrated.settings.edgeRoutingMode).toBe('dynamic');
     expect(migrated.edges[0].confidence).toBe('high');
   });

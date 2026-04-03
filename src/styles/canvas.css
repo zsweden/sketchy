@@ -110,7 +110,8 @@
 }
 
 .entity-node.handles-visible .react-flow__handle,
-.entity-node:focus-within .react-flow__handle {
+.entity-node:focus-within .react-flow__handle,
+.react-flow__handle.handle-active {
   opacity: 1;
   scale: 1;
   pointer-events: auto;

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { isSkyJson, convertSkyJson, diagramToSkyJson } from '../causal-json';
-import { createEmptyDiagram } from '../../types';
+import { createEmptyDiagram, SCHEMA_VERSION } from '../../types';
 
 const minimal = {
   nodes: [
@@ -214,7 +214,7 @@ describe('convertSkyJson', () => {
       ],
     });
 
-    expect(diagram.schemaVersion).toBe(4);
+    expect(diagram.schemaVersion).toBe(SCHEMA_VERSION);
     expect(diagram.edges[0].sourceSide).toBe('topright-right');
     expect(diagram.edges[0].targetSide).toBe('topleft-left');
   });

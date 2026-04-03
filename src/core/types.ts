@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export type EdgeRoutingMode = 'dynamic' | 'fixed';
 export type CardinalHandleSide = 'top' | 'right' | 'bottom' | 'left';
@@ -28,6 +28,7 @@ export interface DiagramSettings {
   showGrid: boolean;
   snapToGrid: boolean;
   edgeRoutingMode: EdgeRoutingMode;
+  showActiveAttachments: boolean;
 }
 
 export interface DiagramNode {
@@ -71,6 +72,7 @@ export function createEmptyDiagram(frameworkId: string, id?: string): Diagram {
       showGrid: true,
       snapToGrid: false,
       edgeRoutingMode: 'fixed',
+      showActiveAttachments: false,
     },
     nodes: [],
     edges: [],

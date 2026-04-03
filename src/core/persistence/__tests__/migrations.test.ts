@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { migrations } from '../migrations';
 import { migrate } from '../schema';
+import { SCHEMA_VERSION } from '../../types';
 
 describe('migrations', () => {
   describe('v1 → v2', () => {
@@ -72,7 +73,7 @@ describe('migrations', () => {
       };
 
       const result = migrate(v1Data);
-      expect(result.schemaVersion).toBe(4);
+      expect(result.schemaVersion).toBe(SCHEMA_VERSION);
       expect(result.settings).toMatchObject({ edgeRoutingMode: 'dynamic' });
       expect(result.edges[0]).toMatchObject({ confidence: 'high' });
     });
@@ -92,7 +93,7 @@ describe('migrations', () => {
       };
 
       const result = migrate(v3Data);
-      expect(result.schemaVersion).toBe(4);
+      expect(result.schemaVersion).toBe(SCHEMA_VERSION);
       expect(result.edges[0]).toMatchObject({
         sourceSide: 'topright-right',
         targetSide: 'topleft-left',
