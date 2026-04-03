@@ -295,7 +295,7 @@
 }
 
 .chat-bubble {
-  max-width: 90%;
+  max-width: 100%;
   padding: 0.5rem 0.75rem;
   border-radius: 0.75rem;
   font-size: 0.8rem;
@@ -316,7 +316,6 @@
   color: var(--text);
   border-bottom-left-radius: 0.25rem;
   position: relative;
-  padding-right: 3.4rem;
 }
 
 .chat-copy-btn {
