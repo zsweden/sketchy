@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sketchy-plum.vercel.app/sitemap.xml

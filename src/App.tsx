@@ -39,12 +39,12 @@ export default function App() {
     <ReactFlowProvider>
       <div className="app-shell">
         <Toolbar />
-        <div className="app-main">
+        <main className="app-main">
           <div className="app-canvas-shell">
             <DiagramCanvas />
           </div>
           <SidePanel />
-        </div>
+        </main>
       </div>
       <ContextMenu />
       <ToastContainer />
