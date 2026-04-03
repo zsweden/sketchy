@@ -3,6 +3,9 @@ import { compareTieBreakScores } from '../edge-optimization-algorithm';
 import {
   buildEdgeRoutingGeometry,
   computeEdgeRoutingPlacements,
+  createPlacementCandidates,
+  getPolylineLength,
+  polylinesIntersect,
   shouldRewardSharedEndpointCrossingAlignment,
   shouldCountCrossingBetweenEdges,
   type EdgeRoutingEdge,
@@ -288,5 +291,75 @@ describe('edge routing', () => {
       sourceSide: 'bottomleft-bottom',
       targetSide: 'right',
     });
+  });
+
+  it('does not treat collinear overlapping segments as crossings', () => {
+    const vertical1 = [{ x: 0, y: 0 }, { x: 0, y: 100 }];
+    const vertical2 = [{ x: 0, y: 50 }, { x: 0, y: 150 }];
+    expect(polylinesIntersect(vertical1, vertical2)).toBe(false);
+
+    const horizontal1 = [{ x: 0, y: 0 }, { x: 100, y: 0 }];
+    const horizontal2 = [{ x: 50, y: 0 }, { x: 150, y: 0 }];
+    expect(polylinesIntersect(horizontal1, horizontal2)).toBe(false);
+  });
+
+  it('still detects true crossings between non-collinear segments', () => {
+    const horizontal = [{ x: 0, y: 50 }, { x: 100, y: 50 }];
+    const vertical = [{ x: 50, y: 0 }, { x: 50, y: 100 }];
+    expect(polylinesIntersect(horizontal, vertical)).toBe(true);
+  });
+
+  it('shrinks stubs for closely-spaced facing handles', () => {
+    const nodeBoxes = boxes([
+      ['a', 0, 0, 160, 60],
+      ['b', 0, 80, 160, 140],
+    ]);
+    const edge = { id: 'e1', source: 'a', target: 'b' };
+
+    const geo = buildEdgeRoutingGeometry(edge, { sourceSide: 'bottom', targetSide: 'top' }, nodeBoxes);
+    const length = getPolylineLength(geo.points);
+    // Gap is 20px (60 to 80), so length should reflect that, not inflate to 92
+    expect(length).toBe(20);
+  });
+
+  it('prefers flow-aligned handles for reciprocal edges on close nodes', () => {
+    const nodeBoxes = boxes([
+      ['a', 0, 0, 160, 60],
+      ['b', 0, 80, 160, 140],
+    ]);
+    const edges = [
+      { id: 'a-b', source: 'a', target: 'b' },
+      { id: 'b-a', source: 'b', target: 'a' },
+    ];
+
+    const placements = computeEdgeRoutingPlacements({
+      edges,
+      nodeBoxes,
+      layoutDirection: 'TB',
+    });
+
+    const ab = placements.get('a-b')!;
+    const ba = placements.get('b-a')!;
+    // Both should use vertical exits (bottom/top), not detour through right/left
+    expect(['bottom', 'bottomleft-bottom', 'bottomright-bottom']).toContain(ab.sourceSide);
+    expect(['top', 'topleft-top', 'topright-top']).toContain(ab.targetSide);
+    expect(['top', 'topleft-top', 'topright-top']).toContain(ba.sourceSide);
+    expect(['bottom', 'bottomleft-bottom', 'bottomright-bottom']).toContain(ba.targetSide);
+  });
+
+  it('flow-aligned candidate ordering puts flow-direction sides first in TB', () => {
+    const nodeBoxes = boxes([
+      ['a', 0, 0, 160, 60],
+      ['b', 0, 200, 160, 260],
+    ]);
+    const candidates = createPlacementCandidates({ source: 'a', target: 'b' }, nodeBoxes, 'TB');
+
+    const bottomRightBottom = candidates.findIndex(
+      (c) => c.sourceSide === 'bottomright-bottom' && c.targetSide === 'topright-top',
+    );
+    const bottomRightRight = candidates.findIndex(
+      (c) => c.sourceSide === 'bottomright-right' && c.targetSide === 'topright-top',
+    );
+    expect(bottomRightBottom).toBeLessThan(bottomRightRight);
   });
 });
