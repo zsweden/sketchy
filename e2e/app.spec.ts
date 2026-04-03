@@ -178,12 +178,18 @@ test('connects two nodes and changes edge confidence via context menu', async ({
   await addEdge(page, ids[0], ids[1]);
   await expect(page.locator('.react-flow__edge')).toHaveCount(1);
 
-  // Right-click edge midpoint
+  // Right-click edge midpoint — retry if the click misses the edge
   const edgePath = page.locator('.react-flow__edge-interaction').first();
-  const box = await edgePath.boundingBox();
-  await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2, { button: 'right' });
-  await expect(page.locator('.context-menu')).toBeVisible();
-  await page.locator('.context-menu-item', { hasText: 'Medium' }).click();
+  const mediumItem = page.locator('.context-menu-item', { hasText: 'Medium' });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const box = await edgePath.boundingBox();
+    await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2, { button: 'right' });
+    await expect(page.locator('.context-menu')).toBeVisible();
+    if (await mediumItem.isVisible()) break;
+    await page.locator('.context-menu').click(); // dismiss wrong menu
+    await expect(page.locator('.context-menu')).not.toBeVisible();
+  }
+  await mediumItem.click();
   await expect(page.locator('.edge-confidence-medium')).toHaveCount(1);
 });
 
