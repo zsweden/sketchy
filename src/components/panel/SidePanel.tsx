@@ -6,8 +6,34 @@ import { useNodeAlignmentActions } from '../../hooks/useNodeAlignmentActions';
 import NodePanel from './NodePanel';
 import EdgePanel from './EdgePanel';
 import SettingsPanel from './SettingsPanel';
+import EdgeRoutingPanel from './EdgeRoutingPanel';
 import ChatPanel from './ChatPanel';
 import { AlignHorizontalIcon, AlignVerticalIcon, DistributeHorizontalIcon, DistributeVerticalIcon } from '../icons/AlignDistributeIcons';
+
+type DefaultTab = 'diagram' | 'edge-routing';
+
+function DefaultPanelTabs() {
+  const [tab, setTab] = useState<DefaultTab>('diagram');
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div className="panel-tabs">
+        <button
+          className={`panel-tab ${tab === 'diagram' ? 'active' : ''}`}
+          onClick={() => setTab('diagram')}
+        >
+          Diagram
+        </button>
+        <button
+          className={`panel-tab ${tab === 'edge-routing' ? 'active' : ''}`}
+          onClick={() => setTab('edge-routing')}
+        >
+          Edge Routing
+        </button>
+      </div>
+      {tab === 'diagram' ? <SettingsPanel /> : <EdgeRoutingPanel />}
+    </div>
+  );
+}
 
 export default function SidePanel() {
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
@@ -223,7 +249,7 @@ export default function SidePanel() {
         ) : selectedEdges.length === 1 ? (
           <EdgePanel edge={selectedEdges[0]} />
         ) : (
-          <SettingsPanel />
+          <DefaultPanelTabs />
         )}
       </div>
       {isSharedLayout && (

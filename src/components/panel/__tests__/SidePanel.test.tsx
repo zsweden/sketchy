@@ -57,7 +57,7 @@ describe('SidePanel', () => {
   it('shows settings and chat when nothing is selected', () => {
     render(<SidePanel />);
 
-    expect(screen.getByText('Diagram')).toBeInTheDocument();
+    expect(screen.getAllByText('Diagram').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByLabelText('Diagram name')).toBeInTheDocument();
     expect(
       screen.getByText('Ask questions about your diagram or request changes.'),

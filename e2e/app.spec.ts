@@ -302,19 +302,19 @@ test('multi-select nodes and delete all', async ({ page }) => {
 // --- 7. Side panel switching ---
 
 test('side panel switches between Node and Diagram views', async ({ page }) => {
-  // Default: Diagram panel
-  await expect(page.locator('.side-panel-top').getByText('Diagram', { exact: true })).toBeVisible();
+  // Default: Diagram panel (section heading inside SettingsPanel)
+  await expect(page.locator('.side-panel-top .section-heading', { hasText: 'Diagram' })).toBeVisible();
 
   // Create a node
   await createNode(page, 200, 250);
 
   // Click node → NodePanel
   await page.locator('.entity-node').nth(0).click();
-  await expect(page.locator('.side-panel-top').getByText('Node', { exact: true })).toBeVisible();
+  await expect(page.locator('.side-panel-top .section-heading', { hasText: 'Node' })).toBeVisible();
 
   // Click pane → back to Diagram
   await page.locator(PANE).click({ position: { x: 50, y: 50 } });
-  await expect(page.locator('.side-panel-top').getByText('Diagram', { exact: true })).toBeVisible();
+  await expect(page.locator('.side-panel-top .section-heading', { hasText: 'Diagram' })).toBeVisible();
 });
 
 // --- 8. Provider / model settings ---
@@ -872,7 +872,7 @@ test('edge panel shows confidence and notes when an edge is clicked', async ({ p
   await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
 
   // Edge panel should appear
-  await expect(page.locator('.section-heading', { hasText: 'Edge' })).toBeVisible();
+  await expect(page.locator('.side-panel-top .section-heading', { hasText: 'Edge' })).toBeVisible();
   await expect(page.getByLabel('Edge notes')).toBeVisible();
 
   // Edit notes

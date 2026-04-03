@@ -16,6 +16,7 @@ import type { EdgeHandlePlacement } from '../core/graph/ports';
 import {
   computeEdgeRoutingPlacements,
   getAutomaticEdgeRoutingPlacement,
+  type EdgeRoutingConfig,
   type EdgeRoutingPolicy,
   type EdgeRoutingNodeBox,
 } from '../core/edge-routing';
@@ -74,12 +75,14 @@ export function getOptimizedEdgePlacements(
   nodes: DiagramNode[],
   settings: DiagramSettings,
   policy?: EdgeRoutingPolicy,
+  config?: EdgeRoutingConfig,
 ): Map<string, EdgeHandlePlacement> {
   return computeEdgeRoutingPlacements({
     edges: edges.map((edge) => ({ id: edge.id, source: edge.source, target: edge.target })),
     nodeBoxes: getNodeBoxes(nodes),
     layoutDirection: settings.layoutDirection,
     policy,
+    config,
   });
 }
 
@@ -137,8 +140,9 @@ export function captureOptimizedEdgeSides(
   nodes: DiagramNode[],
   settings: DiagramSettings,
   policy?: EdgeRoutingPolicy,
+  config?: EdgeRoutingConfig,
 ): DiagramEdge[] {
-  const placements = getOptimizedEdgePlacements(edges, nodes, settings, policy);
+  const placements = getOptimizedEdgePlacements(edges, nodes, settings, policy, config);
   return edges.map((edge) => ({
     ...edge,
     ...(placements.get(edge.id) ?? getAutomaticEdgeSides(edge.source, edge.target, nodes, settings)),

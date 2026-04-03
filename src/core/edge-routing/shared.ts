@@ -43,10 +43,29 @@ export type EdgeRoutingPolicy =
   | 'shared-endpoint-outside-buffer'
   | 'shared-endpoint-outside-buffer-same-type-only'
   | 'shared-endpoint-outside-buffer-same-type-rewarded'
-  | 'shared-endpoint-anywhere';
+  | 'shared-endpoint-anywhere'
+  | 'shared-endpoint-same-type-forgiven';
 
 export const DEFAULT_EDGE_ROUTING_POLICY: EdgeRoutingPolicy = 'shared-endpoint-outside-buffer-same-type-only';
 export const EDGE_ROUTING_NODE_NEIGHBORHOOD_PADDING = 36;
+
+export interface EdgeRoutingConfig {
+  edgeCrossingPenalty: number;
+  edgeNodeOverlapPenalty: number;
+  edgeLengthSquared: boolean;
+  flowAlignedBonus: number;
+  crossingPolicy: EdgeRoutingPolicy;
+  mixedDirectionPenalty: number;
+}
+
+export const DEFAULT_EDGE_ROUTING_CONFIG: EdgeRoutingConfig = {
+  edgeCrossingPenalty: 10_000,
+  edgeNodeOverlapPenalty: 2_000,
+  edgeLengthSquared: false,
+  flowAlignedBonus: 0,
+  crossingPolicy: DEFAULT_EDGE_ROUTING_POLICY,
+  mixedDirectionPenalty: 0,
+};
 
 export interface EdgeRoutingInput {
   edges: EdgeRoutingEdge[];
@@ -54,6 +73,7 @@ export interface EdgeRoutingInput {
   layoutDirection: LayoutDirection;
   policy?: EdgeRoutingPolicy;
   nodeNeighborhoodPadding?: number;
+  config?: EdgeRoutingConfig;
 }
 
 export interface EdgeRoutingGeometry {
@@ -241,6 +261,8 @@ export function shouldCountCrossingBetweenEdges(
         bPoints,
         getEndpointNeighborhoods([a, b], nodeBoxes, options?.nodeNeighborhoodPadding ?? EDGE_ROUTING_NODE_NEIGHBORHOOD_PADDING),
       ) || !sharedEndpointsHaveSameDirection(a, b);
+    case 'shared-endpoint-same-type-forgiven':
+      return !sharedEndpointsHaveSameDirection(a, b);
     case 'shared-endpoint-outside-buffer-same-type-rewarded':
       return polylinesIntersectOutsideBoxes(
         aPoints,

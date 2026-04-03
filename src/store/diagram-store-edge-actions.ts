@@ -6,6 +6,7 @@ import {
   captureOptimizedEdgeSides,
   resolveFramework,
 } from './diagram-helpers';
+import { useEdgeRoutingStore } from './edge-routing-store';
 import type { DiagramEdge } from '../core/types';
 import type { DiagramState, DiagramStoreContext } from './diagram-store-types';
 
@@ -152,11 +153,16 @@ export function createDiagramEdgeActions(
       const state = get();
       if (state.diagram.settings.edgeRoutingMode !== 'fixed') return false;
 
+      const config = useEdgeRoutingStore.getState().getConfig();
+      const fw = resolveFramework(state.diagram.frameworkId);
+      if (fw.allowsCycles) config.flowAlignedBonus = 0;
+
       const optimizedEdges = captureOptimizedEdgeSides(
         state.diagram.edges,
         state.diagram.nodes,
         state.diagram.settings,
         DEFAULT_EDGE_ROUTING_POLICY,
+        config,
       );
       const changed = optimizedEdges.some((edge, index) => {
         const current = state.diagram.edges[index];
@@ -179,11 +185,16 @@ export function createDiagramEdgeActions(
       const state = get();
       if (state.diagram.settings.edgeRoutingMode !== 'fixed') return;
 
+      const config = useEdgeRoutingStore.getState().getConfig();
+      const fw = resolveFramework(state.diagram.frameworkId);
+      if (fw.allowsCycles) config.flowAlignedBonus = 0;
+
       const optimizedEdges = captureOptimizedEdgeSides(
         state.diagram.edges,
         state.diagram.nodes,
         state.diagram.settings,
         DEFAULT_EDGE_ROUTING_POLICY,
+        config,
       );
       setDiagram((diagram) => ({ ...diagram, edges: optimizedEdges }));
     },

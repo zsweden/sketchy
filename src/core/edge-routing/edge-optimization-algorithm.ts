@@ -1,16 +1,15 @@
 import type { EdgeRoutingInput, EdgeRoutingPlacement } from './shared';
-import { isCornerHandleSide } from '../graph/ports';
+import { isCornerHandleSide, getBaseHandleSide, getPrimaryFlowSides } from '../graph/ports';
 import {
   buildEdgeRoutingGeometry,
   createPlacementCandidates,
+  DEFAULT_EDGE_ROUTING_CONFIG,
   getPolylineLength,
   polylineIntersectsBox,
   shouldRewardSharedEndpointCrossingAlignment,
   shouldCountCrossingBetweenEdges,
 } from './shared';
 
-const EDGE_INTERSECTION_PENALTY = 10_000;
-const EDGE_NODE_OVERLAP_PENALTY = 2_000;
 const EDGE_LENGTH_PENALTY = 1;
 const EDGE_SAME_TYPE_BUFFER_ALIGNMENT_REWARD = 400;
 
@@ -35,9 +34,13 @@ export function computeLegacyPlusEdgeRoutingPlacements({
   layoutDirection,
   policy,
   nodeNeighborhoodPadding,
+  config: configOverride,
 }: EdgeRoutingInput): Map<string, EdgeRoutingPlacement> {
+  const config = configOverride ?? DEFAULT_EDGE_ROUTING_CONFIG;
+  const effectivePolicy = configOverride?.crossingPolicy ?? policy;
   const placements = new Map<string, EdgeRoutingPlacement>();
   const nodeBoxEntries = [...nodeBoxes.entries()];
+  const flowSides = getPrimaryFlowSides(layoutDirection);
 
   const getGeometry = (
     edge: EdgeRoutingInput['edges'][number],
@@ -75,12 +78,13 @@ export function computeLegacyPlusEdgeRoutingPlacements({
         const geometry = getGeometry(edge, candidate);
         if (geometry.points.length === 0) continue;
 
-        let score = getPolylineLength(geometry.points) * EDGE_LENGTH_PENALTY;
+        const length = getPolylineLength(geometry.points);
+        let score = (config.edgeLengthSquared ? length * length : length) * EDGE_LENGTH_PENALTY;
 
         for (const [nodeId, box] of nodeBoxEntries) {
           if (nodeId === edge.source || nodeId === edge.target) continue;
           if (polylineIntersectsBox(geometry.points, box)) {
-            score += EDGE_NODE_OVERLAP_PENALTY;
+            score += config.edgeNodeOverlapPenalty;
           }
         }
 
@@ -96,9 +100,9 @@ export function computeLegacyPlusEdgeRoutingPlacements({
             other,
             otherGeometry.points,
             nodeBoxes,
-            { policy, nodeNeighborhoodPadding },
+            { policy: effectivePolicy, nodeNeighborhoodPadding },
           )) {
-            score += EDGE_INTERSECTION_PENALTY;
+            score += config.edgeCrossingPenalty;
           }
           if (shouldRewardSharedEndpointCrossingAlignment(
             edge,
@@ -106,10 +110,25 @@ export function computeLegacyPlusEdgeRoutingPlacements({
             other,
             otherGeometry.points,
             nodeBoxes,
-            { policy, nodeNeighborhoodPadding },
+            { policy: effectivePolicy, nodeNeighborhoodPadding },
           )) {
             score -= EDGE_SAME_TYPE_BUFFER_ALIGNMENT_REWARD;
           }
+        }
+
+        if (config.flowAlignedBonus > 0) {
+          const srcBase = getBaseHandleSide(candidate.sourceSide);
+          const tgtBase = getBaseHandleSide(candidate.targetSide);
+          if (srcBase === flowSides.sourceSide && tgtBase === flowSides.targetSide) {
+            score -= config.flowAlignedBonus;
+          }
+        }
+
+        if (config.mixedDirectionPenalty > 0) {
+          const srcUsage = handleUsage.get(`${edge.source}:${candidate.sourceSide}`);
+          const tgtUsage = handleUsage.get(`${edge.target}:${candidate.targetSide}`);
+          if (srcUsage && srcUsage.incoming > 0) score += config.mixedDirectionPenalty;
+          if (tgtUsage && tgtUsage.outgoing > 0) score += config.mixedDirectionPenalty;
         }
 
         const tieBreak = getTieBreakScore(edge, candidate, handleUsage);
