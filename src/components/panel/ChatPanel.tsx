@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Check, Compass, PanelBottom, Rows2, Square, Trash2 } from 'lucide-react';
+import { Check, PanelBottom, Rows2, Square, Trash2 } from 'lucide-react';
 import { useChatStore } from '../../store/chat-store';
 import { useSettingsStore, PROVIDERS } from '../../store/settings-store';
 import { useUIStore } from '../../store/ui-store';
@@ -17,8 +17,6 @@ export default function ChatPanel() {
   const clearMessages = useChatStore((state) => state.clearMessages);
   const selectGraphObject = useUIStore((state) => state.selectGraphObject);
   const focusGraphObject = useUIStore((state) => state.focusGraphObject);
-  const guideMode = useChatStore((state) => state.guideMode);
-  const setGuideMode = useChatStore((state) => state.setGuideMode);
   const chatPanelMode = useUIStore((state) => state.chatPanelMode);
   const setChatPanelMode = useUIStore((state) => state.setChatPanelMode);
 
@@ -73,16 +71,6 @@ export default function ChatPanel() {
           {isConnected && <Check size={14} style={{ color: '#22c55e' }} />}
         </p>
         <div className="chat-header-actions">
-          <button
-            className={`btn btn-ghost chat-guide-toggle${guideMode ? ' is-active' : ''}`}
-            onClick={() => setGuideMode(!guideMode)}
-            title={guideMode ? 'Guide mode on — AI will evaluate framework fit' : 'Guide mode off'}
-            aria-label="Toggle guide mode"
-            aria-pressed={guideMode}
-          >
-            <Compass size={13} />
-            <span className="chat-guide-label">Guide</span>
-          </button>
           <div className="chat-layout-controls" aria-label="Chat panel layout controls">
             <button
               className={`btn btn-ghost btn-icon-sm chat-layout-btn${chatPanelMode === 'max' ? ' is-active' : ''}`}

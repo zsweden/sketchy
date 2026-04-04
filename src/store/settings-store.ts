@@ -35,6 +35,7 @@ interface StoredSettings {
   model: string;
   provider?: string;
   theme?: string;
+  guideMode?: boolean;
 }
 
 const DEFAULT_SETTINGS: StoredSettings = {
@@ -43,6 +44,7 @@ const DEFAULT_SETTINGS: StoredSettings = {
   model: '',
   provider: PROVIDERS[0].id,
   theme: DEFAULT_THEME,
+  guideMode: true,
 };
 
 interface SettingsState {
@@ -51,6 +53,7 @@ interface SettingsState {
   openaiApiKey: string;
   baseUrl: string;
   model: string;
+  guideMode: boolean;
   settingsOpen: boolean;
   availableModels: ModelInfo[];
   modelsLoading: boolean;
@@ -61,6 +64,7 @@ interface SettingsState {
   setOpenaiApiKey: (key: string) => void;
   setBaseUrl: (url: string) => void;
   setModel: (model: string) => void;
+  setGuideMode: (enabled: boolean) => void;
   toggleSettings: () => void;
   closeSettings: () => void;
   refreshModels: () => void;
@@ -81,6 +85,7 @@ function loadSettings(): StoredSettings {
         model: parsed.model ?? '',
         provider: parsed.provider ?? detectProvider(baseUrl),
         theme: parsed.theme ?? DEFAULT_THEME,
+        guideMode: parsed.guideMode ?? true,
       };
     }
   } catch { /* ignore */ }
@@ -139,6 +144,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     openaiApiKey: initial.apiKey,
     baseUrl: initial.baseUrl,
     model: initial.model,
+    guideMode: initial.guideMode ?? true,
     settingsOpen: false,
     availableModels: [],
     modelsLoading: false,
@@ -175,6 +181,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       set({ model });
     },
 
+    setGuideMode: (enabled) => {
+      saveSettings({ guideMode: enabled });
+      set({ guideMode: enabled });
+    },
+
     toggleSettings: () => set((s) => ({ settingsOpen: !s.settingsOpen })),
     closeSettings: () => set({ settingsOpen: false }),
     refreshModels,
@@ -200,6 +211,7 @@ window.addEventListener('storage', (e) => {
       model: parsed.model ?? '',
       provider: newProvider,
       theme: (parsed.theme as ThemeId) ?? DEFAULT_THEME,
+      guideMode: parsed.guideMode ?? true,
     });
     useSettingsStore.getState().refreshModels();
   } catch { /* ignore malformed data */ }

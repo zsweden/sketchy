@@ -486,22 +486,8 @@ describe('chat-store', () => {
   });
 
   describe('guide mode', () => {
-    it('setGuideMode toggles guideMode and clears pendingSuggestions', () => {
-      useChatStore.getState().setGuideMode(true);
-      expect(useChatStore.getState().guideMode).toBe(true);
-      expect(useChatStore.getState().pendingSuggestions).toBeNull();
-
-      useChatStore.setState({
-        pendingSuggestions: [{ frameworkId: 'crt', frameworkName: 'CRT', reason: 'test' }],
-      });
-
-      useChatStore.getState().setGuideMode(false);
-      expect(useChatStore.getState().guideMode).toBe(false);
-      expect(useChatStore.getState().pendingSuggestions).toBeNull();
-    });
-
     it('stores suggestions from onDone and sets pendingSuggestions', async () => {
-      useChatStore.getState().setGuideMode(true);
+      useSettingsStore.setState({ guideMode: true });
 
       const suggestions = [
         { frameworkId: 'crt', frameworkName: 'Current Reality Tree', reason: 'Root cause analysis' },
@@ -527,7 +513,7 @@ describe('chat-store', () => {
     });
 
     it('passes guideMode to streamChatMessage', () => {
-      useChatStore.getState().setGuideMode(true);
+      useSettingsStore.setState({ guideMode: true });
       useChatStore.getState().sendMessage('Test query');
 
       const lastCall = mockStreamChatMessage.mock.calls[mockStreamChatMessage.mock.calls.length - 1];
@@ -536,7 +522,6 @@ describe('chat-store', () => {
     });
 
     it('clears pendingSuggestions when user types a conversational reply', async () => {
-      useChatStore.getState().setGuideMode(true);
       useChatStore.setState({
         pendingSuggestions: [{ frameworkId: 'crt', frameworkName: 'CRT', reason: 'test' }],
       });
@@ -554,7 +539,7 @@ describe('chat-store', () => {
     });
 
     it('acceptSuggestion switches framework and sends synthetic message', async () => {
-      useChatStore.getState().setGuideMode(true);
+      useSettingsStore.setState({ guideMode: true });
 
       const suggestions = [
         { frameworkId: 'crt', frameworkName: 'Current Reality Tree', reason: 'Root cause analysis' },
@@ -573,8 +558,6 @@ describe('chat-store', () => {
 
       // Framework should be switched
       expect(useDiagramStore.getState().diagram.frameworkId).toBe('crt');
-      // Auto mode should be off
-      expect(useChatStore.getState().guideMode).toBe(false);
       expect(useChatStore.getState().pendingSuggestions).toBeNull();
 
       // Synthetic message should have been sent
