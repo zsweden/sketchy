@@ -1,8 +1,16 @@
 import type { EdgePolarity } from '../types';
 
+export type ChatImageMediaType = 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp';
+
+export interface ChatImage {
+  mediaType: ChatImageMediaType;
+  base64: string;
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
+  images?: ChatImage[];
 }
 
 export interface DiagramModification {

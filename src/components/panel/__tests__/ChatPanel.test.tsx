@@ -123,7 +123,7 @@ describe('ChatPanel', () => {
     await user.type(input, 'Explain this flow');
     fireEvent.keyDown(input, { key: 'Enter' });
 
-    expect(sendMessage).toHaveBeenCalledWith('Explain this flow');
+    expect(sendMessage).toHaveBeenCalledWith('Explain this flow', undefined);
   });
 
   it('cycles through prompt history with arrow keys', async () => {
@@ -174,9 +174,10 @@ describe('ChatPanel', () => {
 
     expect(sendMessage).toHaveBeenCalledWith(
       expect.stringContaining('[Attached file: notes.txt]'),
+      undefined,
     );
-    expect(sendMessage).toHaveBeenCalledWith(expect.stringContaining('file body'));
-    expect(sendMessage).toHaveBeenCalledWith(expect.stringContaining('Summarize this'));
+    expect(sendMessage).toHaveBeenCalledWith(expect.stringContaining('file body'), undefined);
+    expect(sendMessage).toHaveBeenCalledWith(expect.stringContaining('Summarize this'), undefined);
   });
 
   it('shows stop and clear actions when chat is active', async () => {

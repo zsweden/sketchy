@@ -465,6 +465,22 @@
   color: var(--text);
 }
 
+.chat-image-thumbnail {
+  max-width: 48px;
+  max-height: 36px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.chat-message-image {
+  display: block;
+  max-width: 100%;
+  max-height: 160px;
+  border-radius: 6px;
+  margin-bottom: 0.375rem;
+  object-fit: contain;
+}
+
 .chat-input-row {
   display: flex;
   align-items: flex-end;

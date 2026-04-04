@@ -6,7 +6,7 @@ import { buildSystemPrompt, modifyDiagramTool, anthropicModifyDiagramTool } from
 import type { ParseState } from './stream-parsers';
 import { processOpenAILine, processAnthropicLine, finalizeToolCalls } from './stream-parsers';
 
-export type { ChatMessage, DiagramModification, StreamCallbacks } from './ai-types';
+export type { ChatImage, ChatImageMediaType, ChatMessage, DiagramModification, StreamCallbacks } from './ai-types';
 
 // --- Conversation pruning ---
 
@@ -27,8 +27,22 @@ function buildOpenAIRequest(
   messages: ChatMessage[],
 ): { url: string; headers: Record<string, string>; body: string } {
   const apiMessages = [
-    { role: 'system', content: systemPrompt },
-    ...pruneHistory(messages).map((m) => ({ role: m.role, content: m.content })),
+    { role: 'system' as const, content: systemPrompt },
+    ...pruneHistory(messages).map((m) => {
+      if (m.images?.length) {
+        return {
+          role: m.role,
+          content: [
+            { type: 'text' as const, text: m.content },
+            ...m.images.map((img) => ({
+              type: 'image_url' as const,
+              image_url: { url: `data:${img.mediaType};base64,${img.base64}` },
+            })),
+          ],
+        };
+      }
+      return { role: m.role, content: m.content };
+    }),
   ];
   return {
     url: `${baseUrl.replace(/\/+$/, '')}/chat/completions`,
@@ -52,7 +66,21 @@ function buildAnthropicRequest(
 ): { url: string; headers: Record<string, string>; body: string } {
   const userMessages = pruneHistory(messages)
     .filter((m) => m.role !== 'system')
-    .map((m) => ({ role: m.role, content: m.content }));
+    .map((m) => {
+      if (m.images?.length) {
+        return {
+          role: m.role,
+          content: [
+            { type: 'text' as const, text: m.content },
+            ...m.images.map((img) => ({
+              type: 'image' as const,
+              source: { type: 'base64' as const, media_type: img.mediaType, data: img.base64 },
+            })),
+          ],
+        };
+      }
+      return { role: m.role, content: m.content };
+    });
   return {
     url: `${baseUrl.replace(/\/+$/, '')}/messages`,
     headers: buildHeaders(apiKey, 'anthropic'),

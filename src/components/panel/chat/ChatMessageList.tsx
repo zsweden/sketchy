@@ -58,7 +58,17 @@ export function ChatMessageList({
               onMentionClick={onMentionClick}
             />
           ) : (
-            <div className="chat-bubble-text">{message.content}</div>
+            <div className="chat-bubble-text">
+              {message.images?.map((img, i) => (
+                <img
+                  key={i}
+                  src={`data:${img.mediaType};base64,${img.base64}`}
+                  alt="Attached image"
+                  className="chat-message-image"
+                />
+              ))}
+              {message.content}
+            </div>
           )}
           {message.modifications && (
             <span className="chat-badge-modified">changes applied</span>

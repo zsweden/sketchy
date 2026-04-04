@@ -1,5 +1,8 @@
 import type { ChangeEvent, KeyboardEvent, RefObject } from 'react';
 import { Paperclip, Send, Square, X } from 'lucide-react';
+import type { AttachedFile } from './useChatComposer';
+
+const ACCEPT = '.txt,.json,.sky,.csv,.md,.ts,.tsx,.js,.jsx,.html,.css,.yml,.yaml,.xml,.log,.png,.jpg,.jpeg,.gif,.webp';
 
 export function ChatComposer({
   attachedFile,
@@ -15,7 +18,7 @@ export function ChatComposer({
   onRemoveAttachment,
   onSend,
 }: {
-  attachedFile: { name: string; content: string } | null;
+  attachedFile: AttachedFile | null;
   disabled: boolean;
   fileInputRef: RefObject<HTMLInputElement | null>;
   input: string;
@@ -32,7 +35,15 @@ export function ChatComposer({
     <div className="chat-input-area">
       {attachedFile && (
         <div className="chat-file-chip">
-          <Paperclip size={11} />
+          {attachedFile.isImage && attachedFile.image ? (
+            <img
+              src={`data:${attachedFile.image.mediaType};base64,${attachedFile.image.base64}`}
+              alt={attachedFile.name}
+              className="chat-image-thumbnail"
+            />
+          ) : (
+            <Paperclip size={11} />
+          )}
           <span className="chat-file-chip-name">{attachedFile.name}</span>
           <button
             className="chat-file-chip-remove"
@@ -48,7 +59,7 @@ export function ChatComposer({
           ref={fileInputRef}
           type="file"
           onChange={onFileChange}
-          accept=".txt,.json,.sky,.csv,.md,.ts,.tsx,.js,.jsx,.html,.css,.yml,.yaml,.xml,.log"
+          accept={ACCEPT}
           style={{ display: 'none' }}
         />
         {!loading && (

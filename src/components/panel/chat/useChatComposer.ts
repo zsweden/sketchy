@@ -1,8 +1,26 @@
 import { useCallback, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
+import type { ChatImage, ChatImageMediaType } from '../../../core/ai/ai-types';
 
-interface AttachedFile {
+const IMAGE_MEDIA_TYPES = new Set<string>(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
+
+export interface AttachedFile {
   name: string;
   content: string;
+  isImage: boolean;
+  image?: ChatImage;
+}
+
+function readFileAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Strip "data:<mediaType>;base64," prefix
+      resolve(result.split(',', 2)[1]);
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }
 
 export function useChatComposer({
@@ -12,7 +30,7 @@ export function useChatComposer({
 }: {
   isConfigured: boolean;
   loading: boolean;
-  sendMessage: (message: string) => void;
+  sendMessage: (message: string, image?: ChatImage) => void;
 }) {
   const [input, setInput] = useState('');
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -28,24 +46,42 @@ export function useChatComposer({
     setInput('');
 
     let message = trimmed;
+    let image: ChatImage | undefined;
+
     if (attachedFile) {
-      message = `[Attached file: ${attachedFile.name}]\n\`\`\`\n${attachedFile.content}\n\`\`\`\n\n${trimmed}`;
+      if (attachedFile.isImage && attachedFile.image) {
+        image = attachedFile.image;
+        message = `[Attached image: ${attachedFile.name}]\n\n${trimmed}`;
+      } else {
+        message = `[Attached file: ${attachedFile.name}]\n\`\`\`\n${attachedFile.content}\n\`\`\`\n\n${trimmed}`;
+      }
       setAttachedFile(null);
     }
 
-    sendMessage(message);
+    sendMessage(message, image);
   }, [attachedFile, input, isConfigured, loading, sendMessage]);
 
   const handleAttach = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
 
-  const handleFileChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    file.text().then((content) => {
-      setAttachedFile({ name: file.name, content });
-    });
+
+    if (IMAGE_MEDIA_TYPES.has(file.type)) {
+      const base64 = await readFileAsBase64(file);
+      setAttachedFile({
+        name: file.name,
+        content: '',
+        isImage: true,
+        image: { mediaType: file.type as ChatImageMediaType, base64 },
+      });
+    } else {
+      const content = await file.text();
+      setAttachedFile({ name: file.name, content, isImage: false });
+    }
+
     event.target.value = '';
   }, []);
 

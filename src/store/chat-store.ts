@@ -1,7 +1,7 @@
 import type { Framework } from '../core/framework-types';
 import type { Diagram } from '../core/types';
 import { create } from 'zustand';
-import type { ChatMessage, DiagramModification } from '../core/ai/openai-client';
+import type { ChatImage, ChatMessage, DiagramModification } from '../core/ai/openai-client';
 import { streamChatMessage } from '../core/ai/openai-client';
 import { useSettingsStore } from './settings-store';
 import { useDiagramStore } from './diagram-store';
@@ -17,6 +17,7 @@ export interface DisplayMessage {
   content: string;
   displayText?: string;
   segments?: ParsedChatSegment[];
+  images?: ChatImage[];
   modifications?: DiagramModification;
   retryText?: string;
 }
@@ -27,7 +28,7 @@ interface ChatState {
   streamingContent: string;
   aiModifiedNodeIds: Set<string>;
 
-  sendMessage: (text: string) => void;
+  sendMessage: (text: string, image?: ChatImage) => void;
   cancelStream: () => void;
   clearMessages: () => void;
   clearAiModified: () => void;
@@ -76,7 +77,8 @@ function getInitialChatState(): Pick<ChatState, 'messages' | 'aiModifiedNodeIds'
 
 function serializeChatState(state: Pick<ChatState, 'messages' | 'aiModifiedNodeIds'>): string {
   return JSON.stringify({
-    messages: state.messages,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    messages: state.messages.map(({ images, ...rest }) => rest),
     aiModifiedNodeIds: Array.from(state.aiModifiedNodeIds),
   } satisfies PersistedChatState);
 }
@@ -144,6 +146,7 @@ function buildConversationHistory(messages: DisplayMessage[]): ChatMessage[] {
     .map((message) => ({
       role: message.role,
       content: message.content,
+      ...(message.images?.length ? { images: message.images } : {}),
     }));
 }
 
@@ -181,7 +184,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   loading: false,
   streamingContent: '',
 
-  sendMessage: (text) => {
+  sendMessage: (text, image) => {
     const { openaiApiKey, baseUrl, model, provider } = useSettingsStore.getState();
     if (!baseUrl || !model) {
       set((s) => ({
@@ -204,6 +207,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       id: crypto.randomUUID(),
       role: 'user',
       content: text,
+      ...(image ? { images: [image] } : {}),
     };
 
     set((s) => ({
