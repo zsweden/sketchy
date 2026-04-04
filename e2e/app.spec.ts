@@ -186,7 +186,7 @@ test('connects two nodes and changes edge confidence via context menu', async ({
     await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2, { button: 'right' });
     await expect(page.locator('.context-menu')).toBeVisible();
     if (await mediumItem.isVisible()) break;
-    await page.locator('.context-menu').click(); // dismiss wrong menu
+    await page.keyboard.press('Escape'); // dismiss wrong menu
     await expect(page.locator('.context-menu')).not.toBeVisible();
   }
   await mediumItem.click();
