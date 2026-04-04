@@ -209,6 +209,248 @@ describe('settings store', () => {
     });
   });
 
+  describe('setProvider', () => {
+    it('switches provider, resets model, updates baseUrl', async () => {
+      const useSettingsStore = await importFreshStore();
+      useSettingsStore.getState().setProvider('anthropic');
+
+      const state = useSettingsStore.getState();
+      expect(state.provider).toBe('anthropic');
+      expect(state.baseUrl).toBe('https://api.anthropic.com/v1');
+      expect(state.model).toBe('');
+
+      const stored = JSON.parse(mockStorage.getItem(STORAGE_KEY)!);
+      expect(stored.provider).toBe('anthropic');
+      expect(stored.baseUrl).toBe('https://api.anthropic.com/v1');
+      expect(stored.model).toBe('');
+    });
+
+    it('keeps current baseUrl for custom provider', async () => {
+      const useSettingsStore = await importFreshStore();
+      useSettingsStore.getState().setBaseUrl('https://my-custom.api/v1');
+      useSettingsStore.getState().setProvider('custom');
+
+      expect(useSettingsStore.getState().baseUrl).toBe('https://my-custom.api/v1');
+    });
+
+    it('ignores unknown provider id', async () => {
+      const useSettingsStore = await importFreshStore();
+      useSettingsStore.getState().setProvider('nonexistent');
+
+      // Should remain default
+      expect(useSettingsStore.getState().provider).toBe('openai');
+    });
+  });
+
+  describe('setTheme', () => {
+    it('updates theme in state and persists', async () => {
+      const useSettingsStore = await importFreshStore();
+      useSettingsStore.getState().setTheme('dark');
+
+      expect(useSettingsStore.getState().theme).toBe('dark');
+      const stored = JSON.parse(mockStorage.getItem(STORAGE_KEY)!);
+      expect(stored.theme).toBe('dark');
+    });
+  });
+
+  describe('setGuideMode', () => {
+    it('updates guideMode in state and persists', async () => {
+      const useSettingsStore = await importFreshStore();
+      useSettingsStore.getState().setGuideMode(false);
+
+      expect(useSettingsStore.getState().guideMode).toBe(false);
+      const stored = JSON.parse(mockStorage.getItem(STORAGE_KEY)!);
+      expect(stored.guideMode).toBe(false);
+    });
+  });
+
+  describe('refreshModels', () => {
+    it('fetches models and updates availableModels on success', async () => {
+      const mockModels = [
+        { id: 'gpt-4o', owned_by: 'openai', created: null },
+        { id: 'gpt-4o-mini', owned_by: 'openai', created: null },
+      ];
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ data: mockModels }), { status: 200 }),
+      ));
+
+      const useSettingsStore = await importFreshStore();
+      useSettingsStore.getState().refreshModels();
+
+      // Wait for async fetch to complete
+      await vi.waitFor(() => {
+        expect(useSettingsStore.getState().modelsLoading).toBe(false);
+      });
+
+      expect(useSettingsStore.getState().availableModels).toHaveLength(2);
+      expect(useSettingsStore.getState().modelsError).toBeNull();
+      // Should auto-select first model when current model is empty
+      expect(useSettingsStore.getState().model).toBe('gpt-4o');
+      vi.unstubAllGlobals();
+    });
+
+    it('falls back to known models on fetch failure', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')));
+
+      mockStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ apiKey: 'sk-test', provider: 'anthropic', baseUrl: 'https://api.anthropic.com/v1' }),
+      );
+
+      const useSettingsStore = await importFreshStore();
+      useSettingsStore.getState().refreshModels();
+
+      await vi.waitFor(() => {
+        expect(useSettingsStore.getState().modelsLoading).toBe(false);
+      });
+
+      expect(useSettingsStore.getState().modelsError).toContain('Network error');
+      // Should fall back to known Anthropic models
+      expect(useSettingsStore.getState().availableModels.length).toBeGreaterThan(0);
+      vi.unstubAllGlobals();
+    });
+
+    it('preserves current model when it exists in fetched list', async () => {
+      const mockModels = [
+        { id: 'gpt-4o', owned_by: 'openai', created: null },
+        { id: 'gpt-4o-mini', owned_by: 'openai', created: null },
+      ];
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ data: mockModels }), { status: 200 }),
+      ));
+
+      mockStorage.setItem(STORAGE_KEY, JSON.stringify({ apiKey: 'sk-x', model: 'gpt-4o-mini' }));
+
+      const useSettingsStore = await importFreshStore();
+      useSettingsStore.getState().refreshModels();
+
+      await vi.waitFor(() => {
+        expect(useSettingsStore.getState().modelsLoading).toBe(false);
+      });
+
+      // Should keep existing model since it's in the list
+      expect(useSettingsStore.getState().model).toBe('gpt-4o-mini');
+      vi.unstubAllGlobals();
+    });
+
+    it('aborts previous request when called again', async () => {
+      let fetchCount = 0;
+      vi.stubGlobal('fetch', vi.fn().mockImplementation((_url: string, opts?: RequestInit) => {
+        fetchCount++;
+        return new Promise((resolve, reject) => {
+          if (opts?.signal) {
+            opts.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+          }
+          // Only resolve the second call
+          if (fetchCount === 2) {
+            setTimeout(() => resolve(new Response(JSON.stringify({ data: [] }), { status: 200 })), 10);
+          }
+        });
+      }));
+
+      const useSettingsStore = await importFreshStore();
+      useSettingsStore.getState().refreshModels(); // first call — will be aborted
+      useSettingsStore.getState().refreshModels(); // second call — should succeed
+
+      await vi.waitFor(() => {
+        expect(useSettingsStore.getState().modelsLoading).toBe(false);
+      });
+
+      expect(fetchCount).toBe(2);
+      vi.unstubAllGlobals();
+    });
+  });
+
+  describe('cross-tab sync', () => {
+    it('updates state when storage event fires with new settings', async () => {
+      const useSettingsStore = await importFreshStore();
+
+      const newSettings = JSON.stringify({
+        apiKey: 'sk-from-other-tab',
+        baseUrl: 'https://api.anthropic.com/v1',
+        model: 'claude-sonnet-4-6',
+        provider: 'anthropic',
+        theme: 'dark',
+        guideMode: false,
+      });
+
+      // Mock fetch for the refreshModels call triggered by cross-tab sync
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ data: [] }), { status: 200 }),
+      ));
+
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: STORAGE_KEY,
+        newValue: newSettings,
+      }));
+
+      const state = useSettingsStore.getState();
+      expect(state.openaiApiKey).toBe('sk-from-other-tab');
+      expect(state.provider).toBe('anthropic');
+      expect(state.theme).toBe('dark');
+      expect(state.guideMode).toBe(false);
+      vi.unstubAllGlobals();
+    });
+
+    it('ignores storage events for unrelated keys', async () => {
+      const useSettingsStore = await importFreshStore();
+      const originalKey = useSettingsStore.getState().openaiApiKey;
+
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'unrelated-key',
+        newValue: JSON.stringify({ apiKey: 'should-not-apply' }),
+      }));
+
+      expect(useSettingsStore.getState().openaiApiKey).toBe(originalKey);
+    });
+
+    it('ignores storage events with null newValue', async () => {
+      const useSettingsStore = await importFreshStore();
+      const originalKey = useSettingsStore.getState().openaiApiKey;
+
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: STORAGE_KEY,
+        newValue: null,
+      }));
+
+      expect(useSettingsStore.getState().openaiApiKey).toBe(originalKey);
+    });
+
+    it('ignores malformed JSON in storage event', async () => {
+      const useSettingsStore = await importFreshStore();
+      const originalKey = useSettingsStore.getState().openaiApiKey;
+
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: STORAGE_KEY,
+        newValue: 'not json{{{',
+      }));
+
+      expect(useSettingsStore.getState().openaiApiKey).toBe(originalKey);
+    });
+  });
+
+  describe('detectProvider via init', () => {
+    it('detects Anthropic provider from baseUrl', async () => {
+      mockStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ apiKey: 'sk-ant', baseUrl: 'https://api.anthropic.com/v1' }),
+      );
+
+      const useSettingsStore = await importFreshStore();
+      expect(useSettingsStore.getState().provider).toBe('anthropic');
+    });
+
+    it('falls back to custom for unknown baseUrl', async () => {
+      mockStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ apiKey: 'sk-x', baseUrl: 'https://my-llm-proxy.com/v1' }),
+      );
+
+      const useSettingsStore = await importFreshStore();
+      expect(useSettingsStore.getState().provider).toBe('custom');
+    });
+  });
+
   describe('localStorage error handling', () => {
     it('survives localStorage.setItem throwing', async () => {
       const useSettingsStore = await importFreshStore();

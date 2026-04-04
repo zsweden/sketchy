@@ -410,6 +410,213 @@ describe('Anthropic streaming', () => {
   });
 });
 
+describe('streamChatMessage – error paths', () => {
+  it('calls onError for non-ok HTTP response', async () => {
+    const { streamChatMessage } = await import('../openai-client');
+
+    let caughtError: Error | null = null;
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response('Unauthorized', { status: 401 }),
+    ));
+
+    await new Promise<void>((resolve) => {
+      streamChatMessage('key', 'https://api.test.com/v1', 'gpt-4o', makeDiagram(), mockFrameworkCRT, [], {
+        onToken: () => {},
+        onDone: () => resolve(),
+        onError: (err) => { caughtError = err; resolve(); },
+      });
+    });
+
+    expect(caughtError).not.toBeNull();
+    expect(caughtError!.message).toContain('API error (401)');
+    expect(caughtError!.message).toContain('Unauthorized');
+    vi.unstubAllGlobals();
+  });
+
+  it('ignores AbortError (user cancellation)', async () => {
+    const { streamChatMessage } = await import('../openai-client');
+
+    let errorCalled = false;
+    let doneCalled = false;
+
+    const abortError = new DOMException('The operation was aborted', 'AbortError');
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(abortError));
+
+    const controller = streamChatMessage('key', 'https://api.test.com/v1', 'gpt-4o', makeDiagram(), mockFrameworkCRT, [], {
+      onToken: () => {},
+      onDone: () => { doneCalled = true; },
+      onError: () => { errorCalled = true; },
+    });
+
+    // Give the promise time to settle
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(errorCalled).toBe(false);
+    expect(doneCalled).toBe(false);
+    expect(controller).toBeInstanceOf(AbortController);
+    vi.unstubAllGlobals();
+  });
+
+  it('wraps non-Error thrown values in Error', async () => {
+    const { streamChatMessage } = await import('../openai-client');
+
+    let caughtError: Error | null = null;
+
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue('string error'));
+
+    await new Promise<void>((resolve) => {
+      streamChatMessage('key', 'https://api.test.com/v1', 'gpt-4o', makeDiagram(), mockFrameworkCRT, [], {
+        onToken: () => {},
+        onDone: () => resolve(),
+        onError: (err) => { caughtError = err; resolve(); },
+      });
+    });
+
+    expect(caughtError).toBeInstanceOf(Error);
+    expect(caughtError!.message).toBe('string error');
+    vi.unstubAllGlobals();
+  });
+});
+
+describe('streamChatMessage – Anthropic request building', () => {
+  it('formats images with base64 source block for Anthropic', async () => {
+    const { streamChatMessage } = await import('../openai-client');
+
+    let sentBody: string = '';
+
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      sentBody = init.body as string;
+      return Promise.resolve(mockAnthropicSSEResponse([
+        JSON.stringify({ type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } }),
+        JSON.stringify({ type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: 'ok' } }),
+        JSON.stringify({ type: 'message_stop' }),
+      ]));
+    }));
+
+    const messages = [
+      {
+        role: 'user' as const,
+        content: 'Look at this',
+        images: [{ mediaType: 'image/png' as const, base64: 'abc123' }],
+      },
+    ];
+
+    await new Promise<void>((resolve) => {
+      streamChatMessage('key', 'https://api.anthropic.com/v1', 'claude-sonnet-4-6', makeDiagram(), mockFrameworkCRT, messages, {
+        onToken: () => {},
+        onDone: () => resolve(),
+        onError: () => resolve(),
+      }, 'anthropic');
+    });
+
+    const body = JSON.parse(sentBody);
+    const userMsg = body.messages[0];
+    expect(userMsg.content).toBeInstanceOf(Array);
+    expect(userMsg.content[1]).toEqual({
+      type: 'image',
+      source: { type: 'base64', media_type: 'image/png', data: 'abc123' },
+    });
+    vi.unstubAllGlobals();
+  });
+
+  it('filters out system messages from Anthropic conversation', async () => {
+    const { streamChatMessage } = await import('../openai-client');
+
+    let sentBody: string = '';
+
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      sentBody = init.body as string;
+      return Promise.resolve(mockAnthropicSSEResponse([
+        JSON.stringify({ type: 'message_stop' }),
+      ]));
+    }));
+
+    const messages = [
+      { role: 'system' as const, content: 'should be filtered' },
+      { role: 'user' as const, content: 'hello' },
+    ];
+
+    await new Promise<void>((resolve) => {
+      streamChatMessage('key', 'https://api.anthropic.com/v1', 'claude-sonnet-4-6', makeDiagram(), mockFrameworkCRT, messages, {
+        onToken: () => {},
+        onDone: () => resolve(),
+        onError: () => resolve(),
+      }, 'anthropic');
+    });
+
+    const body = JSON.parse(sentBody);
+    expect(body.messages).toHaveLength(1);
+    expect(body.messages[0].role).toBe('user');
+    vi.unstubAllGlobals();
+  });
+});
+
+describe('streamChatMessage – guide mode', () => {
+  it('sends suggestFrameworks tool when guideMode is true', async () => {
+    const { streamChatMessage } = await import('../openai-client');
+
+    let sentBody: string = '';
+
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      sentBody = init.body as string;
+      return Promise.resolve(mockSSEResponse([
+        JSON.stringify({ choices: [{ delta: { content: 'ok' } }] }),
+      ]));
+    }));
+
+    await new Promise<void>((resolve) => {
+      streamChatMessage('key', 'https://api.test.com/v1', 'gpt-4o', makeDiagram(), mockFrameworkCRT, [], {
+        onToken: () => {},
+        onDone: () => resolve(),
+        onError: () => resolve(),
+      }, 'openai', true);
+    });
+
+    const body = JSON.parse(sentBody);
+    const toolNames = body.tools.map((t: { function: { name: string } }) => t.function.name);
+    expect(toolNames).toContain('modify_diagram');
+    expect(toolNames).toContain('suggest_frameworks');
+    vi.unstubAllGlobals();
+  });
+});
+
+describe('streamChatMessage – history pruning', () => {
+  it('prunes messages to last 16 when history exceeds limit', async () => {
+    const { streamChatMessage } = await import('../openai-client');
+
+    let sentBody: string = '';
+
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      sentBody = init.body as string;
+      return Promise.resolve(mockSSEResponse([
+        JSON.stringify({ choices: [{ delta: { content: 'ok' } }] }),
+      ]));
+    }));
+
+    // 20 messages — should be pruned to 16
+    const messages = Array.from({ length: 20 }, (_, i) => ({
+      role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
+      content: `msg-${i}`,
+    }));
+
+    await new Promise<void>((resolve) => {
+      streamChatMessage('key', 'https://api.test.com/v1', 'gpt-4o', makeDiagram(), mockFrameworkCRT, messages, {
+        onToken: () => {},
+        onDone: () => resolve(),
+        onError: () => resolve(),
+      });
+    });
+
+    const body = JSON.parse(sentBody);
+    // 1 system message + 16 pruned history messages
+    expect(body.messages).toHaveLength(17);
+    // Should keep the last 16 — first kept message is msg-4
+    expect(body.messages[1].content).toBe('msg-4');
+    vi.unstubAllGlobals();
+  });
+});
+
 describe('buildSystemPrompt framework-agnostic', () => {
   // We test that the system prompt includes framework-specific tags by
   // intercepting the fetch call and inspecting the system message body.
