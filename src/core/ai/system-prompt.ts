@@ -280,63 +280,30 @@ export const anthropicSuggestFrameworksTool = {
   input_schema: suggestFrameworksTool.function.parameters,
 };
 
-export function buildAutoModeSystemPrompt(diagram: Diagram): string {
-  const frameworks = listFrameworks();
-  const frameworkList = frameworks
+export function buildGuideSystemPrompt(diagram: Diagram, framework: Framework): string {
+  // Start with the full normal system prompt (diagram state, current framework rules, modify_diagram)
+  const basePrompt = buildSystemPrompt(diagram, framework);
+
+  // Build the alternatives list (all frameworks except the current one)
+  const alternatives = listFrameworks()
+    .filter((fw) => fw.id !== framework.id)
     .map((fw) => {
       const tags = fw.nodeTags.length > 0
         ? ` Node types: ${fw.nodeTags.map((t) => t.name).join(', ')}.`
         : '';
-      const traits: string[] = [];
-      if (fw.allowsCycles) traits.push('supports feedback loops');
-      if (fw.supportsEdgePolarity) traits.push('signed causal links');
-      if (fw.supportsJunctions) traits.push('AND/OR junctions');
-      const traitStr = traits.length > 0 ? ` Traits: ${traits.join(', ')}.` : '';
-      return `  - ${fw.id}: ${fw.name} — ${fw.description}.${tags}${traitStr}`;
+      return `  - ${fw.id}: ${fw.name} — ${fw.description}.${tags}`;
     })
     .join('\n');
 
-  const hasContent = diagram.nodes.length > 0 || diagram.edges.length > 0;
-  let diagramSection = '';
-  if (hasContent) {
-    const nodesDesc = diagram.nodes
-      .map((n) => `  - "${n.data.label}"${n.data.tags.length ? ` [tags: ${n.data.tags.join(', ')}]` : ''}`)
-      .join('\n');
-    const edgesDesc = diagram.edges
-      .map((e) => {
-        const sourceLabel = diagram.nodes.find((n) => n.id === e.source)?.data.label ?? e.source;
-        const targetLabel = diagram.nodes.find((n) => n.id === e.target)?.data.label ?? e.target;
-        return `  - "${sourceLabel}" → "${targetLabel}"`;
-      })
-      .join('\n');
-    diagramSection = `
-The user's current diagram "${diagram.name}" (framework: ${diagram.frameworkId}) already has content:
+  return `${basePrompt}
 
-Nodes:
-${nodesDesc || '  (none)'}
+GUIDE MODE IS ON.
+Before making any diagram changes, evaluate whether "${framework.name}" is the best framework for what the user is describing.
 
-Edges:
-${edgesDesc || '  (none)'}
+- If "${framework.name}" is a good fit: proceed normally — answer questions or use modify_diagram to build the diagram. No need to mention other frameworks.
+- If a different framework would be a better fit: call the suggest_frameworks tool with 1-3 ranked recommendations (best fit first, 1-2 sentence reason each). Include "${framework.name}" in the list only if it's still a reasonable option. The system will handle switching — never tell the user to switch manually.
+- If the user rejects your suggestions, suggest alternatives or ask clarifying questions.
 
-Factor this existing content into your recommendations — suggest frameworks that best fit what they have already built or are trying to build.
-`;
-  }
-
-  return `You are an AI assistant for Sketchy, a thinking-frameworks diagram editor.
-
-The user has selected "Auto" mode. Your primary job is to recommend which diagram framework fits their problem by calling the suggest_frameworks tool. The system will handle switching to the chosen framework — you do not need to tell the user to switch manually.
-
-Available frameworks:
-
-${frameworkList}
-${diagramSection}
-IMPORTANT RULES:
-- When the user describes any problem, situation, goal, or request, you MUST call the suggest_frameworks tool with 1-3 ranked recommendations. Always prefer calling the tool over answering in plain text.
-- For each suggestion, explain in 1-2 sentences why that specific framework fits their situation.
-- Sort suggestions from best to worst fit.
-- Only answer conversationally WITHOUT calling the tool if the user asks a purely factual question that has nothing to do with building a diagram (e.g. "what is a CRT?").
-- If the user rejects your suggestions, call suggest_frameworks again with different recommendations, or ask a clarifying question to narrow down the right fit.
-- Never tell the user to manually switch frameworks — the system does this automatically when they accept a suggestion.
-
-Reply in plain text only. Do not use Markdown formatting such as headings (#), bold (**), italic (*), tables, or code fences. Use "* " to start bullet points and UPPERCASE for section headings.`;
+Alternative frameworks available:
+${alternatives}`;
 }

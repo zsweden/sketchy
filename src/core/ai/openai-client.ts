@@ -4,7 +4,7 @@ import { buildHeaders } from './model-fetcher';
 import type { ChatMessage, StreamCallbacks } from './ai-types';
 import {
   buildSystemPrompt,
-  buildAutoModeSystemPrompt,
+  buildGuideSystemPrompt,
   modifyDiagramTool,
   anthropicModifyDiagramTool,
   suggestFrameworksTool,
@@ -115,16 +115,20 @@ export function streamChatMessage(
   messages: ChatMessage[],
   callbacks: StreamCallbacks,
   provider: string = 'openai',
-  autoMode: boolean = false,
+  guideMode: boolean = false,
 ): AbortController {
   const controller = new AbortController();
-  const systemPrompt = autoMode
-    ? buildAutoModeSystemPrompt(diagram)
+  const systemPrompt = guideMode
+    ? buildGuideSystemPrompt(diagram, framework)
     : buildSystemPrompt(diagram, framework);
 
   const isAnthropic = provider === 'anthropic';
-  const openaiTools = autoMode ? [suggestFrameworksTool] : [modifyDiagramTool];
-  const anthropicTools = autoMode ? [anthropicSuggestFrameworksTool] : [anthropicModifyDiagramTool];
+  const openaiTools = guideMode
+    ? [modifyDiagramTool, suggestFrameworksTool]
+    : [modifyDiagramTool];
+  const anthropicTools = guideMode
+    ? [anthropicModifyDiagramTool, anthropicSuggestFrameworksTool]
+    : [anthropicModifyDiagramTool];
   const req = isAnthropic
     ? buildAnthropicRequest(baseUrl, apiKey, model, systemPrompt, messages, anthropicTools)
     : buildOpenAIRequest(baseUrl, apiKey, model, systemPrompt, messages, openaiTools);

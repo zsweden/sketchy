@@ -5,7 +5,6 @@ import { listFrameworks } from '../../frameworks/registry';
 export default function FrameworkSelector() {
   const currentId = useDiagramStore((s) => s.diagram.frameworkId);
   const setFramework = useDiagramStore((s) => s.setFramework);
-  const autoMode = useChatStore((s) => s.autoMode);
   const hasDiagramWork = useDiagramStore((s) =>
     s.diagram.nodes.length > 1 ||
     s.diagram.edges.length > 0 ||
@@ -16,27 +15,14 @@ export default function FrameworkSelector() {
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newId = e.target.value;
-
-    if (newId === 'auto') {
-      if (autoMode) return;
-      useChatStore.getState().setAutoMode(true);
-      useChatStore.getState().clearMessages();
-      useChatStore.getState().clearAiModified();
-      return;
-    }
-
-    if (autoMode) {
-      useChatStore.getState().setAutoMode(false);
-    }
-
-    if (newId === currentId && !autoMode) return;
+    if (newId === currentId) return;
     if (
       hasDiagramWork &&
       !window.confirm(
         'Switching framework will reset the diagram. Continue?',
       )
     ) {
-      e.target.value = autoMode ? 'auto' : currentId;
+      e.target.value = currentId;
       return;
     }
     setFramework(newId);
@@ -47,11 +33,10 @@ export default function FrameworkSelector() {
   return (
     <select
       className="select-control"
-      value={autoMode ? 'auto' : currentId}
+      value={currentId}
       onChange={handleChange}
       aria-label="Framework"
     >
-      <option value="auto">Auto</option>
       {frameworks.map((fw) => (
         <option key={fw.id} value={fw.id}>
           {fw.name}

@@ -245,6 +245,29 @@
   flex-shrink: 0;
 }
 
+.chat-guide-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-soft);
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.chat-guide-toggle.is-active {
+  color: var(--accent);
+  background: rgba(33, 33, 33, 0.08);
+}
+
+.chat-guide-label {
+  line-height: 1;
+}
+
 .chat-layout-controls {
   display: flex;
   align-items: center;

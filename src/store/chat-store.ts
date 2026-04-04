@@ -30,7 +30,7 @@ interface ChatState {
   loading: boolean;
   streamingContent: string;
   aiModifiedNodeIds: Set<string>;
-  autoMode: boolean;
+  guideMode: boolean;
   pendingSuggestions: FrameworkSuggestions | null;
 
   sendMessage: (text: string, image?: ChatImage, displayText?: string) => void;
@@ -38,7 +38,7 @@ interface ChatState {
   clearMessages: () => void;
   clearAiModified: () => void;
   removeAiModified: (nodeId: string) => void;
-  setAutoMode: (enabled: boolean) => void;
+  setGuideMode: (enabled: boolean) => void;
   acceptSuggestion: (frameworkId: string) => void;
 }
 
@@ -50,19 +50,19 @@ const CHAT_STORAGE_KEY = 'sketchy_chat';
 interface PersistedChatState {
   messages: DisplayMessage[];
   aiModifiedNodeIds: string[];
-  autoMode?: boolean;
+  guideMode?: boolean;
   pendingSuggestions?: FrameworkSuggestions | null;
 }
 
-function getInitialChatState(): Pick<ChatState, 'messages' | 'aiModifiedNodeIds' | 'autoMode' | 'pendingSuggestions'> {
+function getInitialChatState(): Pick<ChatState, 'messages' | 'aiModifiedNodeIds' | 'guideMode' | 'pendingSuggestions'> {
   if (typeof window === 'undefined') {
-    return { messages: [], aiModifiedNodeIds: new Set(), autoMode: false, pendingSuggestions: null };
+    return { messages: [], aiModifiedNodeIds: new Set(), guideMode: false, pendingSuggestions: null };
   }
 
   try {
     const raw = window.sessionStorage.getItem(CHAT_STORAGE_KEY);
     if (!raw) {
-      return { messages: [], aiModifiedNodeIds: new Set(), autoMode: false, pendingSuggestions: null };
+      return { messages: [], aiModifiedNodeIds: new Set(), guideMode: false, pendingSuggestions: null };
     }
 
     const parsed = JSON.parse(raw) as Partial<PersistedChatState>;
@@ -73,7 +73,7 @@ function getInitialChatState(): Pick<ChatState, 'messages' | 'aiModifiedNodeIds'
           ? parsed.aiModifiedNodeIds.filter((id): id is string => typeof id === 'string')
           : [],
       ),
-      autoMode: parsed.autoMode ?? false,
+      guideMode: parsed.guideMode ?? false,
       pendingSuggestions: parsed.pendingSuggestions ?? null,
     };
   } catch {
@@ -82,21 +82,21 @@ function getInitialChatState(): Pick<ChatState, 'messages' | 'aiModifiedNodeIds'
     } catch {
       // Ignore storage cleanup failures
     }
-    return { messages: [], aiModifiedNodeIds: new Set(), autoMode: false, pendingSuggestions: null };
+    return { messages: [], aiModifiedNodeIds: new Set(), guideMode: false, pendingSuggestions: null };
   }
 }
 
-function serializeChatState(state: Pick<ChatState, 'messages' | 'aiModifiedNodeIds' | 'autoMode' | 'pendingSuggestions'>): string {
+function serializeChatState(state: Pick<ChatState, 'messages' | 'aiModifiedNodeIds' | 'guideMode' | 'pendingSuggestions'>): string {
   return JSON.stringify({
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     messages: state.messages.map(({ images, ...rest }) => rest),
     aiModifiedNodeIds: Array.from(state.aiModifiedNodeIds),
-    autoMode: state.autoMode,
+    guideMode: state.guideMode,
     pendingSuggestions: state.pendingSuggestions,
   } satisfies PersistedChatState);
 }
 
-function persistChatState(state: Pick<ChatState, 'messages' | 'aiModifiedNodeIds' | 'autoMode' | 'pendingSuggestions'>): void {
+function persistChatState(state: Pick<ChatState, 'messages' | 'aiModifiedNodeIds' | 'guideMode' | 'pendingSuggestions'>): void {
   if (typeof window === 'undefined') return;
 
   try {
@@ -237,7 +237,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     const { diagram } = useDiagramStore.getState();
     const framework = resolveFramework(diagram.frameworkId);
-    const isAutoMode = get().autoMode;
+    const isGuideMode = get().guideMode;
     const requestId = activeRequestId + 1;
     const requestDiagramId = diagram.id;
     activeRequestId = requestId;
@@ -265,7 +265,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             activeController = null;
           }
 
-          // Auto-mode: framework suggestions
+          // Guide mode: framework suggestions
           if (result.suggestions && result.suggestions.length > 0) {
             const content = result.text.trim() || result.suggestions.map((s) => `${s.frameworkName}: ${s.reason}`).join('\n');
             const assistantMsg: DisplayMessage = {
@@ -384,7 +384,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         },
       },
       provider,
-      isAutoMode,
+      isGuideMode,
     );
     activeController = controller;
   },
@@ -423,8 +423,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       return { aiModifiedNodeIds: next };
     }),
 
-  setAutoMode: (enabled) => {
-    set({ autoMode: enabled, pendingSuggestions: null });
+  setGuideMode: (enabled) => {
+    set({ guideMode: enabled, pendingSuggestions: null });
   },
 
   acceptSuggestion: (frameworkId) => {
@@ -453,7 +453,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
 
     useDiagramStore.getState().setFramework(frameworkId);
-    set({ autoMode: false, pendingSuggestions: null });
+    set({ guideMode: false, pendingSuggestions: null });
 
     const cleanText = `Let's use ${fw.name}. Build the diagram based on what I've described, or ask me for more details if needed.`;
     get().sendMessage(

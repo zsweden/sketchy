@@ -485,23 +485,23 @@ describe('chat-store', () => {
     });
   });
 
-  describe('auto mode', () => {
-    it('setAutoMode toggles autoMode and clears pendingSuggestions', () => {
-      useChatStore.getState().setAutoMode(true);
-      expect(useChatStore.getState().autoMode).toBe(true);
+  describe('guide mode', () => {
+    it('setGuideMode toggles guideMode and clears pendingSuggestions', () => {
+      useChatStore.getState().setGuideMode(true);
+      expect(useChatStore.getState().guideMode).toBe(true);
       expect(useChatStore.getState().pendingSuggestions).toBeNull();
 
       useChatStore.setState({
         pendingSuggestions: [{ frameworkId: 'crt', frameworkName: 'CRT', reason: 'test' }],
       });
 
-      useChatStore.getState().setAutoMode(false);
-      expect(useChatStore.getState().autoMode).toBe(false);
+      useChatStore.getState().setGuideMode(false);
+      expect(useChatStore.getState().guideMode).toBe(false);
       expect(useChatStore.getState().pendingSuggestions).toBeNull();
     });
 
     it('stores suggestions from onDone and sets pendingSuggestions', async () => {
-      useChatStore.getState().setAutoMode(true);
+      useChatStore.getState().setGuideMode(true);
 
       const suggestions = [
         { frameworkId: 'crt', frameworkName: 'Current Reality Tree', reason: 'Root cause analysis' },
@@ -526,17 +526,17 @@ describe('chat-store', () => {
       expect(assistantMsg!.suggestions).toEqual(suggestions);
     });
 
-    it('passes autoMode to streamChatMessage', () => {
-      useChatStore.getState().setAutoMode(true);
+    it('passes guideMode to streamChatMessage', () => {
+      useChatStore.getState().setGuideMode(true);
       useChatStore.getState().sendMessage('Test query');
 
       const lastCall = mockStreamChatMessage.mock.calls[mockStreamChatMessage.mock.calls.length - 1];
-      // autoMode is the last argument (index 8)
+      // guideMode is the last argument (index 8)
       expect(lastCall[8]).toBe(true);
     });
 
     it('clears pendingSuggestions when user types a conversational reply', async () => {
-      useChatStore.getState().setAutoMode(true);
+      useChatStore.getState().setGuideMode(true);
       useChatStore.setState({
         pendingSuggestions: [{ frameworkId: 'crt', frameworkName: 'CRT', reason: 'test' }],
       });
@@ -554,7 +554,7 @@ describe('chat-store', () => {
     });
 
     it('acceptSuggestion switches framework and sends synthetic message', async () => {
-      useChatStore.getState().setAutoMode(true);
+      useChatStore.getState().setGuideMode(true);
 
       const suggestions = [
         { frameworkId: 'crt', frameworkName: 'Current Reality Tree', reason: 'Root cause analysis' },
@@ -574,7 +574,7 @@ describe('chat-store', () => {
       // Framework should be switched
       expect(useDiagramStore.getState().diagram.frameworkId).toBe('crt');
       // Auto mode should be off
-      expect(useChatStore.getState().autoMode).toBe(false);
+      expect(useChatStore.getState().guideMode).toBe(false);
       expect(useChatStore.getState().pendingSuggestions).toBeNull();
 
       // Synthetic message should have been sent

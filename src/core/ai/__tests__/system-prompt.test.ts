@@ -1,24 +1,31 @@
 import { describe, it, expect } from 'vitest';
-import { buildAutoModeSystemPrompt, suggestFrameworksTool } from '../system-prompt';
+import { buildGuideSystemPrompt, suggestFrameworksTool } from '../system-prompt';
 import { createEmptyDiagram } from '../../types';
-import { listFrameworks } from '../../../frameworks/registry';
+import { listFrameworks, getFramework } from '../../../frameworks/registry';
 
+const crtFramework = getFramework('crt')!;
 const emptyDiagram = createEmptyDiagram('crt');
 
-describe('auto-mode system prompt', () => {
-  it('includes all framework names', () => {
-    const prompt = buildAutoModeSystemPrompt(emptyDiagram);
+describe('guide-mode system prompt', () => {
+  it('includes alternative framework names (all except current)', () => {
+    const prompt = buildGuideSystemPrompt(emptyDiagram, crtFramework);
     const frameworks = listFrameworks();
 
     for (const fw of frameworks) {
+      if (fw.id === 'crt') continue;
       expect(prompt).toContain(fw.name);
-      expect(prompt).toContain(fw.id);
     }
   });
 
-  it('instructs to call suggest_frameworks tool', () => {
-    const prompt = buildAutoModeSystemPrompt(emptyDiagram);
-    expect(prompt).toContain('MUST call the suggest_frameworks tool');
+  it('includes the current framework context', () => {
+    const prompt = buildGuideSystemPrompt(emptyDiagram, crtFramework);
+    expect(prompt).toContain('Current Reality Tree');
+    expect(prompt).toContain('GUIDE MODE IS ON');
+  });
+
+  it('includes modify_diagram instructions from base prompt', () => {
+    const prompt = buildGuideSystemPrompt(emptyDiagram, crtFramework);
+    expect(prompt).toContain('modify_diagram');
   });
 
   it('includes diagram content when nodes exist', () => {
@@ -29,14 +36,8 @@ describe('auto-mode system prompt', () => {
       ],
       edges: [],
     };
-    const prompt = buildAutoModeSystemPrompt(diagram);
+    const prompt = buildGuideSystemPrompt(diagram, crtFramework);
     expect(prompt).toContain('Deploy failures');
-    expect(prompt).toContain('already has content');
-  });
-
-  it('omits diagram section when diagram is empty', () => {
-    const prompt = buildAutoModeSystemPrompt(emptyDiagram);
-    expect(prompt).not.toContain('already has content');
   });
 });
 
