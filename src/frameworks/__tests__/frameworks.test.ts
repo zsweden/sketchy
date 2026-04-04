@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { crtFramework } from '../crt';
 import { frtFramework } from '../frt';
 import { goalTreeFramework } from '../goal-tree';
+import { kpiTreeFramework } from '../kpi-tree';
 import { prtFramework } from '../prt';
 import { successTreeFramework } from '../success-tree';
 import { sttFramework } from '../stt';
@@ -13,6 +14,7 @@ const ALL_FRAMEWORKS: Framework[] = [
   crtFramework,
   frtFramework,
   goalTreeFramework,
+  kpiTreeFramework,
   prtFramework,
   successTreeFramework,
   sttFramework,
@@ -202,6 +204,34 @@ describe('framework definitions', () => {
       expect(indicatorIds).toContain('start');
       expect(indicatorIds).toContain('intermediate-step');
       expect(indicatorIds).toContain('end');
+    });
+  });
+
+  describe('KPI Tree', () => {
+    it('has bottom-to-top direction', () => {
+      expect(kpiTreeFramework.defaultLayoutDirection).toBe('BT');
+    });
+
+    it('supports junctions', () => {
+      expect(kpiTreeFramework.supportsJunctions).toBe(true);
+    });
+
+    it('has leading and lagging indicator tags', () => {
+      expect(kpiTreeFramework.nodeTags).toHaveLength(2);
+      const tagIds = kpiTreeFramework.nodeTags.map((t) => t.id);
+      expect(tagIds).toContain('leading');
+      expect(tagIds).toContain('lagging');
+    });
+
+    it('has north-star, driver, and actionable derived indicators', () => {
+      const ids = kpiTreeFramework.derivedIndicators.map((d) => d.id);
+      expect(ids).toContain('north-star');
+      expect(ids).toContain('driver');
+      expect(ids).toContain('actionable');
+    });
+
+    it('does not allow cycles', () => {
+      expect(kpiTreeFramework.allowsCycles).toBeFalsy();
     });
   });
 
