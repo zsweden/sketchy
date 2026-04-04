@@ -11,5 +11,17 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     css: false,
     exclude: [...configDefaults.exclude, 'e2e/**', ...perfOnlyTests],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      reportsDirectory: './coverage',
+      exclude: [
+        ...configDefaults.exclude,
+        'e2e/**',
+        'src/test/**',
+        '**/*.test.{ts,tsx}',
+        '**/__tests__/**',
+      ],
+    },
   },
 })
