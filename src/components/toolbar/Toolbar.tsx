@@ -10,6 +10,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { useCallback, useRef } from 'react';
+import { toast } from 'sonner';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { useSettingsStore } from '../../store/settings-store';
@@ -35,7 +36,6 @@ export default function Toolbar() {
   const nodes = useDiagramStore((s) => s.diagram.nodes);
   const edges = useDiagramStore((s) => s.diagram.edges);
   const edgeRoutingMode = useDiagramStore((s) => s.diagram.settings.edgeRoutingMode);
-  const addToast = useUIStore((s) => s.addToast);
   const sidePanelOpen = useUIStore((s) => s.sidePanelOpen);
   const toggleSidePanel = useUIStore((s) => s.toggleSidePanel);
   const requestFitView = useUIStore((s) => s.requestFitView);
@@ -99,9 +99,9 @@ export default function Toolbar() {
     try {
       await saveSkyFile(useDiagramStore.getState().diagram);
     } catch {
-      addToast('Failed to save the project. Try again.', 'error');
+      toast.error('Failed to save the project. Try again.');
     }
-  }, [addToast]);
+  }, []);
 
   const handleLoad = useCallback(() => {
     if (
@@ -129,20 +129,19 @@ export default function Toolbar() {
 
         requestFitView();
         for (const warning of result.warnings) {
-          addToast(warning, 'warning');
+          toast.warning(warning);
         }
         if (result.warnings.length === 0) {
-          addToast('Project loaded', 'info');
+          toast('Project loaded');
         }
       } catch (err) {
-        addToast(
+        toast.error(
           err instanceof Error ? err.message : 'Failed to load project. Try again.',
-          'error',
         );
       }
       e.target.value = '';
     },
-    [loadDiagram, addToast, requestFitView],
+    [loadDiagram, requestFitView],
   );
 
 

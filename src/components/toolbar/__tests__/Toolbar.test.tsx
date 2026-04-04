@@ -18,6 +18,14 @@ const mocks = vi.hoisted(() => ({
   runElkAutoLayout: vi.fn(),
   saveSkyFile: vi.fn(),
   loadSkyFile: vi.fn(),
+  toast: Object.assign(vi.fn(), {
+    error: vi.fn(),
+    warning: vi.fn(),
+  }),
+}));
+
+vi.mock('sonner', () => ({
+  toast: mocks.toast,
 }));
 
 vi.mock('@xyflow/react', async () => {
@@ -54,7 +62,6 @@ function resetStores() {
     selectedNodeIds: [],
     selectedEdgeIds: [],
     contextMenu: null,
-    toasts: [],
     sidePanelOpen: true,
     chatPanelMode: 'shared',
     interactionMode: 'select',
@@ -248,11 +255,8 @@ describe('Toolbar', () => {
 
     expect(useChatStore.getState().messages).toEqual([]);
     expect(useChatStore.getState().aiModifiedNodeIds.size).toBe(0);
-    expect(useUIStore.getState().toasts).toContainEqual(
-      expect.objectContaining({
-        message: 'Imported file had one invalid connection removed.',
-        type: 'warning',
-      }),
+    expect(mocks.toast.warning).toHaveBeenCalledWith(
+      'Imported file had one invalid connection removed.',
     );
   });
 
@@ -298,11 +302,8 @@ describe('Toolbar', () => {
 
     await user.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => {
-      expect(useUIStore.getState().toasts).toContainEqual(
-        expect.objectContaining({
-          message: 'Failed to save the project. Try again.',
-          type: 'error',
-        }),
+      expect(mocks.toast.error).toHaveBeenCalledWith(
+        'Failed to save the project. Try again.',
       );
     });
 

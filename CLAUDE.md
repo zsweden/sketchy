@@ -4,15 +4,8 @@ A web-based thinking-frameworks diagram editor focused on structured reasoning. 
 
 ## Working Principles
 
-### Honesty & Collaboration
-- Say if an approach has flaws, will cause bugs, or contradicts existing patterns. Be a collaborator, not a yes-man.
-- Stop and re-plan after 2-3 failed attempts. Don't brute-force.
-
 ### Testing
-- TDD by default — write failing tests before implementation when practical.
-- Every bug fix must include a test proving it's fixed and preventing regression.
 - Every new feature must ship with tests — no exceptions, even for "small" UI changes. Add unit tests for new logic/state and E2E tests for new user-facing behavior.
-- Never modify tests to make them pass — investigate the root cause.
 - Verify before done: `npm run lint && npx tsc --noEmit && npx vitest run`.
 
 ### Architecture
@@ -22,8 +15,6 @@ A web-based thinking-frameworks diagram editor focused on structured reasoning. 
 - Prefer framework additions that fit the current DAG model. Diagram types that require cycles or new structural primitives are product-level decisions, not just config work.
 - Keep cyclic layout logic isolated to `src/core/layout/`. Loop-specific placement, SCC handling, and cyclic heuristics must not change graph routing, stores, persistence, or UI code.
 
-### Self-Improvement
-- Track rules that would have prevented bugs. After a 2nd occurrence, promote to this CLAUDE.md.
 
 ## Commands
 

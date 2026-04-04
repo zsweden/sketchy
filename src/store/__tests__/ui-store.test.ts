@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { useUIStore } from '../ui-store';
 
 function resetStore() {
@@ -7,7 +7,6 @@ function resetStore() {
     selectedEdgeIds: [],
     selectedLoopId: null,
     contextMenu: null,
-    toasts: [],
     sidePanelOpen: true,
     chatPanelMode: 'shared',
     interactionMode: 'select',
@@ -124,89 +123,6 @@ describe('ui store', () => {
       useUIStore.getState().openContextMenu(300, 400, undefined, 'e2');
       const menu = useUIStore.getState().contextMenu;
       expect(menu).toEqual({ x: 300, y: 400, nodeId: undefined, edgeId: 'e2' });
-    });
-  });
-
-  describe('toasts', () => {
-    it('adds a toast with default type info', () => {
-      useUIStore.getState().addToast('Hello');
-      const toasts = useUIStore.getState().toasts;
-      expect(toasts).toHaveLength(1);
-      expect(toasts[0].message).toBe('Hello');
-      expect(toasts[0].type).toBe('info');
-      expect(toasts[0].id).toBeTruthy();
-    });
-
-    it('adds a toast with explicit type', () => {
-      useUIStore.getState().addToast('Oops', 'error');
-      const toasts = useUIStore.getState().toasts;
-      expect(toasts).toHaveLength(1);
-      expect(toasts[0].type).toBe('error');
-    });
-
-    it('adds multiple toasts', () => {
-      useUIStore.getState().addToast('First');
-      useUIStore.getState().addToast('Second', 'warning');
-      useUIStore.getState().addToast('Third', 'error');
-      const toasts = useUIStore.getState().toasts;
-      expect(toasts).toHaveLength(3);
-      expect(toasts[0].message).toBe('First');
-      expect(toasts[1].message).toBe('Second');
-      expect(toasts[2].message).toBe('Third');
-    });
-
-    it('dismisses a specific toast by id', () => {
-      useUIStore.getState().addToast('Keep');
-      useUIStore.getState().addToast('Remove');
-      const toasts = useUIStore.getState().toasts;
-      const removeId = toasts[1].id;
-      useUIStore.getState().dismissToast(removeId);
-      const remaining = useUIStore.getState().toasts;
-      expect(remaining).toHaveLength(1);
-      expect(remaining[0].message).toBe('Keep');
-    });
-
-    it('dismissing a non-existent toast id is a no-op', () => {
-      useUIStore.getState().addToast('Existing');
-      useUIStore.getState().dismissToast('nonexistent-id');
-      expect(useUIStore.getState().toasts).toHaveLength(1);
-    });
-
-    describe('auto-dismiss', () => {
-      beforeEach(() => {
-        vi.useFakeTimers();
-      });
-
-      afterEach(() => {
-        vi.useRealTimers();
-      });
-
-      it('auto-dismisses a toast after 4000ms', () => {
-        useUIStore.getState().addToast('Auto-remove');
-        expect(useUIStore.getState().toasts).toHaveLength(1);
-
-        vi.advanceTimersByTime(3999);
-        expect(useUIStore.getState().toasts).toHaveLength(1);
-
-        vi.advanceTimersByTime(1);
-        expect(useUIStore.getState().toasts).toHaveLength(0);
-      });
-
-      it('auto-dismisses each toast independently', () => {
-        useUIStore.getState().addToast('First');
-        vi.advanceTimersByTime(2000);
-        useUIStore.getState().addToast('Second');
-
-        // At 4000ms total: first should be dismissed, second still present
-        vi.advanceTimersByTime(2000);
-        const toasts = useUIStore.getState().toasts;
-        expect(toasts).toHaveLength(1);
-        expect(toasts[0].message).toBe('Second');
-
-        // At 6000ms total: second should be dismissed too
-        vi.advanceTimersByTime(2000);
-        expect(useUIStore.getState().toasts).toHaveLength(0);
-      });
     });
   });
 

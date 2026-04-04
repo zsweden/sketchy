@@ -9,6 +9,10 @@ const mocks = vi.hoisted(() => ({
   useAutoSave: vi.fn(),
   useKeyboardShortcuts: vi.fn(),
   loadDiagram: vi.fn(),
+  toast: Object.assign(vi.fn(), {
+    error: vi.fn(),
+    warning: vi.fn(),
+  }),
 }));
 
 vi.mock('../hooks/useAutoSave', () => ({
@@ -39,8 +43,9 @@ vi.mock('../components/context-menu/ContextMenu', () => ({
   default: () => <div>Context Menu</div>,
 }));
 
-vi.mock('../components/toast/ToastContainer', () => ({
-  default: () => <div>Toast Container</div>,
+vi.mock('sonner', () => ({
+  toast: mocks.toast,
+  Toaster: () => <div>Toaster</div>,
 }));
 
 import App from '../App';
@@ -55,7 +60,6 @@ function resetStores() {
     selectedNodeIds: [],
     selectedEdgeIds: [],
     contextMenu: null,
-    toasts: [],
     sidePanelOpen: true,
     chatPanelMode: 'shared',
     interactionMode: 'select',
@@ -100,22 +104,19 @@ describe('App', () => {
     expect(mocks.useAutoSave).toHaveBeenCalledTimes(1);
     expect(mocks.useKeyboardShortcuts).toHaveBeenCalledTimes(1);
     expect(useDiagramStore.getState().diagram.nodes).toHaveLength(1);
-    expect(useUIStore.getState().toasts).toEqual([
-      expect.objectContaining({
-        message: 'Saved data was corrupted and could not be fully restored',
-        type: 'error',
-      }),
-      expect.objectContaining({
-        message: 'Recovered session contained errors and was sanitized.',
-        type: 'warning',
-      }),
-    ]);
+    expect(mocks.toast.error).toHaveBeenCalledWith(
+      'Saved data was corrupted and could not be fully restored',
+    );
+    expect(mocks.toast.warning).toHaveBeenCalledWith(
+      'Recovered session contained errors and was sanitized.',
+    );
   });
 
   it('leaves the default diagram untouched when nothing is stored', () => {
     render(<App />);
 
     expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
-    expect(useUIStore.getState().toasts).toHaveLength(0);
+    expect(mocks.toast.error).not.toHaveBeenCalled();
+    expect(mocks.toast.warning).not.toHaveBeenCalled();
   });
 });

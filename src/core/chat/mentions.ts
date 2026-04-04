@@ -74,7 +74,7 @@ interface ParsedChatSegmentsResult {
   malformedMentions: string[];
 }
 
-export interface ChatMessageRenderData {
+interface ChatMessageRenderData {
   segments: ParsedChatSegment[];
   normalizedText: string;
   displayText: string;

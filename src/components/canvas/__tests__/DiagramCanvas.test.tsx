@@ -19,6 +19,14 @@ const mocks = vi.hoisted(() => ({
   getViewport: vi.fn(() => ({ x: 0, y: 0, zoom: 1 })),
   getInternalNode: vi.fn(() => undefined),
   setCenter: vi.fn(),
+  toast: Object.assign(vi.fn(), {
+    error: vi.fn(),
+    warning: vi.fn(),
+  }),
+}));
+
+vi.mock('sonner', () => ({
+  toast: mocks.toast,
 }));
 
 vi.mock('../EntityNode', () => ({
@@ -271,7 +279,6 @@ function resetStores() {
     selectedEdgeIds: [],
     selectedLoopId: null,
     contextMenu: null,
-    toasts: [],
     sidePanelOpen: true,
     chatPanelMode: 'shared',
     interactionMode: 'select',
@@ -308,14 +315,17 @@ describe('DiagramCanvas', () => {
 
     await user.click(screen.getByRole('button', { name: 'Trigger connect' }));
 
-    const [toast] = useUIStore.getState().toasts;
-    expect(toast).toEqual(expect.objectContaining({
-      message: 'Edge anchors can\'t be changed while routing is set to "Optimize Continuously".',
-      type: 'warning',
-      action: expect.objectContaining({ label: 'Switch to Fixed' }),
-    }));
+    expect(mocks.toast.warning).toHaveBeenCalledWith(
+      'Edge anchors can\'t be changed while routing is set to "Optimize Continuously".',
+      expect.objectContaining({
+        duration: 6000,
+        action: expect.objectContaining({ label: 'Switch to Fixed' }),
+      }),
+    );
 
-    toast.action?.onClick();
+    // Execute the action callback
+    const call = mocks.toast.warning.mock.calls[0];
+    call[1].action.onClick();
 
     expect(useDiagramStore.getState().diagram.settings.edgeRoutingMode).toBe('fixed');
   });

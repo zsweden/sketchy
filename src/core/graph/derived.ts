@@ -19,7 +19,7 @@ export interface NamedCausalLoop extends CausalLoop {
   label: string;
 }
 
-export interface LoopSummary {
+interface LoopSummary {
   totalLoops: number;
   reinforcingLoops: number;
   balancingLoops: number;

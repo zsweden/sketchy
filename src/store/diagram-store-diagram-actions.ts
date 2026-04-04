@@ -1,3 +1,4 @@
+import { toast } from 'sonner';
 import { getFramework } from '../frameworks/registry';
 import { DEFAULT_EDGE_ROUTING_POLICY } from '../core/edge-routing';
 import { reportError } from '../core/monitoring/error-logging';
@@ -84,7 +85,7 @@ export function createDiagramActions(
         });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        useUIStore.getState().addToast(`Auto-layout failed: ${msg}`, 'error');
+        toast.error(`Auto-layout failed: ${msg}`);
         void reportError(err, { source: 'layout.elk_error', fatal: false });
         return false;
       }

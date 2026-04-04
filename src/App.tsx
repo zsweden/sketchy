@@ -1,17 +1,16 @@
 import { useEffect } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
+import { Toaster, toast } from 'sonner';
 import DiagramCanvas from './components/canvas/DiagramCanvas';
 import Toolbar from './components/toolbar/Toolbar';
 import SidePanel from './components/panel/SidePanel';
 import ContextMenu from './components/context-menu/ContextMenu';
-import ToastContainer from './components/toast/ToastContainer';
 import { useAutoSave } from './hooks/useAutoSave';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useThemeEffect } from './hooks/useThemeEffect';
 import { useViewportInsets } from './hooks/useViewportInsets';
 import { loadDiagram } from './core/persistence/local-storage';
 import { useDiagramStore } from './store/diagram-store';
-import { useUIStore } from './store/ui-store';
 
 export default function App() {
   useAutoSave();
@@ -26,11 +25,11 @@ export default function App() {
       useDiagramStore.getState().loadDiagram(result.diagram);
     }
     if (result.error) {
-      useUIStore.getState().addToast(result.error, 'error');
+      toast.error(result.error);
     }
     if (result.warnings) {
       for (const warning of result.warnings) {
-        useUIStore.getState().addToast(warning, 'warning');
+        toast.warning(warning);
       }
     }
   }, []);
@@ -47,7 +46,11 @@ export default function App() {
         </main>
       </div>
       <ContextMenu />
-      <ToastContainer />
+      <Toaster
+        position="bottom-center"
+        duration={4000}
+        toastOptions={{ className: 'sketchy-toast' }}
+      />
     </ReactFlowProvider>
   );
 }

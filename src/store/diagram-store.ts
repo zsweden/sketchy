@@ -7,7 +7,6 @@ import { createDiagramNodeActions } from './diagram-store-node-actions';
 import type { DiagramState } from './diagram-store-types';
 import type { Framework } from '../core/framework-types';
 
-export type { BatchMutations, DiagramState } from './diagram-store-types';
 
 export const useDiagramStore = create<DiagramState>((set, get) => {
   const context = createDiagramStoreContext(set, get);

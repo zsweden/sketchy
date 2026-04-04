@@ -1,15 +1,8 @@
 import { create } from 'zustand';
 
-export interface Toast {
-  id: string;
-  message: string;
-  type: 'info' | 'warning' | 'error';
-  action?: { label: string; onClick: () => void };
-}
-
-export type InteractionMode = 'select' | 'pan';
+type InteractionMode = 'select' | 'pan';
 export type GraphObjectKind = 'node' | 'edge' | 'loop';
-export type ChatPanelMode = 'min' | 'shared' | 'max';
+type ChatPanelMode = 'min' | 'shared' | 'max';
 export interface GraphObjectTarget {
   kind: GraphObjectKind;
   id: string;
@@ -20,7 +13,6 @@ interface UIState {
   selectedEdgeIds: string[];
   selectedLoopId: string | null;
   contextMenu: { x: number; y: number; nodeId?: string; edgeId?: string } | null;
-  toasts: Toast[];
   sidePanelOpen: boolean;
   chatPanelMode: ChatPanelMode;
   interactionMode: InteractionMode;
@@ -35,8 +27,6 @@ interface UIState {
   setSelectedLoop: (id: string | null) => void;
   openContextMenu: (x: number, y: number, nodeId?: string, edgeId?: string) => void;
   closeContextMenu: () => void;
-  addToast: (message: string, type?: 'info' | 'warning' | 'error', action?: { label: string; onClick: () => void }) => void;
-  dismissToast: (id: string) => void;
   toggleSidePanel: () => void;
   setChatPanelMode: (mode: ChatPanelMode) => void;
   setInteractionMode: (mode: InteractionMode) => void;
@@ -51,7 +41,6 @@ export const useUIStore = create<UIState>((set) => ({
   selectedEdgeIds: [],
   selectedLoopId: null,
   contextMenu: null,
-  toasts: [],
   sidePanelOpen: true,
   chatPanelMode: 'shared',
   interactionMode: 'select',
@@ -71,23 +60,6 @@ export const useUIStore = create<UIState>((set) => ({
     set({ contextMenu: { x, y, nodeId, edgeId } }),
 
   closeContextMenu: () => set({ contextMenu: null }),
-
-  addToast: (message, type = 'info', action) => {
-    const id = crypto.randomUUID();
-    set((s) => ({
-      toasts: [...s.toasts, { id, message, type, action }],
-    }));
-    setTimeout(() => {
-      set((s) => ({
-        toasts: s.toasts.filter((t) => t.id !== id),
-      }));
-    }, action ? 6000 : 4000);
-  },
-
-  dismissToast: (id) =>
-    set((s) => ({
-      toasts: s.toasts.filter((t) => t.id !== id),
-    })),
 
   toggleSidePanel: () =>
     set((s) => ({ sidePanelOpen: !s.sidePanelOpen })),

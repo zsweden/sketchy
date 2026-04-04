@@ -301,42 +301,31 @@
   transform: translateX(1rem);
 }
 
-/* Toast */
-.toast-container {
-  position: fixed;
-  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
-  bottom: calc(1.5rem + max(env(safe-area-inset-bottom, 0px), var(--app-viewport-bottom-inset)));
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 60;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  align-items: center;
-  pointer-events: none;
-}
-
-.toast {
-  pointer-events: auto;
-  padding: 0.625rem 1rem;
-  border-radius: 0.75rem;
-  border: 1px solid var(--border-strong);
-  background: var(--surface);
-  color: var(--text);
+/* Toast (sonner overrides) */
+.sketchy-toast[data-sonner-toast] {
+  --normal-bg: var(--surface);
+  --normal-text: var(--text);
+  --normal-border: var(--border-strong);
+  font-family: inherit;
   font-size: 0.8rem;
   font-weight: 500;
+  border-radius: 0.75rem;
   box-shadow: var(--shadow);
-  animation: toast-in 0.2s ease-out;
-  cursor: pointer;
 }
 
-.toast--warning {
-  background: #F59E0B;
-  color: #1a1a1a;
+.sketchy-toast[data-sonner-toast][data-type="warning"] {
+  --normal-bg: #F59E0B;
+  --normal-text: #1a1a1a;
+  --normal-border: #F59E0B;
 }
 
-.toast-action {
-  margin-left: 0.75rem;
+.sketchy-toast[data-sonner-toast][data-type="error"] {
+  --normal-bg: var(--ude-color);
+  --normal-text: white;
+  --normal-border: var(--ude-color);
+}
+
+.sketchy-toast [data-button] {
   padding: 0.2rem 0.6rem;
   border: 1.5px solid currentColor;
   border-radius: 0.5rem;
@@ -345,29 +334,10 @@
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  cursor: pointer;
-  white-space: nowrap;
 }
 
-.toast-action:hover {
+.sketchy-toast [data-button]:hover {
   background: color-mix(in srgb, currentColor 12%, transparent);
-}
-
-.toast--error {
-  background: var(--ude-color);
-  border-color: var(--ude-color);
-  color: white;
-}
-
-@keyframes toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(0.5rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* Tag chip */

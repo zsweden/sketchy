@@ -16,6 +16,7 @@ import {
   applyEdgeChanges,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { toast } from 'sonner';
 import EntityNode from './EntityNode';
 import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
@@ -47,7 +48,6 @@ export default function DiagramCanvas() {
   const setSelectedLoop = useUIStore((s) => s.setSelectedLoop);
   const openContextMenu = useUIStore((s) => s.openContextMenu);
   const closeContextMenu = useUIStore((s) => s.closeContextMenu);
-  const addToast = useUIStore((s) => s.addToast);
   const interactionMode = useUIStore((s) => s.interactionMode);
 
   const isPanMode = interactionMode === 'pan';
@@ -219,18 +219,20 @@ export default function DiagramCanvas() {
         targetHandleId: connection.targetHandle,
       });
       if (result.reason === 'dynamic-edge-move') {
-        addToast(
+        toast.warning(
           'Edge anchors can\'t be changed while routing is set to "Optimize Continuously".',
-          'warning',
-          { label: 'Switch to Fixed', onClick: () => updateSettings({ edgeRoutingMode: 'fixed' }) },
+          {
+            duration: 6000,
+            action: { label: 'Switch to Fixed', onClick: () => updateSettings({ edgeRoutingMode: 'fixed' }) },
+          },
         );
       } else if (!result.success && result.reason) {
-        addToast(result.reason, 'warning');
+        toast.warning(result.reason);
       } else if (result.success && result.reason) {
-        addToast(result.reason, 'info');
+        toast(result.reason);
       }
     },
-    [addEdgeStore, addToast, updateSettings],
+    [addEdgeStore, updateSettings],
   );
 
   const onPaneClickHandler = useCallback(() => {

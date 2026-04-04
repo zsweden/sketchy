@@ -18,7 +18,6 @@ import {
 } from './geometry';
 import type { BoundingBox, Point } from './geometry';
 
-export type { Point } from './geometry';
 export { getPolylineLength, polylineIntersectsBox, polylinesIntersect } from './geometry';
 
 export type EdgeRoutingNodeBox = BoundingBox;

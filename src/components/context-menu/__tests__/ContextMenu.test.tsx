@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ReactFlowProvider } from '@xyflow/react';
@@ -16,7 +16,6 @@ function resetStores() {
     selectedNodeIds: [],
     selectedEdgeIds: [],
     contextMenu: null,
-    toasts: [],
     sidePanelOpen: true,
     chatPanelMode: 'shared',
     interactionMode: 'select',

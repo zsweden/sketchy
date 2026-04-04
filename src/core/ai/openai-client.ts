@@ -6,7 +6,7 @@ import { buildSystemPrompt, modifyDiagramTool, anthropicModifyDiagramTool } from
 import type { ParseState } from './stream-parsers';
 import { processOpenAILine, processAnthropicLine, finalizeToolCalls } from './stream-parsers';
 
-export type { ChatImage, ChatImageMediaType, ChatMessage, DiagramModification, StreamCallbacks } from './ai-types';
+export type { ChatImage, ChatMessage, DiagramModification } from './ai-types';
 
 // --- Conversation pruning ---
 

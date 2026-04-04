@@ -20,7 +20,6 @@ export {
   shouldCountCrossingBetweenEdges,
   type EdgeRoutingConfig,
   type EdgeRoutingEdge,
-  type EdgeRoutingInput,
   type EdgeRoutingNodeBox,
   type EdgeRoutingPlacement,
   type EdgeRoutingPolicy,

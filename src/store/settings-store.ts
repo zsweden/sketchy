@@ -5,7 +5,7 @@ import { getWebStorage } from '../utils/web-storage';
 
 const STORAGE_KEY = 'sketchy-settings';
 
-export interface Provider {
+interface Provider {
   id: string;
   name: string;
   baseUrl: string;

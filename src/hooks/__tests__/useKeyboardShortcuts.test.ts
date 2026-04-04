@@ -10,13 +10,24 @@ function Harness() {
   return null;
 }
 
+const KEY_TO_CODE: Record<string, string> = {
+  z: 'KeyZ',
+  y: 'KeyY',
+  v: 'KeyV',
+  h: 'KeyH',
+  ' ': 'Space',
+  Escape: 'Escape',
+};
+
 function fireKey(key: string, opts: Partial<KeyboardEvent> = {}) {
-  const event = new KeyboardEvent('keydown', { key, bubbles: true, ...opts });
+  const code = KEY_TO_CODE[key] ?? key;
+  const event = new KeyboardEvent('keydown', { key, code, bubbles: true, ...opts });
   (opts.target ?? document).dispatchEvent(event);
 }
 
 function fireKeyUp(key: string, target: EventTarget = document) {
-  const event = new KeyboardEvent('keyup', { key, bubbles: true });
+  const code = KEY_TO_CODE[key] ?? key;
+  const event = new KeyboardEvent('keyup', { key, code, bubbles: true });
   target.dispatchEvent(event);
 }
 
