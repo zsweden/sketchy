@@ -4,6 +4,7 @@ import {
   buildEdgeRoutingGeometry,
   computeEdgeRoutingPlacements,
   createPlacementCandidates,
+  getAutomaticEdgeRoutingPlacement,
   getPolylineLength,
   polylinesIntersect,
   shouldRewardSharedEndpointCrossingAlignment,
@@ -12,6 +13,7 @@ import {
   type EdgeRoutingNodeBox,
   type EdgeRoutingPolicy,
 } from '../index';
+import { getBaseHandleSide } from '../../graph/ports';
 
 function boxes(entries: Array<[string, number, number, number, number]>): Map<string, EdgeRoutingNodeBox> {
   return new Map(entries.map(([id, left, top, right, bottom]) => [
@@ -347,6 +349,55 @@ describe('edge routing', () => {
     expect(ab.targetSide).toBe('top');
     expect(ba.sourceSide).toBe('bottom');
     expect(ba.targetSide).toBe('top');
+  });
+
+  it('picks vertical anchors when they produce a shorter path than horizontal', () => {
+    // Target is up-and-to-the-right with similar dx (~169) and dy (~122).
+    // Old heuristic picked horizontal (right→left) because |dx| > |dy|,
+    // creating an S-curve. Vertical (top→bottom) is much more direct.
+    const nodeBoxes = boxes([
+      ['source', 33, 475, 273, 523],
+      ['target', 202, 353, 442, 401],
+    ]);
+
+    const placement = getAutomaticEdgeRoutingPlacement(
+      { source: 'source', target: 'target' },
+      nodeBoxes,
+      'TB',
+    );
+
+    expect(getBaseHandleSide(placement.sourceSide)).toBe('top');
+    expect(getBaseHandleSide(placement.targetSide)).toBe('bottom');
+
+    // Verify the chosen path is actually shorter
+    const hGeo = buildEdgeRoutingGeometry(
+      { id: 'e', source: 'source', target: 'target' },
+      { sourceSide: 'topright-right', targetSide: 'bottomleft-left' },
+      nodeBoxes,
+    );
+    const vGeo = buildEdgeRoutingGeometry(
+      { id: 'e', source: 'source', target: 'target' },
+      placement,
+      nodeBoxes,
+    );
+    expect(getPolylineLength(vGeo.points)).toBeLessThan(getPolylineLength(hGeo.points));
+  });
+
+  it('still picks horizontal anchors when target is far to the right', () => {
+    // Target is far right and slightly below — horizontal is genuinely shorter
+    const nodeBoxes = boxes([
+      ['source', 0, 0, 240, 48],
+      ['target', 500, 30, 740, 78],
+    ]);
+
+    const placement = getAutomaticEdgeRoutingPlacement(
+      { source: 'source', target: 'target' },
+      nodeBoxes,
+      'TB',
+    );
+
+    expect(getBaseHandleSide(placement.sourceSide)).toBe('right');
+    expect(getBaseHandleSide(placement.targetSide)).toBe('left');
   });
 
   it('flow-aligned candidate ordering puts flow-direction sides first in TB', () => {

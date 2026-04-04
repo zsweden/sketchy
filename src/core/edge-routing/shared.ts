@@ -3,15 +3,18 @@ import type { CardinalHandleSide, EdgeHandleSide } from '../types';
 import {
   VISIBLE_HANDLE_SIDES,
   getBaseHandleSide,
+  getDirectionalHandleSide,
   getEdgeHandlePlacement,
   getPrimaryFlowSides,
   getHandlePoint,
   isHorizontalCardinalSide,
+  opposite,
 } from '../graph/ports';
 import {
   dedupePoints,
   expandBox,
   getCenter,
+  getPolylineLength as computePolylineLength,
   offsetPoint,
   polylinesIntersect,
   polylinesIntersectOutsideBoxes,
@@ -93,11 +96,50 @@ export function getAutomaticEdgeRoutingPlacement(
   const sourceBox = nodeBoxes.get(edge.source);
   const targetBox = nodeBoxes.get(edge.target);
 
-  return getEdgeHandlePlacement(
-    sourceBox ? getCenter(sourceBox) : undefined,
-    targetBox ? getCenter(targetBox) : undefined,
-    layoutDirection,
-  );
+  if (!sourceBox || !targetBox) {
+    return getEdgeHandlePlacement(
+      sourceBox ? getCenter(sourceBox) : undefined,
+      targetBox ? getCenter(targetBox) : undefined,
+      layoutDirection,
+    );
+  }
+
+  const sourceCenter = getCenter(sourceBox);
+  const targetCenter = getCenter(targetBox);
+  const dx = targetCenter.x - sourceCenter.x;
+  const dy = targetCenter.y - sourceCenter.y;
+
+  if (dx === 0 && dy === 0) {
+    return getEdgeHandlePlacement(sourceCenter, targetCenter, layoutDirection);
+  }
+
+  // Build horizontal-base and vertical-base candidates
+  const hSourceBase = dx >= 0 ? 'right' as const : 'left' as const;
+  const hTargetBase = opposite(hSourceBase);
+  const horizontalPlacement: EdgeRoutingPlacement = {
+    sourceSide: getDirectionalHandleSide(hSourceBase, dx, dy),
+    targetSide: getDirectionalHandleSide(hTargetBase, -dx, -dy),
+  };
+
+  const vSourceBase = dy >= 0 ? 'bottom' as const : 'top' as const;
+  const vTargetBase = opposite(vSourceBase);
+  const verticalPlacement: EdgeRoutingPlacement = {
+    sourceSide: getDirectionalHandleSide(vSourceBase, dx, dy),
+    targetSide: getDirectionalHandleSide(vTargetBase, -dx, -dy),
+  };
+
+  // Pick the placement that produces a shorter routed path
+  const dummyEdge = { id: '', source: edge.source, target: edge.target };
+  const hLength = computePolylineLength(buildEdgeRoutingGeometry(dummyEdge, horizontalPlacement, nodeBoxes).points);
+  const vLength = computePolylineLength(buildEdgeRoutingGeometry(dummyEdge, verticalPlacement, nodeBoxes).points);
+
+  if (hLength < vLength) return horizontalPlacement;
+  if (vLength < hLength) return verticalPlacement;
+
+  // Tie: prefer flow-aligned direction
+  const flowSides = getPrimaryFlowSides(layoutDirection);
+  const flowIsVertical = flowSides.sourceSide === 'top' || flowSides.sourceSide === 'bottom';
+  return flowIsVertical ? verticalPlacement : horizontalPlacement;
 }
 
 export function createPlacementCandidates(

@@ -58,7 +58,7 @@ export function getBaseHandleSide(side: HandleSide): CardinalHandleSide {
   }
 }
 
-function opposite(side: CardinalHandleSide): CardinalHandleSide {
+export function opposite(side: CardinalHandleSide): CardinalHandleSide {
   switch (side) {
     case 'top':
       return 'bottom';
@@ -75,7 +75,7 @@ export function isHorizontalCardinalSide(side: CardinalHandleSide): boolean {
   return side === 'left' || side === 'right';
 }
 
-function getDirectionalHandleSide(baseSide: CardinalHandleSide, dx: number, dy: number): HandleSide {
+export function getDirectionalHandleSide(baseSide: CardinalHandleSide, dx: number, dy: number): HandleSide {
   switch (baseSide) {
     case 'top':
       return dx < 0 ? 'topleft-top' : dx > 0 ? 'topright-top' : 'top';
