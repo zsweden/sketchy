@@ -100,15 +100,14 @@ describe('ContextMenu', () => {
       const user = userEvent.setup();
       renderContextMenu();
 
-      // Pink only exists in background colors
-      const pinkSwatch = screen.getByTitle('Pink');
-      await user.click(pinkSwatch);
+      const purpleSwatches = screen.getAllByTitle('Purple');
+      await user.click(purpleSwatches[0]);
 
       // Color is applied immediately (live preview)
       expect(
         useDiagramStore.getState().diagram.nodes.find((n) => n.id === nodeId)?.data.color,
-      ).toBe('#FBCFE8');
-      expect(pinkSwatch).toHaveAttribute('data-active', 'true');
+      ).toBe('#8B5CF6');
+      expect(purpleSwatches[0]).toHaveAttribute('data-active', 'true');
 
       // Closing commits the history-tracked update
       fireEvent.pointerDown(document.body);
@@ -126,29 +125,18 @@ describe('ContextMenu', () => {
       expect(
         useDiagramStore.getState().diagram.nodes.find((n) => n.id === nodeId)?.data.color,
       ).toBe('#12ABEF');
-      expect(screen.getByTitle('Pick custom background color')).toHaveStyle({
-        background: '#12ABEF',
-      });
 
       fireEvent.pointerDown(document.body);
       expect(useUIStore.getState().contextMenu).toBeNull();
-
-      act(() => {
-        useUIStore.setState({
-          contextMenu: { x: 100, y: 200, nodeId, edgeId: undefined },
-        });
-      });
-      expect(screen.getByTitle('#12ABEF')).toHaveAttribute('data-active', 'true');
-      expect(screen.queryByTitle('Pink')).not.toBeInTheDocument();
     });
 
     it('applies a text color immediately on swatch click', async () => {
       const user = userEvent.setup();
       renderContextMenu();
 
-      // White only exists in text colors
-      const whiteSwatch = screen.getByTitle('White');
-      await user.click(whiteSwatch);
+      const whiteSwatches = screen.getAllByTitle('White');
+      // Second White swatch is in the Text Color row
+      await user.click(whiteSwatches[1]);
 
       // Text color is applied immediately (live preview)
       expect(

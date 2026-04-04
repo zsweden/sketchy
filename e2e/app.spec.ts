@@ -555,9 +555,9 @@ test('sets node background color via context menu color swatch', async ({ page }
   await page.locator('.entity-node').first().click({ button: 'right' });
   await expect(page.locator('.context-menu')).toBeVisible();
 
-  // Default swatch should be active initially
+  // Default (none) swatch should be active initially
   const bgSwatches = page.locator('.context-menu-colors').first();
-  await expect(bgSwatches.locator('.color-swatch[title="Default"]')).toHaveAttribute('data-active', 'true');
+  await expect(bgSwatches.locator('.color-swatch-none')).toHaveAttribute('data-active', 'true');
 
   // Click the Blue swatch
   await bgSwatches.locator('.color-swatch[title="Blue"]').click();
@@ -567,7 +567,7 @@ test('sets node background color via context menu color swatch', async ({ page }
   await page.waitForFunction(() => {
     const raw = sessionStorage.getItem('sketchy_diagram');
     if (!raw) return false;
-    return JSON.parse(raw).nodes?.[0]?.data?.color === '#BFDBFE';
+    return JSON.parse(raw).nodes?.[0]?.data?.color === '#3B82F6';
   });
 });
 
@@ -588,7 +588,7 @@ test('sets node text color via context menu and persists to store', async ({ pag
   await page.waitForFunction(() => {
     const raw = sessionStorage.getItem('sketchy_diagram');
     if (!raw) return false;
-    return JSON.parse(raw).nodes?.[0]?.data?.textColor === '#DC2626';
+    return JSON.parse(raw).nodes?.[0]?.data?.textColor === '#EF4444';
   });
 });
 
@@ -609,10 +609,10 @@ test('reopen context menu reflects current node color as active swatch', async (
 
   const bgSwatches = page.locator('.context-menu-colors').first();
   await expect(bgSwatches.locator('.color-swatch[title="Green"]')).toHaveAttribute('data-active', 'true');
-  await expect(bgSwatches.locator('.color-swatch[title="Default"]')).toHaveAttribute('data-active', 'false');
+  await expect(bgSwatches.locator('.color-swatch-none')).toHaveAttribute('data-active', 'false');
 });
 
-test('custom node background color appears in the right-click palette after selection', async ({ page }) => {
+test('custom node background color persists via color picker', async ({ page }) => {
   await createNode(page, 200, 250);
 
   await page.locator('.entity-node').first().click({ button: 'right' });
@@ -636,11 +636,11 @@ test('custom node background color appears in the right-click palette after sele
     return JSON.parse(raw).nodes?.[0]?.data?.color === '#12ABEF';
   });
 
+  // Re-open: no preset swatch should be active since the color is custom
   await page.locator('.entity-node').first().click({ button: 'right' });
   await expect(page.locator('.context-menu')).toBeVisible();
-  await expect(
-    page.locator('.context-menu-colors').first().locator('.color-swatch[title="#12ABEF"]'),
-  ).toHaveAttribute('data-active', 'true');
+  const bgSwatches = page.locator('.context-menu-colors').first();
+  await expect(bgSwatches.locator('.color-swatch-none')).toHaveAttribute('data-active', 'false');
 });
 
 test('pressing Escape in the node color menu discards pending colors', async ({ page }) => {
