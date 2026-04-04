@@ -37,21 +37,6 @@ function getColorInputValue(color: string | undefined, fallback: string): string
   return normalizeHexColor(color) ?? fallback;
 }
 
-function getPickerTriggerStyle(color: string | undefined) {
-  const normalized = normalizeHexColor(color);
-  if (!normalized) return undefined;
-
-  const red = Number.parseInt(normalized.slice(1, 3), 16);
-  const green = Number.parseInt(normalized.slice(3, 5), 16);
-  const blue = Number.parseInt(normalized.slice(5, 7), 16);
-  const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
-
-  return {
-    background: normalized,
-    color: luminance > 0.6 ? '#1A1A1A' : '#FFFFFF',
-    borderStyle: 'solid' as const,
-  };
-}
 
 interface NodeMenuProps {
   node: DiagramNode;
@@ -176,6 +161,12 @@ function NodeContextMenu({
 
       <div className="context-menu-label">Background</div>
       <div className="context-menu-colors">
+        <button
+          className="color-swatch color-swatch-none"
+          data-active={!node.data.color}
+          title="Default"
+          onClick={() => setBackgroundColor(undefined)}
+        />
         {nodeBackgroundColors.map((c) => (
           <button
             key={c.id}
@@ -189,7 +180,7 @@ function NodeContextMenu({
         <label
           className="color-swatch color-picker-trigger"
           title="Pick custom background color"
-          style={getPickerTriggerStyle(node.data.color)}
+          style={undefined}
           onPointerDown={beginColorPickerInteraction}
         >
           <Pipette size={12} aria-hidden="true" />
@@ -209,6 +200,12 @@ function NodeContextMenu({
 
       <div className="context-menu-label">Text Color</div>
       <div className="context-menu-colors">
+        <button
+          className="color-swatch color-swatch-none"
+          data-active={!node.data.textColor}
+          title="Default"
+          onClick={() => setTextColor(undefined)}
+        />
         {nodeTextColors.map((c) => (
           <button
             key={c.id}
@@ -222,7 +219,7 @@ function NodeContextMenu({
         <label
           className="color-swatch color-picker-trigger"
           title="Pick custom text color"
-          style={getPickerTriggerStyle(node.data.textColor)}
+          style={undefined}
           onPointerDown={beginColorPickerInteraction}
         >
           <Pipette size={12} aria-hidden="true" />
