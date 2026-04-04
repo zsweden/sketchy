@@ -1017,3 +1017,104 @@ test('switching framework clears diagram and shows new framework tags', async ({
   await expect(page.locator('.tag-chip', { hasText: 'Injection' })).toBeVisible();
   await expect(page.locator('.tag-chip', { hasText: 'Desirable Effect' })).toBeVisible();
 });
+
+// --- 30. Save → New → Load round-trip ---
+
+test('save → new → load round-trip preserves nodes, edges, and tags', async ({ page }) => {
+  // Build a small diagram: two nodes with an edge and a tag
+  await createNode(page, 100, 200);
+  await createNode(page, 300, 200);
+  const ids = await getNodeIds(page);
+  await updateNodeText(page, ids[0], 'Cause A');
+  await updateNodeText(page, ids[1], 'Effect B');
+  await addEdge(page, ids[0], ids[1]);
+
+  // Apply UDE tag to second node via context menu
+  await page.locator(`[data-node-id="${ids[1]}"]`).click({ button: 'right' });
+  await expect(page.locator('.context-menu')).toBeVisible();
+  await page.locator('.context-menu-item', { hasText: 'Undesirable Effect' }).click();
+  await expect(page.locator('.entity-node .badge', { hasText: 'UDE' })).toBeVisible();
+
+  // Get the diagram as a .sky JSON blob via the store
+  const skyJson = await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const store = (window as any).__diagramStore;
+    const diagram = store.getState().diagram;
+    // Re-use the same serialization the Save button uses
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { diagramToSkyJson } = (window as any).__skyIoHelpers ?? {};
+    if (diagramToSkyJson) return JSON.stringify(diagramToSkyJson(diagram), null, 2);
+    // Fallback: raw diagram JSON (loadSkyFile handles this format too)
+    return JSON.stringify(diagram);
+  });
+
+  // Click New to clear diagram
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('button', { name: 'New' }).click();
+  await expect(page.locator('.entity-node')).toHaveCount(0);
+
+  // Load the saved file
+  const fileInput = page.locator('input[type="file"][accept=".sky,.json"]');
+  await fileInput.setInputFiles({
+    name: 'round-trip.sky',
+    mimeType: 'application/json',
+    buffer: Buffer.from(skyJson, 'utf-8'),
+  });
+
+  // Verify everything survived the round-trip
+  await expect(page.locator('.entity-node')).toHaveCount(2);
+  await expect(page.locator('.entity-node').filter({ hasText: 'Cause A' })).toBeVisible();
+  await expect(page.locator('.entity-node').filter({ hasText: 'Effect B' })).toBeVisible();
+  await expect(page.locator('.react-flow__edge')).toHaveCount(1);
+  await expect(page.locator('.entity-node .badge', { hasText: 'UDE' })).toBeVisible();
+});
+
+// --- 31. Keyboard shortcuts ---
+
+test('Ctrl+Z undoes and Ctrl+Shift+Z redoes a node creation', async ({ page }) => {
+  await createNode(page, 200, 200);
+  await expect(page.locator('.entity-node')).toHaveCount(1);
+
+  // Click pane to deselect (ensure no input is focused)
+  await page.locator(PANE).click({ position: { x: 50, y: 50 } });
+
+  // Undo
+  await page.keyboard.press('ControlOrMeta+z');
+  await expect(page.locator('.entity-node')).toHaveCount(0);
+
+  // Redo
+  await page.keyboard.press('ControlOrMeta+Shift+z');
+  await expect(page.locator('.entity-node')).toHaveCount(1);
+});
+
+test('Escape clears node selection', async ({ page }) => {
+  await createNode(page, 200, 200);
+  const node = page.locator('.entity-node').first();
+  await node.click();
+
+  // Node should be selected (side panel shows node details)
+  await expect(page.getByLabel('Node text')).toBeVisible();
+
+  await page.keyboard.press('Escape');
+
+  // Side panel should no longer show node inspector
+  await expect(page.getByLabel('Node text')).not.toBeVisible();
+});
+
+test('V key switches to select mode and H key switches to pan mode', async ({ page }) => {
+  const selectBtn = page.getByLabel('Select tool');
+  const panBtn = page.getByLabel('Pan tool');
+
+  // Click pane to ensure no input is focused
+  await page.locator(PANE).click({ position: { x: 50, y: 50 } });
+
+  // Press H for pan mode
+  await page.keyboard.press('h');
+  await expect(panBtn).toHaveClass(/btn-toggle-active/);
+  await expect(selectBtn).not.toHaveClass(/btn-toggle-active/);
+
+  // Press V for select mode
+  await page.keyboard.press('v');
+  await expect(selectBtn).toHaveClass(/btn-toggle-active/);
+  await expect(panBtn).not.toHaveClass(/btn-toggle-active/);
+});

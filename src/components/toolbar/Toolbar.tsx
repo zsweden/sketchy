@@ -145,9 +145,6 @@ export default function Toolbar() {
     [loadDiagram, addToast, requestFitView],
   );
 
-  const handlePrint = useCallback(() => {
-    addToast('Print is coming soon', 'info');
-  }, [addToast]);
 
   return (
     <header className="app-header">
@@ -279,13 +276,7 @@ export default function Toolbar() {
         >
           Save
         </button>
-        <button
-          className="btn btn-secondary"
-          onClick={handlePrint}
-          title="Print project"
-        >
-          Print
-        </button>
+
         <input
           ref={fileInputRef}
           type="file"
