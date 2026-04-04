@@ -25,8 +25,8 @@ export default function SidePanel() {
   const getPanelWidthBounds = useCallback(() => {
     const viewportWidth = typeof window === 'undefined' ? 1440 : window.innerWidth;
     return {
-      min: 240,
-      max: Math.max(240, Math.min(600, Math.round(viewportWidth * 0.45))),
+      min: 360,
+      max: Math.max(360, Math.min(720, Math.round(viewportWidth * 0.45))),
     };
   }, []);
 
@@ -37,9 +37,9 @@ export default function SidePanel() {
 
   const [width, setWidth] = useState(() => {
     const viewportWidth = typeof window === 'undefined' ? 1440 : window.innerWidth;
-    const defaultWidth = viewportWidth <= 900 ? 280 : viewportWidth <= 1200 ? 300 : 320;
-    const max = Math.max(240, Math.min(600, Math.round(viewportWidth * 0.45)));
-    return Math.min(max, Math.max(240, defaultWidth));
+    const defaultWidth = viewportWidth <= 900 ? 420 : viewportWidth <= 1200 ? 450 : 480;
+    const max = Math.max(360, Math.min(720, Math.round(viewportWidth * 0.45)));
+    return Math.min(max, Math.max(360, defaultWidth));
   });
   const [dragging, setDragging] = useState(false);
   const startX = useRef(0);

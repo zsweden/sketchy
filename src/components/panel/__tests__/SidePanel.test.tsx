@@ -186,8 +186,8 @@ describe('SidePanel', () => {
     const { container } = render(<SidePanel />);
 
     expect(container.querySelector('.side-panel')).toHaveStyle({
-      width: '280px',
-      minWidth: '280px',
+      width: '369px',
+      minWidth: '369px',
     });
   });
 
@@ -206,8 +206,8 @@ describe('SidePanel', () => {
     fireEvent.pointerMove(document, { pointerId: 11, clientX: 600 });
     fireEvent.pointerUp(document, { pointerId: 11, clientX: 600 });
 
-    expect(panel.style.width).toBe('420px');
-    expect(panel.style.minWidth).toBe('420px');
+    expect(panel.style.width).toBe('580px');
+    expect(panel.style.minWidth).toBe('580px');
   });
 
   it('switches between max, min, and shared chat layouts', async () => {
