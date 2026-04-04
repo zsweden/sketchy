@@ -4,8 +4,6 @@ import type { ElkExperimentSettings } from './elk-options';
 
 export const NODE_WIDTH = 160;
 export const MIN_NODE_HEIGHT = 60;
-export const NODE_SEP = 40;
-
 export interface LayoutInput {
   id: string;
   width: number;

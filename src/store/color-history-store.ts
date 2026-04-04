@@ -3,7 +3,7 @@ import { getWebStorage } from '../utils/web-storage';
 const STORAGE_KEY = 'sketchy-recent-colors';
 const MAX_RECENT_COLORS = 8;
 
-export type RecentColorKind = 'background' | 'text';
+type RecentColorKind = 'background' | 'text';
 
 interface StoredRecentColors {
   background: string[];

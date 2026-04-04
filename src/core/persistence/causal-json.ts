@@ -41,7 +41,7 @@ interface SkyJunction {
   sources: string[];
 }
 
-export interface SkyJson {
+interface SkyJson {
   name?: string;
   framework?: string;
   direction?: Diagram['settings']['layoutDirection'];

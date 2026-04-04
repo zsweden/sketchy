@@ -9,7 +9,7 @@ export interface BoundingBox {
   bottom: number;
 }
 
-export const SIDE_VECTORS: Record<CardinalHandleSide, Point> = {
+const SIDE_VECTORS: Record<CardinalHandleSide, Point> = {
   top: { x: 0, y: -1 },
   right: { x: 1, y: 0 },
   bottom: { x: 0, y: 1 },
@@ -46,7 +46,7 @@ export function expandBox(box: BoundingBox, padding: number): BoundingBox {
   };
 }
 
-export function pointInBox(point: Point, box: BoundingBox): boolean {
+function pointInBox(point: Point, box: BoundingBox): boolean {
   return point.x >= box.left && point.x <= box.right && point.y >= box.top && point.y <= box.bottom;
 }
 

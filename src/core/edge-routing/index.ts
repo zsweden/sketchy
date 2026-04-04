@@ -1,8 +1,6 @@
 import { computeLegacyPlusEdgeRoutingPlacements } from './edge-optimization-algorithm';
 import type { EdgeRoutingInput, EdgeRoutingPlacement } from './shared';
 
-export const DEFAULT_EDGE_ROUTING_ALGORITHM = 'legacy-plus';
-
 export function computeEdgeRoutingPlacements(
   input: EdgeRoutingInput,
 ): Map<string, EdgeRoutingPlacement> {
@@ -11,27 +9,19 @@ export function computeEdgeRoutingPlacements(
 
 export {
   buildEdgeRoutingGeometry,
-  compareEdgeRoutingObjectiveScores,
   createPlacementCandidates,
   DEFAULT_EDGE_ROUTING_CONFIG,
   DEFAULT_EDGE_ROUTING_POLICY,
-  EDGE_ROUTING_NODE_NEIGHBORHOOD_PADDING,
   getAutomaticEdgeRoutingPlacement,
   getPolylineLength,
-  isReciprocalEdgePair,
   polylineIntersectsBox,
   polylinesIntersect,
-  scoreObjectiveEdgeRouting,
-  sharesEndpoint,
   shouldRewardSharedEndpointCrossingAlignment,
   shouldCountCrossingBetweenEdges,
   type EdgeRoutingConfig,
   type EdgeRoutingEdge,
-  type EdgeRoutingGeometry,
   type EdgeRoutingInput,
   type EdgeRoutingNodeBox,
-  type EdgeRoutingObjectiveScore,
-  type EdgeRoutingPoint,
   type EdgeRoutingPlacement,
   type EdgeRoutingPolicy,
 } from './shared';

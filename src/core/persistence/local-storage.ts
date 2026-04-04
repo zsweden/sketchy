@@ -15,7 +15,7 @@ export function saveDiagram(diagram: Diagram): void {
   }
 }
 
-export interface LoadResult {
+interface LoadResult {
   diagram: Diagram | null;
   error?: string;
   warnings?: string[];

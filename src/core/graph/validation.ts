@@ -1,6 +1,6 @@
 import type { DiagramEdge, DiagramNode } from '../types';
 
-export interface GraphValidationOptions {
+interface GraphValidationOptions {
   allowCycles?: boolean;
 }
 
@@ -98,7 +98,7 @@ function hasCycle(edges: DiagramEdge[]): boolean {
   return false;
 }
 
-export interface ValidationResult {
+interface ValidationResult {
   valid: boolean;
   reason?: string;
 }
@@ -121,7 +121,7 @@ export function validateEdge(
   return { valid: true };
 }
 
-export interface GraphValidationResult {
+interface GraphValidationResult {
   valid: boolean;
   droppedEdges: DiagramEdge[];
   reasons: string[];

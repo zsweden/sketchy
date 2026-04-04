@@ -18,7 +18,7 @@ interface HandleUsage {
   outgoing: number;
 }
 
-export interface TieBreakScore {
+interface TieBreakScore {
   mixedDirectionPenalty: number;
   sameDirectionReward: number;
   cornerPenalty: number;

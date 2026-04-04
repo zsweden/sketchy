@@ -63,7 +63,7 @@ export async function saveSkyFile(diagram: Diagram): Promise<void> {
   URL.revokeObjectURL(url);
 }
 
-export interface LoadResult {
+interface LoadResult {
   diagram: Diagram;
   warnings: string[];
   needsLayout: boolean;

@@ -182,13 +182,13 @@ export function getChatMessageDisplayText(
   );
 }
 
-export function getNormalizedChatMessageTextFromSegments(segments: ParsedChatSegment[]): string {
+function getNormalizedChatMessageTextFromSegments(segments: ParsedChatSegment[]): string {
   return segments
     .map((segment) => segment.type === 'mention' ? segment.rawText : segment.text)
     .join('');
 }
 
-export function getChatMessageDisplayTextFromSegments(segments: ParsedChatSegment[]): string {
+function getChatMessageDisplayTextFromSegments(segments: ParsedChatSegment[]): string {
   return segments
     .map((segment) => segment.type === 'mention' ? segment.displayText : segment.text)
     .join('');

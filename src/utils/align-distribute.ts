@@ -8,7 +8,7 @@ export interface SizedPositionedItem extends PositionedItem {
   height: number;
 }
 
-export interface PositionUpdate {
+interface PositionUpdate {
   id: string;
   position: { x: number; y: number };
 }

@@ -2,7 +2,7 @@ import type { Diagram } from '../types';
 import type { Framework } from '../framework-types';
 import { getFramework } from '../../frameworks/registry';
 
-export interface SkyFileMeta {
+interface SkyFileMeta {
   app: string;
   fileFormat: string;
   framework: {

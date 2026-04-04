@@ -96,10 +96,6 @@ function createElkEngine(algorithm: ElkAlgorithm): LayoutEngine {
   };
 }
 
-export const elkForceEngine = createElkEngine('force');
-export const elkStressEngine = createElkEngine('stress');
-export const elkRadialEngine = createElkEngine('radial');
-
 export const elkEngine: LayoutEngine = async (nodes, edges, options) =>
   createElkEngine(
     resolveElkAlgorithm(

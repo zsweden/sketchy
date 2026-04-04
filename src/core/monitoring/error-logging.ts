@@ -1,7 +1,7 @@
 import { appVersion } from '../app-version';
 import { logFirebaseException, logFirestoreError } from './firebase';
 
-export type ErrorSource =
+type ErrorSource =
   | 'react.error_boundary'
   | 'window.error'
   | 'window.unhandledrejection'

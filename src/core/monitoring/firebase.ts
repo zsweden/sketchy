@@ -1,7 +1,7 @@
 import type { Analytics } from 'firebase/analytics';
 import type { Firestore } from 'firebase/firestore';
 
-export interface FirebaseExceptionPayload {
+interface FirebaseExceptionPayload {
   version: string;
   source: string;
   fatal: boolean;
