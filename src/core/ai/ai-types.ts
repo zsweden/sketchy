@@ -49,8 +49,16 @@ export interface DiagramModification {
   removeEdgeIds: string[];
 }
 
+export interface FrameworkSuggestion {
+  frameworkId: string;
+  frameworkName: string;
+  reason: string;
+}
+
+export type FrameworkSuggestions = FrameworkSuggestion[];
+
 export interface StreamCallbacks {
   onToken: (token: string) => void;
-  onDone: (result: { text: string; modifications?: DiagramModification }) => void;
+  onDone: (result: { text: string; modifications?: DiagramModification; suggestions?: FrameworkSuggestions }) => void;
   onError: (error: Error) => void;
 }

@@ -1,9 +1,40 @@
 import { RotateCcw, Settings } from 'lucide-react';
 import type { RefObject } from 'react';
 import { getStreamingChatMessageDisplayText, type ChatMentionTarget } from '../../../core/chat/mentions';
-import type { DisplayMessage } from '../../../store/chat-store';
+import type { FrameworkSuggestion } from '../../../core/ai/ai-types';
+import { useChatStore, type DisplayMessage } from '../../../store/chat-store';
 import { AssistantMessageText } from './AssistantMessageText';
 import { ChatCopyButton } from './ChatCopyButton';
+
+function SuggestionCard({
+  suggestion,
+  rank,
+  isPending,
+  onAccept,
+}: {
+  suggestion: FrameworkSuggestion;
+  rank: number;
+  isPending: boolean;
+  onAccept: () => void;
+}) {
+  return (
+    <div className="chat-suggestion-card">
+      <div className="chat-suggestion-header">
+        <span className="chat-suggestion-rank">{rank}</span>
+        <span className="chat-suggestion-name">{suggestion.frameworkName}</span>
+      </div>
+      <p className="chat-suggestion-reason">{suggestion.reason}</p>
+      {isPending && (
+        <button
+          className="btn btn-xs chat-suggestion-accept"
+          onClick={onAccept}
+        >
+          Use {suggestion.frameworkName}
+        </button>
+      )}
+    </div>
+  );
+}
 
 export function ChatMessageList({
   isConfigured,
@@ -25,6 +56,8 @@ export function ChatMessageList({
   streamingContent: string;
 }) {
   const streamingDisplayText = getStreamingChatMessageDisplayText(streamingContent).trimStart();
+  const pendingSuggestions = useChatStore((s) => s.pendingSuggestions);
+  const acceptSuggestion = useChatStore((s) => s.acceptSuggestion);
 
   return (
     <div className="chat-messages">
@@ -67,11 +100,24 @@ export function ChatMessageList({
                   className="chat-message-image"
                 />
               ))}
-              {message.content}
+              {message.displayText ?? message.content}
             </div>
           )}
           {message.modifications && (
             <span className="chat-badge-modified">changes applied</span>
+          )}
+          {message.suggestions && message.suggestions.length > 0 && (
+            <div className="chat-suggestions">
+              {message.suggestions.map((s, i) => (
+                <SuggestionCard
+                  key={s.frameworkId}
+                  suggestion={s}
+                  rank={i + 1}
+                  isPending={pendingSuggestions !== null}
+                  onAccept={() => acceptSuggestion(s.frameworkId)}
+                />
+              ))}
+            </div>
           )}
           {(() => {
             const retryText = message.role === 'assistant' ? message.retryText : undefined;

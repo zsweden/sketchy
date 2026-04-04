@@ -2,7 +2,14 @@ import type { Diagram } from '../types';
 import type { Framework } from '../framework-types';
 import { buildHeaders } from './model-fetcher';
 import type { ChatMessage, StreamCallbacks } from './ai-types';
-import { buildSystemPrompt, modifyDiagramTool, anthropicModifyDiagramTool } from './system-prompt';
+import {
+  buildSystemPrompt,
+  buildAutoModeSystemPrompt,
+  modifyDiagramTool,
+  anthropicModifyDiagramTool,
+  suggestFrameworksTool,
+  anthropicSuggestFrameworksTool,
+} from './system-prompt';
 import type { ParseState } from './stream-parsers';
 import { processOpenAILine, processAnthropicLine, finalizeToolCalls } from './stream-parsers';
 
@@ -25,6 +32,7 @@ function buildOpenAIRequest(
   model: string,
   systemPrompt: string,
   messages: ChatMessage[],
+  tools: unknown[],
 ): { url: string; headers: Record<string, string>; body: string } {
   const apiMessages = [
     { role: 'system' as const, content: systemPrompt },
@@ -50,7 +58,7 @@ function buildOpenAIRequest(
     body: JSON.stringify({
       model,
       messages: apiMessages,
-      tools: [modifyDiagramTool],
+      tools,
       tool_choice: 'auto',
       stream: true,
     }),
@@ -63,6 +71,7 @@ function buildAnthropicRequest(
   model: string,
   systemPrompt: string,
   messages: ChatMessage[],
+  tools: unknown[],
 ): { url: string; headers: Record<string, string>; body: string } {
   const userMessages = pruneHistory(messages)
     .filter((m) => m.role !== 'system')
@@ -89,7 +98,7 @@ function buildAnthropicRequest(
       max_tokens: 4096,
       system: systemPrompt,
       messages: userMessages,
-      tools: [anthropicModifyDiagramTool],
+      tools,
       stream: true,
     }),
   };
@@ -106,14 +115,19 @@ export function streamChatMessage(
   messages: ChatMessage[],
   callbacks: StreamCallbacks,
   provider: string = 'openai',
+  autoMode: boolean = false,
 ): AbortController {
   const controller = new AbortController();
-  const systemPrompt = buildSystemPrompt(diagram, framework);
+  const systemPrompt = autoMode
+    ? buildAutoModeSystemPrompt(diagram)
+    : buildSystemPrompt(diagram, framework);
 
   const isAnthropic = provider === 'anthropic';
+  const openaiTools = autoMode ? [suggestFrameworksTool] : [modifyDiagramTool];
+  const anthropicTools = autoMode ? [anthropicSuggestFrameworksTool] : [anthropicModifyDiagramTool];
   const req = isAnthropic
-    ? buildAnthropicRequest(baseUrl, apiKey, model, systemPrompt, messages)
-    : buildOpenAIRequest(baseUrl, apiKey, model, systemPrompt, messages);
+    ? buildAnthropicRequest(baseUrl, apiKey, model, systemPrompt, messages, anthropicTools)
+    : buildOpenAIRequest(baseUrl, apiKey, model, systemPrompt, messages, openaiTools);
 
   const processLine = isAnthropic ? processAnthropicLine : processOpenAILine;
 

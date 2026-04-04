@@ -484,4 +484,119 @@ describe('chat-store', () => {
       expect(useChatStore.getState().aiModifiedNodeIds.size).toBe(2);
     });
   });
+
+  describe('auto mode', () => {
+    it('setAutoMode toggles autoMode and clears pendingSuggestions', () => {
+      useChatStore.getState().setAutoMode(true);
+      expect(useChatStore.getState().autoMode).toBe(true);
+      expect(useChatStore.getState().pendingSuggestions).toBeNull();
+
+      useChatStore.setState({
+        pendingSuggestions: [{ frameworkId: 'crt', frameworkName: 'CRT', reason: 'test' }],
+      });
+
+      useChatStore.getState().setAutoMode(false);
+      expect(useChatStore.getState().autoMode).toBe(false);
+      expect(useChatStore.getState().pendingSuggestions).toBeNull();
+    });
+
+    it('stores suggestions from onDone and sets pendingSuggestions', async () => {
+      useChatStore.getState().setAutoMode(true);
+
+      const suggestions = [
+        { frameworkId: 'crt', frameworkName: 'Current Reality Tree', reason: 'Root cause analysis' },
+        { frameworkId: 'frt', frameworkName: 'Future Reality Tree', reason: 'Solution validation' },
+      ];
+
+      mockStreamChatMessage.mockImplementationOnce((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
+        setTimeout(() => {
+          callbacks.onDone({ text: 'I recommend these frameworks:', suggestions });
+        }, 0);
+        return new AbortController();
+      });
+
+      useChatStore.getState().sendMessage('Why do our deploys fail?');
+      await new Promise((r) => setTimeout(r, 50));
+
+      const state = useChatStore.getState();
+      expect(state.pendingSuggestions).toEqual(suggestions);
+
+      const assistantMsg = state.messages.find((m) => m.role === 'assistant');
+      expect(assistantMsg).toBeDefined();
+      expect(assistantMsg!.suggestions).toEqual(suggestions);
+    });
+
+    it('passes autoMode to streamChatMessage', () => {
+      useChatStore.getState().setAutoMode(true);
+      useChatStore.getState().sendMessage('Test query');
+
+      const lastCall = mockStreamChatMessage.mock.calls[mockStreamChatMessage.mock.calls.length - 1];
+      // autoMode is the last argument (index 8)
+      expect(lastCall[8]).toBe(true);
+    });
+
+    it('clears pendingSuggestions when user types a conversational reply', async () => {
+      useChatStore.getState().setAutoMode(true);
+      useChatStore.setState({
+        pendingSuggestions: [{ frameworkId: 'crt', frameworkName: 'CRT', reason: 'test' }],
+      });
+
+      useChatStore.getState().sendMessage('No, try something else');
+      expect(useChatStore.getState().pendingSuggestions).toBeNull();
+    });
+
+    it('clearMessages also clears pendingSuggestions', () => {
+      useChatStore.setState({
+        pendingSuggestions: [{ frameworkId: 'crt', frameworkName: 'CRT', reason: 'test' }],
+      });
+      useChatStore.getState().clearMessages();
+      expect(useChatStore.getState().pendingSuggestions).toBeNull();
+    });
+
+    it('acceptSuggestion switches framework and sends synthetic message', async () => {
+      useChatStore.getState().setAutoMode(true);
+
+      const suggestions = [
+        { frameworkId: 'crt', frameworkName: 'Current Reality Tree', reason: 'Root cause analysis' },
+      ];
+      useChatStore.setState({ pendingSuggestions: suggestions });
+
+      // Mock the follow-up sendMessage call (after framework switch)
+      mockStreamChatMessage.mockImplementationOnce((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
+        setTimeout(() => {
+          callbacks.onDone({ text: 'Building CRT diagram...' });
+        }, 0);
+        return new AbortController();
+      });
+
+      useChatStore.getState().acceptSuggestion('crt');
+
+      // Framework should be switched
+      expect(useDiagramStore.getState().diagram.frameworkId).toBe('crt');
+      // Auto mode should be off
+      expect(useChatStore.getState().autoMode).toBe(false);
+      expect(useChatStore.getState().pendingSuggestions).toBeNull();
+
+      // Synthetic message should have been sent
+      const msgs = useChatStore.getState().messages;
+      const syntheticMsg = msgs.find((m) => m.role === 'user' && m.content.includes('Current Reality Tree'));
+      expect(syntheticMsg).toBeDefined();
+    });
+
+    it('acceptSuggestion does nothing when no pendingSuggestions', () => {
+      useChatStore.setState({ pendingSuggestions: null });
+      const msgCountBefore = useChatStore.getState().messages.length;
+      useChatStore.getState().acceptSuggestion('crt');
+      expect(useChatStore.getState().messages.length).toBe(msgCountBefore);
+    });
+
+    it('acceptSuggestion does nothing for unknown frameworkId', () => {
+      useChatStore.setState({
+        pendingSuggestions: [{ frameworkId: 'crt', frameworkName: 'CRT', reason: 'test' }],
+      });
+      const msgCountBefore = useChatStore.getState().messages.length;
+      useChatStore.getState().acceptSuggestion('nonexistent');
+      expect(useChatStore.getState().messages.length).toBe(msgCountBefore);
+    });
+  });
 });

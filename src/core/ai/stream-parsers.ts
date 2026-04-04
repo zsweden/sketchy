@@ -1,4 +1,4 @@
-import type { DiagramModification, StreamCallbacks } from './ai-types';
+import type { DiagramModification, FrameworkSuggestions, StreamCallbacks } from './ai-types';
 
 export interface ParseState {
   contentText: string;
@@ -114,7 +114,22 @@ export function finalizeToolCalls(
       const rawPreview = `The AI suggested changes but they could not be parsed. Please try again.\n\nRaw response:\n${rawArgs}`;
       callbacks.onDone({ text: contentText || rawPreview });
     }
-  } else {
-    callbacks.onDone({ text: contentText });
+    return;
   }
+
+  const suggestCalls = toolCalls.filter((tc) => tc.name === 'suggest_frameworks' && tc.args);
+  if (suggestCalls.length > 0) {
+    try {
+      const args = JSON.parse(suggestCalls[0].args);
+      const suggestions: FrameworkSuggestions = Array.isArray(args.suggestions)
+        ? args.suggestions
+        : [];
+      callbacks.onDone({ text: contentText, suggestions });
+    } catch {
+      callbacks.onDone({ text: contentText || 'Could not parse framework suggestions. Please try again.' });
+    }
+    return;
+  }
+
+  callbacks.onDone({ text: contentText });
 }

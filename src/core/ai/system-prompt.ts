@@ -1,6 +1,7 @@
 import type { Diagram } from '../types';
 import type { Framework } from '../framework-types';
 import { findCausalLoops } from '../graph/derived';
+import { listFrameworks } from '../../frameworks/registry';
 
 export const modifyDiagramTool = {
   type: 'function' as const,
@@ -229,4 +230,113 @@ Rules for modifications:
 - When mentioning diagram elements in prose, use this format: [Label][kind:id]. Examples: [Demand][node:n1], [Demand -> Growth][edge:e1], [R1][loop:n1>n2>n3]. Never put punctuation inside the kind:id bracket. If you cannot form a valid mention, fall back to plain text rather than inventing IDs.
 - Reply in plain text only. Do not use Markdown formatting such as headings (#), bold (**), italic (*), tables, or code fences. Use "* " to start bullet points and UPPERCASE for section headings (e.g. "ANALYSIS").
 - Always explain your reasoning.`;
+}
+
+// --- Auto-mode: framework suggestion tool + prompt ---
+
+export const suggestFrameworksTool = {
+  type: 'function' as const,
+  function: {
+    name: 'suggest_frameworks',
+    description:
+      'Recommend 1-3 thinking frameworks that best fit the user\'s problem, ranked from best to worst fit. Call this when the user describes a problem or situation that would benefit from structured diagramming.',
+    parameters: {
+      type: 'object',
+      properties: {
+        suggestions: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 3,
+          description: 'Ranked framework suggestions, best fit first.',
+          items: {
+            type: 'object',
+            properties: {
+              frameworkId: {
+                type: 'string',
+                enum: listFrameworks().map((fw) => fw.id),
+                description: 'The framework ID',
+              },
+              frameworkName: {
+                type: 'string',
+                description: 'The display name of the framework',
+              },
+              reason: {
+                type: 'string',
+                description: 'Why this framework fits the user\'s situation (1-2 sentences)',
+              },
+            },
+            required: ['frameworkId', 'frameworkName', 'reason'],
+          },
+        },
+      },
+      required: ['suggestions'],
+    },
+  },
+};
+
+export const anthropicSuggestFrameworksTool = {
+  name: suggestFrameworksTool.function.name,
+  description: suggestFrameworksTool.function.description,
+  input_schema: suggestFrameworksTool.function.parameters,
+};
+
+export function buildAutoModeSystemPrompt(diagram: Diagram): string {
+  const frameworks = listFrameworks();
+  const frameworkList = frameworks
+    .map((fw) => {
+      const tags = fw.nodeTags.length > 0
+        ? ` Node types: ${fw.nodeTags.map((t) => t.name).join(', ')}.`
+        : '';
+      const traits: string[] = [];
+      if (fw.allowsCycles) traits.push('supports feedback loops');
+      if (fw.supportsEdgePolarity) traits.push('signed causal links');
+      if (fw.supportsJunctions) traits.push('AND/OR junctions');
+      const traitStr = traits.length > 0 ? ` Traits: ${traits.join(', ')}.` : '';
+      return `  - ${fw.id}: ${fw.name} — ${fw.description}.${tags}${traitStr}`;
+    })
+    .join('\n');
+
+  const hasContent = diagram.nodes.length > 0 || diagram.edges.length > 0;
+  let diagramSection = '';
+  if (hasContent) {
+    const nodesDesc = diagram.nodes
+      .map((n) => `  - "${n.data.label}"${n.data.tags.length ? ` [tags: ${n.data.tags.join(', ')}]` : ''}`)
+      .join('\n');
+    const edgesDesc = diagram.edges
+      .map((e) => {
+        const sourceLabel = diagram.nodes.find((n) => n.id === e.source)?.data.label ?? e.source;
+        const targetLabel = diagram.nodes.find((n) => n.id === e.target)?.data.label ?? e.target;
+        return `  - "${sourceLabel}" → "${targetLabel}"`;
+      })
+      .join('\n');
+    diagramSection = `
+The user's current diagram "${diagram.name}" (framework: ${diagram.frameworkId}) already has content:
+
+Nodes:
+${nodesDesc || '  (none)'}
+
+Edges:
+${edgesDesc || '  (none)'}
+
+Factor this existing content into your recommendations — suggest frameworks that best fit what they have already built or are trying to build.
+`;
+  }
+
+  return `You are an AI assistant for Sketchy, a thinking-frameworks diagram editor.
+
+The user has selected "Auto" mode. Your primary job is to recommend which diagram framework fits their problem by calling the suggest_frameworks tool. The system will handle switching to the chosen framework — you do not need to tell the user to switch manually.
+
+Available frameworks:
+
+${frameworkList}
+${diagramSection}
+IMPORTANT RULES:
+- When the user describes any problem, situation, goal, or request, you MUST call the suggest_frameworks tool with 1-3 ranked recommendations. Always prefer calling the tool over answering in plain text.
+- For each suggestion, explain in 1-2 sentences why that specific framework fits their situation.
+- Sort suggestions from best to worst fit.
+- Only answer conversationally WITHOUT calling the tool if the user asks a purely factual question that has nothing to do with building a diagram (e.g. "what is a CRT?").
+- If the user rejects your suggestions, call suggest_frameworks again with different recommendations, or ask a clarifying question to narrow down the right fit.
+- Never tell the user to manually switch frameworks — the system does this automatically when they accept a suggestion.
+
+Reply in plain text only. Do not use Markdown formatting such as headings (#), bold (**), italic (*), tables, or code fences. Use "* " to start bullet points and UPPERCASE for section headings.`;
 }
