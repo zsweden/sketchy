@@ -5,36 +5,21 @@ import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import type { DiagramNode } from '../../core/types';
 import {
-  getRecentColors,
   normalizeHexColor,
   rememberRecentColor,
 } from '../../store/color-history-store';
 import { computeNodeDegrees } from '../../core/graph/derived';
 
-const NODE_COLORS = [
-  { id: 'none', label: 'Default', value: undefined },
-  { id: 'red', label: 'Red', value: '#FECACA' },
-  { id: 'orange', label: 'Orange', value: '#FED7AA' },
-  { id: 'amber', label: 'Amber', value: '#FDE68A' },
-  { id: 'green', label: 'Green', value: '#BBF7D0' },
-  { id: 'teal', label: 'Teal', value: '#99F6E4' },
-  { id: 'blue', label: 'Blue', value: '#BFDBFE' },
-  { id: 'purple', label: 'Purple', value: '#DDD6FE' },
-  { id: 'pink', label: 'Pink', value: '#FBCFE8' },
-];
-
-const TEXT_COLORS = [
-  { id: 'none', label: 'Default', value: undefined },
+const SHARED_COLORS = [
   { id: 'black', label: 'Black', value: '#1A1A1A' },
   { id: 'white', label: 'White', value: '#FFFFFF' },
-  { id: 'red', label: 'Red', value: '#DC2626' },
-  { id: 'orange', label: 'Orange', value: '#EA580C' },
-  { id: 'green', label: 'Green', value: '#16A34A' },
-  { id: 'blue', label: 'Blue', value: '#2563EB' },
-  { id: 'purple', label: 'Purple', value: '#7C3AED' },
+  { id: 'gray', label: 'Gray', value: '#9CA3AF' },
+  { id: 'red', label: 'Red', value: '#EF4444' },
+  { id: 'orange', label: 'Orange', value: '#F97316' },
+  { id: 'green', label: 'Green', value: '#22C55E' },
+  { id: 'blue', label: 'Blue', value: '#3B82F6' },
+  { id: 'purple', label: 'Purple', value: '#8B5CF6' },
 ];
-
-const MAX_VISIBLE_RECENT_COLORS = 8;
 
 function colorsMatch(a: string | undefined, b: string | undefined): boolean {
   if (!a && !b) return true;
@@ -46,39 +31,6 @@ function colorsMatch(a: string | undefined, b: string | undefined): boolean {
   }
 
   return a === b;
-}
-
-function buildColorOptions(
-  baseColors: ReadonlyArray<{ id: string; label: string; value: string | undefined }>,
-  recentColors: string[],
-  activeColor: string | undefined,
-) {
-  const defaultColor = baseColors.find((color) => !color.value);
-  const presetColors = baseColors.filter((color) => !!color.value);
-  const seen = new Set<string>();
-
-  const visibleColors = [
-    activeColor,
-    ...recentColors,
-    ...presetColors.map((color) => color.value),
-  ]
-    .map((color) => normalizeHexColor(color))
-    .filter((color): color is string => {
-      if (!color || seen.has(color)) return false;
-      seen.add(color);
-      return true;
-    })
-    .slice(0, MAX_VISIBLE_RECENT_COLORS)
-    .map((value) => {
-      const presetMatch = presetColors.find((color) => colorsMatch(color.value, value));
-      return {
-        id: presetMatch?.id ?? `recent-${value}`,
-        label: presetMatch?.label ?? value,
-        value,
-      };
-    });
-
-  return defaultColor ? [defaultColor, ...visibleColors] : visibleColors;
 }
 
 function getColorInputValue(color: string | undefined, fallback: string): string {
@@ -142,16 +94,8 @@ function NodeContextMenu({
   const originalColorRef = useRef(node.data.color);
   const originalTextColorRef = useRef(node.data.textColor);
 
-  const nodeBackgroundColors = buildColorOptions(
-    NODE_COLORS,
-    getRecentColors('background'),
-    node.data.color,
-  );
-  const nodeTextColors = buildColorOptions(
-    TEXT_COLORS,
-    getRecentColors('text'),
-    node.data.textColor,
-  );
+  const nodeBackgroundColors = SHARED_COLORS;
+  const nodeTextColors = SHARED_COLORS;
 
   const setBackgroundColor = useCallback((color: string | undefined) => {
     previewNodeColor(node.id, color);
@@ -237,7 +181,7 @@ function NodeContextMenu({
             key={c.id}
             className="color-swatch"
             data-active={colorsMatch(node.data.color, c.value)}
-            style={{ backgroundColor: c.value ?? 'var(--surface)' }}
+            style={{ backgroundColor: c.value }}
             title={c.label}
             onClick={() => setBackgroundColor(c.value)}
           />
@@ -270,7 +214,7 @@ function NodeContextMenu({
             key={c.id}
             className="color-swatch"
             data-active={colorsMatch(node.data.textColor, c.value)}
-            style={{ backgroundColor: c.value ?? 'var(--text)' }}
+            style={{ backgroundColor: c.value }}
             title={c.label}
             onClick={() => setTextColor(c.value)}
           />
