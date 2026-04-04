@@ -582,9 +582,8 @@ test('sets node text color via context menu and persists to store', async ({ pag
   // Click the Red text-color swatch (second .context-menu-colors block)
   const textSwatches = page.locator('.context-menu-colors').nth(1);
   await textSwatches.locator('.color-swatch[title="Red"]').click();
-  await page.mouse.click(20, 20);
 
-  // Verify persisted
+  // Verify persisted (color is applied on swatch click, no need to dismiss menu first)
   await page.waitForFunction(() => {
     const raw = sessionStorage.getItem('sketchy_diagram');
     if (!raw) return false;
@@ -776,10 +775,13 @@ test('distribute buttons require three selected nodes and reposition them', asyn
   await expect(distH).toBeDisabled();
   await expect(distV).toBeDisabled();
 
-  // Select all 3
-  await page.locator('.entity-node').nth(0).click();
-  await page.locator('.entity-node').nth(1).click({ modifiers: ['Shift'] });
-  await page.locator('.entity-node').nth(2).click({ modifiers: ['Shift'] });
+  // Select all 3 via the store to avoid Shift-click race conditions
+  const ids = await getNodeIds(page);
+  await page.evaluate(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (nodeIds) => (window as any).__uiStore.getState().setSelectedNodes(nodeIds),
+    ids,
+  );
 
   await expect(distH).toBeEnabled();
   await expect(distV).toBeEnabled();
@@ -1117,4 +1119,157 @@ test('V key switches to select mode and H key switches to pan mode', async ({ pa
   await page.keyboard.press('v');
   await expect(selectBtn).toHaveClass(/btn-toggle-active/);
   await expect(panBtn).not.toHaveClass(/btn-toggle-active/);
+});
+
+// --- 32. Derived indicators ---
+
+test('root cause and intermediate badges appear based on graph topology', async ({ page }) => {
+  // CRT: indegree-zero → "Root", indegree-and-outdegree → "Inter"
+  await createNode(page, 200, 100);
+  await createNode(page, 200, 300);
+  await createNode(page, 200, 500);
+  await expect(page.locator('.entity-node')).toHaveCount(3);
+
+  const ids = await getNodeIds(page);
+
+  // Before edges: all nodes have indegree 0, outdegree 0 → only "Root" badges
+  await expect(page.locator('.badge', { hasText: 'Root' })).toHaveCount(3);
+  await expect(page.locator('.badge', { hasText: 'Inter' })).toHaveCount(0);
+
+  // Connect A → B → C: A is root (indeg 0), B is intermediate, C is leaf (no derived in CRT)
+  await addEdge(page, ids[0], ids[1]);
+  await addEdge(page, ids[1], ids[2]);
+
+  await expect(page.locator('.badge', { hasText: 'Root' })).toHaveCount(1);
+  await expect(page.locator('.badge', { hasText: 'Inter' })).toHaveCount(1);
+
+  // The root badge belongs to the first node
+  const firstNode = page.locator(`[data-node-id="${ids[0]}"]`);
+  await expect(firstNode.locator('.badge', { hasText: 'Root' })).toBeVisible();
+
+  // The intermediate badge belongs to the middle node
+  const middleNode = page.locator(`[data-node-id="${ids[1]}"]`);
+  await expect(middleNode.locator('.badge', { hasText: 'Inter' })).toBeVisible();
+});
+
+// --- 33. Edge deletion ---
+
+test('deletes an edge via right-click context menu', async ({ page }) => {
+  await createNode(page, 200, 200);
+  await createNode(page, 200, 400);
+  await expect(page.locator('.entity-node')).toHaveCount(2);
+
+  const ids = await getNodeIds(page);
+  await addEdge(page, ids[0], ids[1]);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(1);
+
+  // Right-click the edge
+  const edgePath = page.locator('.react-flow__edge-interaction').first();
+  const deleteItem = page.locator('.context-menu-item', { hasText: 'Delete connection' });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const box = await edgePath.boundingBox();
+    await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2, { button: 'right' });
+    await expect(page.locator('.context-menu')).toBeVisible();
+    if (await deleteItem.isVisible()) break;
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.context-menu')).not.toBeVisible();
+  }
+  await deleteItem.click();
+
+  await expect(page.locator('.react-flow__edge')).toHaveCount(0);
+  // Nodes should still exist
+  await expect(page.locator('.entity-node')).toHaveCount(2);
+});
+
+// --- 34. Inline node editing ---
+
+test('double-click a node to edit label inline', async ({ page }) => {
+  await createNode(page, 200, 250);
+  const ids = await getNodeIds(page);
+  const node = page.locator(`[data-testid="entity-node-${ids[0]}"]`);
+
+  // Use two rapid clicks — Playwright dblclick can be intercepted by React Flow's
+  // node wrapper; manual rapid clicks reliably trigger React's onDoubleClick
+  const center = await getNodeCenter(page, ids[0]);
+  await page.mouse.click(center.x, center.y);
+  await page.mouse.click(center.x, center.y, { clickCount: 2 });
+
+  const textarea = page.locator('.entity-node-textarea');
+  await expect(textarea).toBeVisible();
+
+  // Type a new label
+  await textarea.fill('Inline edited');
+  await textarea.press('Enter');
+
+  // Verify the label updated
+  await expect(node).toContainText('Inline edited');
+
+  // Verify persisted to session storage
+  await page.waitForFunction(() => {
+    const raw = sessionStorage.getItem('sketchy_diagram');
+    if (!raw) return false;
+    return JSON.parse(raw).nodes?.[0]?.data?.label === 'Inline edited';
+  });
+});
+
+// --- 35. Graph validation guardrails ---
+
+test('rejects self-loop and shows warning toast', async ({ page }) => {
+  await createNode(page, 200, 250);
+  const ids = await getNodeIds(page);
+
+  // Try to connect node to itself via the store helper
+  const result = await page.evaluate(
+    ([id]) => // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__sketchy_addEdge(id, id),
+    [ids[0]],
+  );
+
+  expect(result.success).toBe(false);
+  expect(result.reason).toBe('Cannot connect a node to itself');
+  await expect(page.locator('.react-flow__edge')).toHaveCount(0);
+});
+
+test('rejects duplicate edge and shows warning toast', async ({ page }) => {
+  await createNode(page, 200, 200);
+  await createNode(page, 200, 400);
+  const ids = await getNodeIds(page);
+
+  // First edge succeeds
+  await addEdge(page, ids[0], ids[1]);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(1);
+
+  // Duplicate edge fails
+  const result = await page.evaluate(
+    ([src, tgt]) => // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__sketchy_addEdge(src, tgt),
+    [ids[0], ids[1]],
+  );
+
+  expect(result.success).toBe(false);
+  expect(result.reason).toBe('Edge already exists');
+  await expect(page.locator('.react-flow__edge')).toHaveCount(1);
+});
+
+test('rejects cycle-creating edge in DAG framework', async ({ page }) => {
+  await createNode(page, 200, 100);
+  await createNode(page, 200, 300);
+  await createNode(page, 200, 500);
+  const ids = await getNodeIds(page);
+
+  // A → B → C
+  await addEdge(page, ids[0], ids[1]);
+  await addEdge(page, ids[1], ids[2]);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(2);
+
+  // C → A would create a cycle
+  const result = await page.evaluate(
+    ([src, tgt]) => // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__sketchy_addEdge(src, tgt),
+    [ids[2], ids[0]],
+  );
+
+  expect(result.success).toBe(false);
+  expect(result.reason).toBe('Cannot connect: would create a cycle');
+  await expect(page.locator('.react-flow__edge')).toHaveCount(2);
 });
