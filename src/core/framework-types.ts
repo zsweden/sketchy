@@ -5,7 +5,7 @@ export interface JunctionOption {
   description: string;
 }
 
-export const LOGIC_JUNCTION_OPTIONS: JunctionOption[] = [
+const LOGIC_JUNCTION_OPTIONS: JunctionOption[] = [
   { id: 'or', symbol: '', label: 'OR', description: 'Any single cause is sufficient' },
   { id: 'and', symbol: '&', label: 'AND', description: 'All incoming causes required' },
 ];
