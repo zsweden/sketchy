@@ -1,4 +1,4 @@
-import type { EdgePolarity } from '../types';
+import type { EdgePolarity, JunctionType } from '../types';
 
 export type ChatImageMediaType = 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp';
 
@@ -21,6 +21,7 @@ export interface DiagramModification {
     notes?: string;
     color?: string | null;
     textColor?: string | null;
+    junctionType?: JunctionType;
   }[];
   updateNodes: {
     id: string;
@@ -29,6 +30,7 @@ export interface DiagramModification {
     notes?: string;
     color?: string | null;
     textColor?: string | null;
+    junctionType?: JunctionType;
   }[];
   removeNodeIds: string[];
   addEdges: {

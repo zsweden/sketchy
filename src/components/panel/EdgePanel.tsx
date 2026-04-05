@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { DiagramEdge, EdgeConfidence, EdgePolarity } from '../../core/types';
 import { useDiagramStore, useFramework } from '../../store/diagram-store';
+import { getJunctionOptions } from '../../core/framework-types';
 import FormField from '../form/FormField';
 import ButtonGroup from '../form/ButtonGroup';
 
@@ -58,20 +59,28 @@ export default function EdgePanel({ edge }: Props) {
         </p>
       </FormField>
 
-      {framework.supportsEdgePolarity && (
-        <FormField label="Polarity">
-          <ButtonGroup
-            items={POLARITY_LEVELS}
-            selected={polarity}
-            onSelect={(v) => setEdgePolarity(edge.id, v)}
-          />
-          <p className="field-label" style={{ marginTop: '-0.25rem' }}>
-            {polarity === 'positive'
-              ? 'If the source rises, the target tends to rise too.'
-              : 'If the source rises, the target tends to fall.'}
-          </p>
-        </FormField>
-      )}
+      {framework.supportsEdgePolarity && (() => {
+        const isMath = getJunctionOptions(framework).some((o) => o.id === 'add' || o.id === 'multiply');
+        const targetOp = targetNode?.data.junctionType;
+        return (
+          <FormField label={isMath ? 'Sign' : 'Polarity'}>
+            <ButtonGroup
+              items={POLARITY_LEVELS}
+              selected={polarity}
+              onSelect={(v) => setEdgePolarity(edge.id, v)}
+            />
+            <p className="field-label" style={{ marginTop: '-0.25rem' }}>
+              {isMath
+                ? polarity === 'positive'
+                  ? targetOp === 'multiply' ? 'Multiplied into the parent.' : 'Added to the parent.'
+                  : targetOp === 'multiply' ? 'Parent is divided by this metric.' : 'Subtracted from the parent.'
+                : polarity === 'positive'
+                  ? 'If the source rises, the target tends to rise too.'
+                  : 'If the source rises, the target tends to fall.'}
+            </p>
+          </FormField>
+        );
+      })()}
 
       {framework.supportsEdgeDelay && (
         <FormField label="Delay">

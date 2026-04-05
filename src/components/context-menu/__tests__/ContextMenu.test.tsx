@@ -215,7 +215,7 @@ describe('ContextMenu', () => {
       });
       renderContextMenu();
 
-      const junctionButton = screen.getByText(/Junction:/);
+      const junctionButton = screen.getByText(/OR → AND/);
       expect(junctionButton).toBeInTheDocument();
       await user.click(junctionButton);
       expect(
@@ -225,7 +225,7 @@ describe('ContextMenu', () => {
 
     it('does not show junction toggle when indegree < 2', () => {
       renderContextMenu();
-      expect(screen.queryByText(/Junction:/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/OR → AND/)).not.toBeInTheDocument();
     });
   });
 

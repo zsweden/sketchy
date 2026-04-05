@@ -1,5 +1,6 @@
 import type { Diagram } from '../types';
 import type { Framework } from '../framework-types';
+import { getJunctionOptions } from '../framework-types';
 import { findCausalLoops } from '../graph/derived';
 import { listFrameworks } from '../../frameworks/registry';
 
@@ -40,6 +41,11 @@ export const modifyDiagramTool = {
                 type: ['string', 'null'],
                 description: 'Optional node text color as a hex code like "#1A1A1A"',
               },
+              junctionType: {
+                type: 'string',
+                enum: ['and', 'or', 'add', 'multiply'],
+                description: "For Value Driver Trees: 'add' (children summed) or 'multiply' (children multiplied). For logic trees: 'and' or 'or'.",
+              },
             },
             required: ['id', 'label'],
           },
@@ -60,6 +66,11 @@ export const modifyDiagramTool = {
               textColor: {
                 type: ['string', 'null'],
                 description: 'Set the node text color with a hex code, or null to clear it',
+              },
+              junctionType: {
+                type: 'string',
+                enum: ['and', 'or', 'add', 'multiply'],
+                description: "For Value Driver Trees: 'add' (children summed) or 'multiply' (children multiplied). For logic trees: 'and' or 'or'.",
               },
             },
             required: ['id'],
@@ -146,6 +157,8 @@ function buildLoopAnalysis(diagram: Diagram): string {
 }
 
 export function buildSystemPrompt(diagram: Diagram, framework: Framework): string {
+  const isMathJunctionsLocal = getJunctionOptions(framework).some((o) => o.id === 'add' || o.id === 'multiply');
+  const defaultJunction = isMathJunctionsLocal ? 'add' : 'or';
   const nodesDesc = diagram.nodes
     .map((n) => {
       const parts = [`id="${n.id}", label="${n.data.label}"`];
@@ -153,7 +166,8 @@ export function buildSystemPrompt(diagram: Diagram, framework: Framework): strin
       if (n.data.notes) parts.push(`notes="${n.data.notes}"`);
       if (n.data.color) parts.push(`color="${n.data.color}"`);
       if (n.data.textColor) parts.push(`textColor="${n.data.textColor}"`);
-      if (n.data.junctionType !== 'or') parts.push(`junction=${n.data.junctionType}`);
+      if (n.data.junctionType !== defaultJunction) parts.push(`junction=${n.data.junctionType}`);
+      if (isMathJunctionsLocal) parts.push(`operator=${n.data.junctionType}`);
       return `  - ${parts.join(', ')}`;
     })
     .join('\n');
@@ -177,8 +191,11 @@ export function buildSystemPrompt(diagram: Diagram, framework: Framework): strin
   const graphRule = framework.allowsCycles
     ? 'Cycles and feedback loops are allowed when they reflect real system behavior.'
     : `Edge direction means "source ${edgeVerb} target" — this is a DAG (no cycles).`;
+  const isMathJunctions = getJunctionOptions(framework).some((o) => o.id === 'add' || o.id === 'multiply');
   const polarityRule = framework.supportsEdgePolarity
-    ? 'Use polarity=positive for same-direction influence and polarity=negative for opposite-direction influence.'
+    ? isMathJunctions
+      ? 'Use polarity=positive (default) for additive/multiplicative contribution and polarity=negative for subtraction/division.'
+      : 'Use polarity=positive for same-direction influence and polarity=negative for opposite-direction influence.'
     : 'Confidence is the primary edge attribute: high (default, solid), medium (dashed), or low (dotted).';
   const delayRule = framework.supportsEdgeDelay
     ? 'Set delay=true when the source affects the target only after a noticeable lag.'
@@ -194,7 +211,9 @@ export function buildSystemPrompt(diagram: Diagram, framework: Framework): strin
     ? '\n- Edges can also use confidence to express uncertainty: high (default, solid), medium (dashed), or low (dotted).'
     : '';
   const junctionRule = framework.supportsJunctions
-    ? "\n- When multiple edges point to the same target, the junction type determines how causes combine: 'and' means all sources are needed together, 'or' (default) means each source independently causes the target."
+    ? isMathJunctions
+      ? "\n- When multiple edges point to the same target, the node's operator determines how children combine: 'add' (default) sums children, 'multiply' multiplies them. Use edge polarity=negative to subtract or divide."
+      : "\n- When multiple edges point to the same target, the junction type determines how causes combine: 'and' means all sources are needed together, 'or' (default) means each source independently causes the target."
     : '';
   const loopSection = loopAnalysis ? `\n${loopAnalysis}\n` : '';
 

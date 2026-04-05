@@ -52,7 +52,7 @@ export function createDiagramActions(
       let nodes = [...state.diagram.nodes];
       let edges = [...state.diagram.edges];
 
-      nodes = batchAddNodes(mutations, idMap, nodes);
+      nodes = batchAddNodes(mutations, idMap, nodes, framework);
       nodes = batchUpdateNodes(mutations, idMap, nodes);
       ({ nodes, edges } = batchRemoveNodes(mutations, idMap, nodes, edges));
       ({ nodes, edges } = batchAddEdges(

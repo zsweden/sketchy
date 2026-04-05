@@ -1,4 +1,5 @@
-import type { DiagramNode } from '../core/types';
+import type { DiagramNode, JunctionType } from '../core/types';
+import { getDefaultJunctionType } from '../core/framework-types';
 import {
   alignHorizontal,
   alignVertical,
@@ -6,6 +7,7 @@ import {
   distributeVertical,
   type SizedPositionedItem,
 } from '../utils/align-distribute';
+import { resolveFramework } from './diagram-helpers';
 import type { DiagramState, DiagramStoreContext } from './diagram-store-types';
 
 export function createDiagramNodeActions(
@@ -46,6 +48,8 @@ export function createDiagramNodeActions(
   return {
     addNode: (position) => {
       const id = crypto.randomUUID();
+      const state = context.get();
+      const framework = resolveFramework(state.diagram.frameworkId);
       const node: DiagramNode = {
         id,
         type: 'entity',
@@ -53,7 +57,7 @@ export function createDiagramNodeActions(
         data: {
           label: '',
           tags: [],
-          junctionType: 'or',
+          junctionType: getDefaultJunctionType(framework) as JunctionType,
         },
       };
 

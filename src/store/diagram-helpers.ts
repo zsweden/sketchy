@@ -4,9 +4,11 @@ import type {
   DiagramNode,
   DiagramSettings,
   EdgePolarity,
+  JunctionType,
 } from '../core/types';
 import { createEmptyDiagram } from '../core/types';
 import type { Framework } from '../core/framework-types';
+import { getDefaultJunctionType } from '../core/framework-types';
 import { getFramework } from '../frameworks/registry';
 import { validateEdge } from '../core/graph/validation';
 import {
@@ -172,6 +174,7 @@ export function batchAddNodes(
   mutations: BatchMutations,
   idMap: Map<string, string>,
   nodes: DiagramNode[],
+  framework: Framework,
 ): DiagramNode[] {
   for (const n of mutations.addNodes ?? []) {
     const realId = crypto.randomUUID();
@@ -183,7 +186,7 @@ export function batchAddNodes(
       data: {
         label: n.label,
         tags: n.tags ?? [],
-        junctionType: 'or',
+        junctionType: (n.junctionType ?? getDefaultJunctionType(framework)) as JunctionType,
         ...(n.notes ? { notes: n.notes } : {}),
         ...(n.color ? { color: n.color } : {}),
         ...(n.textColor ? { textColor: n.textColor } : {}),
@@ -211,6 +214,7 @@ export function batchUpdateNodes(
           ...(upd.notes !== undefined ? { notes: upd.notes || undefined } : {}),
           ...(upd.color !== undefined ? { color: upd.color || undefined } : {}),
           ...(upd.textColor !== undefined ? { textColor: upd.textColor || undefined } : {}),
+          ...(upd.junctionType !== undefined ? { junctionType: upd.junctionType } : {}),
         },
       };
     });
@@ -264,8 +268,9 @@ export function batchAddEdges(
       });
       const incomingCount = edges.filter((ex) => ex.target === target).length;
       if (framework.supportsJunctions && incomingCount === 2) {
+        const defaultJunction = getDefaultJunctionType(framework) as JunctionType;
         nodes = nodes.map((n) =>
-          n.id === target ? { ...n, data: { ...n.data, junctionType: 'or' as const } } : n,
+          n.id === target ? { ...n, data: { ...n.data, junctionType: defaultJunction } } : n,
         );
       }
     }

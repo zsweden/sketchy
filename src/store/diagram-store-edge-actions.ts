@@ -6,7 +6,8 @@ import {
   captureOptimizedEdgeSides,
   resolveFramework,
 } from './diagram-helpers';
-import type { DiagramEdge } from '../core/types';
+import { getDefaultJunctionType } from '../core/framework-types';
+import type { DiagramEdge, JunctionType } from '../core/types';
 import type { DiagramState, DiagramStoreContext } from './diagram-store-types';
 
 export function createDiagramEdgeActions(
@@ -86,8 +87,9 @@ export function createDiagramEdgeActions(
       set((storeState) => {
         let nodes = storeState.diagram.nodes;
         if (framework.supportsJunctions && targetIncomingCount === 2) {
+          const defaultJunction = getDefaultJunctionType(framework) as JunctionType;
           nodes = nodes.map((node) =>
-            node.id === target ? { ...node, data: { ...node.data, junctionType: 'or' as const } } : node,
+            node.id === target ? { ...node, data: { ...node.data, junctionType: defaultJunction } } : node,
           );
         }
         return {

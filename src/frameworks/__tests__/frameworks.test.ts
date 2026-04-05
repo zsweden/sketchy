@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { crtFramework } from '../crt';
 import { frtFramework } from '../frt';
 import { goalTreeFramework } from '../goal-tree';
-import { kpiTreeFramework } from '../kpi-tree';
+import { vdtFramework } from '../vdt';
 import { prtFramework } from '../prt';
 import { successTreeFramework } from '../success-tree';
 import { sttFramework } from '../stt';
@@ -14,7 +14,7 @@ const ALL_FRAMEWORKS: Framework[] = [
   crtFramework,
   frtFramework,
   goalTreeFramework,
-  kpiTreeFramework,
+  vdtFramework,
   prtFramework,
   successTreeFramework,
   sttFramework,
@@ -207,31 +207,41 @@ describe('framework definitions', () => {
     });
   });
 
-  describe('KPI Tree', () => {
+  describe('Value Driver Tree', () => {
     it('has bottom-to-top direction', () => {
-      expect(kpiTreeFramework.defaultLayoutDirection).toBe('BT');
+      expect(vdtFramework.defaultLayoutDirection).toBe('BT');
     });
 
     it('supports junctions', () => {
-      expect(kpiTreeFramework.supportsJunctions).toBe(true);
+      expect(vdtFramework.supportsJunctions).toBe(true);
     });
 
     it('has leading and lagging indicator tags', () => {
-      expect(kpiTreeFramework.nodeTags).toHaveLength(2);
-      const tagIds = kpiTreeFramework.nodeTags.map((t) => t.id);
+      expect(vdtFramework.nodeTags).toHaveLength(2);
+      const tagIds = vdtFramework.nodeTags.map((t) => t.id);
       expect(tagIds).toContain('leading');
       expect(tagIds).toContain('lagging');
     });
 
     it('has north-star, driver, and actionable derived indicators', () => {
-      const ids = kpiTreeFramework.derivedIndicators.map((d) => d.id);
+      const ids = vdtFramework.derivedIndicators.map((d) => d.id);
       expect(ids).toContain('north-star');
       expect(ids).toContain('driver');
       expect(ids).toContain('actionable');
     });
 
     it('does not allow cycles', () => {
-      expect(kpiTreeFramework.allowsCycles).toBeFalsy();
+      expect(vdtFramework.allowsCycles).toBeFalsy();
+    });
+
+    it('supports edge polarity for math sign', () => {
+      expect(vdtFramework.supportsEdgePolarity).toBe(true);
+    });
+
+    it('has math junction options (add, multiply)', () => {
+      expect(vdtFramework.junctionOptions).toBeDefined();
+      const ids = vdtFramework.junctionOptions!.map((o) => o.id);
+      expect(ids).toEqual(['add', 'multiply']);
     });
   });
 

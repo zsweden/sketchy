@@ -6,6 +6,7 @@ import { useUIStore } from '../store/ui-store';
 import { useSettingsStore } from '../store/settings-store';
 import { getSourceHandleId, getTargetHandleId, type EdgeHandlePlacement } from '../core/graph/ports';
 import { getAutomaticEdgeSides, getOptimizedEdgePlacements, getStoredOrAutomaticEdgeSides } from '../store/diagram-helpers';
+import { getJunctionOptions } from '../core/framework-types';
 import { getTheme } from '../styles/themes';
 import { ARROW_MARKER_SIZE } from '../constants/layout';
 import type { ConnectedSubgraph, NamedCausalLoop, NodeDegrees } from '../core/graph/derived';
@@ -114,7 +115,14 @@ export function useRFNodeEdgeBuilder(
           target: e.target,
           label: [
             framework.supportsEdgePolarity
-              ? e.polarity === 'negative' ? '-' : '+'
+              ? (() => {
+                  const isMath = getJunctionOptions(framework).some((o) => o.id === 'add' || o.id === 'multiply');
+                  if (!isMath) return e.polarity === 'negative' ? '-' : '+';
+                  const targetNode = nodes.find((n) => n.id === e.target);
+                  const isMultiply = targetNode?.data.junctionType === 'multiply';
+                  if (e.polarity === 'negative') return isMultiply ? '÷' : '-';
+                  return isMultiply ? '×' : '+';
+                })()
               : null,
             framework.supportsEdgeDelay && e.delay ? 'D' : null,
           ].filter(Boolean).join(' '),

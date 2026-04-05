@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Lock, Unlock } from 'lucide-react';
-import type { DiagramNode } from '../../core/types';
+import type { DiagramNode, JunctionType } from '../../core/types';
+import { getJunctionOptions } from '../../core/framework-types';
 import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
 import FormField from '../form/FormField';
@@ -160,24 +161,27 @@ export default function NodePanel({ node }: Props) {
         </FormField>
       )}
 
-      {/* Junction */}
-      {framework.supportsJunctions && degrees.indegree >= 2 && (
-        <FormField label="Junction Logic">
-          <ButtonGroup
-            items={[
-              { value: 'and' as const, label: 'AND' },
-              { value: 'or' as const, label: 'OR' },
-            ]}
-            selected={node.data.junctionType}
-            onSelect={(v) => updateNodeJunction(node.id, v)}
-          />
-          <p className="field-label" style={{ marginTop: '-0.25rem' }}>
-            {node.data.junctionType === 'and'
-              ? 'All incoming causes required'
-              : 'Any single cause is sufficient'}
-          </p>
-        </FormField>
-      )}
+      {/* Junction / Operator */}
+      {(() => {
+        const options = getJunctionOptions(framework);
+        const isMath = options.some((o) => o.id === 'add' || o.id === 'multiply');
+        if (!framework.supportsJunctions || (!isMath && degrees.indegree < 2)) return null;
+        const current = options.find((o) => o.id === node.data.junctionType);
+        return (
+          <FormField label={isMath ? 'Operator' : 'Junction Logic'}>
+            <ButtonGroup
+              items={options.map((o) => ({ value: o.id as JunctionType, label: o.label }))}
+              selected={node.data.junctionType}
+              onSelect={(v) => updateNodeJunction(node.id, v)}
+            />
+            {current && (
+              <p className="field-label" style={{ marginTop: '-0.25rem' }}>
+                {current.description}
+              </p>
+            )}
+          </FormField>
+        );
+      })()}
 
       {/* Derived indicators */}
       {derived.length > 0 && (

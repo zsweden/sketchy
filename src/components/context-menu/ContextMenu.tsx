@@ -3,7 +3,9 @@ import { Pipette, Plus, Trash2, Check, Lock, Unlock } from 'lucide-react';
 import { useReactFlow } from '@xyflow/react';
 import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
-import type { DiagramNode } from '../../core/types';
+import type { DiagramNode, JunctionType } from '../../core/types';
+import { getJunctionOptions } from '../../core/framework-types';
+import type { Framework } from '../../core/framework-types';
 import {
   normalizeHexColor,
   rememberRecentColor,
@@ -40,14 +42,11 @@ function getColorInputValue(color: string | undefined, fallback: string): string
 
 interface NodeMenuProps {
   node: DiagramNode;
-  framework: {
-    nodeTags: Array<{ id: string; name: string; color: string }>;
-    supportsJunctions: boolean;
-  };
+  framework: Framework;
   degrees: { indegree: number; outdegree: number } | null;
   closeContextMenu: () => void;
   updateNodeTags: (id: string, tags: string[]) => void;
-  updateNodeJunction: (id: string, type: 'and' | 'or') => void;
+  updateNodeJunction: (id: string, type: JunctionType) => void;
   previewNodeColor: (id: string, color: string | undefined) => void;
   previewNodeTextColor: (id: string, textColor: string | undefined) => void;
   updateNodeColor: (id: string, color: string | undefined) => void;
@@ -236,23 +235,29 @@ function NodeContextMenu({
           />
         </label>
       </div>
-      {framework.supportsJunctions && degrees && degrees.indegree >= 2 && (
-        <>
-          <div className="context-menu-separator" />
-          <button
-            className="context-menu-item"
-            onClick={() => {
-              updateNodeJunction(
-                node.id,
-                node.data.junctionType === 'and' ? 'or' : 'and',
-              );
-              applyAndClose();
-            }}
-          >
-            Junction: {node.data.junctionType === 'and' ? 'AND → OR' : 'OR → AND'}
-          </button>
-        </>
-      )}
+      {framework.supportsJunctions && degrees && (() => {
+        const options = getJunctionOptions(framework);
+        const isMath = options.some((o) => o.id === 'add' || o.id === 'multiply');
+        if (!isMath && degrees.indegree < 2) return null;
+        const currentIdx = options.findIndex((o) => o.id === node.data.junctionType);
+        const nextIdx = (currentIdx + 1) % options.length;
+        const current = options[currentIdx >= 0 ? currentIdx : 0];
+        const next = options[nextIdx];
+        return (
+          <>
+            <div className="context-menu-separator" />
+            <button
+              className="context-menu-item"
+              onClick={() => {
+                updateNodeJunction(node.id, next.id as JunctionType);
+                applyAndClose();
+              }}
+            >
+              {current.label} → {next.label}
+            </button>
+          </>
+        );
+      })()}
 
       <div className="context-menu-separator" />
       <button

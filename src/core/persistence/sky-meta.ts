@@ -1,5 +1,6 @@
 import type { Diagram } from '../types';
 import type { Framework } from '../framework-types';
+import { getJunctionOptions } from '../framework-types';
 import { getFramework } from '../../frameworks/registry';
 
 interface SkyFileMeta {
@@ -79,8 +80,10 @@ export function buildSkyMeta(diagram: Diagram): SkyFileMeta {
   }
 
   if (fw.supportsJunctions) {
-    meta.junctionSemantics =
-      "When a node has 2+ incoming edges, junctionType determines logic: 'and' = all causes needed together, 'or' = each cause independently sufficient";
+    const isMath = getJunctionOptions(fw).some((o) => o.id === 'add' || o.id === 'multiply');
+    meta.junctionSemantics = isMath
+      ? "When a node has 2+ incoming edges, junctionType determines arithmetic: 'add' = children are summed, 'multiply' = children are multiplied. Edge polarity flips the sign (negative = subtract or divide)."
+      : "When a node has 2+ incoming edges, junctionType determines logic: 'and' = all causes needed together, 'or' = each cause independently sufficient";
   }
 
   return meta;

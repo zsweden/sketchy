@@ -1,11 +1,14 @@
 import type { Framework } from '../core/framework-types';
+import { MATH_JUNCTION_OPTIONS } from '../core/framework-types';
 
-export const kpiTreeFramework: Framework = {
-  id: 'kpi-tree',
-  name: 'KPI Tree',
+export const vdtFramework: Framework = {
+  id: 'vdt',
+  name: 'Value Driver Tree',
   description: 'Decompose a north-star metric into the sub-metrics that drive it',
   defaultLayoutDirection: 'BT',
   supportsJunctions: true,
+  supportsEdgePolarity: true,
+  junctionOptions: MATH_JUNCTION_OPTIONS,
   edgeLabel: 'drives',
   nodeTags: [
     {

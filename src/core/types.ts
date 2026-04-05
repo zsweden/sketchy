@@ -31,6 +31,8 @@ export interface DiagramSettings {
   showActiveAttachments: boolean;
 }
 
+export type JunctionType = 'and' | 'or' | 'add' | 'multiply';
+
 export interface DiagramNode {
   id: string;
   type: 'entity';
@@ -38,7 +40,7 @@ export interface DiagramNode {
   data: {
     label: string;
     tags: string[];
-    junctionType: 'and' | 'or';
+    junctionType: JunctionType;
     notes?: string;
     color?: string;
     textColor?: string;

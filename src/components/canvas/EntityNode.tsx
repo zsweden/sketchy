@@ -3,6 +3,7 @@ import { Handle, Position, useConnection, type NodeProps } from '@xyflow/react';
 import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
 import { getDerivedIndicators } from '../../core/graph/derived';
+import { getJunctionOptions } from '../../core/framework-types';
 import {
   HANDLE_CORNER_OFFSET,
   VISIBLE_HANDLE_SIDES,
@@ -186,12 +187,17 @@ function EntityNode({ id, data, selected }: NodeProps) {
     touchStart.current = null;
   }, []);
 
+  const junctionOptions = getJunctionOptions(framework);
+  const isMathJunction = junctionOptions.some((o) => o.id === 'add' || o.id === 'multiply');
+  const showJunction = framework.supportsJunctions && (isMathJunction || degrees.indegree >= 2);
   const handleJunctionToggle = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      updateNodeJunction(id, nodeData.junctionType === 'and' ? 'or' : 'and');
+      const currentIdx = junctionOptions.findIndex((o) => o.id === nodeData.junctionType);
+      const nextIdx = (currentIdx + 1) % junctionOptions.length;
+      updateNodeJunction(id, junctionOptions[nextIdx].id as EntityNodeData['junctionType']);
     },
-    [id, nodeData.junctionType, updateNodeJunction],
+    [id, nodeData.junctionType, updateNodeJunction, junctionOptions],
   );
 
   const handleBlur = useCallback(() => {
@@ -254,6 +260,19 @@ function EntityNode({ id, data, selected }: NodeProps) {
         />
       )}
 
+      {showJunction && isMathJunction && (() => {
+        const sym = junctionOptions.find((o) => o.id === nodeData.junctionType)?.symbol;
+        return sym ? (
+          <button
+            className="operator-chip nodrag"
+            onClick={handleJunctionToggle}
+            title={`Operator: ${junctionOptions.find((o) => o.id === nodeData.junctionType)?.label} — click to toggle`}
+          >
+            {sym}
+          </button>
+        ) : null;
+      })()}
+
       {isAiModified && <div className="ai-modified-dot" />}
       {nodeData.locked && (
         <div className="node-lock-indicator" title="Position locked">
@@ -271,13 +290,14 @@ function EntityNode({ id, data, selected }: NodeProps) {
           position={getPositionForBaseSide(getBaseHandleSide(side))}
           id={`target-${side}`}
           style={getVisibleHandleStyle(side)}
-          className={`handle-target handle-${side} ${framework.supportsJunctions && degrees.indegree >= 2 ? 'junction-handle nodrag' : ''} ${showActiveAttachments && activeHandles?.has(`target-${side}`) ? 'handle-active' : ''}`}
-          onClick={framework.supportsJunctions && degrees.indegree >= 2 ? handleJunctionToggle : undefined}
-          title={framework.supportsJunctions && degrees.indegree >= 2 ? `Junction: ${nodeData.junctionType.toUpperCase()} — click to toggle` : undefined}
+          className={`handle-target handle-${side} ${showJunction ? 'junction-handle nodrag' : ''} ${showActiveAttachments && activeHandles?.has(`target-${side}`) ? 'handle-active' : ''}`}
+          onClick={showJunction ? handleJunctionToggle : undefined}
+          title={showJunction ? `Junction: ${junctionOptions.find((o) => o.id === nodeData.junctionType)?.label ?? nodeData.junctionType} — click to toggle` : undefined}
         >
-          {framework.supportsJunctions && degrees.indegree >= 2 && nodeData.junctionType === 'and' && side === 'top' && (
-            <span className="junction-symbol">&</span>
-          )}
+          {showJunction && side === 'top' && (() => {
+            const sym = junctionOptions.find((o) => o.id === nodeData.junctionType)?.symbol;
+            return sym ? <span className="junction-symbol">{sym}</span> : null;
+          })()}
         </Handle>
       ))}
 

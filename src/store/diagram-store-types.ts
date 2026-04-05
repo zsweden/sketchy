@@ -6,6 +6,7 @@ import type {
   DiagramSettings,
   EdgeConfidence,
   EdgePolarity,
+  JunctionType,
 } from '../core/types';
 import type { UndoRedoManager } from '../core/history/undo-redo';
 import type { SizedPositionedItem } from '../utils/align-distribute';
@@ -18,6 +19,7 @@ export interface BatchMutations {
     notes?: string;
     color?: string | null;
     textColor?: string | null;
+    junctionType?: JunctionType;
   }[];
   updateNodes?: {
     id: string;
@@ -26,6 +28,7 @@ export interface BatchMutations {
     notes?: string;
     color?: string | null;
     textColor?: string | null;
+    junctionType?: JunctionType;
   }[];
   removeNodeIds?: string[];
   addEdges?: {
@@ -62,7 +65,7 @@ export interface DiagramState {
   addNode: (position: { x: number; y: number }) => string;
   updateNodeText: (id: string, label: string) => void;
   updateNodeTags: (id: string, tags: string[]) => void;
-  updateNodeJunction: (id: string, type: 'and' | 'or') => void;
+  updateNodeJunction: (id: string, type: JunctionType) => void;
   previewNodeColor: (id: string, color: string | undefined) => void;
   previewNodeTextColor: (id: string, textColor: string | undefined) => void;
   updateNodeColor: (id: string, color: string | undefined) => void;
