@@ -189,7 +189,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
 
   const junctionOptions = getJunctionOptions(framework);
   const isMathJunction = junctionOptions.some((o) => o.id === 'add' || o.id === 'multiply');
-  const showJunction = framework.supportsJunctions && (isMathJunction || degrees.indegree >= 2);
+  const showJunction = framework.supportsJunctions && (isMathJunction ? degrees.indegree >= 1 : degrees.indegree >= 2);
   const handleJunctionToggle = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();

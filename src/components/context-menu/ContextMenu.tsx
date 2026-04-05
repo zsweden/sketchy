@@ -238,7 +238,7 @@ function NodeContextMenu({
       {framework.supportsJunctions && degrees && (() => {
         const options = getJunctionOptions(framework);
         const isMath = options.some((o) => o.id === 'add' || o.id === 'multiply');
-        if (!isMath && degrees.indegree < 2) return null;
+        if (isMath ? degrees.indegree < 1 : degrees.indegree < 2) return null;
         const currentIdx = options.findIndex((o) => o.id === node.data.junctionType);
         const nextIdx = (currentIdx + 1) % options.length;
         const current = options[currentIdx >= 0 ? currentIdx : 0];

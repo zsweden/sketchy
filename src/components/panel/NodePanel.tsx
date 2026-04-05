@@ -165,7 +165,7 @@ export default function NodePanel({ node }: Props) {
       {(() => {
         const options = getJunctionOptions(framework);
         const isMath = options.some((o) => o.id === 'add' || o.id === 'multiply');
-        if (!framework.supportsJunctions || (!isMath && degrees.indegree < 2)) return null;
+        if (!framework.supportsJunctions || (isMath ? degrees.indegree < 1 : degrees.indegree < 2)) return null;
         const current = options.find((o) => o.id === node.data.junctionType);
         return (
           <FormField label={isMath ? 'Operator' : 'Junction Logic'}>
