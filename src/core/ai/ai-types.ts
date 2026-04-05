@@ -7,10 +7,17 @@ export interface ChatImage {
   base64: string;
 }
 
+export interface ChatDocument {
+  filename: string;
+  mediaType: 'application/pdf';
+  base64: string;
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   images?: ChatImage[];
+  documents?: ChatDocument[];
 }
 
 export interface DiagramModification {

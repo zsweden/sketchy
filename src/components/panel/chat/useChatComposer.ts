@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
-import type { ChatImage, ChatImageMediaType } from '../../../core/ai/ai-types';
+import type { ChatDocument, ChatImage, ChatImageMediaType } from '../../../core/ai/ai-types';
 
 const IMAGE_MEDIA_TYPES = new Set<string>(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
 
@@ -7,7 +7,9 @@ export interface AttachedFile {
   name: string;
   content: string;
   isImage: boolean;
+  isPdf: boolean;
   image?: ChatImage;
+  document?: ChatDocument;
 }
 
 function readFileAsBase64(file: File): Promise<string> {
@@ -30,7 +32,7 @@ export function useChatComposer({
 }: {
   isConfigured: boolean;
   loading: boolean;
-  sendMessage: (message: string, image?: ChatImage) => void;
+  sendMessage: (message: string, image?: ChatImage, displayText?: string, document?: ChatDocument) => void;
 }) {
   const [input, setInput] = useState('');
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -47,18 +49,22 @@ export function useChatComposer({
 
     let message = trimmed;
     let image: ChatImage | undefined;
+    let document: ChatDocument | undefined;
 
     if (attachedFile) {
       if (attachedFile.isImage && attachedFile.image) {
         image = attachedFile.image;
         message = `[Attached image: ${attachedFile.name}]\n\n${trimmed}`;
+      } else if (attachedFile.isPdf && attachedFile.document) {
+        document = attachedFile.document;
+        message = `[Attached PDF: ${attachedFile.name}]\n\n${trimmed}`;
       } else {
         message = `[Attached file: ${attachedFile.name}]\n\`\`\`\n${attachedFile.content}\n\`\`\`\n\n${trimmed}`;
       }
       setAttachedFile(null);
     }
 
-    sendMessage(message, image);
+    sendMessage(message, image, undefined, document);
   }, [attachedFile, input, isConfigured, loading, sendMessage]);
 
   const handleAttach = useCallback(() => {
@@ -75,11 +81,21 @@ export function useChatComposer({
         name: file.name,
         content: '',
         isImage: true,
+        isPdf: false,
         image: { mediaType: file.type as ChatImageMediaType, base64 },
+      });
+    } else if (file.type === 'application/pdf') {
+      const base64 = await readFileAsBase64(file);
+      setAttachedFile({
+        name: file.name,
+        content: '',
+        isImage: false,
+        isPdf: true,
+        document: { filename: file.name, mediaType: 'application/pdf', base64 },
       });
     } else {
       const content = await file.text();
-      setAttachedFile({ name: file.name, content, isImage: false });
+      setAttachedFile({ name: file.name, content, isImage: false, isPdf: false });
     }
 
     event.target.value = '';

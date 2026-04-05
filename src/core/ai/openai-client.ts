@@ -13,7 +13,7 @@ import {
 import type { ParseState } from './stream-parsers';
 import { processOpenAILine, processAnthropicLine, finalizeToolCalls } from './stream-parsers';
 
-export type { ChatImage, ChatMessage, DiagramModification } from './ai-types';
+export type { ChatDocument, ChatImage, ChatMessage, DiagramModification } from './ai-types';
 
 // --- Conversation pruning ---
 
@@ -37,14 +37,22 @@ function buildOpenAIRequest(
   const apiMessages = [
     { role: 'system' as const, content: systemPrompt },
     ...pruneHistory(messages).map((m) => {
-      if (m.images?.length) {
+      const hasMedia = m.images?.length || m.documents?.length;
+      if (hasMedia) {
         return {
           role: m.role,
           content: [
             { type: 'text' as const, text: m.content },
-            ...m.images.map((img) => ({
+            ...(m.images ?? []).map((img) => ({
               type: 'image_url' as const,
               image_url: { url: `data:${img.mediaType};base64,${img.base64}` },
+            })),
+            ...(m.documents ?? []).map((doc) => ({
+              type: 'file' as const,
+              file: {
+                filename: doc.filename,
+                file_data: `data:${doc.mediaType};base64,${doc.base64}`,
+              },
             })),
           ],
         };
@@ -76,14 +84,19 @@ function buildAnthropicRequest(
   const userMessages = pruneHistory(messages)
     .filter((m) => m.role !== 'system')
     .map((m) => {
-      if (m.images?.length) {
+      const hasMedia = m.images?.length || m.documents?.length;
+      if (hasMedia) {
         return {
           role: m.role,
           content: [
             { type: 'text' as const, text: m.content },
-            ...m.images.map((img) => ({
+            ...(m.images ?? []).map((img) => ({
               type: 'image' as const,
               source: { type: 'base64' as const, media_type: img.mediaType, data: img.base64 },
+            })),
+            ...(m.documents ?? []).map((doc) => ({
+              type: 'document' as const,
+              source: { type: 'base64' as const, media_type: doc.mediaType, data: doc.base64 },
             })),
           ],
         };

@@ -479,6 +479,48 @@ describe('streamChatMessage – error paths', () => {
   });
 });
 
+describe('streamChatMessage – OpenAI PDF documents', () => {
+  it('formats PDF documents with file content block for OpenAI', async () => {
+    const { streamChatMessage } = await import('../openai-client');
+
+    let sentBody: string = '';
+
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      sentBody = init.body as string;
+      return Promise.resolve(mockSSEResponse([
+        JSON.stringify({ choices: [{ delta: { content: 'ok' } }] }),
+      ]));
+    }));
+
+    const messages = [
+      {
+        role: 'user' as const,
+        content: 'Summarize this',
+        documents: [{ filename: 'report.pdf', mediaType: 'application/pdf' as const, base64: 'JVBER' }],
+      },
+    ];
+
+    await new Promise<void>((resolve) => {
+      streamChatMessage('key', 'https://api.openai.com/v1', 'gpt-4o', makeDiagram(), mockFrameworkCRT, messages, {
+        onToken: () => {},
+        onDone: () => resolve(),
+        onError: () => resolve(),
+      });
+    });
+
+    const body = JSON.parse(sentBody);
+    // system + 1 user message
+    const userMsg = body.messages[1];
+    expect(userMsg.content).toBeInstanceOf(Array);
+    expect(userMsg.content[0]).toEqual({ type: 'text', text: 'Summarize this' });
+    expect(userMsg.content[1]).toEqual({
+      type: 'file',
+      file: { filename: 'report.pdf', file_data: 'data:application/pdf;base64,JVBER' },
+    });
+    vi.unstubAllGlobals();
+  });
+});
+
 describe('streamChatMessage – Anthropic request building', () => {
   it('formats images with base64 source block for Anthropic', async () => {
     const { streamChatMessage } = await import('../openai-client');
@@ -516,6 +558,47 @@ describe('streamChatMessage – Anthropic request building', () => {
     expect(userMsg.content[1]).toEqual({
       type: 'image',
       source: { type: 'base64', media_type: 'image/png', data: 'abc123' },
+    });
+    vi.unstubAllGlobals();
+  });
+
+  it('formats PDF documents with document source block for Anthropic', async () => {
+    const { streamChatMessage } = await import('../openai-client');
+
+    let sentBody: string = '';
+
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      sentBody = init.body as string;
+      return Promise.resolve(mockAnthropicSSEResponse([
+        JSON.stringify({ type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } }),
+        JSON.stringify({ type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: 'ok' } }),
+        JSON.stringify({ type: 'message_stop' }),
+      ]));
+    }));
+
+    const messages = [
+      {
+        role: 'user' as const,
+        content: 'Read this PDF',
+        documents: [{ filename: 'report.pdf', mediaType: 'application/pdf' as const, base64: 'JVBER' }],
+      },
+    ];
+
+    await new Promise<void>((resolve) => {
+      streamChatMessage('key', 'https://api.anthropic.com/v1', 'claude-sonnet-4-6', makeDiagram(), mockFrameworkCRT, messages, {
+        onToken: () => {},
+        onDone: () => resolve(),
+        onError: () => resolve(),
+      }, 'anthropic');
+    });
+
+    const body = JSON.parse(sentBody);
+    const userMsg = body.messages[0];
+    expect(userMsg.content).toBeInstanceOf(Array);
+    expect(userMsg.content[0]).toEqual({ type: 'text', text: 'Read this PDF' });
+    expect(userMsg.content[1]).toEqual({
+      type: 'document',
+      source: { type: 'base64', media_type: 'application/pdf', data: 'JVBER' },
     });
     vi.unstubAllGlobals();
   });

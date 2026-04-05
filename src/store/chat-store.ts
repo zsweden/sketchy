@@ -1,7 +1,7 @@
 import type { Framework } from '../core/framework-types';
 import type { Diagram } from '../core/types';
 import { create } from 'zustand';
-import type { ChatImage, ChatMessage, DiagramModification } from '../core/ai/openai-client';
+import type { ChatDocument, ChatImage, ChatMessage, DiagramModification } from '../core/ai/openai-client';
 import type { FrameworkSuggestions } from '../core/ai/ai-types';
 import { streamChatMessage } from '../core/ai/openai-client';
 import { getFramework } from '../frameworks/registry';
@@ -20,6 +20,7 @@ export interface DisplayMessage {
   displayText?: string;
   segments?: ParsedChatSegment[];
   images?: ChatImage[];
+  documents?: ChatDocument[];
   modifications?: DiagramModification;
   suggestions?: FrameworkSuggestions;
   retryText?: string;
@@ -32,7 +33,7 @@ interface ChatState {
   aiModifiedNodeIds: Set<string>;
   pendingSuggestions: FrameworkSuggestions | null;
 
-  sendMessage: (text: string, image?: ChatImage, displayText?: string) => void;
+  sendMessage: (text: string, image?: ChatImage, displayText?: string, document?: ChatDocument) => void;
   cancelStream: () => void;
   clearMessages: () => void;
   clearAiModified: () => void;
@@ -85,7 +86,7 @@ function getInitialChatState(): Pick<ChatState, 'messages' | 'aiModifiedNodeIds'
 function serializeChatState(state: Pick<ChatState, 'messages' | 'aiModifiedNodeIds' | 'pendingSuggestions'>): string {
   return JSON.stringify({
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    messages: state.messages.map(({ images, ...rest }) => rest),
+    messages: state.messages.map(({ images, documents, ...rest }) => rest),
     aiModifiedNodeIds: Array.from(state.aiModifiedNodeIds),
     pendingSuggestions: state.pendingSuggestions,
   } satisfies PersistedChatState);
@@ -155,6 +156,7 @@ function buildConversationHistory(messages: DisplayMessage[]): ChatMessage[] {
       role: message.role,
       content: message.content,
       ...(message.images?.length ? { images: message.images } : {}),
+      ...(message.documents?.length ? { documents: message.documents } : {}),
     }));
 }
 
@@ -192,7 +194,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   loading: false,
   streamingContent: '',
 
-  sendMessage: (text, image, displayText) => {
+  sendMessage: (text, image, displayText, document) => {
     const { openaiApiKey, baseUrl, model, provider } = useSettingsStore.getState();
     if (!baseUrl || !model) {
       set((s) => ({
@@ -222,6 +224,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       content: text,
       ...(displayText ? { displayText } : {}),
       ...(image ? { images: [image] } : {}),
+      ...(document ? { documents: [document] } : {}),
     };
 
     set((s) => ({

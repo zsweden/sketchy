@@ -123,7 +123,7 @@ describe('ChatPanel', () => {
     await user.type(input, 'Explain this flow');
     fireEvent.keyDown(input, { key: 'Enter' });
 
-    expect(sendMessage).toHaveBeenCalledWith('Explain this flow', undefined);
+    expect(sendMessage).toHaveBeenCalledWith('Explain this flow', undefined, undefined, undefined);
   });
 
   it('cycles through prompt history with arrow keys', async () => {
@@ -174,10 +174,41 @@ describe('ChatPanel', () => {
 
     expect(sendMessage).toHaveBeenCalledWith(
       expect.stringContaining('[Attached file: notes.txt]'),
-      undefined,
+      undefined, undefined, undefined,
     );
-    expect(sendMessage).toHaveBeenCalledWith(expect.stringContaining('file body'), undefined);
-    expect(sendMessage).toHaveBeenCalledWith(expect.stringContaining('Summarize this'), undefined);
+    expect(sendMessage).toHaveBeenCalledWith(expect.stringContaining('file body'), undefined, undefined, undefined);
+    expect(sendMessage).toHaveBeenCalledWith(expect.stringContaining('Summarize this'), undefined, undefined, undefined);
+  });
+
+  it('attaches a PDF and sends it as a document', async () => {
+    const user = userEvent.setup();
+    const sendMessage = vi.fn();
+    useChatStore.setState({ sendMessage });
+
+    const { container } = render(<ChatPanel />);
+    const fileInput = container.querySelector('input[type="file"]');
+    expect(fileInput).not.toBeNull();
+
+    // Simulate selecting a PDF — FileReader will base64-encode it
+    const pdfBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46]); // %PDF header
+    const pdfFile = new File([pdfBytes], 'report.pdf', { type: 'application/pdf' });
+
+    fireEvent.change(fileInput!, { target: { files: [pdfFile] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('report.pdf')).toBeInTheDocument();
+    });
+
+    const input = screen.getByLabelText('Chat input');
+    await user.type(input, 'Analyze this');
+    await user.click(screen.getByRole('button', { name: 'Send message' }));
+
+    expect(sendMessage).toHaveBeenCalledWith(
+      expect.stringContaining('[Attached PDF: report.pdf]'),
+      undefined,
+      undefined,
+      expect.objectContaining({ filename: 'report.pdf', mediaType: 'application/pdf' }),
+    );
   });
 
   it('shows stop and clear actions when chat is active', async () => {
