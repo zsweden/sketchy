@@ -751,7 +751,7 @@ describe('buildSystemPrompt framework-agnostic', () => {
     expect(systemContent).toContain('delay=true');
     expect(systemContent).toContain('Detected feedback loops:');
     expect(systemContent).toContain('[B1][loop:n1>n2>n3]: Demand');
-    expect(systemContent).toContain('refer to them by the provided R#/B# names');
+    expect(systemContent).toContain('refer to them using mention syntax');
     expect(systemContent).toContain('suggest flywheel rewrites or simplifications');
     vi.unstubAllGlobals();
   });

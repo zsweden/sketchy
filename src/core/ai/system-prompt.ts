@@ -187,7 +187,7 @@ export function buildSystemPrompt(diagram: Diagram, framework: Framework): strin
     ? buildLoopAnalysis(diagram)
     : '';
   const loopReasoningRule = framework.allowsCycles
-    ? 'When loops are present, refer to them by the provided R#/B# names, explain whether each loop is reinforcing or balancing from its signed edges, and suggest flywheel rewrites or simplifications when the structure is overly redundant.'
+    ? 'When loops are present, refer to them using mention syntax (e.g. [R1][loop:n1>n2>n3]), explain whether each loop is reinforcing or balancing from its signed edges, and suggest flywheel rewrites or simplifications when the structure is overly redundant.'
     : 'Focus on causes, dependencies, and missing links rather than feedback loops.';
 
   const confidenceRule = framework.supportsEdgePolarity
@@ -227,7 +227,7 @@ Rules for modifications:
 - ${delayRule}
 - ${loopReasoningRule}
 - Edges can have notes — use them to explain the causal reasoning behind the connection.
-- When mentioning diagram elements in prose, use this format: [Label][kind:id]. Examples: [Demand][node:n1], [Demand -> Growth][edge:e1], [R1][loop:n1>n2>n3]. Never put punctuation inside the kind:id bracket. If you cannot form a valid mention, fall back to plain text rather than inventing IDs.
+- When mentioning diagram elements in prose, use this exact format: [Label][kind:id]. The two bracket groups must be adjacent with NO space between them. Examples: [Demand][node:n1], [Demand -> Growth][edge:e1], [R1][loop:n1>n2>n3]. WRONG: R1 [loop:n1>n2>n3]. CORRECT: [R1][loop:n1>n2>n3]. Never put punctuation inside the kind:id bracket. If you cannot form a valid mention, fall back to plain text rather than inventing IDs.
 - Reply in plain text only. Do not use Markdown formatting such as headings (#), bold (**), italic (*), tables, or code fences. Use "* " to start bullet points and UPPERCASE for section headings (e.g. "ANALYSIS").
 - Always explain your reasoning.`;
 }
