@@ -193,6 +193,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
   const handleJunctionToggle = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
+      (e.currentTarget as HTMLElement).blur();
       const currentIdx = junctionOptions.findIndex((o) => o.id === nodeData.junctionType);
       const nextIdx = (currentIdx + 1) % junctionOptions.length;
       updateNodeJunction(id, junctionOptions[nextIdx].id as EntityNodeData['junctionType']);
