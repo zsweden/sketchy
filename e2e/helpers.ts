@@ -46,3 +46,27 @@ export async function getNodeCenter(page: import('@playwright/test').Page, nodeI
     y: box!.y + box!.height / 2,
   };
 }
+
+/**
+ * Right-click an edge and wait for a specific context menu item to appear.
+ * Retries up to 3 times because React Flow edge SVGs may not have settled
+ * when the bounding box is first captured — the click can land on the pane.
+ */
+export async function rightClickEdge(
+  page: import('@playwright/test').Page,
+  menuItemText: string,
+) {
+  const edgePath = page.locator('.react-flow__edge-interaction').first();
+  const menuItem = page.locator('.context-menu-item', { hasText: menuItemText });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const box = await edgePath.boundingBox();
+    expect(box).not.toBeNull();
+    await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2, { button: 'right' });
+    await expect(page.locator('.context-menu')).toBeVisible();
+    if (await menuItem.isVisible()) return;
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.context-menu')).not.toBeVisible();
+  }
+  // Final attempt — let Playwright's expect fail with a clear message
+  await expect(menuItem).toBeVisible();
+}

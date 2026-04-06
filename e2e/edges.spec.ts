@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { PANE, createNode, getNodeIds, addEdge, updateNodeText } from './helpers';
+import { PANE, createNode, getNodeIds, addEdge, updateNodeText, rightClickEdge } from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -25,17 +25,8 @@ test('connects two nodes and changes edge confidence via context menu', async ({
   await addEdge(page, ids[0], ids[1]);
   await expect(page.locator('.react-flow__edge')).toHaveCount(1);
 
-  const edgePath = page.locator('.react-flow__edge-interaction').first();
-  const mediumItem = page.locator('.context-menu-item', { hasText: 'Medium' });
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const box = await edgePath.boundingBox();
-    await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2, { button: 'right' });
-    await expect(page.locator('.context-menu')).toBeVisible();
-    if (await mediumItem.isVisible()) break;
-    await page.keyboard.press('Escape');
-    await expect(page.locator('.context-menu')).not.toBeVisible();
-  }
-  await mediumItem.click();
+  await rightClickEdge(page, 'Medium');
+  await page.locator('.context-menu-item', { hasText: 'Medium' }).click();
   await expect(page.locator('.edge-confidence-medium')).toHaveCount(1);
 });
 
@@ -51,11 +42,7 @@ test('CLD framework supports edge polarity and delay via context menu', async ({
   await addEdge(page, ids[0], ids[1]);
   await expect(page.locator('.react-flow__edge')).toHaveCount(1);
 
-  const edgePath = page.locator('.react-flow__edge-interaction').first();
-  const box1 = await edgePath.boundingBox();
-  await page.mouse.click(box1!.x + box1!.width / 2, box1!.y + box1!.height / 2, { button: 'right' });
-  await expect(page.locator('.context-menu')).toBeVisible();
-
+  await rightClickEdge(page, 'Negative');
   await page.locator('.context-menu-item', { hasText: 'Negative' }).click();
 
   await page.waitForFunction(() => {
@@ -64,9 +51,7 @@ test('CLD framework supports edge polarity and delay via context menu', async ({
     return JSON.parse(raw).edges?.[0]?.polarity === 'negative';
   });
 
-  const box2 = await page.locator('.react-flow__edge-interaction').first().boundingBox();
-  await page.mouse.click(box2!.x + box2!.width / 2, box2!.y + box2!.height / 2, { button: 'right' });
-  await expect(page.locator('.context-menu')).toBeVisible();
+  await rightClickEdge(page, 'Add Delay');
   await page.locator('.context-menu-item', { hasText: 'Add Delay' }).click();
 
   await page.waitForFunction(() => {
@@ -124,11 +109,14 @@ test('edge panel shows confidence and notes when an edge is clicked', async ({ p
 
   await page.locator(PANE).click({ position: { x: 50, y: 50 } });
 
+  // Click the edge — retry because edge SVG may not have settled
   const edgePath = page.locator('.react-flow__edge-interaction').first();
-  await expect(edgePath).toHaveCount(1);
-  const box = await edgePath.boundingBox();
-  expect(box).not.toBeNull();
-  await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const box = await edgePath.boundingBox();
+    expect(box).not.toBeNull();
+    await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+    if (await page.locator('.side-panel-top .section-heading', { hasText: 'Edge' }).isVisible()) break;
+  }
 
   await expect(page.locator('.side-panel-top .section-heading', { hasText: 'Edge' })).toBeVisible();
   await expect(page.getByLabel('Edge notes')).toBeVisible();
@@ -155,17 +143,8 @@ test('deletes an edge via right-click context menu', async ({ page }) => {
   await addEdge(page, ids[0], ids[1]);
   await expect(page.locator('.react-flow__edge')).toHaveCount(1);
 
-  const edgePath = page.locator('.react-flow__edge-interaction').first();
-  const deleteItem = page.locator('.context-menu-item', { hasText: 'Delete connection' });
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const box = await edgePath.boundingBox();
-    await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2, { button: 'right' });
-    await expect(page.locator('.context-menu')).toBeVisible();
-    if (await deleteItem.isVisible()) break;
-    await page.keyboard.press('Escape');
-    await expect(page.locator('.context-menu')).not.toBeVisible();
-  }
-  await deleteItem.click();
+  await rightClickEdge(page, 'Delete connection');
+  await page.locator('.context-menu-item', { hasText: 'Delete connection' }).click();
 
   await expect(page.locator('.react-flow__edge')).toHaveCount(0);
   await expect(page.locator('.entity-node')).toHaveCount(2);
