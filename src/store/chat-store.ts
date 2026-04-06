@@ -206,13 +206,28 @@ export const useChatStore = create<ChatState>((set, get) => ({
             activeController = null;
           }
 
-          const outcome = processStreamDone(result, diagram, framework, errorCtx, get().streamingContent.length);
-          set((s) => ({
-            messages: [...s.messages, outcome.assistantMsg],
-            loading: false,
-            streamingContent: '',
-            ...(outcome.pendingSuggestions ? { pendingSuggestions: outcome.pendingSuggestions } : {}),
-          }));
+          try {
+            const outcome = processStreamDone(result, diagram, framework, errorCtx, get().streamingContent.length);
+            set((s) => ({
+              messages: [...s.messages, outcome.assistantMsg],
+              loading: false,
+              streamingContent: '',
+              ...(outcome.pendingSuggestions ? { pendingSuggestions: outcome.pendingSuggestions } : {}),
+            }));
+          } catch (processingError) {
+            const err = processingError instanceof Error ? processingError : new Error(String(processingError));
+            reportStreamError(err, errorCtx);
+            try {
+              const fallback = createAssistantMessage(`Error: ${err.message}`, { retryText: text });
+              set((s) => ({
+                messages: [...s.messages, fallback],
+                loading: false,
+                streamingContent: '',
+              }));
+            } catch {
+              set({ loading: false, streamingContent: '' });
+            }
+          }
         },
 
         onError: (error) => {
@@ -221,12 +236,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
             activeController = null;
           }
           reportStreamError(error, errorCtx);
-          const errorMsg = createAssistantMessage(`Error: ${error.message}`, { retryText: text });
-          set((s) => ({
-            messages: [...s.messages, errorMsg],
-            loading: false,
-            streamingContent: '',
-          }));
+          try {
+            const errorMsg = createAssistantMessage(`Error: ${error.message}`, { retryText: text });
+            set((s) => ({
+              messages: [...s.messages, errorMsg],
+              loading: false,
+              streamingContent: '',
+            }));
+          } catch {
+            set({ loading: false, streamingContent: '' });
+          }
         },
       },
       provider,

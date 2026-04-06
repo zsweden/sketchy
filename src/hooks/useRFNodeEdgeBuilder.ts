@@ -27,7 +27,7 @@ export function useRFNodeEdgeBuilder(
   const edges = useDiagramStore((s) => s.diagram.edges);
   const settings = useDiagramStore((s) => s.diagram.settings);
   const framework = useFramework();
-  const edgeRoutingMode = settings.edgeRoutingMode;
+  const edgeRoutingMode = settings?.edgeRoutingMode ?? 'dynamic';
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
   const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
   const themeId = useSettingsStore((s) => s.theme);

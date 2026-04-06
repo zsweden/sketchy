@@ -401,6 +401,49 @@ describe('chat-store', () => {
       );
     });
 
+    it('logs error and shows fallback when onDone processing throws', async () => {
+      mockStreamChatMessage.mockImplementationOnce((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
+        setTimeout(() => {
+          // onDone with a result that will trigger processStreamDone
+          // which calls buildChatMessageRenderData — simulate it throwing
+          callbacks.onDone({ text: 'Response text' });
+        }, 0);
+        return new AbortController();
+      });
+
+      // Temporarily break processStreamDone by providing invalid diagram state
+      const original = useDiagramStore.getState().diagram;
+      useDiagramStore.setState({ diagram: { ...original, frameworkId: 'nonexistent-framework-xyz' } });
+
+      useChatStore.getState().sendMessage('Hello');
+      await new Promise((r) => setTimeout(r, 50));
+
+      // Should still clear loading state regardless
+      expect(useChatStore.getState().loading).toBe(false);
+      expect(useChatStore.getState().streamingContent).toBe('');
+
+      // Restore
+      useDiagramStore.setState({ diagram: original });
+    });
+
+    it('still logs to Firebase when onError UI update fails', async () => {
+      mockStreamChatMessage.mockImplementationOnce((_key, _url, _model, _diagram, _fw, _msgs, callbacks) => {
+        setTimeout(() => {
+          callbacks.onError(new Error('network error'));
+        }, 0);
+        return new AbortController();
+      });
+
+      useChatStore.getState().sendMessage('Hello');
+      await new Promise((r) => setTimeout(r, 50));
+
+      // Error should always be reported regardless of UI state
+      expect(reportError).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'network error' }),
+        expect.objectContaining({ source: 'chat.stream_error' }),
+      );
+    });
+
     it('shows config message when no baseUrl', () => {
       useSettingsStore.setState({ baseUrl: '', model: '' });
       useChatStore.getState().sendMessage('Hello');

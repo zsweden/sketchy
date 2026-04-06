@@ -25,6 +25,8 @@ interface NormalizedError {
 
 const MAX_DESCRIPTION_LENGTH = 500;
 const DEDUPE_WINDOW_MS = 5_000;
+const PENDING_ERRORS_KEY = 'sketchy_pending_errors';
+const MAX_PENDING_ERRORS = 50;
 
 /** Browser-noise error messages that should never be reported. */
 const IGNORED_MESSAGES = [
@@ -141,6 +143,34 @@ export function buildErrorDescription(
   return truncate(details.join(' | '), MAX_DESCRIPTION_LENGTH);
 }
 
+function queuePendingError(payload: object): void {
+  try {
+    const raw = localStorage.getItem(PENDING_ERRORS_KEY);
+    const pending: object[] = raw ? JSON.parse(raw) : [];
+    pending.push(payload);
+    if (pending.length > MAX_PENDING_ERRORS) {
+      pending.splice(0, pending.length - MAX_PENDING_ERRORS);
+    }
+    localStorage.setItem(PENDING_ERRORS_KEY, JSON.stringify(pending));
+  } catch {
+    // localStorage unavailable — drop silently
+  }
+}
+
+function flushPendingErrors(): void {
+  try {
+    const raw = localStorage.getItem(PENDING_ERRORS_KEY);
+    if (!raw) return;
+    const pending = JSON.parse(raw) as object[];
+    localStorage.removeItem(PENDING_ERRORS_KEY);
+    for (const payload of pending) {
+      void logFirestoreError(payload as Parameters<typeof logFirestoreError>[0]);
+    }
+  } catch {
+    // Ignore flush failures
+  }
+}
+
 export async function reportError(error: unknown, options: ReportErrorOptions): Promise<void> {
   const normalized = normalizeUnknownError(error);
 
@@ -165,10 +195,15 @@ export async function reportError(error: unknown, options: ReportErrorOptions): 
     description: buildErrorDescription(error, options),
   };
 
-  await Promise.all([
-    logFirebaseException(payload),
-    logFirestoreError(payload),
-  ]);
+  try {
+    await Promise.all([
+      logFirebaseException(payload),
+      logFirestoreError(payload),
+    ]);
+    flushPendingErrors();
+  } catch {
+    queuePendingError(payload);
+  }
 }
 
 export function installGlobalErrorLogging(): void {

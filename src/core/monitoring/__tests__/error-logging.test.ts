@@ -13,6 +13,28 @@ vi.mock('../firebase', () => ({
   logFirestoreError: vi.fn().mockResolvedValue(undefined),
 }));
 
+/**
+ * Node.js 25+ ships a native `localStorage` global that shadows jsdom's.
+ * The native version has no methods when `--localstorage-file` is absent.
+ */
+function createMemoryStorage(): Storage {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => { store[key] = String(value); },
+    removeItem: (key: string) => { delete store[key]; },
+    clear: () => { store = {}; },
+    key: (index: number) => Object.keys(store)[index] ?? null,
+    get length() { return Object.keys(store).length; },
+  };
+}
+
+Object.defineProperty(globalThis, 'localStorage', {
+  value: createMemoryStorage(),
+  configurable: true,
+  writable: true,
+});
+
 describe('error logging', () => {
   beforeEach(() => {
     resetErrorLoggingForTests();
@@ -269,6 +291,84 @@ describe('deduplication edge cases', () => {
     await reportError(new Error('Boom'), { source: 'chat.stream_error', fatal: false });
 
     expect(logFirebaseException).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('localStorage fallback on Firestore failure', () => {
+  const PENDING_KEY = 'sketchy_pending_errors';
+
+  beforeEach(() => {
+    resetErrorLoggingForTests();
+    vi.mocked(logFirebaseException).mockClear();
+    vi.mocked(logFirestoreError).mockClear();
+    localStorage.removeItem(PENDING_KEY);
+    window.history.replaceState({}, '', '/');
+  });
+
+  afterEach(() => {
+    resetErrorLoggingForTests();
+    localStorage.removeItem(PENDING_KEY);
+  });
+
+  it('queues to localStorage when Firestore write fails', async () => {
+    vi.mocked(logFirestoreError).mockRejectedValueOnce(new Error('network'));
+
+    await reportError(new Error('Offline boom'), {
+      source: 'chat.stream_error',
+      fatal: false,
+    });
+
+    const pending = JSON.parse(localStorage.getItem(PENDING_KEY) ?? '[]');
+    expect(pending).toHaveLength(1);
+    expect(pending[0].message).toBe('Offline boom');
+    expect(pending[0].source).toBe('chat.stream_error');
+  });
+
+  it('flushes pending errors on next successful write', async () => {
+    // Seed one pending error
+    localStorage.setItem(PENDING_KEY, JSON.stringify([{
+      version: '1.0.0',
+      source: 'chat.stream_error',
+      fatal: false,
+      name: 'Error',
+      message: 'Queued error',
+      route: '/',
+      description: 'Error: Queued error',
+    }]));
+
+    await reportError(new Error('Success write'), {
+      source: 'window.error',
+      fatal: true,
+    });
+
+    // Pending error should have been flushed
+    expect(localStorage.getItem(PENDING_KEY)).toBeNull();
+    // logFirestoreError: 1 for the new error + 1 for the flushed error
+    expect(logFirestoreError).toHaveBeenCalledTimes(2);
+    expect(logFirestoreError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Queued error' }),
+    );
+  });
+
+  it('caps pending errors to prevent localStorage bloat', async () => {
+    const existing = Array.from({ length: 50 }, (_, i) => ({
+      version: '1.0.0', source: 'window.error', fatal: false,
+      name: 'Error', message: `Error ${i}`, route: '/', description: `Error ${i}`,
+    }));
+    localStorage.setItem(PENDING_KEY, JSON.stringify(existing));
+
+    vi.mocked(logFirestoreError).mockRejectedValueOnce(new Error('network'));
+
+    await reportError(new Error('Error 50'), {
+      source: 'window.error',
+      fatal: false,
+    });
+
+    const pending = JSON.parse(localStorage.getItem(PENDING_KEY) ?? '[]');
+    expect(pending).toHaveLength(50);
+    // Oldest should be dropped, newest should be present
+    expect(pending[pending.length - 1].message).toBe('Error 50');
+    expect(pending[0].message).toBe('Error 1');
   });
 });
 
