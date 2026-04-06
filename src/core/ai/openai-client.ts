@@ -129,11 +129,12 @@ export function streamChatMessage(
   callbacks: StreamCallbacks,
   provider: string = 'openai',
   guideMode: boolean = false,
+  responseStyle: 'concise' | 'detailed' = 'concise',
 ): AbortController {
   const controller = new AbortController();
   const systemPrompt = guideMode
-    ? buildGuideSystemPrompt(diagram, framework)
-    : buildSystemPrompt(diagram, framework);
+    ? buildGuideSystemPrompt(diagram, framework, responseStyle)
+    : buildSystemPrompt(diagram, framework, responseStyle);
 
   const isAnthropic = provider === 'anthropic';
   const openaiTools = guideMode

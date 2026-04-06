@@ -170,7 +170,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     const { diagram } = useDiagramStore.getState();
     const framework = resolveFramework(diagram.frameworkId);
-    const isGuideMode = useSettingsStore.getState().guideMode;
+    const { guideMode: isGuideMode, responseStyle } = useSettingsStore.getState();
     const requestId = activeRequestId + 1;
     const requestDiagramId = diagram.id;
     activeRequestId = requestId;
@@ -250,6 +250,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       },
       provider,
       isGuideMode,
+      responseStyle,
     );
     activeController = controller;
   },

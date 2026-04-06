@@ -29,13 +29,15 @@ function detectProvider(baseUrl: string): string {
   return match?.id ?? 'custom';
 }
 
+export type ResponseStyle = 'concise' | 'detailed';
+
 interface StoredSettings {
   apiKey: string;
   baseUrl: string;
   model: string;
   provider?: string;
   theme?: string;
-  guideMode?: boolean;
+  responseStyle?: ResponseStyle;
 }
 
 const DEFAULT_SETTINGS: StoredSettings = {
@@ -44,7 +46,7 @@ const DEFAULT_SETTINGS: StoredSettings = {
   model: '',
   provider: PROVIDERS[0].id,
   theme: DEFAULT_THEME,
-  guideMode: true,
+  responseStyle: 'concise',
 };
 
 interface SettingsState {
@@ -54,6 +56,7 @@ interface SettingsState {
   baseUrl: string;
   model: string;
   guideMode: boolean;
+  responseStyle: ResponseStyle;
   settingsOpen: boolean;
   availableModels: ModelInfo[];
   modelsLoading: boolean;
@@ -65,6 +68,7 @@ interface SettingsState {
   setBaseUrl: (url: string) => void;
   setModel: (model: string) => void;
   setGuideMode: (enabled: boolean) => void;
+  setResponseStyle: (style: ResponseStyle) => void;
   toggleSettings: () => void;
   closeSettings: () => void;
   refreshModels: () => void;
@@ -86,6 +90,7 @@ function loadSettings(): StoredSettings {
         provider: parsed.provider ?? detectProvider(baseUrl),
         theme: parsed.theme ?? DEFAULT_THEME,
         guideMode: parsed.guideMode ?? true,
+        responseStyle: parsed.responseStyle ?? 'concise',
       };
     }
   } catch { /* ignore */ }
@@ -145,6 +150,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     baseUrl: initial.baseUrl,
     model: initial.model,
     guideMode: initial.guideMode ?? true,
+    responseStyle: initial.responseStyle ?? 'concise',
     settingsOpen: false,
     availableModels: [],
     modelsLoading: false,
@@ -186,6 +192,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       set({ guideMode: enabled });
     },
 
+    setResponseStyle: (style) => {
+      saveSettings({ responseStyle: style });
+      set({ responseStyle: style });
+    },
+
     toggleSettings: () => set((s) => ({ settingsOpen: !s.settingsOpen })),
     closeSettings: () => set({ settingsOpen: false }),
     refreshModels,
@@ -212,6 +223,7 @@ window.addEventListener('storage', (e) => {
       provider: newProvider,
       theme: (parsed.theme as ThemeId) ?? DEFAULT_THEME,
       guideMode: parsed.guideMode ?? true,
+      responseStyle: parsed.responseStyle ?? 'concise',
     });
     useSettingsStore.getState().refreshModels();
   } catch { /* ignore malformed data */ }

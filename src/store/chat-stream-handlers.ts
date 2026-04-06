@@ -86,7 +86,7 @@ function buildBaseMetadata(ctx: ErrorMetadataContext) {
   };
 }
 
-export interface StreamDoneResult {
+interface StreamDoneResult {
   text: string;
   modifications?: DiagramModification;
   suggestions?: FrameworkSuggestions;

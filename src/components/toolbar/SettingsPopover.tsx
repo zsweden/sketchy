@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
-import { useSettingsStore, PROVIDERS } from '../../store/settings-store';
+import { useSettingsStore, PROVIDERS, type ResponseStyle } from '../../store/settings-store';
 import { formatModelDate } from '../../core/ai/model-fetcher';
 import { THEMES, type ThemeId } from '../../styles/themes';
 import { DROPDOWN_BLUR_DELAY_MS } from '../../constants/timing';
@@ -16,6 +16,8 @@ export default function SettingsPopover() {
   const setProvider = useSettingsStore((s) => s.setProvider);
   const guideMode = useSettingsStore((s) => s.guideMode);
   const setGuideMode = useSettingsStore((s) => s.setGuideMode);
+  const responseStyle = useSettingsStore((s) => s.responseStyle);
+  const setResponseStyle = useSettingsStore((s) => s.setResponseStyle);
   const apiKey = useSettingsStore((s) => s.openaiApiKey);
   const setApiKey = useSettingsStore((s) => s.setOpenaiApiKey);
   const baseUrl = useSettingsStore((s) => s.baseUrl);
@@ -251,6 +253,18 @@ export default function SettingsPopover() {
           >
             <div className="toggle-thumb" />
           </button>
+        </div>
+        <div className="settings-field">
+          <p className="section-label">Response Style</p>
+          <select
+            className="input-text"
+            value={responseStyle}
+            onChange={(e) => setResponseStyle(e.target.value as ResponseStyle)}
+            aria-label="Response style"
+          >
+            <option value="concise">Concise</option>
+            <option value="detailed">Detailed</option>
+          </select>
         </div>
       </div>
 

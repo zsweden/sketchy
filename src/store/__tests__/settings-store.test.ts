@@ -264,6 +264,42 @@ describe('settings store', () => {
     });
   });
 
+  describe('responseStyle', () => {
+    it('defaults to concise', async () => {
+      const useSettingsStore = await importFreshStore();
+      expect(useSettingsStore.getState().responseStyle).toBe('concise');
+    });
+
+    it('updates responseStyle in state and persists', async () => {
+      const useSettingsStore = await importFreshStore();
+      useSettingsStore.getState().setResponseStyle('detailed');
+
+      expect(useSettingsStore.getState().responseStyle).toBe('detailed');
+      const stored = JSON.parse(mockStorage.getItem(STORAGE_KEY)!);
+      expect(stored.responseStyle).toBe('detailed');
+    });
+
+    it('loads responseStyle from localStorage', async () => {
+      mockStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ apiKey: '', responseStyle: 'detailed' }),
+      );
+
+      const useSettingsStore = await importFreshStore();
+      expect(useSettingsStore.getState().responseStyle).toBe('detailed');
+    });
+
+    it('falls back to concise for missing responseStyle in localStorage', async () => {
+      mockStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ apiKey: 'sk-test' }),
+      );
+
+      const useSettingsStore = await importFreshStore();
+      expect(useSettingsStore.getState().responseStyle).toBe('concise');
+    });
+  });
+
   describe('refreshModels', () => {
     it('fetches models and updates availableModels on success', async () => {
       const mockModels = [

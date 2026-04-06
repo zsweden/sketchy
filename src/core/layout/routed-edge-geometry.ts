@@ -18,7 +18,7 @@ export interface RoutedEdgeGeometry {
   targetExitSide: 'left' | 'right' | 'top' | 'bottom';
 }
 
-export type AxisAlignedBox = {
+type AxisAlignedBox = {
   left: number;
   top: number;
   right: number;

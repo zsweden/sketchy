@@ -14,7 +14,6 @@ import {
   getPolylineLength,
 } from './routed-edge-geometry';
 
-export type { RoutedEdgeGeometry } from './routed-edge-geometry';
 export { computeRoutedEdgeGeometries } from './routed-edge-geometry';
 
 export interface LayoutMetrics {
