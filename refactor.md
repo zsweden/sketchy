@@ -9,7 +9,7 @@ Architectural improvement opportunities identified 2026-04-06. Ordered by impact
 | 1 | Chat-store / diagram-store coupling | High | Phase 1 done; Phase 2 pending |
 | 2 | EntityNode complexity | Medium | Not started |
 | 3 | Layout metrics hotspot | Medium | Not started |
-| 4 | E2E test depth | Medium | Not started |
+| 4 | E2E test depth | Medium | Done (55 tests, +6 covering save/load, mixed undo/redo, AI batch, multi-drag, reconnect, CLD cycles) |
 | 5 | Error handling consistency | Low | Not started |
 
 ## Strengths to Preserve

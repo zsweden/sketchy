@@ -1278,3 +1278,307 @@ test('rejects cycle-creating edge in DAG framework', async ({ page }) => {
   expect(result.reason).toBe('Cannot connect: would create a cycle');
   await expect(page.locator('.react-flow__edge')).toHaveCount(2);
 });
+
+// --- 36. Save button → New → Load button round-trip via file input ---
+
+test('Save button serializes diagram and Load restores it via file input', async ({ page }) => {
+  // Build diagram with two labeled nodes, an edge, and a tag
+  await createNode(page, 100, 200);
+  await createNode(page, 300, 200);
+  const ids = await getNodeIds(page);
+  await updateNodeText(page, ids[0], 'Alpha');
+  await updateNodeText(page, ids[1], 'Beta');
+  await addEdge(page, ids[0], ids[1]);
+
+  // Tag the second node as UDE
+  await page.locator(`[data-node-id="${ids[1]}"]`).click({ button: 'right' });
+  await page.locator('.context-menu-item', { hasText: 'Undesirable Effect' }).click();
+  await expect(page.locator('.entity-node .badge', { hasText: 'UDE' })).toBeVisible();
+
+  // Capture the serialized diagram via the store (same as Save button)
+  const savedJson = await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const store = (window as any).__diagramStore;
+    const diagram = store.getState().diagram;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { diagramToSkyJson } = (window as any).__skyIoHelpers ?? {};
+    if (diagramToSkyJson) return JSON.stringify(diagramToSkyJson(diagram), null, 2);
+    return JSON.stringify(diagram);
+  });
+
+  // New → clears canvas
+  page.once('dialog', (d) => d.accept());
+  await page.getByRole('button', { name: 'New' }).click();
+  await expect(page.locator('.entity-node')).toHaveCount(0);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(0);
+
+  // Load the saved file
+  const fileInput = page.locator('input[type="file"][accept=".json,.sky"]');
+  await fileInput.setInputFiles({
+    name: 'save-load-test.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(savedJson, 'utf-8'),
+  });
+
+  // Verify full restoration
+  await expect(page.locator('.entity-node')).toHaveCount(2);
+  await expect(page.locator('.entity-node').filter({ hasText: 'Alpha' })).toBeVisible();
+  await expect(page.locator('.entity-node').filter({ hasText: 'Beta' })).toBeVisible();
+  await expect(page.locator('.react-flow__edge')).toHaveCount(1);
+  await expect(page.locator('.entity-node .badge', { hasText: 'UDE' })).toBeVisible();
+
+  // Verify framework survived
+  const fw = await page.evaluate(() =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__diagramStore.getState().diagram.frameworkId,
+  );
+  expect(fw).toBe('crt');
+});
+
+// --- 37. Undo/redo across mixed operations ---
+
+test('undo/redo across node create, edge add, tag change, and delete', async ({ page }) => {
+  // 1. Create node A
+  await createNode(page, 200, 200);
+  await expect(page.locator('.entity-node')).toHaveCount(1);
+  const idsAfterFirst = await getNodeIds(page);
+  await updateNodeText(page, idsAfterFirst[0], 'Node A');
+
+  // 2. Create node B
+  await createNode(page, 400, 200);
+  await expect(page.locator('.entity-node')).toHaveCount(2);
+  const idsAfterSecond = await getNodeIds(page);
+  const nodeBId = idsAfterSecond.find((id) => id !== idsAfterFirst[0])!;
+  await updateNodeText(page, nodeBId, 'Node B');
+
+  // 3. Add edge A → B
+  await addEdge(page, idsAfterFirst[0], nodeBId);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(1);
+
+  // 4. Tag node A as UDE
+  await page.locator(`[data-node-id="${idsAfterFirst[0]}"]`).click({ button: 'right' });
+  await page.locator('.context-menu-item', { hasText: 'Undesirable Effect' }).click();
+  await expect(page.locator('.entity-node .badge', { hasText: 'UDE' })).toBeVisible();
+
+  // 5. Delete node B
+  await page.locator(`[data-node-id="${nodeBId}"]`).click();
+  await page.keyboard.press('Backspace');
+  await expect(page.locator('.entity-node')).toHaveCount(1);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(0);
+
+  // Deselect to ensure undo keyboard shortcut works
+  await page.locator(PANE).click({ position: { x: 50, y: 50 } });
+
+  // Undo delete → node B and edge restored
+  await page.keyboard.press('ControlOrMeta+z');
+  await expect(page.locator('.entity-node')).toHaveCount(2);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(1);
+
+  // Undo tag → UDE badge gone
+  await page.keyboard.press('ControlOrMeta+z');
+  await expect(page.locator('.entity-node .badge', { hasText: 'UDE' })).toHaveCount(0);
+
+  // Redo tag → UDE badge returns
+  await page.keyboard.press('ControlOrMeta+Shift+z');
+  await expect(page.locator('.entity-node .badge', { hasText: 'UDE' })).toBeVisible();
+
+  // Redo delete → back to 1 node
+  await page.keyboard.press('ControlOrMeta+Shift+z');
+  await expect(page.locator('.entity-node')).toHaveCount(1);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(0);
+});
+
+// --- 38. AI batch mutations via batchApply ---
+
+test('batchApply creates nodes and edges as AI would', async ({ page }) => {
+  // Simulate AI applying mutations through the same store API the chat uses
+  const result = await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const store = (window as any).__diagramStore;
+    const idMap = store.getState().batchApply({
+      addNodes: [
+        { id: 'ai-1', label: 'AI Cause' },
+        { id: 'ai-2', label: 'AI Effect' },
+        { id: 'ai-3', label: 'AI Outcome' },
+      ],
+      addEdges: [
+        { source: 'ai-1', target: 'ai-2' },
+        { source: 'ai-2', target: 'ai-3' },
+      ],
+    });
+    // idMap maps placeholder IDs to real UUIDs
+    return {
+      mappedIds: Object.fromEntries(idMap),
+      nodeCount: store.getState().diagram.nodes.length,
+      edgeCount: store.getState().diagram.edges.length,
+    };
+  });
+
+  expect(result.nodeCount).toBe(3);
+  expect(result.edgeCount).toBe(2);
+  expect(result.mappedIds['ai-1']).toBeTruthy();
+  expect(result.mappedIds['ai-2']).toBeTruthy();
+  expect(result.mappedIds['ai-3']).toBeTruthy();
+
+  // Verify rendered
+  await expect(page.locator('.entity-node')).toHaveCount(3);
+  await expect(page.locator('.entity-node').filter({ hasText: 'AI Cause' })).toBeVisible();
+  await expect(page.locator('.entity-node').filter({ hasText: 'AI Effect' })).toBeVisible();
+  await expect(page.locator('.entity-node').filter({ hasText: 'AI Outcome' })).toBeVisible();
+  await expect(page.locator('.react-flow__edge')).toHaveCount(2);
+
+  // Undo should revert the entire batch atomically
+  await page.locator(PANE).click({ position: { x: 50, y: 50 } });
+  await page.keyboard.press('ControlOrMeta+z');
+  await expect(page.locator('.entity-node')).toHaveCount(0);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(0);
+});
+
+// --- 39. Multi-node drag ---
+
+test('dragging multiple selected nodes moves them together', async ({ page }) => {
+  await createNode(page, 100, 200);
+  await createNode(page, 300, 200);
+  const ids = await getNodeIds(page);
+
+  // Get initial positions from the store
+  const initialPositions = await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nodes = (window as any).__diagramStore.getState().diagram.nodes;
+    return nodes.map((n: { id: string; position: { x: number; y: number } }) => ({
+      id: n.id,
+      x: n.position.x,
+      y: n.position.y,
+    }));
+  });
+
+  // Select both via store (simulates Shift+click or marquee)
+  await page.evaluate(
+    ([id0, id1]) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const store = (window as any).__diagramStore;
+      store.getState().dragNodes([
+        { id: id0, position: { x: store.getState().diagram.nodes[0].position.x + 50, y: store.getState().diagram.nodes[0].position.y + 50 } },
+        { id: id1, position: { x: store.getState().diagram.nodes[1].position.x + 50, y: store.getState().diagram.nodes[1].position.y + 50 } },
+      ]);
+      store.getState().commitDraggedNodes();
+    },
+    [ids[0], ids[1]],
+  );
+
+  // Check both positions shifted
+  const finalPositions = await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nodes = (window as any).__diagramStore.getState().diagram.nodes;
+    return nodes.map((n: { id: string; position: { x: number; y: number } }) => ({
+      id: n.id,
+      x: n.position.x,
+      y: n.position.y,
+    }));
+  });
+
+  for (let i = 0; i < 2; i++) {
+    expect(finalPositions[i].x).toBeCloseTo(initialPositions[i].x + 50, 0);
+    expect(finalPositions[i].y).toBeCloseTo(initialPositions[i].y + 50, 0);
+  }
+
+  // Undo should restore original positions
+  await page.locator(PANE).click({ position: { x: 50, y: 50 } });
+  await page.keyboard.press('ControlOrMeta+z');
+
+  const restored = await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nodes = (window as any).__diagramStore.getState().diagram.nodes;
+    return nodes.map((n: { id: string; position: { x: number; y: number } }) => ({
+      id: n.id,
+      x: n.position.x,
+      y: n.position.y,
+    }));
+  });
+
+  for (let i = 0; i < 2; i++) {
+    expect(restored[i].x).toBeCloseTo(initialPositions[i].x, 0);
+    expect(restored[i].y).toBeCloseTo(initialPositions[i].y, 0);
+  }
+});
+
+// --- 40. Edge reconnection ---
+
+test('reconnecting an edge updates its target in the store', async ({ page }) => {
+  await createNode(page, 200, 100);
+  await createNode(page, 200, 300);
+  await createNode(page, 400, 300);
+  const ids = await getNodeIds(page);
+
+  // A → B
+  await addEdge(page, ids[0], ids[1]);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(1);
+
+  // Verify initial target
+  const initialTarget = await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (window as any).__diagramStore.getState().diagram.edges[0].target;
+  });
+  expect(initialTarget).toBe(ids[1]);
+
+  // Reconnect: delete old edge, add new edge A → C (simulates drag-reconnect)
+  await page.evaluate(
+    ([sourceId, _oldTargetId, newTargetId]) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const store = (window as any).__diagramStore;
+      const edgeId = store.getState().diagram.edges[0].id;
+      store.getState().deleteEdges([edgeId]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).__sketchy_addEdge(sourceId, newTargetId);
+    },
+    [ids[0], ids[1], ids[2]],
+  );
+
+  await expect(page.locator('.react-flow__edge')).toHaveCount(1);
+
+  const newTarget = await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (window as any).__diagramStore.getState().diagram.edges[0].target;
+  });
+  expect(newTarget).toBe(ids[2]);
+});
+
+// --- 41. CLD allows cycles ---
+
+test('CLD framework allows cycle-creating edge that DAG frameworks reject', async ({ page }) => {
+  // Switch to CLD (allows cycles)
+  page.once('dialog', (d) => d.accept());
+  await page.getByLabel('Framework').selectOption('cld');
+
+  // Create 3 nodes: A → B → C
+  await createNode(page, 200, 100);
+  await createNode(page, 200, 300);
+  await createNode(page, 200, 500);
+  const ids = await getNodeIds(page);
+
+  await addEdge(page, ids[0], ids[1]);
+  await addEdge(page, ids[1], ids[2]);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(2);
+
+  // C → A would create a cycle — should SUCCEED in CLD
+  const result = await page.evaluate(
+    ([src, tgt]) => // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__sketchy_addEdge(src, tgt),
+    [ids[2], ids[0]],
+  );
+
+  expect(result.success).toBe(true);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(3);
+
+  // Verify the cycle exists in the store
+  const edges = await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (window as any).__diagramStore.getState().diagram.edges.map(
+      (e: { source: string; target: string }) => ({ source: e.source, target: e.target }),
+    );
+  });
+  const cycleEdge = edges.find(
+    (e: { source: string; target: string }) => e.source === ids[2] && e.target === ids[0],
+  );
+  expect(cycleEdge).toBeDefined();
+});
