@@ -242,6 +242,27 @@ describe('diagram store', () => {
       expect(node?.data.tags).toEqual(['ude']);
     });
 
+    it('enforces exclusive tags by removing other exclusive tags', () => {
+      useDiagramStore.getState().setFramework('team-topology');
+      useDiagramStore.getState().newDiagram();
+      const id = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+
+      // Apply first exclusive tag
+      useDiagramStore.getState().updateNodeTags(id, ['stream-aligned']);
+      expect(
+        useDiagramStore.getState().diagram.nodes.find((n) => n.id === id)?.data.tags,
+      ).toEqual(['stream-aligned']);
+
+      // Apply second exclusive tag — should replace the first
+      useDiagramStore.getState().updateNodeTags(id, ['stream-aligned', 'platform']);
+      expect(
+        useDiagramStore.getState().diagram.nodes.find((n) => n.id === id)?.data.tags,
+      ).toEqual(['platform']);
+
+      // Reset to CRT for subsequent tests
+      resetStore();
+    });
+
     it('toggles junction type', () => {
       const id = useDiagramStore.getState().addNode({ x: 0, y: 0 });
       useDiagramStore.getState().updateNodeJunction(id, 'or');

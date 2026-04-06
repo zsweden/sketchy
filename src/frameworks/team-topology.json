@@ -1,0 +1,70 @@
+{
+  "id": "team-topology",
+  "name": "Team Topology",
+  "abbreviation": "TT",
+  "description": "Map team types and interaction modes to optimize for fast flow and minimal cognitive load",
+  "defaultLayoutDirection": "TB",
+  "supportsJunctions": false,
+  "edgeLabel": "interacts with",
+  "systemPromptHint": "Stream-aligned teams should be the majority — if most teams are platform or enabling, the topology is inverted. Collaboration mode should be temporary; if two teams are permanently collaborating, they should merge or define an x-as-a-service boundary. Every interaction adds cognitive load — teams with many connections are overloaded; reduce interactions rather than adding capacity. Platform teams exist to make stream-aligned teams autonomous, not to centralize control.",
+  "nodeTags": [
+    {
+      "id": "stream-aligned",
+      "name": "Stream-Aligned Team",
+      "shortName": "Stream",
+      "color": "#42A5F5",
+      "description": "Aligned to a single flow of work from a business domain segment",
+      "exclusive": true
+    },
+    {
+      "id": "platform",
+      "name": "Platform Team",
+      "shortName": "Platform",
+      "color": "#7E57C2",
+      "description": "Provides internal services that reduce cognitive load for stream-aligned teams",
+      "exclusive": true
+    },
+    {
+      "id": "enabling",
+      "name": "Enabling Team",
+      "shortName": "Enable",
+      "color": "#26A69A",
+      "description": "Helps other teams overcome obstacles and adopt new capabilities — temporary by nature",
+      "exclusive": true
+    },
+    {
+      "id": "complicated-subsystem",
+      "name": "Complicated-Subsystem Team",
+      "shortName": "Subsys",
+      "color": "#FB8C00",
+      "description": "Owns a subsystem requiring deep specialist knowledge that would overload other teams",
+      "exclusive": true
+    }
+  ],
+  "derivedIndicators": [
+    {
+      "id": "autonomous",
+      "name": "Autonomous",
+      "shortName": "Auto",
+      "color": "#5C8DB5",
+      "condition": "indegree-zero",
+      "description": "No incoming interactions — operates independently"
+    },
+    {
+      "id": "hub",
+      "name": "Hub",
+      "shortName": "Hub",
+      "color": "#9E9E9E",
+      "condition": "indegree-and-outdegree",
+      "description": "Both provides and consumes interactions — watch for cognitive overload"
+    },
+    {
+      "id": "consumer",
+      "name": "Consumer",
+      "shortName": "Consumer",
+      "color": "#26A69A",
+      "condition": "leaf",
+      "description": "Only consumes services or facilitation from other teams"
+    }
+  ]
+}

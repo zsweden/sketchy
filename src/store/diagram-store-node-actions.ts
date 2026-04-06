@@ -78,8 +78,28 @@ export function createDiagramNodeActions(
     },
 
     updateNodeTags: (id, tags) => {
+      const state = context.get();
+      const framework = resolveFramework(state.diagram.frameworkId);
+      const exclusiveIds = new Set(
+        framework.nodeTags.filter((t) => t.exclusive).map((t) => t.id),
+      );
+
+      let resolved = tags;
+      if (exclusiveIds.size > 0) {
+        // Find the newly added exclusive tag (last one wins)
+        const node = state.diagram.nodes.find((n) => n.id === id);
+        const prevTags = node?.data.tags ?? [];
+        const newExclusive = tags.filter(
+          (t) => exclusiveIds.has(t) && !prevTags.includes(t),
+        );
+        if (newExclusive.length > 0) {
+          const keeper = newExclusive[newExclusive.length - 1];
+          resolved = tags.filter((t) => !exclusiveIds.has(t) || t === keeper);
+        }
+      }
+
       updateNodes(
-        (node) => (node.id === id ? { ...node, data: { ...node.data, tags } } : node),
+        (node) => (node.id === id ? { ...node, data: { ...node.data, tags: resolved } } : node),
         { trackHistory: true },
       );
     },

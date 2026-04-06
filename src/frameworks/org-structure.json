@@ -1,0 +1,78 @@
+{
+  "id": "org-structure",
+  "name": "Org Structure",
+  "abbreviation": "ORG",
+  "description": "Map reporting lines, roles, and team boundaries across an organization",
+  "defaultLayoutDirection": "TB",
+  "supportsJunctions": false,
+  "edgeLabel": "reports to",
+  "systemPromptHint": "Each node should represent a role or team, not a person — people change, structures persist. Reporting lines must be unambiguous: a node with multiple managers signals a matrix structure that should be made explicit. Span of control matters — more than 7-8 direct reports usually indicates a missing layer. If the diagram is flat everywhere, critical coordination points are being hidden.",
+  "nodeTags": [
+    {
+      "id": "executive",
+      "name": "Executive",
+      "shortName": "Exec",
+      "color": "#7E57C2",
+      "description": "C-suite or top-level leadership role",
+      "exclusive": true
+    },
+    {
+      "id": "department",
+      "name": "Department",
+      "shortName": "Dept",
+      "color": "#42A5F5",
+      "description": "A major organizational division or business unit",
+      "exclusive": true
+    },
+    {
+      "id": "team",
+      "name": "Team",
+      "shortName": "Team",
+      "color": "#26A69A",
+      "description": "A working group within a department",
+      "exclusive": true
+    },
+    {
+      "id": "role",
+      "name": "Role",
+      "shortName": "Role",
+      "color": "#FB8C00",
+      "description": "An individual function or position",
+      "exclusive": true
+    },
+    {
+      "id": "vacant",
+      "name": "Vacant",
+      "shortName": "Open",
+      "color": "#E57373",
+      "description": "An unfilled position or planned role",
+      "exclusive": false
+    }
+  ],
+  "derivedIndicators": [
+    {
+      "id": "top-leadership",
+      "name": "Top Leadership",
+      "shortName": "Top",
+      "color": "#5C8DB5",
+      "condition": "indegree-zero",
+      "description": "No one above — the top of the reporting chain"
+    },
+    {
+      "id": "manager",
+      "name": "Manager",
+      "shortName": "Mgr",
+      "color": "#9E9E9E",
+      "condition": "indegree-and-outdegree",
+      "description": "Has both a reporting line above and direct reports below"
+    },
+    {
+      "id": "individual-contributor",
+      "name": "Individual Contributor",
+      "shortName": "IC",
+      "color": "#26A69A",
+      "condition": "leaf",
+      "description": "No direct reports — an end-of-chain role"
+    }
+  ]
+}
