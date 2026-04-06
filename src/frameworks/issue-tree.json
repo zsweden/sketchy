@@ -1,0 +1,70 @@
+{
+  "id": "issue-tree",
+  "name": "Issue Tree",
+  "abbreviation": "IT",
+  "description": "Decompose a question into mutually exclusive, collectively exhaustive sub-questions and hypotheses",
+  "defaultLayoutDirection": "TB",
+  "supportsJunctions": false,
+  "edgeLabel": "decomposes into",
+  "systemPromptHint": "Every level must be MECE: children must not overlap (mutually exclusive) and must fully cover the parent (collectively exhaustive). If you can't confirm both, the decomposition is incomplete. Leaves are testable hypotheses, not conclusions — phrase them so data can confirm or eliminate them. Decompose questions into sub-questions, not causes into effects — this is not a causal diagram. Stop splitting when you reach a level where each branch can be investigated directly.",
+  "nodeTags": [
+    {
+      "id": "question",
+      "name": "Question",
+      "shortName": "Q",
+      "color": "#42A5F5",
+      "description": "An open question or sub-question to be decomposed further",
+      "exclusive": true
+    },
+    {
+      "id": "hypothesis",
+      "name": "Hypothesis",
+      "shortName": "Hyp",
+      "color": "#FB8C00",
+      "description": "A testable explanation or answer to investigate",
+      "exclusive": true
+    },
+    {
+      "id": "validated",
+      "name": "Validated",
+      "shortName": "Yes",
+      "color": "#66BB6A",
+      "description": "Investigation confirmed this hypothesis",
+      "exclusive": true
+    },
+    {
+      "id": "eliminated",
+      "name": "Eliminated",
+      "shortName": "No",
+      "color": "#9E9E9E",
+      "description": "Investigation ruled out this hypothesis",
+      "exclusive": true
+    }
+  ],
+  "derivedIndicators": [
+    {
+      "id": "root-question",
+      "name": "Root Question",
+      "shortName": "Root",
+      "color": "#5C8DB5",
+      "condition": "indegree-zero",
+      "description": "The top-level question being investigated"
+    },
+    {
+      "id": "branch",
+      "name": "Branch",
+      "shortName": "Branch",
+      "color": "#9E9E9E",
+      "condition": "indegree-and-outdegree",
+      "description": "An intermediate decomposition — neither the root question nor a leaf hypothesis"
+    },
+    {
+      "id": "leaf",
+      "name": "Testable",
+      "shortName": "Test",
+      "color": "#26A69A",
+      "condition": "leaf",
+      "description": "A leaf node — should be directly investigable with data or evidence"
+    }
+  ]
+}
