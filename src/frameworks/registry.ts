@@ -1,25 +1,20 @@
 import type { Framework } from '../core/framework-types';
-import { cldFramework } from './cld';
-import { crtFramework } from './crt';
-import { frtFramework } from './frt';
-import { goalTreeFramework } from './goal-tree';
-import { vdtFramework } from './vdt';
-import { prtFramework } from './prt';
-import { successTreeFramework } from './success-tree';
-import { sttFramework } from './stt';
-import { valueStreamFramework } from './value-stream';
 
 const frameworks = new Map<string, Framework>();
 
-frameworks.set(cldFramework.id, cldFramework);
-frameworks.set(crtFramework.id, crtFramework);
-frameworks.set(frtFramework.id, frtFramework);
-frameworks.set(goalTreeFramework.id, goalTreeFramework);
-frameworks.set(vdtFramework.id, vdtFramework);
-frameworks.set(prtFramework.id, prtFramework);
-frameworks.set(successTreeFramework.id, successTreeFramework);
-frameworks.set(sttFramework.id, sttFramework);
-frameworks.set(valueStreamFramework.id, valueStreamFramework);
+// Auto-discover all framework files in this directory (excluding registry + tests).
+// Drop a new .ts file here that exports a Framework const and it registers automatically.
+const modules = import.meta.glob<Record<string, unknown>>('./*.ts', { eager: true });
+
+for (const [path, mod] of Object.entries(modules)) {
+  if (path === './registry.ts') continue;
+  for (const exp of Object.values(mod)) {
+    const fw = exp as Framework;
+    if (fw && typeof fw === 'object' && typeof fw.id === 'string' && Array.isArray(fw.nodeTags)) {
+      frameworks.set(fw.id, fw);
+    }
+  }
+}
 
 export function getFramework(id: string): Framework | undefined {
   return frameworks.get(id);
@@ -27,6 +22,13 @@ export function getFramework(id: string): Framework | undefined {
 
 export function listFrameworks(): Framework[] {
   return Array.from(frameworks.values());
+}
+
+/** Returns the first framework alphabetically by name. */
+export function getDefaultFramework(): Framework {
+  const sorted = listFrameworks().sort((a, b) => a.name.localeCompare(b.name));
+  if (sorted.length === 0) throw new Error('No frameworks registered');
+  return sorted[0];
 }
 
 export function registerFramework(fw: Framework): void {

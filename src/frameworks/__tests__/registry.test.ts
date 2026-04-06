@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getFramework, listFrameworks, registerFramework } from '../registry';
+import { getFramework, getDefaultFramework, listFrameworks, registerFramework } from '../registry';
 
 describe('framework registry', () => {
   it('has core frameworks registered by default', () => {
@@ -51,5 +51,26 @@ describe('framework registry', () => {
       derivedIndicators: [],
     });
     expect(getFramework('test-fw')).toBeDefined();
+  });
+
+  it('returns the alphabetically first framework as default', () => {
+    const defaultFw = getDefaultFramework();
+    const sorted = listFrameworks().sort((a, b) => a.name.localeCompare(b.name));
+    expect(defaultFw.id).toBe(sorted[0].id);
+  });
+
+  it('auto-discovers all framework files without manual imports', () => {
+    // Every framework .ts file in src/frameworks/ (excluding registry) should be registered
+    const all = listFrameworks();
+    const ids = all.map((f) => f.id);
+    expect(ids).toContain('cld');
+    expect(ids).toContain('crt');
+    expect(ids).toContain('frt');
+    expect(ids).toContain('goal-tree');
+    expect(ids).toContain('prt');
+    expect(ids).toContain('success-tree');
+    expect(ids).toContain('stt');
+    expect(ids).toContain('value-stream');
+    expect(ids).toContain('vdt');
   });
 });

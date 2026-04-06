@@ -11,6 +11,11 @@ test.beforeEach(async ({ page }) => {
   });
   await page.reload();
   await page.waitForSelector('[data-testid="diagram-flow"]');
+  // Explicitly set CRT as the starting framework so tests don't depend on the default
+  await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__diagramStore.getState().setFramework('crt');
+  });
 });
 
 // --- Helpers ---

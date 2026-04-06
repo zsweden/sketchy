@@ -1,11 +1,10 @@
 import { toast } from 'sonner';
-import { getFramework } from '../frameworks/registry';
+import { getFramework, getDefaultFramework } from '../frameworks/registry';
 import { DEFAULT_EDGE_ROUTING_POLICY } from '../core/edge-routing';
 import { reportError } from '../core/monitoring/error-logging';
 import { runElkAutoLayout } from '../core/layout/run-elk-auto-layout';
 import { useUIStore } from './ui-store';
 import {
-  getDefaultFramework,
   createDiagramForFramework,
   ensureFixedEdgeSides,
   batchAddNodes,

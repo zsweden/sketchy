@@ -9,7 +9,7 @@ import type {
 import { createEmptyDiagram } from '../core/types';
 import type { Framework } from '../core/framework-types';
 import { getDefaultJunctionType } from '../core/framework-types';
-import { getFramework } from '../frameworks/registry';
+import { getFramework, getDefaultFramework } from '../frameworks/registry';
 import { validateEdge } from '../core/graph/validation';
 import {
   getSideFromHandleId,
@@ -26,12 +26,6 @@ import type { BatchMutations } from './diagram-store-types';
 import { DEFAULT_NODE_HEIGHT, DEFAULT_NODE_WIDTH } from '../constants/layout';
 
 // --- Framework helpers ---
-
-export function getDefaultFramework(): Framework {
-  const fw = getFramework('crt');
-  if (!fw) throw new Error('CRT framework not registered');
-  return fw;
-}
 
 const _defaultFramework = getDefaultFramework();
 
