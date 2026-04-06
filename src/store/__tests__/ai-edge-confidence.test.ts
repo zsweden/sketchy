@@ -54,7 +54,7 @@ describe('AI edge confidence end-to-end', () => {
     }
   });
 
-  it('medium confidence survives .sky round-trip', () => {
+  it('medium confidence survives .json round-trip', () => {
     setupFixture();
     const edges = useDiagramStore.getState().diagram.edges;
 
@@ -63,16 +63,16 @@ describe('AI edge confidence end-to-end', () => {
       updateEdges: edges.map((e) => ({ id: e.id, confidence: 'medium' as const })),
     });
 
-    // Save to .sky format
+    // Save to .json format
     const diagram = useDiagramStore.getState().diagram;
     const skyJson = diagramToSkyJson(diagram);
 
-    // All edges in .sky should have confidence: 'medium'
+    // All edges in .json should have confidence: 'medium'
     for (const e of skyJson.edges) {
       expect(e.confidence).toBe('medium');
     }
 
-    // Load back from .sky
+    // Load back from .json
     const { diagram: loaded } = convertSkyJson(skyJson);
 
     expect(loaded.edges).toHaveLength(3);

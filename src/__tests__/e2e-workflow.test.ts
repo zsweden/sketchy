@@ -42,7 +42,7 @@ describe('end-to-end: CRT workflow', () => {
     expect(store().diagram.edges).toHaveLength(2);
     expect(store().diagram.nodes.find((n) => n.id === n2)?.data.tags).toEqual(['ude']);
 
-    // Save to .sky format
+    // Save to .json format
     const sky = diagramToSkyJson(store().diagram);
     expect(sky.nodes).toHaveLength(3);
     expect(sky.nodes.find((n) => n.label === 'Low morale')?.isUDE).toBe(true);
@@ -98,7 +98,7 @@ describe('end-to-end: CRT workflow', () => {
     expect(store().diagram.edges).toHaveLength(0);
   });
 
-  it('AI batchApply with edge confidence persists through .sky round-trip', () => {
+  it('AI batchApply with edge confidence persists through .json round-trip', () => {
     const store = useDiagramStore.getState;
 
     const n1 = store().addNode({ x: 0, y: 0 });
@@ -155,7 +155,7 @@ describe('end-to-end: FRT workflow', () => {
     expect(store().diagram.nodes.find((n) => n.id === n1)?.data.tags).toEqual(['injection']);
     expect(store().diagram.nodes.find((n) => n.id === n3)?.data.tags).toEqual(['de']);
 
-    // Save and verify .sky format
+    // Save and verify .json format
     const sky = diagramToSkyJson(store().diagram);
     expect(sky.framework).toBe('frt');
     expect(sky.nodes.find((n) => n.id === n1)?.tags).toEqual(['injection']);
@@ -174,7 +174,7 @@ describe('end-to-end: PRT workflow', () => {
     expect(prt!.edgeLabel).toBe('enables');
   });
 
-  it('create PRT diagram and preserve tags through .sky round-trip', () => {
+  it('create PRT diagram and preserve tags through .json round-trip', () => {
     const store = useDiagramStore.getState;
 
     const n1 = store().addNode({ x: 0, y: 0 });
@@ -216,7 +216,7 @@ describe('end-to-end: STT workflow', () => {
     expect(store.diagram.settings.layoutDirection).toBe('TB');
   });
 
-  it('create STT diagram and preserve tags through .sky round-trip', () => {
+  it('create STT diagram and preserve tags through .json round-trip', () => {
     const store = useDiagramStore.getState;
 
     const n1 = store().addNode({ x: 0, y: 0 });
@@ -258,7 +258,7 @@ describe('end-to-end: Goal Tree workflow', () => {
     expect(store.diagram.settings.layoutDirection).toBe('BT');
   });
 
-  it('create Goal Tree diagram and preserve tags through .sky round-trip', () => {
+  it('create Goal Tree diagram and preserve tags through .json round-trip', () => {
     const store = useDiagramStore.getState;
 
     const n1 = store().addNode({ x: 0, y: 0 });

@@ -3,7 +3,7 @@ import { loadSkyFile } from '../sky-io';
 import { createEmptyDiagram, SCHEMA_VERSION } from '../../types';
 import type { Diagram } from '../../types';
 
-function makeFile(content: string, name = 'test.sky'): File {
+function makeFile(content: string, name = 'test.json'): File {
   return new File([content], name, { type: 'application/json' });
 }
 
@@ -30,7 +30,7 @@ function makeDiagram(): Diagram {
 }
 
 describe('loadSkyFile', () => {
-  it('loads a .sky format file', async () => {
+  it('loads a project JSON file', async () => {
     const diagram = makeDiagram();
     const skyFile = {
       format: 'sky',
@@ -68,7 +68,7 @@ describe('loadSkyFile', () => {
     ).rejects.toThrow('Unrecognized file format');
   });
 
-  it('rejects .sky file with malformed diagram', async () => {
+  it('rejects file with malformed diagram', async () => {
     const skyFile = {
       format: 'sky',
       version: 1,

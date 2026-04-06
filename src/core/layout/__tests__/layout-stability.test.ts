@@ -59,7 +59,7 @@ function applyUpdates(
   });
 }
 
-describe('layout stability (4BoxLayout.sky)', () => {
+describe('layout stability (4BoxLayout)', () => {
   it('auto-layout produces deterministic positions', async () => {
     const updates1 = await autoLayout(fourBoxNodes, fourBoxEdges, {
       direction: 'TB',

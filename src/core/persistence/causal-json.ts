@@ -9,7 +9,7 @@ import { SCHEMA_VERSION } from '../types';
 import type { LegacyCornerHandleSide } from '../graph/ports';
 import { normalizeLegacyHandleSide } from '../graph/ports';
 
-// --- Unified .sky format types ---
+// --- Unified project JSON format types ---
 
 interface SkyNode {
   id: string;
@@ -62,7 +62,7 @@ export function isSkyJson(data: unknown): data is SkyJson {
   if (typeof data !== 'object' || data === null) return false;
   const d = data as Record<string, unknown>;
 
-  // Reject old .sky wrapper format and raw diagram format
+  // Reject old wrapper format and raw diagram format
   if ('format' in d || 'schemaVersion' in d) return false;
 
   if (!Array.isArray(d.nodes) || !Array.isArray(d.edges)) return false;

@@ -2,7 +2,7 @@ import type { ChangeEvent, KeyboardEvent, RefObject } from 'react';
 import { FileText, Paperclip, Send, Square, X } from 'lucide-react';
 import type { AttachedFile } from './useChatComposer';
 
-const ACCEPT = '.txt,.json,.sky,.csv,.md,.ts,.tsx,.js,.jsx,.html,.css,.yml,.yaml,.xml,.log,.png,.jpg,.jpeg,.gif,.webp,.pdf';
+const ACCEPT = '.txt,.json,.csv,.md,.ts,.tsx,.js,.jsx,.html,.css,.yml,.yaml,.xml,.log,.png,.jpg,.jpeg,.gif,.webp,.pdf';
 
 export function ChatComposer({
   attachedFile,

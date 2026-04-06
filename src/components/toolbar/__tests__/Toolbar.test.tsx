@@ -245,7 +245,7 @@ describe('Toolbar', () => {
 
     fireEvent.change(input!, {
       target: {
-        files: [new File(['{}'], 'diagram.sky', { type: 'application/json' })],
+        files: [new File(['{}'], 'diagram.json', { type: 'application/json' })],
       },
     });
 

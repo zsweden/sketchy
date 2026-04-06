@@ -253,7 +253,7 @@ describePerf('perf: autosave serialization', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 5. .sky file load + validation + migration
+// 5. JSON file load + validation + migration
 // ---------------------------------------------------------------------------
 
 describePerf('perf: sky file load pipeline', () => {

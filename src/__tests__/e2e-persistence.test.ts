@@ -1,6 +1,6 @@
 /**
  * E2E tests for persistence workflows:
- * sessionStorage auto-save, .sky file round-trips, migration paths
+ * sessionStorage auto-save, .json file round-trips, migration paths
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useDiagramStore } from '../store/diagram-store';
@@ -72,7 +72,7 @@ describe('e2e: sessionStorage persistence', () => {
   });
 });
 
-describe('e2e: .sky format round-trips', () => {
+describe('e2e: .json format round-trips', () => {
   beforeEach(() => {
     useDiagramStore.getState().newDiagram();
     useDiagramStore.setState((s) => ({ diagram: { ...s.diagram, nodes: [] } }));
@@ -97,7 +97,7 @@ describe('e2e: .sky format round-trips', () => {
     expect(store().diagram.nodes).toHaveLength(50);
     expect(store().diagram.edges).toHaveLength(49);
 
-    // Round-trip through .sky
+    // Round-trip through .json
     const sky = diagramToSkyJson(store().diagram);
     const { diagram: loaded } = convertSkyJson(sky);
 
@@ -134,7 +134,7 @@ describe('e2e: .sky format round-trips', () => {
     expect(loaded.edges).toHaveLength(2);
   });
 
-  it('generic framework tags survive .sky round-trip', () => {
+  it('generic framework tags survive .json round-trip', () => {
     useDiagramStore.getState().setFramework('prt');
     const store = useDiagramStore.getState;
 
@@ -159,7 +159,7 @@ describe('e2e: .sky format round-trips', () => {
     expect(loaded.nodes.find((n) => n.id === n2)?.data.tags).toEqual(['io']);
   });
 
-  it('UDE tags survive .sky round-trip (CRT)', () => {
+  it('UDE tags survive .json round-trip (CRT)', () => {
     const store = useDiagramStore.getState;
     const n1 = store().addNode({ x: 0, y: 0 });
     store().updateNodeText(n1, 'Bad thing');

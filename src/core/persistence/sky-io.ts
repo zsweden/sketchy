@@ -5,7 +5,7 @@ import { migrateDiagramShape, normalizeLoadedDiagram } from './load-helpers';
 function defaultFilename(diagram: Diagram): string {
   const name = diagram.name?.trim() || 'diagram';
   const safe = name.replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '-');
-  return `${safe}.sky`;
+  return `${safe}.json`;
 }
 
 // Modern File System Access API types
@@ -36,7 +36,7 @@ export async function saveSkyFile(diagram: Diagram): Promise<void> {
         types: [
           {
             description: 'Sketchy Project',
-            accept: { 'application/json': ['.sky'] },
+            accept: { 'application/json': ['.json'] },
           },
         ],
       };
@@ -98,7 +98,7 @@ export async function loadSkyFile(file: File): Promise<LoadResult> {
     const skyFile = parsed as Record<string, unknown>;
     const legacyDiagram = migrateDiagramShape(skyFile.diagram);
     if (!legacyDiagram) {
-      throw new Error('Invalid .sky project. The diagram data is missing or malformed.');
+      throw new Error('Invalid project file. The diagram data is missing or malformed.');
     }
     diagram = legacyDiagram;
   }
@@ -106,7 +106,7 @@ export async function loadSkyFile(file: File): Promise<LoadResult> {
   else {
     const legacyDiagram = migrateDiagramShape(parsed);
     if (!legacyDiagram) {
-      throw new Error('Unrecognized file format. Expected a .sky project file.');
+      throw new Error('Unrecognized file format. Expected a Sketchy .json project file.');
     }
     diagram = legacyDiagram;
   }

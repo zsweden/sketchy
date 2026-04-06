@@ -15,7 +15,7 @@ function e(id: string, source: string, target: string): DiagramEdge {
   return { id, source, target };
 }
 
-// --- Fixtures extracted from .sky test files ---
+// --- Fixtures extracted from project test files ---
 
 const fixtures: Record<string, { nodes: DiagramNode[]; edges: DiagramEdge[] }> = {
   '4BoxLayout': {
@@ -184,7 +184,7 @@ function assertNoOverlap(
   }
 }
 
-describe('no-overlap on .sky fixtures', () => {
+describe('no-overlap on project fixtures', () => {
   for (const [name, fixture] of Object.entries(fixtures)) {
     it(`${name} — no overlap after layout`, async () => {
       const heights = computeNodeHeights(fixture.nodes, fixture.edges);

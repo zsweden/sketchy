@@ -3,7 +3,7 @@ import { autoLayout } from '../auto-layout';
 import { elkEngine } from '../elk-engine';
 import type { DiagramNode, DiagramEdge } from '../../types';
 
-// Fixture from 4BoxLayout.sky — two disconnected chains (TB direction)
+// Fixture from 4BoxLayout — two disconnected chains (TB direction)
 const nodes: DiagramNode[] = [
   {
     id: '3468c4d9',

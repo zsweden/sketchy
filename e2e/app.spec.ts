@@ -217,7 +217,7 @@ test('undo restores a deleted node and redo removes it again', async ({ page }) 
   await expect(page.locator('.entity-node').first()).toContainText('Keep me');
 });
 
-// --- 3. Save / load .sky file ---
+// --- 3. Save / load JSON file ---
 
 test('saves diagram to sessionStorage, clears, and restores via file load', async ({ page }) => {
   await createNode(page, 200, 250);
@@ -243,11 +243,11 @@ test('saves diagram to sessionStorage, clears, and restores via file load', asyn
   await page.getByRole('button', { name: 'New' }).click();
   await expect(page.locator('.entity-node')).toHaveCount(0);
 
-  // Load via the .sky file input
-  const fileInput = page.locator('input[type="file"][accept=".sky,.json"]');
+  // Load via the JSON file input
+  const fileInput = page.locator('input[type="file"][accept=".json,.sky"]');
   const buffer = Buffer.from(json as string, 'utf-8');
   await fileInput.setInputFiles({
-    name: 'test-diagram.sky',
+    name: 'test-diagram.json',
     mimeType: 'application/json',
     buffer,
   });
@@ -1037,7 +1037,7 @@ test('save → new → load round-trip preserves nodes, edges, and tags', async 
   await page.locator('.context-menu-item', { hasText: 'Undesirable Effect' }).click();
   await expect(page.locator('.entity-node .badge', { hasText: 'UDE' })).toBeVisible();
 
-  // Get the diagram as a .sky JSON blob via the store
+  // Get the diagram as a JSON blob via the store
   const skyJson = await page.evaluate(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const store = (window as any).__diagramStore;
@@ -1056,9 +1056,9 @@ test('save → new → load round-trip preserves nodes, edges, and tags', async 
   await expect(page.locator('.entity-node')).toHaveCount(0);
 
   // Load the saved file
-  const fileInput = page.locator('input[type="file"][accept=".sky,.json"]');
+  const fileInput = page.locator('input[type="file"][accept=".json,.sky"]');
   await fileInput.setInputFiles({
-    name: 'round-trip.sky',
+    name: 'round-trip.json',
     mimeType: 'application/json',
     buffer: Buffer.from(skyJson, 'utf-8'),
   });
