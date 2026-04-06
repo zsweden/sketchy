@@ -8,10 +8,10 @@ LOC reduction opportunities, ranked by impact-to-complexity ratio. Updated 2026-
 | 2 | ContextMenu.tsx | 490 | 80–120 | Medium | Done (490 → 437, extracted ColorSwatchRow) |
 | 3 | e2e/app.spec.ts | 1,584 | 200–280 | High | Done (split into 6 spec files + helpers) |
 | 4 | Legacy .sky support | 219 | 30–50 | Low | Done (dropped legacy formats, isUDE shims) |
-| 5 | chat-store.ts | 466 | 70–110 | Medium | Not started |
-| 6 | system-prompt.ts | 349 | 60–100 | Medium | Not started |
-| 7 | DiagramCanvas.tsx | 366 | 90–150 | High | Not started |
-| 8 | Test fixtures | 1,397 | 160–250 | High | Not started |
+| 5 | chat-store.ts | 466 | 148 | Medium | Done (466 → 319, extracted chat-stream-handlers.ts) |
+| 6 | system-prompt.ts | 349 | 180 | Medium | Done (349 → 169, extracted tools.ts) |
+| 7 | DiagramCanvas.tsx | 366 | 189 | High | Done (366 → 177, extracted useCanvasHandlers.ts) |
+| 8 | Test fixtures | 1,397 | 81 | High | Done (extracted shared fixtures to src/test/fixtures.ts) |
 
 ---
 
@@ -37,18 +37,18 @@ Split 1,584-line monolith into 6 focused spec files with shared `helpers.ts`:
 
 Dropped legacy `.sky` wrapper format and raw diagram JSON loading from `sky-io.ts`. Removed `isUDE` backward-compat shims from `causal-json.ts`. File input now accepts `.json` only.
 
-## 5. chat-store.ts
+## 5. chat-store.ts — Done
 
-Extract streaming callback handlers (`onToken`, `onDone`, `onError` ~90 LOC) and error-reporting metadata builders into a separate module. `apply-ai-modifications.ts` already extracted.
+Extracted `processStreamDone`, `reportStreamError`, `createAssistantMessage`, and error-metadata builders into `chat-stream-handlers.ts`. chat-store.ts slimmed from 466 to 319 lines.
 
-## 6. system-prompt.ts
+## 6. system-prompt.ts — Done
 
-Extract tool definitions (`modifyDiagramTool`, `suggestFrameworksTool` + Anthropic aliases = ~180 LOC) into `tools.ts`. `buildSystemPrompt` and `buildGuideSystemPrompt` share ~60 LOC of rule construction.
+Extracted `modifyDiagramTool`, `suggestFrameworksTool` + Anthropic aliases into `tools.ts` (187 lines). system-prompt.ts slimmed from 349 to 169 lines. Re-exports preserved for backward compatibility.
 
-## 7. DiagramCanvas.tsx
+## 7. DiagramCanvas.tsx — Done
 
-Extract React Flow event handlers (onConnect, onNodeDragStop, onEdgeClick, etc.) into a `useCanvasHandlers` hook (~100 LOC saved). 3 hooks already extracted but could be consolidated.
+Extracted all React Flow event handlers (onNodesChange, onEdgesChange, onConnect, onNodeDragStop, selection, context menus, double-click, removal flush) into `useCanvasHandlers` hook. DiagramCanvas.tsx slimmed from 366 to 177 lines.
 
-## 8. Test fixtures
+## 8. Test fixtures — Done
 
-`openai-client.test.ts` (844 lines) and `diagram-store.test.ts` (553 lines) duplicate mock framework/diagram construction. A shared `src/test/fixtures.ts` would cut across multiple test files.
+Extracted mock frameworks (CRT, CLD, FRT), `makeCRTDiagram`, and SSE response helpers into shared `src/test/fixtures.ts`. openai-client.test.ts slimmed from 844 to 763 lines.

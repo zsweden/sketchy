@@ -1,5 +1,3 @@
-import type { Framework } from '../core/framework-types';
-import type { Diagram } from '../core/types';
 import { create } from 'zustand';
 import type { ChatDocument, ChatImage, ChatMessage, DiagramModification } from '../core/ai/openai-client';
 import type { FrameworkSuggestions } from '../core/ai/ai-types';
@@ -8,11 +6,9 @@ import { getFramework } from '../frameworks/registry';
 import { useSettingsStore } from './settings-store';
 import { useDiagramStore } from './diagram-store';
 import { resolveFramework } from './diagram-helpers';
-import { applyAiModifications } from './apply-ai-modifications';
-import { reportError } from '../core/monitoring/error-logging';
-import { findCausalLoops, labelCausalLoops } from '../core/graph/derived';
+import { createAssistantMessage, processStreamDone, reportStreamError } from './chat-stream-handlers';
+import type { ErrorMetadataContext } from './chat-stream-handlers';
 import type { ParsedChatSegment } from '../core/chat/mentions';
-import { buildChatMessageRenderData, remapCanonicalMentionIds } from '../core/chat/mentions';
 
 export interface DisplayMessage {
   id: string;
@@ -44,7 +40,6 @@ interface ChatState {
 
 let activeController: AbortController | null = null;
 let activeRequestId = 0;
-const EMPTY_RESPONSE_FALLBACK = 'The AI returned an empty response. Please try again.';
 const CHAT_STORAGE_KEY = 'sketchy_chat';
 
 interface PersistedChatState {
@@ -103,53 +98,6 @@ function persistChatState(state: Pick<ChatState, 'messages' | 'aiModifiedNodeIds
   }
 }
 
-function getLoopsForDiagram(diagram: Diagram, framework: Framework) {
-  return framework.allowsCycles ? labelCausalLoops(findCausalLoops(diagram.edges)) : [];
-}
-
-function createTextSegments(text: string): ParsedChatSegment[] {
-  return [{ type: 'text', text }];
-}
-
-function createAssistantMessage(
-  content: string,
-  options?: {
-    diagram?: Diagram;
-    framework?: Framework;
-    modifications?: DiagramModification;
-    retryText?: string;
-  },
-): DisplayMessage {
-  if (options?.diagram && options.framework) {
-    const renderData = buildChatMessageRenderData(
-      content,
-      options.diagram.nodes,
-      options.diagram.edges,
-      getLoopsForDiagram(options.diagram, options.framework),
-    );
-
-    return {
-      id: crypto.randomUUID(),
-      role: 'assistant',
-      content: renderData.normalizedText,
-      displayText: renderData.displayText,
-      segments: renderData.segments,
-      modifications: options.modifications,
-      retryText: options.retryText,
-    };
-  }
-
-  return {
-    id: crypto.randomUUID(),
-    role: 'assistant',
-    content,
-    displayText: content,
-    segments: createTextSegments(content),
-    modifications: options?.modifications,
-    retryText: options?.retryText,
-  };
-}
-
 function buildConversationHistory(messages: DisplayMessage[]): ChatMessage[] {
   return messages
     .filter((message) => !(message.role === 'assistant' && message.retryText))
@@ -159,14 +107,6 @@ function buildConversationHistory(messages: DisplayMessage[]): ChatMessage[] {
       ...(message.images?.length ? { images: message.images } : {}),
       ...(message.documents?.length ? { documents: message.documents } : {}),
     }));
-}
-
-function getEndpointHost(baseUrl: string): string {
-  try {
-    return new URL(baseUrl).host || 'unknown';
-  } catch {
-    return 'invalid_url';
-  }
 }
 
 function invalidateActiveRequest(options: { abort?: boolean } = {}): void {
@@ -238,6 +178,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
     // Build conversation history
     const history = buildConversationHistory(get().messages);
 
+    const errorCtx: ErrorMetadataContext = {
+      provider,
+      model,
+      baseUrl,
+      frameworkId: framework.id,
+      historyCount: history.length,
+      userMessageLength: text.length,
+    };
+
     const controller = streamChatMessage(
       openaiApiKey,
       baseUrl,
@@ -246,7 +195,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       framework,
       history,
       {
-
         onToken: (token) => {
           if (!isActiveRequest(requestId, requestDiagramId)) return;
           set((s) => ({ streamingContent: s.streamingContent + token }));
@@ -258,96 +206,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
             activeController = null;
           }
 
-          // Guide mode: framework suggestions
-          if (result.suggestions && result.suggestions.length > 0) {
-            const content = result.text.trim() || result.suggestions.map((s) => `${s.frameworkName}: ${s.reason}`).join('\n');
-            const assistantMsg: DisplayMessage = {
-              id: crypto.randomUUID(),
-              role: 'assistant',
-              content,
-              displayText: content,
-              segments: createTextSegments(content),
-              suggestions: result.suggestions,
-            };
-            set((s) => ({
-              messages: [...s.messages, assistantMsg],
-              loading: false,
-              streamingContent: '',
-              pendingSuggestions: result.suggestions!,
-            }));
-            return;
-          }
-
-          let messageDiagram = diagram;
-          let normalizedInput = result.text;
-
-          if (result.modifications) {
-            const idMap = applyAiModifications(result.modifications);
-            normalizedInput = remapCanonicalMentionIds(result.text, idMap);
-            messageDiagram = useDiagramStore.getState().diagram;
-          }
-
-          const renderData = buildChatMessageRenderData(
-            normalizedInput,
-            messageDiagram.nodes,
-            messageDiagram.edges,
-            getLoopsForDiagram(messageDiagram, framework),
-          );
-          const trimmedText = renderData.normalizedText.trim();
-          const content = trimmedText || EMPTY_RESPONSE_FALLBACK;
-
-          if (renderData.malformedMentionCount > 0) {
-            void reportError(new Error('AI chat returned malformed canonical mentions'), {
-              source: 'chat.malformed_mention',
-              fatal: false,
-              metadata: {
-                provider,
-                model,
-                endpointHost: getEndpointHost(baseUrl),
-                frameworkId: framework.id,
-                historyCount: history.length,
-                malformedMentionCount: renderData.malformedMentionCount,
-                resultTextLength: result.text.length,
-                normalizedTextLength: renderData.normalizedText.length,
-              },
-            });
-          }
-
-          if (!trimmedText) {
-            void reportError(new Error('AI chat returned empty assistant response'), {
-              source: 'chat.empty_response',
-              fatal: false,
-              metadata: {
-                provider,
-                model,
-                endpointHost: getEndpointHost(baseUrl),
-                frameworkId: framework.id,
-                historyCount: history.length,
-                userMessageLength: text.length,
-                streamingLength: get().streamingContent.length,
-                resultTextLength: result.text.length,
-                normalizedTextLength: renderData.normalizedText.length,
-                hasModifications: Boolean(result.modifications),
-                addedNodes: result.modifications?.addNodes.length ?? 0,
-                updatedNodes: result.modifications?.updateNodes.length ?? 0,
-                removedNodes: result.modifications?.removeNodeIds.length ?? 0,
-                addedEdges: result.modifications?.addEdges.length ?? 0,
-                updatedEdges: result.modifications?.updateEdges.length ?? 0,
-                removedEdges: result.modifications?.removeEdgeIds.length ?? 0,
-              },
-            });
-          }
-
-          const assistantMsg = createAssistantMessage(content, {
-            diagram: trimmedText ? messageDiagram : undefined,
-            framework: trimmedText ? framework : undefined,
-            modifications: result.modifications,
-          });
-
+          const outcome = processStreamDone(result, diagram, framework, errorCtx, get().streamingContent.length);
           set((s) => ({
-            messages: [...s.messages, assistantMsg],
+            messages: [...s.messages, outcome.assistantMsg],
             loading: false,
             streamingContent: '',
+            ...(outcome.pendingSuggestions ? { pendingSuggestions: outcome.pendingSuggestions } : {}),
           }));
         },
 
@@ -356,18 +220,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           if (activeController === controller) {
             activeController = null;
           }
-          void reportError(error, {
-            source: 'chat.stream_error',
-            fatal: false,
-            metadata: {
-              provider,
-              model,
-              endpointHost: getEndpointHost(baseUrl),
-              frameworkId: framework.id,
-              historyCount: history.length,
-              userMessageLength: text.length,
-            },
-          });
+          reportStreamError(error, errorCtx);
           const errorMsg = createAssistantMessage(`Error: ${error.message}`, { retryText: text });
           set((s) => ({
             messages: [...s.messages, errorMsg],
