@@ -3,7 +3,7 @@
   "name": "Org Structure",
   "abbreviation": "ORG",
   "description": "Map reporting lines, roles, and team boundaries across an organization",
-  "defaultLayoutDirection": "TB",
+  "defaultLayoutDirection": "BT",
   "supportsJunctions": false,
   "edgeLabel": "reports to",
   "systemPromptHint": "Each node should represent a role or team, not a person — people change, structures persist. Reporting lines must be unambiguous: a node with multiple managers signals a matrix structure that should be made explicit. Span of control matters — more than 7-8 direct reports usually indicates a missing layer. If the diagram is flat everywhere, critical coordination points are being hidden.",
