@@ -8,6 +8,7 @@ import { getFramework } from '../frameworks/registry';
 import { useSettingsStore } from './settings-store';
 import { useDiagramStore } from './diagram-store';
 import { resolveFramework } from './diagram-helpers';
+import { applyAiModifications } from './apply-ai-modifications';
 import { reportError } from '../core/monitoring/error-logging';
 import { findCausalLoops, labelCausalLoops } from '../core/graph/derived';
 import type { ParsedChatSegment } from '../core/chat/mentions';
@@ -182,12 +183,6 @@ function isActiveRequest(requestId: number, diagramId: string): boolean {
   return activeRequestId === requestId && useDiagramStore.getState().diagram.id === diagramId;
 }
 
-function shouldAutoLayoutForModifications(mods: DiagramModification): boolean {
-  return mods.addNodes.length > 0
-    || mods.removeNodeIds.length > 0
-    || mods.addEdges.length > 0
-    || mods.removeEdgeIds.length > 0;
-}
 
 export const useChatStore = create<ChatState>((set, get) => ({
   ...getInitialChatState(),
@@ -287,7 +282,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           let normalizedInput = result.text;
 
           if (result.modifications) {
-            const idMap = applyModifications(result.modifications);
+            const idMap = applyAiModifications(result.modifications);
             normalizedInput = remapCanonicalMentionIds(result.text, idMap);
             messageDiagram = useDiagramStore.getState().diagram;
           }
@@ -469,33 +464,3 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// --- Apply AI modifications to the diagram ---
-
-function applyModifications(mods: DiagramModification): Map<string, string> {
-  // Single batched store update — one render instead of many
-  const idMap = useDiagramStore.getState().batchApply({
-    addNodes: mods.addNodes,
-    updateNodes: mods.updateNodes,
-    removeNodeIds: mods.removeNodeIds,
-    addEdges: mods.addEdges,
-    updateEdges: mods.updateEdges,
-    removeEdgeIds: mods.removeEdgeIds,
-  });
-
-  // Track AI-modified node IDs (resolved to real UUIDs)
-  const prev = useChatStore.getState().aiModifiedNodeIds;
-  const modifiedIds = new Set(prev);
-  for (const node of mods.addNodes) {
-    const realId = idMap.get(node.id);
-    if (realId) modifiedIds.add(realId);
-  }
-  for (const upd of mods.updateNodes) {
-    modifiedIds.add(idMap.get(upd.id) ?? upd.id);
-  }
-  useChatStore.setState({ aiModifiedNodeIds: modifiedIds });
-
-  if (shouldAutoLayoutForModifications(mods)) {
-    void useDiagramStore.getState().runAutoLayout({ fitView: true });
-  }
-  return idMap;
-}

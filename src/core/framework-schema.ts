@@ -26,7 +26,7 @@ const derivedIndicatorSchema = z.object({
   description: z.string().min(1),
 });
 
-export const frameworkSchema = z.object({
+const frameworkSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   abbreviation: z.string().min(1),

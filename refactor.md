@@ -6,9 +6,9 @@ Architectural improvement opportunities identified 2026-04-06. Ordered by impact
 
 | # | Opportunity | Priority | Status |
 |---|-------------|----------|--------|
-| 1 | Chat-store / diagram-store coupling | High | Phase 1 done; Phase 2 pending |
-| 2 | EntityNode complexity | Medium | Not started |
-| 3 | Layout metrics hotspot | Medium | Not started |
+| 1 | Chat-store / diagram-store coupling | High | Done (Phase 1: chat boundary; Phase 2: applyAiModifications extracted) |
+| 2 | EntityNode complexity | Medium | Done (388→308 LOC; touch + handle proximity extracted to hooks) |
+| 3 | Layout metrics hotspot | Medium | Done (edge geometry primitives extracted to routed-edge-geometry.ts) |
 | 4 | E2E test depth | Medium | Done (55 tests, +6 covering save/load, mixed undo/redo, AI batch, multi-drag, reconnect, CLD cycles) |
 | 5 | Error handling consistency | Low | Not started |
 

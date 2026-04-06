@@ -10,6 +10,8 @@ import {
   getBaseHandleSide,
 } from '../../core/graph/ports';
 import type { CardinalHandleSide, EdgeHandleSide as HandleSide } from '../../core/types';
+import { useTouchNodeEditing } from '../../hooks/useTouchNodeEditing';
+import { useHandleProximity } from '../../hooks/useHandleProximity';
 
 interface EntityNodeData {
   label: string;
@@ -70,18 +72,17 @@ function getVisibleHandleStyle(side: HandleSide): CSSProperties | undefined {
 }
 
 function EntityNode({ id, data, selected }: NodeProps) {
-  const TOUCH_DOUBLE_TAP_MS = 320;
-  const TOUCH_MOVE_TOLERANCE_PX = 14;
-  const HANDLE_REVEAL_DISTANCE_PX = 40;
   const nodeData = data as unknown as EntityNodeData;
   const [editing, setEditing] = useState(false);
-  const [handlesVisible, setHandlesVisible] = useState(false);
   const [text, setText] = useState(nodeData.label);
-  const nodeRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const touchPointerId = useRef<number | null>(null);
-  const touchStart = useRef<{ x: number; y: number; moved: boolean } | null>(null);
-  const lastTouchTap = useRef<{ timestamp: number; x: number; y: number } | null>(null);
+
+  const [nodeRef, handlesVisible, setHandlesVisible] = useHandleProximity();
+  const touch = useTouchNodeEditing({
+    editing,
+    onStartEditing: () => setEditing(true),
+    onTouchStart: () => setHandlesVisible(true),
+  });
 
   const commitNodeText = useDiagramStore((s) => s.commitNodeText);
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
@@ -112,89 +113,8 @@ function EntityNode({ id, data, selected }: NodeProps) {
     }
   }, [editing]);
 
-  useEffect(() => {
-    const handlePointerMove = (event: PointerEvent) => {
-      if (event.pointerType === 'touch') return;
-      const nodeElement = nodeRef.current;
-      if (!nodeElement) return;
-
-      const rect = nodeElement.getBoundingClientRect();
-      const isNear = event.clientX >= rect.left - HANDLE_REVEAL_DISTANCE_PX
-        && event.clientX <= rect.right + HANDLE_REVEAL_DISTANCE_PX
-        && event.clientY >= rect.top - HANDLE_REVEAL_DISTANCE_PX
-        && event.clientY <= rect.bottom + HANDLE_REVEAL_DISTANCE_PX;
-
-      setHandlesVisible((current) => (current === isNear ? current : isNear));
-    };
-
-    const handlePointerLeave = () => {
-      setHandlesVisible(false);
-    };
-
-    window.addEventListener('pointermove', handlePointerMove, { passive: true });
-    window.addEventListener('pointerleave', handlePointerLeave);
-
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerleave', handlePointerLeave);
-    };
-  }, []);
-
   const handleDoubleClick = useCallback(() => {
     setEditing(true);
-  }, []);
-
-  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType === 'touch') {
-      setHandlesVisible(true);
-    }
-    if (e.pointerType !== 'touch' || editing) return;
-    touchPointerId.current = e.pointerId;
-    touchStart.current = { x: e.clientX, y: e.clientY, moved: false };
-  }, [editing]);
-
-  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType !== 'touch' || touchPointerId.current !== e.pointerId || !touchStart.current) return;
-    const movedX = e.clientX - touchStart.current.x;
-    const movedY = e.clientY - touchStart.current.y;
-    if (Math.hypot(movedX, movedY) > TOUCH_MOVE_TOLERANCE_PX) {
-      touchStart.current.moved = true;
-    }
-  }, []);
-
-  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType !== 'touch' || touchPointerId.current !== e.pointerId) return;
-    touchPointerId.current = null;
-
-    const touch = touchStart.current;
-    touchStart.current = null;
-    if (!touch || touch.moved || editing) return;
-
-    const target = e.target instanceof Element ? e.target : null;
-    if (target?.closest('.react-flow__handle, textarea, button')) {
-      lastTouchTap.current = null;
-      return;
-    }
-
-    const now = Date.now();
-    const lastTap = lastTouchTap.current;
-    if (
-      lastTap &&
-      now - lastTap.timestamp <= TOUCH_DOUBLE_TAP_MS &&
-      Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) <= TOUCH_MOVE_TOLERANCE_PX
-    ) {
-      lastTouchTap.current = null;
-      setEditing(true);
-      return;
-    }
-
-    lastTouchTap.current = { timestamp: now, x: e.clientX, y: e.clientY };
-  }, [editing]);
-
-  const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (touchPointerId.current !== e.pointerId) return;
-    touchPointerId.current = null;
-    touchStart.current = null;
   }, []);
 
   const junctionOptions = getJunctionOptions(framework);
@@ -256,10 +176,10 @@ function EntityNode({ id, data, selected }: NodeProps) {
           : '',
       ].join(' ')}
       onDoubleClick={handleDoubleClick}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerCancel}
+      onPointerDown={touch.handlePointerDown}
+      onPointerMove={touch.handlePointerMove}
+      onPointerUp={touch.handlePointerUp}
+      onPointerCancel={touch.handlePointerCancel}
       style={nodeData.color ? { backgroundColor: nodeData.color } : undefined}
       data-testid={`entity-node-${id}`}
       data-node-id={id}

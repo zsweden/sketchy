@@ -1523,7 +1523,7 @@ test('reconnecting an edge updates its target in the store', async ({ page }) =>
 
   // Reconnect: delete old edge, add new edge A → C (simulates drag-reconnect)
   await page.evaluate(
-    ([sourceId, _oldTargetId, newTargetId]) => {
+    ([sourceId, , newTargetId]) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const store = (window as any).__diagramStore;
       const edgeId = store.getState().diagram.edges[0].id;
