@@ -17,6 +17,8 @@ export interface BatchMutations {
     label: string;
     tags?: string[];
     notes?: string;
+    value?: number | null;
+    unit?: string | null;
     color?: string | null;
     textColor?: string | null;
     junctionType?: JunctionType;
@@ -26,6 +28,8 @@ export interface BatchMutations {
     label?: string;
     tags?: string[];
     notes?: string;
+    value?: number | null;
+    unit?: string | null;
     color?: string | null;
     textColor?: string | null;
     junctionType?: JunctionType;
@@ -73,6 +77,8 @@ export interface DiagramState {
   updateNodeNotes: (id: string, notes: string) => void;
   commitNodeText: (id: string, label: string) => void;
   commitNodeNotes: (id: string, notes: string) => void;
+  commitNodeValue: (id: string, value: number | undefined) => void;
+  commitNodeUnit: (id: string, unit: string) => void;
   toggleNodeLocked: (ids: string[], locked: boolean) => void;
   moveNodes: (changes: NodePositionChange[]) => void;
   dragNodes: (changes: NodePositionChange[]) => void;

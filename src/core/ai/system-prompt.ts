@@ -33,6 +33,14 @@ export const modifyDiagramTool = {
                 type: 'string',
                 description: 'Optional node notes or reasoning',
               },
+              value: {
+                type: ['number', 'null'],
+                description: 'Numeric metric value for the node (e.g. 3000000). Only for frameworks that support node values.',
+              },
+              unit: {
+                type: ['string', 'null'],
+                description: 'Unit prefix/suffix displayed with the value (e.g. "$", "%", "users"). Only for frameworks that support node values.',
+              },
               color: {
                 type: ['string', 'null'],
                 description: 'Optional node background color as a hex code like "#FDE68A"',
@@ -59,6 +67,14 @@ export const modifyDiagramTool = {
               label: { type: 'string' },
               tags: { type: 'array', items: { type: 'string' } },
               notes: { type: 'string' },
+              value: {
+                type: ['number', 'null'],
+                description: 'Numeric metric value, or null to clear it. Only for frameworks that support node values.',
+              },
+              unit: {
+                type: ['string', 'null'],
+                description: 'Unit prefix/suffix, or null to clear it. Only for frameworks that support node values.',
+              },
               color: {
                 type: ['string', 'null'],
                 description: 'Set the node background color with a hex code, or null to clear it',
@@ -164,6 +180,8 @@ export function buildSystemPrompt(diagram: Diagram, framework: Framework): strin
       const parts = [`id="${n.id}", label="${n.data.label}"`];
       if (n.data.tags.length) parts.push(`tags=[${n.data.tags.join(', ')}]`);
       if (n.data.notes) parts.push(`notes="${n.data.notes}"`);
+      if (n.data.value != null) parts.push(`value=${n.data.value}`);
+      if (n.data.unit) parts.push(`unit="${n.data.unit}"`);
       if (n.data.color) parts.push(`color="${n.data.color}"`);
       if (n.data.textColor) parts.push(`textColor="${n.data.textColor}"`);
       if (n.data.junctionType !== defaultJunction) parts.push(`junction=${n.data.junctionType}`);
@@ -210,6 +228,7 @@ export function buildSystemPrompt(diagram: Diagram, framework: Framework): strin
   const confidenceRule = framework.supportsEdgePolarity
     ? '\n- Edges can also use confidence to express uncertainty: high (default, solid), medium (dashed), or low (dotted).'
     : '';
+  const nodeValueRule = "\n- Nodes support numeric values: set 'value' (number) and 'unit' (string like '$', '%', 'users') to display metrics on nodes. Set value=null to clear. When the user provides quantitative data, populate these fields.";
   const junctionRule = framework.supportsJunctions
     ? isMathJunctions
       ? "\n- When multiple edges point to the same target, the node's operator determines how children combine: 'add' (default) sums children, 'multiply' multiplies them. Use edge polarity=negative to subtract or divide."
@@ -241,7 +260,7 @@ Rules for modifications:
 - When adding nodes, use IDs like "new_1", "new_2", etc.
 - When referencing existing nodes, use their exact IDs.
 - Available tags: ${tagList}.
-- Do NOT set color or textColor on nodes unless the user explicitly asks for colors or styling. Leave them unset by default.${junctionRule}
+- Do NOT set color or textColor on nodes unless the user explicitly asks for colors or styling. Leave them unset by default.${nodeValueRule}${junctionRule}
 - ${polarityRule}${confidenceRule}
 - ${delayRule}
 - ${loopReasoningRule}

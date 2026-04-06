@@ -88,4 +88,8 @@ export const migrations: Record<
       },
     };
   },
+  5: (data) => {
+    // Migration 5→6: node value/unit fields are optional, no data transform needed.
+    return { ...data, schemaVersion: 6 };
+  },
 };

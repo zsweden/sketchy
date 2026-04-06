@@ -46,6 +46,8 @@ function renderNode(overrides: {
   label?: string;
   tags?: string[];
   junctionType?: 'and' | 'or';
+  value?: number;
+  unit?: string;
   color?: string;
   textColor?: string;
   locked?: boolean;
@@ -59,6 +61,8 @@ function renderNode(overrides: {
     label: overrides.label ?? 'Test Node',
     tags: overrides.tags ?? [],
     junctionType: overrides.junctionType ?? 'or',
+    value: overrides.value,
+    unit: overrides.unit,
     color: overrides.color,
     textColor: overrides.textColor,
     locked: overrides.locked,
@@ -348,6 +352,33 @@ describe('EntityNode', () => {
     it('does not show AI modified dot for unmodified node', () => {
       renderNode();
       expect(document.querySelector('.ai-modified-dot')).toBeNull();
+    });
+  });
+
+  describe('value display', () => {
+    it('shows formatted value when node has a value', () => {
+      renderNode({ value: 3000000, unit: '$' });
+      expect(document.querySelector('.entity-node-value')).not.toBeNull();
+      expect(document.querySelector('.entity-node-value')!.textContent).toBe('3M $');
+    });
+
+    it('shows value without unit when unit is not set', () => {
+      renderNode({ value: 1500 });
+      const el = document.querySelector('.entity-node-value');
+      expect(el).not.toBeNull();
+      expect(el!.textContent).toBe('1,500');
+    });
+
+    it('does not show value element when value is undefined', () => {
+      renderNode({ label: 'No value' });
+      expect(document.querySelector('.entity-node-value')).toBeNull();
+    });
+
+    it('shows zero value', () => {
+      renderNode({ value: 0, unit: '%' });
+      const el = document.querySelector('.entity-node-value');
+      expect(el).not.toBeNull();
+      expect(el!.textContent).toBe('0 %');
     });
   });
 

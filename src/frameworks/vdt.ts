@@ -7,6 +7,7 @@ export const vdtFramework: Framework = {
   description: 'Decompose a north-star metric into the sub-metrics that drive it',
   defaultLayoutDirection: 'BT',
   supportsJunctions: true,
+  supportsNodeValues: true,
   supportsEdgePolarity: true,
   junctionOptions: MATH_JUNCTION_OPTIONS,
   edgeLabel: 'drives',

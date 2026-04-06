@@ -15,12 +15,22 @@ interface EntityNodeData {
   label: string;
   tags: string[];
   junctionType: 'and' | 'or';
+  value?: number;
+  unit?: string;
   color?: string;
   textColor?: string;
   locked?: boolean;
   highlightState?: 'highlighted' | 'dimmed' | 'none';
   loopKind?: 'reinforcing' | 'balancing';
   [key: string]: unknown;
+}
+
+function formatNodeValue(value: number, unit?: string): string {
+  const formatted = new Intl.NumberFormat(undefined, {
+    notation: Math.abs(value) >= 1e6 ? 'compact' : 'standard',
+    maximumFractionDigits: 2,
+  }).format(value);
+  return unit ? `${formatted} ${unit}` : formatted;
 }
 
 function getPositionForBaseSide(side: CardinalHandleSide): Position {
@@ -322,6 +332,12 @@ function EntityNode({ id, data, selected }: NodeProps) {
                 Double-tap or double-click to edit
               </span>
             )}
+          </div>
+        )}
+
+        {nodeData.value != null && (
+          <div className="entity-node-value">
+            {formatNodeValue(nodeData.value, nodeData.unit)}
           </div>
         )}
 

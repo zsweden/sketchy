@@ -25,6 +25,8 @@ export function createDiagramNodeActions(
   | 'updateNodeNotes'
   | 'commitNodeText'
   | 'commitNodeNotes'
+  | 'commitNodeValue'
+  | 'commitNodeUnit'
   | 'toggleNodeLocked'
   | 'moveNodes'
   | 'dragNodes'
@@ -141,6 +143,28 @@ export function createDiagramNodeActions(
         (node) => (
           node.id === id
             ? { ...node, data: { ...node.data, notes: notes || undefined } }
+            : node
+        ),
+        { trackHistory: true },
+      );
+    },
+
+    commitNodeValue: (id, value) => {
+      updateNodes(
+        (node) => (
+          node.id === id
+            ? { ...node, data: { ...node.data, value } }
+            : node
+        ),
+        { trackHistory: true },
+      );
+    },
+
+    commitNodeUnit: (id, unit) => {
+      updateNodes(
+        (node) => (
+          node.id === id
+            ? { ...node, data: { ...node.data, unit: unit || undefined } }
             : node
         ),
         { trackHistory: true },

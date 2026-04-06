@@ -60,6 +60,33 @@ describe('migrations', () => {
     });
   });
 
+  describe('v5 → v6', () => {
+    it('bumps schemaVersion to 6 without altering nodes', () => {
+      const data = {
+        schemaVersion: 5,
+        id: 'test',
+        name: 'Test',
+        frameworkId: 'vdt',
+        settings: {
+          layoutDirection: 'BT',
+          showGrid: true,
+          snapToGrid: false,
+          edgeRoutingMode: 'fixed',
+          showActiveAttachments: true,
+        },
+        nodes: [
+          { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'Revenue', tags: [], junctionType: 'add' } },
+        ],
+        edges: [],
+      };
+
+      const result = migrations[5](data);
+      expect(result.schemaVersion).toBe(6);
+      const nodes = result.nodes as Array<Record<string, unknown>>;
+      expect(nodes).toHaveLength(1);
+    });
+  });
+
   describe('migrate() integration', () => {
     it('migrates v1 data through to current version', () => {
       const v1Data = {

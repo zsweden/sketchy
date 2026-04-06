@@ -22,6 +22,8 @@ interface Props {
 export default function NodePanel({ node }: Props) {
   const [text, setText] = useState(node.data.label);
   const [notes, setNotes] = useState(node.data.notes ?? '');
+  const [valueStr, setValueStr] = useState(node.data.value != null ? String(node.data.value) : '');
+  const [unit, setUnit] = useState(node.data.unit ?? '');
 
   const framework = useFramework();
   const nodes = useDiagramStore((s) => s.diagram.nodes);
@@ -30,6 +32,8 @@ export default function NodePanel({ node }: Props) {
   const updateNodeTags = useDiagramStore((s) => s.updateNodeTags);
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
   const commitNodeNotes = useDiagramStore((s) => s.commitNodeNotes);
+  const commitNodeValue = useDiagramStore((s) => s.commitNodeValue);
+  const commitNodeUnit = useDiagramStore((s) => s.commitNodeUnit);
   const toggleNodeLocked = useDiagramStore((s) => s.toggleNodeLocked);
   const removeAiModified = useChatStore((s) => s.removeAiModified);
   const selectedLoopId = useUIStore((s) => s.selectedLoopId);
@@ -58,6 +62,36 @@ export default function NodePanel({ node }: Props) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setNotes(node.data.notes ?? '');
   }, [node.data.notes]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setValueStr(node.data.value != null ? String(node.data.value) : '');
+  }, [node.data.value]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setUnit(node.data.unit ?? '');
+  }, [node.data.unit]);
+
+  const handleValueBlur = useCallback(() => {
+    const trimmed = valueStr.trim();
+    const parsed = trimmed === '' ? undefined : Number(trimmed);
+    const current = node.data.value;
+    if (parsed === current) return;
+    if (trimmed !== '' && isNaN(parsed!)) {
+      // Reset to stored value on invalid input
+      setValueStr(current != null ? String(current) : '');
+      return;
+    }
+    commitNodeValue(node.id, parsed);
+  }, [valueStr, node.data.value, node.id, commitNodeValue]);
+
+  const handleUnitBlur = useCallback(() => {
+    const current = node.data.unit ?? '';
+    if (unit !== current) {
+      commitNodeUnit(node.id, unit);
+    }
+  }, [unit, node.data.unit, node.id, commitNodeUnit]);
 
   const handleNotesBlur = useCallback(() => {
     const current = node.data.notes ?? '';
@@ -131,6 +165,35 @@ export default function NodePanel({ node }: Props) {
           style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}
           aria-label="Node notes"
         />
+      </FormField>
+
+      {/* Value & Unit */}
+      <FormField label="Value">
+        <div className="control-row" style={{ gap: '0.5rem' }}>
+          <input
+            type="text"
+            inputMode="decimal"
+            className="input-text"
+            value={valueStr}
+            onChange={(e) => setValueStr(e.target.value)}
+            onBlur={handleValueBlur}
+            onKeyDown={handleTextKeyDown}
+            placeholder="e.g. 3000000"
+            aria-label="Node value"
+            style={{ flex: 2 }}
+          />
+          <input
+            type="text"
+            className="input-text"
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            onBlur={handleUnitBlur}
+            onKeyDown={handleTextKeyDown}
+            placeholder="e.g. $"
+            aria-label="Node unit"
+            style={{ flex: 1 }}
+          />
+        </div>
       </FormField>
 
       {/* Tags */}

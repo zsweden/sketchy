@@ -23,6 +23,7 @@ export interface Framework {
   supportsJunctions: boolean;
   allowsCycles?: boolean;
   supportsEdgePolarity?: boolean;
+  supportsNodeValues?: boolean;
   supportsEdgeDelay?: boolean;
   junctionOptions?: JunctionOption[];
   nodeTags: NodeTag[];

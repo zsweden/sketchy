@@ -146,4 +146,78 @@ describe('NodePanel', () => {
 
     expect(useChatStore.getState().aiModifiedNodeIds.has(nodeId)).toBe(false);
   });
+
+  describe('value/unit fields (VDT)', () => {
+    beforeEach(() => {
+      useDiagramStore.getState().setFramework('vdt');
+      nodeId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+    });
+
+    it('shows value and unit inputs for VDT framework', () => {
+      render(<NodePanel node={getNode(nodeId)} />);
+      expect(screen.getByLabelText('Node value')).toBeInTheDocument();
+      expect(screen.getByLabelText('Node unit')).toBeInTheDocument();
+    });
+
+    it('shows value/unit inputs for CRT framework too', () => {
+      useDiagramStore.getState().setFramework('crt');
+      nodeId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      render(<NodePanel node={getNode(nodeId)} />);
+      expect(screen.getByLabelText('Node value')).toBeInTheDocument();
+      expect(screen.getByLabelText('Node unit')).toBeInTheDocument();
+    });
+
+    it('commits value on blur', async () => {
+      const user = userEvent.setup();
+      render(<NodePanel node={getNode(nodeId)} />);
+
+      const valueField = screen.getByLabelText('Node value');
+      await user.type(valueField, '3000000');
+      fireEvent.blur(valueField);
+
+      await waitFor(() => {
+        expect(getNode(nodeId).data.value).toBe(3000000);
+      });
+    });
+
+    it('commits unit on blur', async () => {
+      const user = userEvent.setup();
+      render(<NodePanel node={getNode(nodeId)} />);
+
+      const unitField = screen.getByLabelText('Node unit');
+      await user.type(unitField, '$');
+      fireEvent.blur(unitField);
+
+      await waitFor(() => {
+        expect(getNode(nodeId).data.unit).toBe('$');
+      });
+    });
+
+    it('clears value when input is emptied', async () => {
+      const user = userEvent.setup();
+      useDiagramStore.getState().commitNodeValue(nodeId, 500);
+      render(<NodePanel node={getNode(nodeId)} />);
+
+      const valueField = screen.getByLabelText('Node value');
+      await user.clear(valueField);
+      fireEvent.blur(valueField);
+
+      await waitFor(() => {
+        expect(getNode(nodeId).data.value).toBeUndefined();
+      });
+    });
+
+    it('rejects non-numeric value input', async () => {
+      const user = userEvent.setup();
+      render(<NodePanel node={getNode(nodeId)} />);
+
+      const valueField = screen.getByLabelText('Node value');
+      await user.type(valueField, 'abc');
+      fireEvent.blur(valueField);
+
+      await waitFor(() => {
+        expect(getNode(nodeId).data.value).toBeUndefined();
+      });
+    });
+  });
 });

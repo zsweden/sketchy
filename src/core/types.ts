@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 export type EdgeRoutingMode = 'dynamic' | 'fixed';
 export type CardinalHandleSide = 'top' | 'right' | 'bottom' | 'left';
@@ -42,6 +42,8 @@ export interface DiagramNode {
     tags: string[];
     junctionType: JunctionType;
     notes?: string;
+    value?: number;
+    unit?: string;
     color?: string;
     textColor?: string;
     locked?: boolean;

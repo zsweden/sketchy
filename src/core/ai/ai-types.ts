@@ -26,6 +26,8 @@ export interface DiagramModification {
     label: string;
     tags?: string[];
     notes?: string;
+    value?: number | null;
+    unit?: string | null;
     color?: string | null;
     textColor?: string | null;
     junctionType?: JunctionType;
@@ -35,6 +37,8 @@ export interface DiagramModification {
     label?: string;
     tags?: string[];
     notes?: string;
+    value?: number | null;
+    unit?: string | null;
     color?: string | null;
     textColor?: string | null;
     junctionType?: JunctionType;
