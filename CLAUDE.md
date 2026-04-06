@@ -1,6 +1,6 @@
 # Sketchy
 
-A web-based thinking-frameworks diagram editor focused on structured reasoning. The architecture is framework-agnostic, and the app currently ships with Current Reality Tree (CRT), Future Reality Tree (FRT), Prerequisite Tree (PRT), Success Tree, Strategy & Tactics Tree (STT), and Causal Loop Diagram (CLD).
+A web-based thinking-frameworks diagram editor focused on structured reasoning. The architecture is framework-agnostic, and the app currently ships with 9 frameworks: CRT, FRT, PRT, Success Tree, STT, CLD, Goal Tree, Value Driver Tree (VDT), and Value Stream Map (VSM).
 
 ## Working Principles
 
@@ -14,6 +14,14 @@ A web-based thinking-frameworks diagram editor focused on structured reasoning. 
 - No compatibility helpers or workarounds — fix the root cause.
 - Prefer framework additions that fit the current DAG model. Diagram types that require cycles or new structural primitives are product-level decisions, not just config work.
 - Keep cyclic layout logic isolated to `src/core/layout/`. Loop-specific placement, SCC handling, and cyclic heuristics must not change graph routing, stores, persistence, or UI code.
+
+### Framework boundary (enforced)
+Adding a framework = drop a `.json` file in `src/frameworks/`. No other file should change.
+- **JSON manifests only.** Frameworks are pure data defined as `.json` files. Never add `.ts` framework files — the registry auto-discovers `*.json` via `import.meta.glob`.
+- **Zod-validated at load time.** `src/core/framework-schema.ts` validates every manifest on startup. If you add a field to the `Framework` interface, update the Zod schema to match.
+- **No framework imports outside the registry.** Components, stores, and core modules must access frameworks through `getFramework()` / `listFrameworks()` / `getDefaultFramework()` from `src/frameworks/registry.ts`. Never import a specific framework JSON directly.
+- **No `frameworkId ===` checks.** All behavior differences flow through `Framework` interface properties (feature flags, tags, derived indicators, junction options). If a new framework needs behavior that existing flags can't express, add a new flag to the interface — don't hardcode a check.
+- **AI prompt hints stay with the framework.** Use the `systemPromptHint` field in the JSON manifest for domain-specific AI reasoning guidance. Don't add framework-specific prose to `system-prompt.ts`.
 
 
 ## Commands
@@ -41,6 +49,7 @@ npm run lint && npx tsc --noEmit && npm run test:all
 - ELK (`elkjs`) — auto-layout engine (lazy-loaded)
 - Zustand — state management (diagram-store, ui-store, settings-store, chat-store)
 - Tailwind CSS v4 plus project CSS
+- Zod — runtime schema validation (framework manifests)
 - Lucide React — icons
 
 ## Architecture
@@ -48,6 +57,7 @@ npm run lint && npx tsc --noEmit && npm run test:all
 ### Core (framework-agnostic)
 - `src/core/types.ts` — Diagram, DiagramNode, DiagramEdge data model
 - `src/core/framework-types.ts` — Framework, NodeTag, DerivedIndicator interfaces
+- `src/core/framework-schema.ts` — Zod schema for validating framework JSON manifests
 - `src/core/graph/validation.ts` — DAG enforcement (no cycles, self-loops, duplicate edges)
 - `src/core/graph/derived.ts` — Compute node indicators from graph topology (root cause = indegree 0, etc.)
 - `src/core/history/undo-redo.ts` — Generic undo/redo with snapshot stack
@@ -68,9 +78,8 @@ npm run lint && npx tsc --noEmit && npm run test:all
 - `src/components/context-menu/ContextMenu.tsx` — Right-click menu for nodes (tags, junction, delete) and edges (delete)
 
 ### Frameworks
-- `src/frameworks/crt.ts` — CRT definition: UDE tag, root-cause/intermediate derived indicators
-- `src/frameworks/frt.ts` — FRT definition: injection/DE tags, foundation/intermediate derived indicators
-- `src/frameworks/registry.ts` — Framework registry (getFramework, listFrameworks, registerFramework)
+- `src/frameworks/*.json` — Framework definitions as JSON manifests (auto-discovered by registry)
+- `src/frameworks/registry.ts` — Auto-discovers JSON manifests, validates with Zod, exports `getFramework`, `listFrameworks`, `getDefaultFramework`, `registerFramework`
 
 ## Design System
 
@@ -86,7 +95,7 @@ Matches the Bricky project design:
 - **React Flow sync**: Store is source of truth for data. Local state (`localNodes`/`localEdges`) is needed for RF selection. `useEffect` on `rfNodes`/`rfEdges` merges store data into local state, preserving selection.
 - **Undo/redo boundaries**: Drag commits on pointer-up, text on blur/Enter, import/delete/layout are atomic.
 - **Junction logic**: `junctionType` on nodes is only relevant when indegree >= 2. Current behavior defaults new 2-input nodes to `or`.
-- **File format**: `.sky` is the canonical explicit save format. Loader also accepts legacy wrapped `.sky` and raw diagram JSON for backwards compatibility.
+- **File format**: `.json` is the canonical explicit save format. Loader also accepts legacy `.sky` wrapped format and raw diagram JSON for backwards compatibility.
 - **Autosave model**: Diagram autosave uses `sessionStorage`; settings use `localStorage`.
 - **AI workflow**: The chat store streams text and can batch-apply node/edge mutations, then auto-layout the updated diagram.
 - **Layout boundary**: `autoLayout()` selects between a tree engine and a cyclic engine based on actual graph topology. Changes to loop readability should stay inside `src/core/layout` unless there is a deliberate product decision to change routing behavior.
