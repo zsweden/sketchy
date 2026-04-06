@@ -9,7 +9,7 @@
   "supportsEdgePolarity": true,
   "supportsEdgeDelay": true,
   "edgeLabel": "influences",
-  "systemPromptHint": "Node labels should be variable names that can increase or decrease (e.g. 'Sales Revenue', not 'Revenue goes up'). Identify reinforcing (R) and balancing (B) loops. A loop with an even number of negative edges is reinforcing; odd is balancing. Delayed links are critical for understanding oscillation.",
+  "systemPromptHint": "Nodes must be neutral variables that can increase or decrease — never directional statements. Identify and label loops: even number of negative links = reinforcing (R), odd = balancing (B). Focus on 1-3 core loops — diagrams that capture everything lose explanatory power. Mark delays explicitly — they drive oscillation, overshoot, and policy resistance. If only reinforcing loops appear, the model is incomplete.",
   "nodeTags": [],
   "derivedIndicators": []
 }

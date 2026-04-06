@@ -6,7 +6,7 @@
   "defaultLayoutDirection": "TB",
   "supportsJunctions": true,
   "edgeLabel": "is achieved through",
-  "systemPromptHint": "Strategy answers 'what approach?' while tactics answer 'how specifically?'. Each strategy node should have at least one tactic beneath it. Objectives at the top should be measurable outcomes, not activities.",
+  "systemPromptHint": "Strategy defines the approach; tactics define execution — if a node can be read as both, it is mis-leveled. Objectives at the top must be measurable outcomes, never activities. Sibling tactics must be independent and collectively sufficient to execute the strategy. A strategy without tactics is a wish; tactics that all appear equally important indicate a strategy that lacks clarity.",
   "nodeTags": [
     {
       "id": "objective",

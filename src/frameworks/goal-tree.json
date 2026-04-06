@@ -6,7 +6,7 @@
   "defaultLayoutDirection": "BT",
   "supportsJunctions": true,
   "edgeLabel": "supports",
-  "systemPromptHint": "Every necessary condition must be truly necessary — if the goal can be achieved without it, it does not belong. Actions at the leaves should be concrete and assignable. Conditions form a logical AND: all must be met for the parent goal to be achieved.",
+  "systemPromptHint": "Each condition must pass both tests: necessity (remove it and the parent fails) and sufficiency (all siblings together guarantee the parent). State conditions as testable assertions, not aspirations — \"Customer NPS above 50\" not \"Happy customers.\" Leaf actions must be concrete, assignable, and time-bound. If all conditions are met but the goal might still fail, the decomposition is wrong.",
   "nodeTags": [
     {
       "id": "goal",

@@ -8,7 +8,7 @@
   "supportsNodeValues": true,
   "supportsEdgePolarity": true,
   "edgeLabel": "drives",
-  "systemPromptHint": "Every node should represent a measurable metric, not an activity. The math must hold: parent values should equal the sum or product of their children (respecting the operator). Use leading/lagging tags to distinguish predictive from outcome metrics. Populate value and unit fields whenever the user provides numbers.",
+  "systemPromptHint": "Every node must be a measurable metric, never an activity. The math must hold exactly: parent = function(children), with consistent units — combining incompatible units invalidates the model. Distinguish leading from lagging metrics — only leading metrics are actionable levers. Apply the movement test: if improving a child does not reliably move the parent, the decomposition is wrong.",
   "junctionOptions": [
     { "id": "add", "symbol": "+", "label": "Add", "description": "Children are summed (use edge polarity to subtract)" },
     { "id": "multiply", "symbol": "×", "label": "Multiply", "description": "Children are multiplied (use edge polarity to divide)" }

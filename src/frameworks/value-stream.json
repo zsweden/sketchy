@@ -6,7 +6,7 @@
   "defaultLayoutDirection": "LR",
   "supportsJunctions": false,
   "edgeLabel": "flows to",
-  "systemPromptHint": "Map the actual flow, not the ideal flow. Tag queues and handoffs explicitly — they are often where the most waste hides. Constraints limit the entire system's throughput, so there should usually be only one or two. Value-adding steps should be clearly distinguished from non-value-adding ones.",
+  "systemPromptHint": "Map the actual current-state flow, not the ideal flow — every real step belongs. Distinguish process time from wait time — queues and delays typically dominate total lead time. There are usually one or two true bottlenecks; if everything appears constrained, the analysis lacks depth. Optimize for flow, not local efficiency — improving non-constraints does not increase system throughput.",
   "nodeTags": [
     {
       "id": "process",

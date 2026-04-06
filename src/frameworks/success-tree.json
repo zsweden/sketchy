@@ -6,7 +6,7 @@
   "defaultLayoutDirection": "BT",
   "supportsJunctions": true,
   "edgeLabel": "contributed to",
-  "systemPromptHint": "Focus on explaining why the success happened, not just what happened. Each factor should be a specific, verifiable contributor — not a vague positive attribute. The tree should reveal which foundations were most critical by their fan-out.",
+  "systemPromptHint": "Identify causal factors, not events — \"won enterprise deal\" is an event; \"deep domain expertise in vertical\" is a factor. Apply counterfactual thinking: if the factor were absent, would the success still occur? If yes, remove it. Guard against hindsight bias: ask \"would we have predicted this mattered beforehand?\" Distinguish repeatable drivers from luck — only the former belong in the tree.",
   "nodeTags": [
     {
       "id": "factor",

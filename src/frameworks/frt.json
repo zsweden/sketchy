@@ -6,7 +6,7 @@
   "defaultLayoutDirection": "BT",
   "supportsJunctions": true,
   "edgeLabel": "leads to",
-  "systemPromptHint": "Injections are specific, actionable changes — not vague wishes. Each injection should lead to at least one desirable effect through a clear causal chain. Look for negative branches: unintended consequences of injections that need trimming.",
+  "systemPromptHint": "Injections must be concrete, implementable changes — vague intentions are invalid. Each injection must create a causal path that directly counteracts a CRT UDE. Actively search for negative branches: for each injection ask \"what breaks?\" and add trimming injections to neutralize side effects. Prefer injections that eliminate multiple UDEs through shared causal paths — these are leverage points.",
   "nodeTags": [
     {
       "id": "injection",

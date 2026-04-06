@@ -6,7 +6,7 @@
   "defaultLayoutDirection": "BT",
   "supportsJunctions": true,
   "edgeLabel": "causes",
-  "systemPromptHint": "UDEs should be stated as observable negative effects, not root causes. Work bottom-up: root causes feed into intermediate effects which surface as UDEs. Challenge single-cause chains — most UDEs have multiple contributing causes.",
+  "systemPromptHint": "UDEs must be observable and specific — if you can't point to evidence, reword it. Every causal link must pass the sufficiency test: \"If X, then inevitably Y\" — otherwise a cause or assumption is missing. Make AND relationships explicit — most UDEs result from converging causes, not linear chains. Apply the removal test: a true root cause, when removed, eliminates multiple downstream UDEs.",
   "nodeTags": [
     {
       "id": "ude",
