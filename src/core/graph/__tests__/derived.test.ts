@@ -9,7 +9,9 @@ import {
   MAX_CYCLE_LENGTH,
   MAX_TOTAL_LOOPS,
 } from '../derived';
-import { crtFramework } from '../../../frameworks/crt';
+import { getFramework } from '../../../frameworks/registry';
+
+const crtFramework = getFramework('crt')!;
 import type { DiagramEdge } from '../../types';
 
 function edge(source: string, target: string): DiagramEdge {

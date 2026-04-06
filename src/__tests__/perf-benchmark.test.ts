@@ -13,7 +13,9 @@ import { autoLayout } from '../core/layout/auto-layout';
 import { elkEngine } from '../core/layout/elk-engine';
 import { UndoRedoManager } from '../core/history/undo-redo';
 import { useDiagramStore } from '../store/diagram-store';
-import { crtFramework } from '../frameworks/crt';
+import { getFramework } from '../frameworks/registry';
+
+const crtFramework = getFramework('crt')!;
 import { migrate, validateDiagramShape } from '../core/persistence/schema';
 import { buildChain, buildCyclicGraph, buildDenseGraph, buildTree } from '../test/layout-benchmark-fixtures';
 

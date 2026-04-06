@@ -44,6 +44,7 @@ describe('framework registry', () => {
     registerFramework({
       id: 'test-fw',
       name: 'Test Framework',
+      abbreviation: 'TST',
       description: 'For testing',
       defaultLayoutDirection: 'TB',
       supportsJunctions: false,

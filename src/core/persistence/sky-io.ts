@@ -1,11 +1,14 @@
 import type { Diagram } from '../types';
 import { isSkyJson, convertSkyJson, diagramToSkyJson } from './causal-json';
 import { migrateDiagramShape, normalizeLoadedDiagram } from './load-helpers';
+import { getFramework } from '../../frameworks/registry';
 
 function defaultFilename(diagram: Diagram): string {
   const name = diagram.name?.trim() || 'diagram';
   const safe = name.replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '-');
-  return `${safe}.json`;
+  const framework = getFramework(diagram.frameworkId);
+  const abbrev = framework?.abbreviation ?? diagram.frameworkId.toUpperCase().slice(0, 3);
+  return `${safe}_${abbrev}.json`;
 }
 
 // Modern File System Access API types

@@ -9,6 +9,7 @@ import { createEmptyDiagram } from '../../types';
 const mockFrameworkCRT: Framework = {
   id: 'crt',
   name: 'Current Reality Tree',
+  abbreviation: 'CRT',
   description: 'Map cause-and-effect to find root causes',
   defaultLayoutDirection: 'BT',
   supportsJunctions: true,
@@ -22,6 +23,7 @@ const mockFrameworkCRT: Framework = {
 const mockFrameworkCLD: Framework = {
   id: 'cld',
   name: 'Causal Loop Diagram',
+  abbreviation: 'CLD',
   description: 'Model feedback loops with signed causal links',
   defaultLayoutDirection: 'TB',
   supportsJunctions: false,
@@ -36,6 +38,7 @@ const mockFrameworkCLD: Framework = {
 const mockFrameworkFRT: Framework = {
   id: 'frt',
   name: 'Future Reality Tree',
+  abbreviation: 'FRT',
   description: 'Validate a proposed solution',
   defaultLayoutDirection: 'BT',
   supportsJunctions: true,

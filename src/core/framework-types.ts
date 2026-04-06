@@ -10,14 +10,11 @@ const LOGIC_JUNCTION_OPTIONS: JunctionOption[] = [
   { id: 'and', symbol: '&', label: 'AND', description: 'All incoming causes required' },
 ];
 
-export const MATH_JUNCTION_OPTIONS: JunctionOption[] = [
-  { id: 'add', symbol: '+', label: 'Add', description: 'Children are summed (use edge polarity to subtract)' },
-  { id: 'multiply', symbol: '×', label: 'Multiply', description: 'Children are multiplied (use edge polarity to divide)' },
-];
-
 export interface Framework {
   id: string;
   name: string;
+  /** Three-letter abbreviation used in filenames (e.g. CRT, FRT, VSM). */
+  abbreviation: string;
   description: string;
   defaultLayoutDirection: LayoutDirection;
   supportsJunctions: boolean;
@@ -29,6 +26,8 @@ export interface Framework {
   nodeTags: NodeTag[];
   derivedIndicators: DerivedIndicator[];
   edgeLabel?: string;
+  /** Optional AI prompt fragment with domain-specific reasoning guidance. */
+  systemPromptHint?: string;
 }
 
 /** Returns the junction options for a framework, defaulting to logic AND/OR. */

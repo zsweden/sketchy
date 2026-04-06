@@ -58,7 +58,7 @@ describe('saveSkyFile', () => {
 
     expect(URL.createObjectURL).toHaveBeenCalledOnce();
     expect(clickedLink).not.toBeNull();
-    expect(clickedLink!.download).toBe('Untitled-Diagram.json');
+    expect(clickedLink!.download).toBe('Untitled-Diagram_CRT.json');
     expect(clickedLink!.href).toBe('blob:mock-url');
     expect(revokedUrl).toBe('blob:mock-url');
   });
@@ -66,19 +66,19 @@ describe('saveSkyFile', () => {
   it('uses diagram name for the download filename', async () => {
     await saveSkyFile(makeDiagram({ name: 'My Cool Diagram' }));
 
-    expect(clickedLink!.download).toBe('My-Cool-Diagram.json');
+    expect(clickedLink!.download).toBe('My-Cool-Diagram_CRT.json');
   });
 
   it('sanitizes special characters in filename', async () => {
     await saveSkyFile(makeDiagram({ name: 'test/file<>name' }));
 
-    expect(clickedLink!.download).toBe('testfilename.json');
+    expect(clickedLink!.download).toBe('testfilename_CRT.json');
   });
 
   it('defaults to "diagram" when name is empty or whitespace', async () => {
     await saveSkyFile(makeDiagram({ name: '   ' }));
 
-    expect(clickedLink!.download).toBe('diagram.json');
+    expect(clickedLink!.download).toBe('diagram_CRT.json');
   });
 
   it('uses showSaveFilePicker when available', async () => {

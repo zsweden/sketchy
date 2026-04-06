@@ -1,0 +1,60 @@
+{
+  "id": "vdt",
+  "name": "Value Driver Tree",
+  "abbreviation": "VDT",
+  "description": "Decompose a north-star metric into the sub-metrics that drive it",
+  "defaultLayoutDirection": "BT",
+  "supportsJunctions": true,
+  "supportsNodeValues": true,
+  "supportsEdgePolarity": true,
+  "edgeLabel": "drives",
+  "systemPromptHint": "Every node should represent a measurable metric, not an activity. The math must hold: parent values should equal the sum or product of their children (respecting the operator). Use leading/lagging tags to distinguish predictive from outcome metrics. Populate value and unit fields whenever the user provides numbers.",
+  "junctionOptions": [
+    { "id": "add", "symbol": "+", "label": "Add", "description": "Children are summed (use edge polarity to subtract)" },
+    { "id": "multiply", "symbol": "×", "label": "Multiply", "description": "Children are multiplied (use edge polarity to divide)" }
+  ],
+  "nodeTags": [
+    {
+      "id": "leading",
+      "name": "Leading Indicator",
+      "shortName": "Lead",
+      "color": "#26A69A",
+      "description": "A predictive metric you can influence before outcomes materialize",
+      "exclusive": false
+    },
+    {
+      "id": "lagging",
+      "name": "Lagging Indicator",
+      "shortName": "Lag",
+      "color": "#E57373",
+      "description": "An outcome metric that reflects past performance",
+      "exclusive": false
+    }
+  ],
+  "derivedIndicators": [
+    {
+      "id": "north-star",
+      "name": "North Star",
+      "shortName": "Star",
+      "color": "#5C8DB5",
+      "condition": "indegree-zero",
+      "description": "No incoming edges — the top-level metric everything rolls up to"
+    },
+    {
+      "id": "driver",
+      "name": "Driver",
+      "shortName": "Drv",
+      "color": "#9E9E9E",
+      "condition": "indegree-and-outdegree",
+      "description": "Has both incoming and outgoing edges — an intermediate roll-up metric"
+    },
+    {
+      "id": "actionable",
+      "name": "Actionable Metric",
+      "shortName": "Act",
+      "color": "#26A69A",
+      "condition": "leaf",
+      "description": "No outgoing edges — a metric teams can directly influence"
+    }
+  ]
+}

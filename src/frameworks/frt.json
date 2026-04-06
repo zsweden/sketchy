@@ -1,0 +1,46 @@
+{
+  "id": "frt",
+  "name": "Future Reality Tree",
+  "abbreviation": "FRT",
+  "description": "Validate a proposed solution by tracing injections to desirable effects",
+  "defaultLayoutDirection": "BT",
+  "supportsJunctions": true,
+  "edgeLabel": "leads to",
+  "systemPromptHint": "Injections are specific, actionable changes — not vague wishes. Each injection should lead to at least one desirable effect through a clear causal chain. Look for negative branches: unintended consequences of injections that need trimming.",
+  "nodeTags": [
+    {
+      "id": "injection",
+      "name": "Injection",
+      "shortName": "INJ",
+      "color": "#4CAF50",
+      "description": "A proposed change or action to implement",
+      "exclusive": false
+    },
+    {
+      "id": "de",
+      "name": "Desirable Effect",
+      "shortName": "DE",
+      "color": "#42A5F5",
+      "description": "A positive outcome you want to achieve",
+      "exclusive": false
+    }
+  ],
+  "derivedIndicators": [
+    {
+      "id": "foundation",
+      "name": "Foundation",
+      "shortName": "Found",
+      "color": "#5C8DB5",
+      "condition": "indegree-zero",
+      "description": "No incoming edges — a starting condition or injection point"
+    },
+    {
+      "id": "intermediate",
+      "name": "Intermediate Effect",
+      "shortName": "Inter",
+      "color": "#9E9E9E",
+      "condition": "indegree-and-outdegree",
+      "description": "Has both incoming and outgoing edges"
+    }
+  ]
+}

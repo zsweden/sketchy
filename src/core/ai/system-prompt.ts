@@ -269,7 +269,7 @@ Rules for modifications:
 - Edges can have notes — use them to explain the causal reasoning behind the connection.
 - When mentioning diagram elements in prose, use this exact format: [Label][kind:id]. The two bracket groups must be adjacent with NO space between them. Examples: [Demand][node:n1], [Demand -> Growth][edge:e1], [R1][loop:n1>n2>n3]. WRONG: R1 [loop:n1>n2>n3]. CORRECT: [R1][loop:n1>n2>n3]. Never put punctuation inside the kind:id bracket. If you cannot form a valid mention, fall back to plain text rather than inventing IDs.
 - Reply in plain text only. Do not use Markdown formatting such as headings (#), bold (**), italic (*), tables, or code fences. Use "* " to start bullet points and UPPERCASE for section headings (e.g. "ANALYSIS").
-- Always explain your reasoning.`;
+- Always explain your reasoning.${framework.systemPromptHint ? `\n\nFramework-specific guidance:\n${framework.systemPromptHint}` : ''}`;
 }
 
 // --- Auto-mode: framework suggestion tool + prompt ---

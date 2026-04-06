@@ -1,0 +1,15 @@
+{
+  "id": "cld",
+  "name": "Causal Loop Diagram",
+  "abbreviation": "CLD",
+  "description": "Model variables and feedback loops with signed causal links",
+  "defaultLayoutDirection": "TB",
+  "supportsJunctions": false,
+  "allowsCycles": true,
+  "supportsEdgePolarity": true,
+  "supportsEdgeDelay": true,
+  "edgeLabel": "influences",
+  "systemPromptHint": "Node labels should be variable names that can increase or decrease (e.g. 'Sales Revenue', not 'Revenue goes up'). Identify reinforcing (R) and balancing (B) loops. A loop with an even number of negative edges is reinforcing; odd is balancing. Delayed links are critical for understanding oscillation.",
+  "nodeTags": [],
+  "derivedIndicators": []
+}

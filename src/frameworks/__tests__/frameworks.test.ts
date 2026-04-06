@@ -1,26 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { crtFramework } from '../crt';
-import { frtFramework } from '../frt';
-import { goalTreeFramework } from '../goal-tree';
-import { vdtFramework } from '../vdt';
-import { prtFramework } from '../prt';
-import { successTreeFramework } from '../success-tree';
-import { sttFramework } from '../stt';
-import { cldFramework } from '../cld';
-import { valueStreamFramework } from '../value-stream';
+import { getFramework, listFrameworks } from '../registry';
 import type { Framework } from '../../core/framework-types';
 
-const ALL_FRAMEWORKS: Framework[] = [
-  crtFramework,
-  frtFramework,
-  goalTreeFramework,
-  vdtFramework,
-  prtFramework,
-  successTreeFramework,
-  sttFramework,
-  cldFramework,
-  valueStreamFramework,
-];
+const ALL_FRAMEWORKS: Framework[] = listFrameworks();
 
 describe('framework definitions', () => {
   it('all frameworks have unique ids', () => {
@@ -36,6 +18,7 @@ describe('framework definitions', () => {
   it.each(ALL_FRAMEWORKS.map((f) => [f.id, f]))('%s has required base properties', (_id, fw) => {
     expect(fw.id).toBeTruthy();
     expect(fw.name).toBeTruthy();
+    expect(fw.abbreviation).toBeTruthy();
     expect(fw.description).toBeTruthy();
     expect(['TB', 'BT', 'LR', 'RL']).toContain(fw.defaultLayoutDirection);
     expect(fw.nodeTags).toBeInstanceOf(Array);
@@ -43,6 +26,8 @@ describe('framework definitions', () => {
   });
 
   describe('CRT', () => {
+    const crtFramework = getFramework('crt')!;
+
     it('has bottom-to-top direction', () => {
       expect(crtFramework.defaultLayoutDirection).toBe('BT');
     });
@@ -72,6 +57,8 @@ describe('framework definitions', () => {
   });
 
   describe('FRT', () => {
+    const frtFramework = getFramework('frt')!;
+
     it('has injection and DE tags', () => {
       expect(frtFramework.nodeTags).toHaveLength(2);
       const tagIds = frtFramework.nodeTags.map((t) => t.id);
@@ -85,6 +72,8 @@ describe('framework definitions', () => {
   });
 
   describe('PRT', () => {
+    const prtFramework = getFramework('prt')!;
+
     it('has obstacle, IO, and goal tags', () => {
       expect(prtFramework.nodeTags).toHaveLength(3);
       const tagIds = prtFramework.nodeTags.map((t) => t.id);
@@ -102,6 +91,8 @@ describe('framework definitions', () => {
   });
 
   describe('Goal Tree', () => {
+    const goalTreeFramework = getFramework('goal-tree')!;
+
     it('has goal, condition, and action tags', () => {
       expect(goalTreeFramework.nodeTags).toHaveLength(3);
       const tagIds = goalTreeFramework.nodeTags.map((t) => t.id);
@@ -123,6 +114,8 @@ describe('framework definitions', () => {
   });
 
   describe('STT', () => {
+    const sttFramework = getFramework('stt')!;
+
     it('has top-to-bottom direction', () => {
       expect(sttFramework.defaultLayoutDirection).toBe('TB');
     });
@@ -136,6 +129,8 @@ describe('framework definitions', () => {
   });
 
   describe('Success Tree', () => {
+    const successTreeFramework = getFramework('success-tree')!;
+
     it('has bottom-to-top direction', () => {
       expect(successTreeFramework.defaultLayoutDirection).toBe('BT');
     });
@@ -160,6 +155,8 @@ describe('framework definitions', () => {
   });
 
   describe('CLD', () => {
+    const cldFramework = getFramework('cld')!;
+
     it('allows cycles', () => {
       expect(cldFramework.allowsCycles).toBe(true);
     });
@@ -183,6 +180,8 @@ describe('framework definitions', () => {
   });
 
   describe('Value Stream Map', () => {
+    const valueStreamFramework = getFramework('value-stream')!;
+
     it('defaults to left-to-right direction', () => {
       expect(valueStreamFramework.defaultLayoutDirection).toBe('LR');
     });
@@ -208,6 +207,8 @@ describe('framework definitions', () => {
   });
 
   describe('Value Driver Tree', () => {
+    const vdtFramework = getFramework('vdt')!;
+
     it('has bottom-to-top direction', () => {
       expect(vdtFramework.defaultLayoutDirection).toBe('BT');
     });

@@ -1,19 +1,16 @@
 import type { Framework } from '../core/framework-types';
+import { validateFramework } from '../core/framework-schema';
 
 const frameworks = new Map<string, Framework>();
 
-// Auto-discover all framework files in this directory (excluding registry + tests).
-// Drop a new .ts file here that exports a Framework const and it registers automatically.
-const modules = import.meta.glob<Record<string, unknown>>('./*.ts', { eager: true });
+// Auto-discover all framework JSON files in this directory.
+// Drop a new .json file here and it registers automatically — no code changes needed.
+const modules = import.meta.glob<Record<string, unknown>>('./*.json', { eager: true });
 
 for (const [path, mod] of Object.entries(modules)) {
-  if (path === './registry.ts') continue;
-  for (const exp of Object.values(mod)) {
-    const fw = exp as Framework;
-    if (fw && typeof fw === 'object' && typeof fw.id === 'string' && Array.isArray(fw.nodeTags)) {
-      frameworks.set(fw.id, fw);
-    }
-  }
+  const data = (mod as { default?: unknown }).default ?? mod;
+  const fw = validateFramework(data, path);
+  frameworks.set(fw.id, fw);
 }
 
 export function getFramework(id: string): Framework | undefined {
@@ -32,5 +29,6 @@ export function getDefaultFramework(): Framework {
 }
 
 export function registerFramework(fw: Framework): void {
+  validateFramework(fw);
   frameworks.set(fw.id, fw);
 }
