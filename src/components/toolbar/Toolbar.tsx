@@ -279,7 +279,7 @@ export default function Toolbar() {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".json,.sky"
+          accept=".json"
           style={{ display: 'none' }}
           onChange={handleFileChange}
         />
