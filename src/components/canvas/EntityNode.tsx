@@ -335,7 +335,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
           </div>
         )}
 
-        {nodeData.value != null && (
+        {framework.supportsNodeValues && nodeData.value != null && (
           <div className="entity-node-value">
             {formatNodeValue(nodeData.value, nodeData.unit)}
           </div>

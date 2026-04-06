@@ -228,7 +228,9 @@ export function buildSystemPrompt(diagram: Diagram, framework: Framework): strin
   const confidenceRule = framework.supportsEdgePolarity
     ? '\n- Edges can also use confidence to express uncertainty: high (default, solid), medium (dashed), or low (dotted).'
     : '';
-  const nodeValueRule = "\n- Nodes support numeric values: set 'value' (number) and 'unit' (string like '$', '%', 'users') to display metrics on nodes. Set value=null to clear. When the user provides quantitative data, populate these fields.";
+  const nodeValueRule = framework.supportsNodeValues
+    ? "\n- Nodes support numeric values: set 'value' (number) and 'unit' (string like '$', '%', 'users') to display metrics on nodes. Set value=null to clear. When the user provides quantitative data, populate these fields."
+    : '';
   const junctionRule = framework.supportsJunctions
     ? isMathJunctions
       ? "\n- When multiple edges point to the same target, the node's operator determines how children combine: 'add' (default) sums children, 'multiply' multiplies them. Use edge polarity=negative to subtract or divide."

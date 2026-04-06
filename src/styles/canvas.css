@@ -64,7 +64,7 @@
   color: var(--text-muted);
   margin-top: 4px;
   padding: 3px 6px;
-  border: 1.5px solid var(--text-muted);
+  border: 1px solid var(--border);
   border-radius: 4px;
   display: inline-block;
 }

@@ -159,12 +159,12 @@ describe('NodePanel', () => {
       expect(screen.getByLabelText('Node unit')).toBeInTheDocument();
     });
 
-    it('shows value/unit inputs for CRT framework too', () => {
+    it('hides value/unit inputs for CRT framework', () => {
       useDiagramStore.getState().setFramework('crt');
       nodeId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
       render(<NodePanel node={getNode(nodeId)} />);
-      expect(screen.getByLabelText('Node value')).toBeInTheDocument();
-      expect(screen.getByLabelText('Node unit')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Node value')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Node unit')).not.toBeInTheDocument();
     });
 
     it('commits value on blur', async () => {

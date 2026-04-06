@@ -356,6 +356,10 @@ describe('EntityNode', () => {
   });
 
   describe('value display', () => {
+    beforeEach(() => {
+      useDiagramStore.getState().setFramework('vdt');
+    });
+
     it('shows formatted value when node has a value', () => {
       renderNode({ value: 3000000, unit: '$' });
       expect(document.querySelector('.entity-node-value')).not.toBeNull();
@@ -379,6 +383,12 @@ describe('EntityNode', () => {
       const el = document.querySelector('.entity-node-value');
       expect(el).not.toBeNull();
       expect(el!.textContent).toBe('0 %');
+    });
+
+    it('hides value when framework does not support node values', () => {
+      useDiagramStore.getState().setFramework('crt');
+      renderNode({ value: 3000000, unit: '$' });
+      expect(document.querySelector('.entity-node-value')).toBeNull();
     });
   });
 

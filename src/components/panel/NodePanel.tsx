@@ -167,34 +167,36 @@ export default function NodePanel({ node }: Props) {
         />
       </FormField>
 
-      {/* Value & Unit */}
-      <FormField label="Value">
-        <div className="control-row" style={{ gap: '0.5rem' }}>
-          <input
-            type="text"
-            inputMode="decimal"
-            className="input-text"
-            value={valueStr}
-            onChange={(e) => setValueStr(e.target.value)}
-            onBlur={handleValueBlur}
-            onKeyDown={handleTextKeyDown}
-            placeholder="e.g. 3000000"
-            aria-label="Node value"
-            style={{ flex: 2 }}
-          />
-          <input
-            type="text"
-            className="input-text"
-            value={unit}
-            onChange={(e) => setUnit(e.target.value)}
-            onBlur={handleUnitBlur}
-            onKeyDown={handleTextKeyDown}
-            placeholder="e.g. $"
-            aria-label="Node unit"
-            style={{ flex: 1 }}
-          />
-        </div>
-      </FormField>
+      {/* Value & Unit — only for frameworks that support quantitative metrics */}
+      {framework.supportsNodeValues && (
+        <FormField label="Value">
+          <div className="control-row" style={{ gap: '0.5rem' }}>
+            <input
+              type="text"
+              inputMode="decimal"
+              className="input-text"
+              value={valueStr}
+              onChange={(e) => setValueStr(e.target.value)}
+              onBlur={handleValueBlur}
+              onKeyDown={handleTextKeyDown}
+              placeholder="e.g. 3000000"
+              aria-label="Node value"
+              style={{ flex: 2 }}
+            />
+            <input
+              type="text"
+              className="input-text"
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              onBlur={handleUnitBlur}
+              onKeyDown={handleTextKeyDown}
+              placeholder="e.g. $"
+              aria-label="Node unit"
+              style={{ flex: 1 }}
+            />
+          </div>
+        </FormField>
+      )}
 
       {/* Tags */}
       {framework.nodeTags.length > 0 && (
