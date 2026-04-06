@@ -1,208 +1,159 @@
 # Refactor Plan
 
-## Goals
+Architectural improvement opportunities identified 2026-04-06. Ordered by impact.
 
-- Reduce coupling between UI components, stores, and domain logic.
-- Move side effects into explicit bootstrap or adapter layers.
-- Split oversized orchestration components into focused hooks/modules.
-- Improve type safety around framework/provider/transition identifiers.
-- Keep behavior stable while making future features easier to add.
+## Status
 
-## Guiding Rules
+| # | Opportunity | Priority | Status |
+|---|-------------|----------|--------|
+| 1 | Chat-store / diagram-store coupling | High | Phase 1 done; Phase 2 pending |
+| 2 | EntityNode complexity | Medium | Not started |
+| 3 | Layout metrics hotspot | Medium | Not started |
+| 4 | E2E test depth | Medium | Not started |
+| 5 | Error handling consistency | Low | Not started |
 
-- Prefer extracting boundaries over rewriting working logic.
-- Keep `core/` free of React/UI concerns.
-- Keep `components/` focused on rendering and interaction wiring.
-- Keep stores focused on state transitions, not cross-layer orchestration.
-- Land changes in small phases with tests preserved at each step.
+## Strengths to Preserve
 
-## Phase 1: Fix Layer Boundaries Around Chat
+These are working well and should not be disrupted by refactoring:
 
-### Problem
+- **Core/UI boundary** — `src/core/` has zero React/Zustand imports. Perfect separation.
+- **Framework registry** — Adding a framework requires only a definition file and one registration call.
+- **Store decomposition** — `diagram-store` is split across 4 focused action modules. No god objects.
+- **Type safety** — Zero `any` types in the entire codebase. `unknown` casts are justified and minimal.
+- **Migration pipeline** — Stateless, composable migration functions in `src/core/persistence/`.
+- **Hook extraction** — Large components already delegate to custom hooks (viewport focus, highlighting, gestures).
 
-`src/store/chat-store.ts` depends on `src/components/panel/chat-mentions.ts`, which means store logic depends on UI-layer parsing and display shaping.
+---
 
-### Changes
-
-- Move chat mention parsing/render-data helpers into `src/core/chat/` or `src/features/chat/`.
-- Keep canonical chat state in the store:
-  - raw message content
-  - retry metadata
-  - modification payloads
-- Compute display segments in the UI or in a domain-level formatter module, not in the store.
-- Move `applyModifications` into a dedicated chat application service or command module.
-
-### Target Shape
-
-- `core/chat/mentions.ts`
-- `core/chat/message-format.ts`
-- `store/chat-store.ts` only coordinates request lifecycle and persisted state
-- `components/panel/chat/*` renders formatted messages without owning parsing rules
-
-### Acceptance Criteria
-
-- No files under `src/store/` import from `src/components/`.
-- Chat mention parsing tests still pass.
-- Chat UI output remains unchanged for valid, malformed, and streaming mentions.
-
-## Phase 2: Introduce an Application Layer for Cross-Store Workflows
+## 1. Chat-Store / Diagram-Store Coupling
 
 ### Problem
 
-Diagram actions currently trigger UI behavior directly through `useUIStore`, which mixes domain mutations with toasts, focus, and viewport requests.
+`chat-store.ts` (501 LOC) calls `useDiagramStore.getState()` directly to read diagram state and apply AI mutations. This creates tight bidirectional coupling between the two largest stores, making chat logic hard to test in isolation.
 
-### Changes
+### Done (Phase 1)
 
-- Add an application layer such as `src/app/commands/` or `src/features/diagram/commands/`.
-- Move workflows like these out of the diagram store:
+Chat mention parsing moved from `src/components/panel/` to `src/core/chat/mentions.ts`. Store no longer imports from `components/`.
+
+### Remaining (Phase 2)
+
+Introduce a diagram operations service that both stores consume:
+
+- Create `src/core/diagram-operations.ts` (or `src/app/commands/`).
+- Move cross-store workflows out of chat-store:
+  - AI modifications + relayout + focus
   - auto-layout + error toast
-  - derive-next-diagram + fit-view
   - framework switching + initial focus
-  - AI modifications + relayout + focus/update handling
-- Keep the diagram store responsible for pure state mutations and history.
-- Let command handlers call both diagram and UI stores explicitly.
-
-### Candidate Commands
-
-- `runAutoLayoutCommand()`
-- `deriveNextDiagramCommand()`
-- `setFrameworkCommand()`
-- `applyAiDiagramModificationsCommand()`
+- Diagram store stays responsible for pure state mutations and history.
+- Chat store describes *what* to change; the service executes it.
 
 ### Acceptance Criteria
 
-- Diagram store no longer imports `useUIStore`.
-- Main workflows remain covered by existing tests or replacement command tests.
-- Diagram mutations can be tested without asserting on UI side effects.
+- `chat-store.ts` does not import `useDiagramStore`.
+- Diagram mutations can be tested without asserting on chat or UI side effects.
+- AI modification workflow remains functionally identical.
 
-## Phase 3: Centralize Bootstrap and Browser Side Effects
+---
+
+## 2. EntityNode Complexity
 
 ### Problem
 
-Startup behavior is spread across `main.tsx`, `App.tsx`, store module top-level code, and hooks. That makes boot order harder to reason about and increases hidden side effects on import.
+`EntityNode.tsx` (388 LOC) combines rendering, inline editing, touch/pointer gesture handling, and connection handle visibility logic. The touch layer (multitouch, double-tap detection, proximity-based handles) is complex enough to warrant its own module.
 
 ### Changes
 
-- Create a bootstrap module, for example `src/app/bootstrap.ts`.
-- Centralize:
-  - initial theme hydration
-  - global error logging install
-  - diagram session restore
-  - settings startup model refresh
-  - storage event subscriptions
-- Replace module-level side effects in stores with explicit startup functions.
-- Keep browser storage access behind small adapters.
-
-### Candidate Modules
-
-- `app/bootstrap.ts`
-- `app/startup/load-session.ts`
-- `app/startup/init-theme.ts`
-- `adapters/storage/settings-storage.ts`
-- `adapters/storage/chat-storage.ts`
+- Extract `useTouchNodeInteraction` hook for pointer/touch gesture logic.
+- Keep EntityNode focused on rendering, accent colors, derived badges, and editing state.
+- Target: EntityNode drops to ~280 LOC.
 
 ### Acceptance Criteria
 
-- Importing a store module does not attach global listeners or kick off network requests.
-- App startup order is explicit from one entry path.
-- Existing persistence and theme behavior remain unchanged.
+- EntityNode.tsx is under 300 LOC.
+- All existing canvas interaction tests pass.
+- No behavior change in touch, tap, edit, or handle visibility.
 
-## Phase 4: Split `DiagramCanvas` Into Focused Hooks
+---
+
+## 3. Layout Metrics Hotspot
 
 ### Problem
 
-`src/components/canvas/DiagramCanvas.tsx` is carrying too many responsibilities and is the most likely place for regressions when interaction logic changes.
+`layout-metrics.ts` (257 LOC) handles collision detection, bounding box computation, and CLD-specific metrics in one file. These are distinct concerns that change for different reasons.
 
 ### Changes
 
-- Extract focused hooks/modules:
-  - `useCanvasSelectionSync`
-  - `useCanvasViewportFocus`
-  - `useBufferedGraphRemovals`
-  - `useCanvasTouchGestures`
-  - `useCanvasFitViewRequests`
-- Keep `DiagramCanvas` as a composition layer around React Flow.
-- Move geometry helpers into a small utility module if they are reused.
-
-### Suggested End State
-
-- `DiagramCanvas.tsx` becomes mostly:
-  - store selectors
-  - React Flow props wiring
-  - rendering
-- Hook modules own interaction details and effect cleanup
+- Extract collision/bbox logic into `src/core/layout/collision-detection.ts`.
+- Keep CLD-specific metrics (loop readability, spacing) in `layout-metrics.ts`.
+- Add unit tests for collision detection in isolation.
 
 ### Acceptance Criteria
 
-- `DiagramCanvas.tsx` is materially smaller and easier to scan.
-- Existing canvas tests still pass.
-- No behavior change in drag, selection, touch, fit-view, or focus behavior.
+- `layout-metrics.ts` under 150 LOC.
+- Collision detection is independently testable.
+- Layout output unchanged for all framework types.
 
-## Phase 5: Extract Panel Resize/Split Behavior
+---
+
+## 4. E2E Test Depth
 
 ### Problem
 
-`SidePanel` mixes presentation, selected-object branching, and drag-resize logic.
+770 unit tests but only 49 Playwright E2E tests (48 in `app.spec.ts`, 1 in `touch.mobile.spec.ts`). Critical user workflows are heavily covered at the unit level but barely exercised in a real browser.
+
+### Coverage Gaps
+
+The following workflows lack E2E coverage:
+
+- Save/load round-trip (native file dialog + `.sky` format)
+- AI chat mutations applied to canvas
+- Framework switching mid-diagram
+- Undo/redo across mixed operations (drag, edit, delete, AI apply)
+- Multi-node selection + bulk operations
+- Edge creation and validation (cycle rejection, duplicate rejection)
 
 ### Changes
 
-- Extract resize/split behavior into reusable hooks:
-  - `useHorizontalPanelResize`
-  - `useVerticalPanelSplit`
-- Keep `SidePanel` responsible for choosing which panel content to render.
-- Optionally persist panel width/layout mode later, but only after the extraction.
+- Add E2E specs for each gap above in `e2e/`.
+- Target: 100+ meaningful E2E test cases.
+- Prioritize save/load and undo/redo — these are the highest-risk user workflows.
 
 ### Acceptance Criteria
 
-- `SidePanel.tsx` mostly reads as layout/render logic.
-- Pointer event cleanup remains correct.
+- Each workflow above has at least one happy-path and one error-case E2E test.
+- E2E suite runs in CI and blocks merges on failure.
 
-## Phase 6: Strengthen Type Safety for Registries
+---
+
+## 5. Error Handling Consistency
 
 ### Problem
 
-Framework IDs, provider IDs, and transition IDs are mostly raw strings. That creates avoidable runtime branching and makes refactors riskier.
+Error handling varies across the codebase. `sky-io.ts` uses try/catch with user-facing toasts. Chat-store subscriptions swallow errors silently. AI streaming failures sometimes surface, sometimes don't.
 
 ### Changes
 
-- Convert framework/provider/transition definitions to `as const` registries where practical.
-- Derive union types:
-  - `FrameworkId`
-  - `ProviderId`
-  - `DiagramTransitionId`
-- Tighten APIs that currently accept plain `string`.
-- Add helper guards only where external input enters the system.
+- Establish a pattern: all async operations that can fail surface errors through the toast system or a dedicated error channel.
+- Audit chat-store, persistence, and AI client for silent failures.
+- Wire failures through `src/core/monitoring/error-logging.ts` consistently.
 
 ### Acceptance Criteria
 
-- Internal APIs use typed identifiers instead of generic strings.
-- Fewer `undefined` fallbacks are needed in internal paths.
+- No silent `catch` blocks that discard errors without logging or user notification.
+- Error logging module is used consistently across async boundaries.
+
+---
 
 ## Recommended Order
 
-1. Phase 1: Chat boundary cleanup
-2. Phase 2: Application-layer commands
-3. Phase 3: Bootstrap and side-effect centralization
-4. Phase 4: `DiagramCanvas` split
-5. Phase 5: `SidePanel` split
-6. Phase 6: Registry typing pass
+1. **Phase 2** (chat-store decoupling) — highest architectural leverage
+2. **EntityNode extraction** — straightforward hook extraction
+3. **Layout metrics split** — small, testable change
+4. **E2E test depth** — can run in parallel with any phase
+5. **Error handling** — lowest priority, do opportunistically
 
 ## Rollout Notes
 
-- Do not combine all phases in one PR.
-- Prefer behavior-preserving extractions first, then boundary tightening.
-- After each phase, run:
-  - `npm run test:unit`
-  - `npm run build`
-- If a phase changes interaction behavior, also run the relevant Playwright coverage.
-
-## First PR Recommendation
-
-Start with Phase 1.
-
-Why:
-
-- It fixes a clear architectural violation.
-- It is relatively contained.
-- It creates a better pattern for later extraction work.
-- It lowers the chance that future chat changes further entangle store and UI code.
+- One PR per opportunity. Do not combine.
+- Run `npm run lint && npx tsc -b && npm run test:all` after each change.
+- Behavior-preserving extractions first, then tighten boundaries.
