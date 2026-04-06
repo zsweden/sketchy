@@ -55,7 +55,6 @@ interface SettingsState {
   openaiApiKey: string;
   baseUrl: string;
   model: string;
-  guideMode: boolean;
   responseStyle: ResponseStyle;
   settingsOpen: boolean;
   availableModels: ModelInfo[];
@@ -67,7 +66,6 @@ interface SettingsState {
   setOpenaiApiKey: (key: string) => void;
   setBaseUrl: (url: string) => void;
   setModel: (model: string) => void;
-  setGuideMode: (enabled: boolean) => void;
   setResponseStyle: (style: ResponseStyle) => void;
   toggleSettings: () => void;
   closeSettings: () => void;
@@ -89,7 +87,6 @@ function loadSettings(): StoredSettings {
         model: parsed.model ?? '',
         provider: parsed.provider ?? detectProvider(baseUrl),
         theme: parsed.theme ?? DEFAULT_THEME,
-        guideMode: parsed.guideMode ?? true,
         responseStyle: parsed.responseStyle ?? 'concise',
       };
     }
@@ -149,7 +146,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     openaiApiKey: initial.apiKey,
     baseUrl: initial.baseUrl,
     model: initial.model,
-    guideMode: initial.guideMode ?? true,
     responseStyle: initial.responseStyle ?? 'concise',
     settingsOpen: false,
     availableModels: [],
@@ -187,11 +183,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       set({ model });
     },
 
-    setGuideMode: (enabled) => {
-      saveSettings({ guideMode: enabled });
-      set({ guideMode: enabled });
-    },
-
     setResponseStyle: (style) => {
       saveSettings({ responseStyle: style });
       set({ responseStyle: style });
@@ -222,7 +213,6 @@ window.addEventListener('storage', (e) => {
       model: parsed.model ?? '',
       provider: newProvider,
       theme: (parsed.theme as ThemeId) ?? DEFAULT_THEME,
-      guideMode: parsed.guideMode ?? true,
       responseStyle: parsed.responseStyle ?? 'concise',
     });
     useSettingsStore.getState().refreshModels();

@@ -530,8 +530,6 @@ describe('chat-store', () => {
 
   describe('guide mode', () => {
     it('stores suggestions from onDone and sets pendingSuggestions', async () => {
-      useSettingsStore.setState({ guideMode: true });
-
       const suggestions = [
         { frameworkId: 'crt', frameworkName: 'Current Reality Tree', reason: 'Root cause analysis' },
         { frameworkId: 'frt', frameworkName: 'Future Reality Tree', reason: 'Solution validation' },
@@ -555,12 +553,11 @@ describe('chat-store', () => {
       expect(assistantMsg!.suggestions).toEqual(suggestions);
     });
 
-    it('passes guideMode to streamChatMessage', () => {
-      useSettingsStore.setState({ guideMode: true });
+    it('always passes guideMode=true to streamChatMessage', () => {
       useChatStore.getState().sendMessage('Test query');
 
       const lastCall = mockStreamChatMessage.mock.calls[mockStreamChatMessage.mock.calls.length - 1];
-      // guideMode is the last argument (index 8)
+      // guideMode is the second-to-last argument (index 8)
       expect(lastCall[8]).toBe(true);
     });
 
@@ -582,8 +579,6 @@ describe('chat-store', () => {
     });
 
     it('acceptSuggestion switches framework and sends synthetic message', async () => {
-      useSettingsStore.setState({ guideMode: true });
-
       const suggestions = [
         { frameworkId: 'crt', frameworkName: 'Current Reality Tree', reason: 'Root cause analysis' },
       ];

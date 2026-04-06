@@ -253,17 +253,6 @@ describe('settings store', () => {
     });
   });
 
-  describe('setGuideMode', () => {
-    it('updates guideMode in state and persists', async () => {
-      const useSettingsStore = await importFreshStore();
-      useSettingsStore.getState().setGuideMode(false);
-
-      expect(useSettingsStore.getState().guideMode).toBe(false);
-      const stored = JSON.parse(mockStorage.getItem(STORAGE_KEY)!);
-      expect(stored.guideMode).toBe(false);
-    });
-  });
-
   describe('responseStyle', () => {
     it('defaults to concise', async () => {
       const useSettingsStore = await importFreshStore();
@@ -407,7 +396,6 @@ describe('settings store', () => {
         model: 'claude-sonnet-4-6',
         provider: 'anthropic',
         theme: 'dark',
-        guideMode: false,
       });
 
       // Mock fetch for the refreshModels call triggered by cross-tab sync
@@ -424,7 +412,6 @@ describe('settings store', () => {
       expect(state.openaiApiKey).toBe('sk-from-other-tab');
       expect(state.provider).toBe('anthropic');
       expect(state.theme).toBe('dark');
-      expect(state.guideMode).toBe(false);
       vi.unstubAllGlobals();
     });
 

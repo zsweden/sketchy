@@ -14,8 +14,6 @@ export default function SettingsPopover() {
   const setTheme = useSettingsStore((s) => s.setTheme);
   const provider = useSettingsStore((s) => s.provider);
   const setProvider = useSettingsStore((s) => s.setProvider);
-  const guideMode = useSettingsStore((s) => s.guideMode);
-  const setGuideMode = useSettingsStore((s) => s.setGuideMode);
   const responseStyle = useSettingsStore((s) => s.responseStyle);
   const setResponseStyle = useSettingsStore((s) => s.setResponseStyle);
   const apiKey = useSettingsStore((s) => s.openaiApiKey);
@@ -241,18 +239,6 @@ export default function SettingsPopover() {
               </div>
             )}
           </div>
-        </div>
-        <div className="control-row split-row">
-          <p className="section-label">Suggest Frameworks</p>
-          <button
-            className="toggle-track"
-            data-active={guideMode}
-            onClick={() => setGuideMode(!guideMode)}
-            aria-label="Toggle framework suggestions"
-            title="Allow AI to suggest using or migrating to a different framework if it works better for the task at hand"
-          >
-            <div className="toggle-thumb" />
-          </button>
         </div>
         <div className="settings-field">
           <p className="section-label">Response Style</p>
