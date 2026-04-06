@@ -1,0 +1,6 @@
+{
+  "id": "crt-audit",
+  "name": "CRT Audit",
+  "startingFramework": "crt",
+  "instructions": "Audit this Current Reality Tree diagram based on two criteria:\n\n1. **Completeness** — Are all significant undesirable effects (UDEs) captured? Are there missing causal links or intermediate causes that should be present?\n\n2. **Sufficiency** — Does each cause-effect relationship pass the sufficiency test? Is each cause truly sufficient to produce its effect, or are additional causes needed?\n\nRecommend the highest-impact improvements, prioritized by how much they would strengthen the tree's explanatory power."
+}

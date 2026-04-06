@@ -18,6 +18,7 @@ import { useChatStore } from '../../store/chat-store';
 import { appVersion } from '../../core/app-version';
 import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import { useNodeAlignmentActions } from '../../hooks/useNodeAlignmentActions';
+import SkillMenu from './SkillMenu';
 import FrameworkSelector from './FrameworkSelector';
 import SearchBar from './SearchBar';
 import SettingsPopover from './SettingsPopover';
@@ -172,6 +173,7 @@ export default function Toolbar() {
         >
           <Hand size={16} />
         </button>
+        <SkillMenu />
 
         <div className="toolbar-divider" />
 
