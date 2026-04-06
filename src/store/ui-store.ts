@@ -21,6 +21,7 @@ interface UIState {
   selectionSyncTrigger: number;
   viewportFocusTarget: GraphObjectTarget | null;
   viewportFocusTrigger: number;
+  searchQuery: string;
 
   setSelectedNodes: (ids: string[]) => void;
   setSelectedEdges: (ids: string[]) => void;
