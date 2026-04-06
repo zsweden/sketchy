@@ -26,6 +26,12 @@ interface NormalizedError {
 const MAX_DESCRIPTION_LENGTH = 500;
 const DEDUPE_WINDOW_MS = 5_000;
 
+/** Browser-noise error messages that should never be reported. */
+const IGNORED_MESSAGES = [
+  'ResizeObserver loop completed with undelivered notifications.',
+  'ResizeObserver loop limit exceeded',
+];
+
 const recentFingerprints = new Map<string, number>();
 
 let globalHandlersInstalled = false;
@@ -137,6 +143,11 @@ export function buildErrorDescription(
 
 export async function reportError(error: unknown, options: ReportErrorOptions): Promise<void> {
   const normalized = normalizeUnknownError(error);
+
+  if (IGNORED_MESSAGES.some((msg) => normalized.message.includes(msg))) {
+    return;
+  }
+
   const route = getCurrentRoute();
   const fingerprint = `${options.source}|${normalized.name}|${normalized.message}|${route}`;
 

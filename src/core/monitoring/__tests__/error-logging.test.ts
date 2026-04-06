@@ -44,6 +44,16 @@ describe('error logging', () => {
     );
   });
 
+  it('silently drops ResizeObserver noise', async () => {
+    await reportError(
+      new Error('ResizeObserver loop completed with undelivered notifications.'),
+      { source: 'window.error', fatal: true },
+    );
+
+    expect(logFirebaseException).not.toHaveBeenCalled();
+    expect(logFirestoreError).not.toHaveBeenCalled();
+  });
+
   it('dedupes repeated errors in the same window', async () => {
     await reportError(new Error('Boom'), {
       source: 'window.error',
