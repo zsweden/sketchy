@@ -4,11 +4,11 @@ interface GraphValidationOptions {
   allowCycles?: boolean;
 }
 
-export function isSelfLoop(source: string, target: string): boolean {
+function isSelfLoop(source: string, target: string): boolean {
   return source === target;
 }
 
-export function isDuplicateEdge(
+function isDuplicateEdge(
   edges: DiagramEdge[],
   source: string,
   target: string,

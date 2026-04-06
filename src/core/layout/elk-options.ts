@@ -1,7 +1,7 @@
 export type ElkAlgorithm = 'layered' | 'force' | 'stress' | 'radial';
-export type ElkAlgorithmOverride = ElkAlgorithm | null;
+type ElkAlgorithmOverride = ElkAlgorithm | null;
 
-export type ElkLayeringStrategy =
+type ElkLayeringStrategy =
   | 'NETWORK_SIMPLEX'
   | 'LONGEST_PATH'
   | 'LONGEST_PATH_SOURCE'
@@ -12,14 +12,14 @@ export type ElkLayeringStrategy =
   | 'BF_MODEL_ORDER'
   | 'DF_MODEL_ORDER';
 
-export type ElkNodePlacementStrategy =
+type ElkNodePlacementStrategy =
   | 'BRANDES_KOEPF'
   | 'NETWORK_SIMPLEX'
   | 'LINEAR_SEGMENTS'
   | 'SIMPLE'
   | 'INTERACTIVE';
 
-export type ElkCycleBreakingStrategy =
+type ElkCycleBreakingStrategy =
   | 'GREEDY'
   | 'DEPTH_FIRST'
   | 'INTERACTIVE'
@@ -30,7 +30,7 @@ export type ElkCycleBreakingStrategy =
   | 'DFS_NODE_ORDER'
   | 'BFS_NODE_ORDER';
 
-export type ElkWrappingStrategy = 'OFF' | 'SINGLE_EDGE' | 'MULTI_EDGE';
+type ElkWrappingStrategy = 'OFF' | 'SINGLE_EDGE' | 'MULTI_EDGE';
 
 export interface ElkExperimentSettings {
   algorithmOverride: ElkAlgorithmOverride;

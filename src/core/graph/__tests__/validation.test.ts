@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import {
-  isSelfLoop,
-  isDuplicateEdge,
   wouldCreateCycle,
   validateEdge,
   validateGraph,
@@ -20,33 +18,6 @@ function node(id: string): DiagramNode {
     data: { label: id, tags: [], junctionType: 'and' },
   };
 }
-
-describe('isSelfLoop', () => {
-  it('detects A→A', () => {
-    expect(isSelfLoop('a', 'a')).toBe(true);
-  });
-
-  it('allows A→B', () => {
-    expect(isSelfLoop('a', 'b')).toBe(false);
-  });
-});
-
-describe('isDuplicateEdge', () => {
-  it('detects existing A→B', () => {
-    const edges = [edge('1', 'a', 'b')];
-    expect(isDuplicateEdge(edges, 'a', 'b')).toBe(true);
-  });
-
-  it('allows reverse B→A', () => {
-    const edges = [edge('1', 'a', 'b')];
-    expect(isDuplicateEdge(edges, 'b', 'a')).toBe(false);
-  });
-
-  it('allows different target', () => {
-    const edges = [edge('1', 'a', 'b')];
-    expect(isDuplicateEdge(edges, 'a', 'c')).toBe(false);
-  });
-});
 
 describe('wouldCreateCycle', () => {
   it('detects direct cycle A→B, adding B→A', () => {
