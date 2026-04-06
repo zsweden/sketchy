@@ -25,8 +25,25 @@ export function useKeyboardShortcuts() {
   // H for hand/pan tool
   useHotkeys('h', () => useUIStore.getState().setInteractionMode('pan'));
 
-  // Escape to clear selection
-  useHotkeys('escape', () => useUIStore.getState().requestClearSelection());
+  // Cmd/Ctrl+F to open find
+  useHotkeys('mod+f', (e) => {
+    e.preventDefault();
+    const input = document.querySelector<HTMLInputElement>('.search-bar-input');
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }, { enableOnFormTags: true });
+
+  // Escape to clear search or selection
+  useHotkeys('escape', () => {
+    const { searchQuery, setSearchQuery, requestClearSelection } = useUIStore.getState();
+    if (searchQuery) {
+      setSearchQuery('');
+    } else {
+      requestClearSelection();
+    }
+  }, { enableOnFormTags: true });
 
   // Space hold to pan, release to restore
   useHotkeys('space', (e) => {

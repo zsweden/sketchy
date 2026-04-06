@@ -19,6 +19,7 @@ import { appVersion } from '../../core/app-version';
 import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import { useNodeAlignmentActions } from '../../hooks/useNodeAlignmentActions';
 import FrameworkSelector from './FrameworkSelector';
+import SearchBar from './SearchBar';
 import SettingsPopover from './SettingsPopover';
 import { AlignHorizontalIcon, AlignVerticalIcon, DistributeHorizontalIcon, DistributeVerticalIcon } from '../icons/AlignDistributeIcons';
 
@@ -284,6 +285,8 @@ export default function Toolbar() {
           onChange={handleFileChange}
         />
 
+        <div className="toolbar-divider" />
+        <SearchBar />
       </div>
 
       <div className="toolbar-group toolbar-group-right">

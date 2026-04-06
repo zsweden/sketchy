@@ -30,6 +30,7 @@ export function useRFNodeEdgeBuilder(
   const edgeRoutingMode = settings?.edgeRoutingMode ?? 'dynamic';
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
   const selectedEdgeIds = useUIStore((s) => s.selectedEdgeIds);
+  const searchQuery = useUIStore((s) => s.searchQuery);
   const themeId = useSettingsStore((s) => s.theme);
   const activeTheme = useMemo(() => getTheme(themeId), [themeId]);
   const edgeRoutingConfig = useMemo(() => (
@@ -64,12 +65,17 @@ export function useRFNodeEdgeBuilder(
     return map;
   }, [edges, nodes, settings, edgeRoutingMode, optimizedPlacements]);
 
+  const searchLower = useMemo(() => searchQuery.toLowerCase(), [searchQuery]);
+
   const rfNodes: Node[] = useMemo(
     () =>
       nodes.map((n) => {
         let highlightState: 'highlighted' | 'dimmed' | 'none' = 'none';
 
-        if (highlightSets) {
+        if (searchLower) {
+          const matches = n.data.label.toLowerCase().includes(searchLower);
+          highlightState = matches ? 'highlighted' : 'dimmed';
+        } else if (highlightSets) {
           const inHighlightedSet = highlightSets.nodeIds.has(n.id);
 
           if (selectedLoop || (selectedEdgeIds.length === 1 && selectedNodeIds.length === 0)) {
@@ -99,7 +105,7 @@ export function useRFNodeEdgeBuilder(
           },
         };
       }),
-    [nodes, degreesMap, activeHandlesByNode, highlightSets, selectedLoop, selectedEdgeIds, selectedNodeIds],
+    [nodes, degreesMap, activeHandlesByNode, highlightSets, selectedLoop, selectedEdgeIds, selectedNodeIds, searchLower],
   );
 
   const rfEdges: Edge[] = useMemo(

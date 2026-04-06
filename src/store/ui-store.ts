@@ -35,6 +35,7 @@ interface UIState {
   requestClearSelection: () => void;
   selectGraphObject: (target: GraphObjectTarget) => void;
   focusGraphObject: (target: GraphObjectTarget) => void;
+  setSearchQuery: (query: string) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -50,6 +51,7 @@ export const useUIStore = create<UIState>((set) => ({
   selectionSyncTrigger: 0,
   viewportFocusTarget: null,
   viewportFocusTrigger: 0,
+  searchQuery: '',
 
   setSelectedNodes: (ids) => set({ selectedNodeIds: ids }),
 
@@ -97,6 +99,8 @@ export const useUIStore = create<UIState>((set) => ({
     viewportFocusTarget: target,
     viewportFocusTrigger: s.viewportFocusTrigger + 1,
   })),
+
+  setSearchQuery: (query) => set({ searchQuery: query }),
 }));
 
 if (import.meta.env.DEV && typeof window !== 'undefined') {
