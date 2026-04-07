@@ -1,6 +1,6 @@
 import { toast } from 'sonner';
 import { getFramework, getDefaultFramework } from '../frameworks/registry';
-import { DEFAULT_EDGE_ROUTING_POLICY } from '../core/edge-routing';
+import { DEFAULT_EDGE_ROUTING_CONFIG, DEFAULT_EDGE_ROUTING_POLICY } from '../core/edge-routing';
 import { reportError } from '../core/monitoring/error-logging';
 import { runElkAutoLayout } from '../core/layout/run-elk-auto-layout';
 import { useUIStore } from './ui-store';
@@ -131,6 +131,11 @@ export function createDiagramActions(
           settings.edgeRoutingMode !== undefined
           && settings.edgeRoutingMode !== state.diagram.settings.edgeRoutingMode;
 
+        const fw = resolveFramework(state.diagram.frameworkId);
+        const edgeRoutingConfig = fw.allowsCycles
+          ? { ...DEFAULT_EDGE_ROUTING_CONFIG, flowAlignedBonus: 0 }
+          : DEFAULT_EDGE_ROUTING_CONFIG;
+
         return {
           diagram: {
             ...state.diagram,
@@ -141,6 +146,7 @@ export function createDiagramActions(
                 state.diagram.nodes,
                 nextSettings,
                 DEFAULT_EDGE_ROUTING_POLICY,
+                edgeRoutingConfig,
               )
               : state.diagram.edges,
           },

@@ -348,6 +348,23 @@ describe('diagram store', () => {
       expect(edge.targetSide).toBe('left');
     });
 
+    it('uses cyclic config (no flow-aligned bonus) when capturing edges for cyclic frameworks', () => {
+      useDiagramStore.getState().setFramework('cld');
+      // Source above target: flow-aligned bonus would prefer top→bottom,
+      // but with flowAlignedBonus=0 (cyclic), geometry picks bottom→top.
+      const topId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const bottomId = useDiagramStore.getState().addNode({ x: 0, y: 200 });
+      useDiagramStore.getState().addEdge(topId, bottomId);
+
+      useDiagramStore.getState().updateSettings({ edgeRoutingMode: 'fixed' });
+
+      const edge = useDiagramStore.getState().diagram.edges[0];
+      // Without the cyclic config fix, this would use the default flowAlignedBonus
+      // and potentially pick different sides than the dynamic renderer shows.
+      expect(edge.sourceSide).toBe('bottom');
+      expect(edge.targetSide).toBe('top');
+    });
+
     it('captures the final dynamic edge state when switching back to fixed', () => {
       const sourceId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
       const targetId = useDiagramStore.getState().addNode({ x: 200, y: 0 });
