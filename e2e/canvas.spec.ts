@@ -102,6 +102,10 @@ test('retains chat messages after browser refresh', async ({ page }) => {
 test('shows a recovery toast and backs up corrupted session data after reload', async ({ page }) => {
   const corrupted = '{not valid json!!!';
 
+  // Wait for the autosave debounce (500ms) triggered by beforeEach's setFramework to flush,
+  // so the beforeunload handler won't overwrite our corrupted data on reload.
+  await page.waitForTimeout(600);
+
   await page.evaluate((raw) => {
     sessionStorage.setItem('sketchy_diagram', raw);
   }, corrupted);
