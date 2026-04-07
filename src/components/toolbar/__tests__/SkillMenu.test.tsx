@@ -42,12 +42,13 @@ describe('SkillMenu', () => {
     );
 
     const sendSpy = vi.spyOn(useChatStore.getState(), 'sendMessage');
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     render(<SkillMenu />);
 
     // Open menu and click the skill
     fireEvent.click(screen.getByLabelText('Skills'));
-    fireEvent.click(screen.getByText('Create Team Topology'));
+    fireEvent.click(screen.getByText(/Create Team Topology/));
 
     expect(sendSpy).toHaveBeenCalledTimes(1);
     const [message] = sendSpy.mock.calls[0];
@@ -55,6 +56,19 @@ describe('SkillMenu', () => {
     expect(message).toContain('Order Received');
     // Framework should have switched to team-topology
     expect(useDiagramStore.getState().diagram.frameworkId).toBe('team-topology');
+  });
+
+  it('cancels framework switch when user declines confirm', () => {
+    const sendSpy = vi.spyOn(useChatStore.getState(), 'sendMessage');
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    render(<SkillMenu />);
+
+    fireEvent.click(screen.getByLabelText('Skills'));
+    fireEvent.click(screen.getByText(/Create Team Topology/));
+
+    expect(sendSpy).not.toHaveBeenCalled();
+    expect(useDiagramStore.getState().diagram.frameworkId).toBe('value-stream');
   });
 
   it('does not prepend snapshot for same-framework skills', () => {

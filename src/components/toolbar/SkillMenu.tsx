@@ -4,6 +4,7 @@ import { useDiagramStore } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
 import { useUIStore } from '../../store/ui-store';
 import { getSkillsForFramework } from '../../skills/registry';
+import { getFramework } from '../../frameworks/registry';
 import type { Skill } from '../../core/skill-types';
 import type { Diagram } from '../../core/types';
 
@@ -43,10 +44,14 @@ export default function SkillMenu() {
 
     // Capture the current diagram BEFORE switching frameworks so the AI sees it
     let instructions = skill.instructions;
-    if (skill.endingFramework && skill.endingFramework !== frameworkId) {
+    const switchesFramework = skill.endingFramework && skill.endingFramework !== frameworkId;
+    if (switchesFramework) {
+      if (!window.confirm('This skill will switch to a different framework. The current diagram will be reset. Continue?')) {
+        return;
+      }
       const snapshot = serializeDiagramSnapshot(useDiagramStore.getState().diagram);
       instructions = `${snapshot}\n\n---\n\n${skill.instructions}`;
-      setFramework(skill.endingFramework);
+      setFramework(skill.endingFramework!);
     }
 
     // Open chat panel if minimized
@@ -86,15 +91,20 @@ export default function SkillMenu() {
       </button>
       {open && (
         <div className="skill-menu-dropdown">
-          {skills.map((skill) => (
-            <button
-              key={skill.id}
-              className="skill-menu-item"
-              onClick={() => handleRun(skill)}
-            >
-              {skill.name}
-            </button>
-          ))}
+          {skills.map((skill) => {
+            const targetAbbr = skill.endingFramework && skill.endingFramework !== frameworkId
+              ? getFramework(skill.endingFramework)?.abbreviation ?? skill.endingFramework
+              : null;
+            return (
+              <button
+                key={skill.id}
+                className="skill-menu-item"
+                onClick={() => handleRun(skill)}
+              >
+                {skill.name}{targetAbbr && ` (\u2192 ${targetAbbr})`}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
