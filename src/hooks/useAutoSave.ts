@@ -6,22 +6,36 @@ const DEBOUNCE_MS = 500;
 
 export function useAutoSave() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const pendingDiagramRef = useRef<Parameters<typeof saveDiagram>[0] | null>(null);
 
   useEffect(() => {
+    const flush = () => {
+      if (pendingDiagramRef.current) {
+        saveDiagram(pendingDiagramRef.current);
+        pendingDiagramRef.current = null;
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = undefined;
+      }
+    };
+
     const unsubscribe = useDiagramStore.subscribe((state) => {
+      pendingDiagramRef.current = state.diagram;
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
       timeoutRef.current = setTimeout(() => {
-        saveDiagram(state.diagram);
+        flush();
       }, DEBOUNCE_MS);
     });
 
+    window.addEventListener('beforeunload', flush);
+
     return () => {
       unsubscribe();
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      window.removeEventListener('beforeunload', flush);
+      flush();
     };
   }, []);
 }

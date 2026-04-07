@@ -39,7 +39,7 @@ describe('useAutoSave', () => {
     expect(parsed.nodes).toHaveLength(1);
   });
 
-  it('clears the pending save when the hook unmounts', () => {
+  it('flushes the pending save when the hook unmounts', () => {
     const view = render(<Harness />);
 
     act(() => {
@@ -48,10 +48,25 @@ describe('useAutoSave', () => {
 
     view.unmount();
 
+    const stored = sessionStorage.getItem('sketchy_diagram');
+    expect(stored).not.toBeNull();
+    const parsed = JSON.parse(stored!);
+    expect(parsed.nodes).toHaveLength(1);
+  });
+
+  it('flushes the pending save on beforeunload', () => {
+    render(<Harness />);
+
     act(() => {
-      vi.runAllTimers();
+      useDiagramStore.getState().addNode({ x: 0, y: 0 });
     });
 
-    expect(sessionStorage.getItem('sketchy_diagram')).toBeNull();
+    // Simulate browser refresh — beforeunload fires before debounce completes
+    window.dispatchEvent(new Event('beforeunload'));
+
+    const stored = sessionStorage.getItem('sketchy_diagram');
+    expect(stored).not.toBeNull();
+    const parsed = JSON.parse(stored!);
+    expect(parsed.nodes).toHaveLength(1);
   });
 });
