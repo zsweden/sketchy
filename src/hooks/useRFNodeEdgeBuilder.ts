@@ -131,8 +131,9 @@ export function useRFNodeEdgeBuilder(
                 })()
               : null,
             framework.supportsEdgeDelay && e.delay ? 'D' : null,
+            e.edgeTag ? framework.edgeTags?.find((t) => t.id === e.edgeTag)?.shortName ?? null : null,
           ].filter(Boolean).join(' '),
-          labelShowBg: framework.supportsEdgePolarity || (framework.supportsEdgeDelay && e.delay),
+          labelShowBg: framework.supportsEdgePolarity || (framework.supportsEdgeDelay && e.delay) || !!e.edgeTag,
           labelBgPadding: [4, 2],
           labelBgBorderRadius: 0,
           labelBgStyle: {

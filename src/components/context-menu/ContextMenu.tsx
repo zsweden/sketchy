@@ -304,6 +304,7 @@ export default function ContextMenu() {
   const setEdgeConfidence = useDiagramStore((s) => s.setEdgeConfidence);
   const setEdgePolarity = useDiagramStore((s) => s.setEdgePolarity);
   const setEdgeDelay = useDiagramStore((s) => s.setEdgeDelay);
+  const setEdgeTag = useDiagramStore((s) => s.setEdgeTag);
   const toggleNodeLocked = useDiagramStore((s) => s.toggleNodeLocked);
 
   const menuRef = useRef<HTMLDivElement>(null);
@@ -395,6 +396,34 @@ export default function ContextMenu() {
         />
       ) : edge ? (
         <>
+          {/* Edge Tags */}
+          {framework.edgeTags && framework.edgeTags.length > 0 && (
+            <>
+              <div className="context-menu-label">Interaction Mode</div>
+              {framework.edgeTags.map((tag) => {
+                const active = edge.edgeTag === tag.id;
+                return (
+                  <button
+                    key={tag.id}
+                    className="context-menu-item"
+                    onClick={() => {
+                      setEdgeTag(edge.id, active ? undefined : tag.id);
+                      closeContextMenu();
+                    }}
+                  >
+                    <span
+                      className="tag-chip-dot"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    {tag.name}
+                    {active && <Check size={14} style={{ marginLeft: 'auto' }} />}
+                  </button>
+                );
+              })}
+              <div className="context-menu-separator" />
+            </>
+          )}
+
           {/* Polarity */}
           {framework.supportsEdgePolarity && (
             <>

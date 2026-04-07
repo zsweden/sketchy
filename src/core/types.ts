@@ -62,6 +62,7 @@ export interface DiagramEdge {
   confidence?: EdgeConfidence;
   polarity?: EdgePolarity;
   delay?: boolean;
+  edgeTag?: string;
   notes?: string;
 }
 

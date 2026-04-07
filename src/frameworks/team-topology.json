@@ -6,6 +6,29 @@
   "defaultLayoutDirection": "TB",
   "supportsJunctions": false,
   "edgeLabel": "interacts with",
+  "edgeTags": [
+    {
+      "id": "collaboration",
+      "name": "Collaboration",
+      "shortName": "Collab",
+      "color": "#42A5F5",
+      "description": "Two teams work closely together for a defined period to discover or build something — should be temporary"
+    },
+    {
+      "id": "x-as-a-service",
+      "name": "X-as-a-Service",
+      "shortName": "XaaS",
+      "color": "#7E57C2",
+      "description": "One team provides a service with a clear API or interface that the consuming team uses with minimal interaction"
+    },
+    {
+      "id": "facilitating",
+      "name": "Facilitating",
+      "shortName": "Facil",
+      "color": "#26A69A",
+      "description": "One team helps and mentors another team to learn or adopt new skills — should be temporary"
+    }
+  ],
   "systemPromptHint": "Stream-aligned teams should be the majority — if most teams are platform or enabling, the topology is inverted. Collaboration mode should be temporary; if two teams are permanently collaborating, they should merge or define an x-as-a-service boundary. Every interaction adds cognitive load — teams with many connections are overloaded; reduce interactions rather than adding capacity. Platform teams exist to make stream-aligned teams autonomous, not to centralize control.",
   "nodeTags": [
     {

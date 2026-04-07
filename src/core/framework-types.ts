@@ -26,6 +26,7 @@ export interface Framework {
   nodeTags: NodeTag[];
   derivedIndicators: DerivedIndicator[];
   edgeLabel?: string;
+  edgeTags?: EdgeTag[];
   /** Optional AI prompt fragment with domain-specific reasoning guidance. */
   systemPromptHint?: string;
 }
@@ -49,6 +50,14 @@ export interface NodeTag {
   color: string;
   description: string;
   exclusive: boolean;
+}
+
+export interface EdgeTag {
+  id: string;
+  name: string;
+  shortName: string;
+  color: string;
+  description: string;
 }
 
 export type DerivedCondition = 'indegree-zero' | 'leaf' | 'indegree-and-outdegree';

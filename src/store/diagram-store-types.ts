@@ -101,6 +101,7 @@ export interface DiagramState {
   setEdgeConfidence: (id: string, confidence: EdgeConfidence) => void;
   setEdgePolarity: (id: string, polarity: EdgePolarity) => void;
   setEdgeDelay: (id: string, delay: boolean) => void;
+  setEdgeTag: (id: string, edgeTag: string | undefined) => void;
   updateEdgeNotes: (id: string, notes: string) => void;
   commitEdgeNotes: (id: string, notes: string) => void;
   optimizeEdges: () => boolean;

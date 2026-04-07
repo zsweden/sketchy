@@ -28,6 +28,7 @@ export default function EdgePanel({ edge }: Props) {
   const setEdgeConfidence = useDiagramStore((s) => s.setEdgeConfidence);
   const setEdgePolarity = useDiagramStore((s) => s.setEdgePolarity);
   const setEdgeDelay = useDiagramStore((s) => s.setEdgeDelay);
+  const setEdgeTag = useDiagramStore((s) => s.setEdgeTag);
   const commitEdgeNotes = useDiagramStore((s) => s.commitEdgeNotes);
 
   useEffect(() => {
@@ -58,6 +59,16 @@ export default function EdgePanel({ edge }: Props) {
           {sourceNode?.data.label ?? 'Unknown'} &rarr; {targetNode?.data.label ?? 'Unknown'}
         </p>
       </FormField>
+
+      {framework.edgeTags && framework.edgeTags.length > 0 && (
+        <FormField label="Interaction Mode">
+          <ButtonGroup
+            items={framework.edgeTags.map((t) => ({ value: t.id, label: t.shortName, title: t.description }))}
+            selected={edge.edgeTag ?? ''}
+            onSelect={(v) => setEdgeTag(edge.id, v === edge.edgeTag ? undefined : v)}
+          />
+        </FormField>
+      )}
 
       {framework.supportsEdgePolarity && (() => {
         const isMath = getJunctionOptions(framework).some((o) => o.id === 'add' || o.id === 'multiply');

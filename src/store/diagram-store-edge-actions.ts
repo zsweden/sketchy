@@ -19,6 +19,7 @@ export function createDiagramEdgeActions(
   | 'setEdgeConfidence'
   | 'setEdgePolarity'
   | 'setEdgeDelay'
+  | 'setEdgeTag'
   | 'updateEdgeNotes'
   | 'commitEdgeNotes'
   | 'optimizeEdges'
@@ -133,6 +134,13 @@ export function createDiagramEdgeActions(
     setEdgeDelay: (id, delay) => {
       updateEdges(
         (edge) => (edge.id === id ? { ...edge, delay } : edge),
+        { trackHistory: true },
+      );
+    },
+
+    setEdgeTag: (id, edgeTag) => {
+      updateEdges(
+        (edge) => (edge.id === id ? { ...edge, edgeTag: edgeTag || undefined } : edge),
         { trackHistory: true },
       );
     },

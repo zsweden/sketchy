@@ -17,6 +17,14 @@ const nodeTagSchema = z.object({
   exclusive: z.boolean(),
 });
 
+const edgeTagSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  shortName: z.string().min(1),
+  color: z.string().regex(/^#/),
+  description: z.string().min(1),
+});
+
 const derivedIndicatorSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -41,6 +49,7 @@ const frameworkSchema = z.object({
   nodeTags: z.array(nodeTagSchema),
   derivedIndicators: z.array(derivedIndicatorSchema),
   edgeLabel: z.string().optional(),
+  edgeTags: z.array(edgeTagSchema).optional(),
   systemPromptHint: z.string().optional(),
 });
 
