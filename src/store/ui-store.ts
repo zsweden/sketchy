@@ -17,6 +17,7 @@ interface UIState {
   chatPanelMode: ChatPanelMode;
   interactionMode: InteractionMode;
   fitViewTrigger: number;
+  edgeRefreshTrigger: number;
   clearSelectionTrigger: number;
   selectionSyncTrigger: number;
   viewportFocusTarget: GraphObjectTarget | null;
@@ -32,6 +33,7 @@ interface UIState {
   setChatPanelMode: (mode: ChatPanelMode) => void;
   setInteractionMode: (mode: InteractionMode) => void;
   requestFitView: () => void;
+  requestEdgeRefresh: () => void;
   requestClearSelection: () => void;
   selectGraphObject: (target: GraphObjectTarget) => void;
   focusGraphObject: (target: GraphObjectTarget) => void;
@@ -47,6 +49,7 @@ export const useUIStore = create<UIState>((set) => ({
   chatPanelMode: 'shared',
   interactionMode: 'select',
   fitViewTrigger: 0,
+  edgeRefreshTrigger: 0,
   clearSelectionTrigger: 0,
   selectionSyncTrigger: 0,
   viewportFocusTarget: null,
@@ -72,6 +75,8 @@ export const useUIStore = create<UIState>((set) => ({
   setInteractionMode: (mode) => set({ interactionMode: mode }),
 
   requestFitView: () => set((s) => ({ fitViewTrigger: s.fitViewTrigger + 1 })),
+
+  requestEdgeRefresh: () => set((s) => ({ edgeRefreshTrigger: s.edgeRefreshTrigger + 1 })),
 
   requestClearSelection: () => set((s) => ({
     selectedNodeIds: [],

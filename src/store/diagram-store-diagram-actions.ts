@@ -106,6 +106,7 @@ export function createDiagramActions(
       if (fitView) {
         useUIStore.getState().requestFitView();
       }
+      useUIStore.getState().requestEdgeRefresh();
 
       return true;
     },
@@ -122,6 +123,7 @@ export function createDiagramActions(
         ...undoState,
       });
       focusInitialNode(diagram.nodes[0]?.id);
+      useUIStore.getState().requestEdgeRefresh();
     },
 
     updateSettings: (settings) => {
@@ -174,6 +176,7 @@ export function createDiagramActions(
         },
         ...undoState,
       });
+      useUIStore.getState().requestEdgeRefresh();
     },
 
     newDiagram: () => {
@@ -185,6 +188,7 @@ export function createDiagramActions(
         ...undoState,
       });
       focusInitialNode(diagram.nodes[0]?.id);
+      useUIStore.getState().requestEdgeRefresh();
     },
 
     setDiagramName: (name) => {

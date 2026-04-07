@@ -72,6 +72,19 @@ export default function DiagramCanvas() {
     });
   }, [rfEdges]);
 
+  // After bulk node repositioning (layout, load, framework switch), React Flow
+  // may render edges before it has measured the new handle DOM positions. Force
+  // a deferred edge re-render so RF picks up fresh measurements — mirrors what
+  // "click background" does manually via clearCanvasSelection.
+  const edgeRefreshTrigger = useUIStore((s) => s.edgeRefreshTrigger);
+  useEffect(() => {
+    if (edgeRefreshTrigger === 0) return;
+    const handle = requestAnimationFrame(() => {
+      setLocalEdges((prev) => prev.map((e) => ({ ...e })));
+    });
+    return () => cancelAnimationFrame(handle);
+  }, [edgeRefreshTrigger]);
+
   // Sync programmatic selection from store -> RF (selectGraphObject)
   const selectionSyncTrigger = useUIStore((s) => s.selectionSyncTrigger);
   useEffect(() => {
