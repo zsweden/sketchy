@@ -59,6 +59,7 @@ describe('error logging', () => {
         version: appVersion,
         source: 'react.error_boundary',
         fatal: true,
+        severity: 'error',
         name: 'Error',
         message: 'Boom',
         route: '/diagram',
@@ -66,14 +67,37 @@ describe('error logging', () => {
     );
   });
 
-  it('silently drops ResizeObserver noise', async () => {
+  it('logs ResizeObserver noise with severity "noise"', async () => {
     await reportError(
       new Error('ResizeObserver loop completed with undelivered notifications.'),
       { source: 'window.error', fatal: true },
     );
 
-    expect(logFirebaseException).not.toHaveBeenCalled();
-    expect(logFirestoreError).not.toHaveBeenCalled();
+    expect(logFirestoreError).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'noise' }),
+    );
+  });
+
+  it('logs HMR getSnapshot noise with severity "noise"', async () => {
+    await reportError(
+      new TypeError("Cannot read properties of null (reading 'getSnapshot')"),
+      { source: 'react.error_boundary', fatal: true },
+    );
+
+    expect(logFirestoreError).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'noise' }),
+    );
+  });
+
+  it('logs HMR hooks-count noise with severity "noise"', async () => {
+    await reportError(
+      new Error('Rendered more hooks than during the previous render.'),
+      { source: 'react.error_boundary', fatal: true },
+    );
+
+    expect(logFirestoreError).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'noise' }),
+    );
   });
 
   it('dedupes repeated errors in the same window', async () => {

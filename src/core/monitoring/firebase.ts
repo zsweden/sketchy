@@ -5,6 +5,7 @@ interface FirebaseExceptionPayload {
   version: string;
   source: string;
   fatal: boolean;
+  severity: 'error' | 'noise';
   name: string;
   message: string;
   route: string;
@@ -93,6 +94,7 @@ export async function logFirebaseException(payload: FirebaseExceptionPayload): P
   logEvent(analytics, 'exception', {
     description: payload.description,
     fatal: payload.fatal,
+    severity: payload.severity,
     app_version: payload.version,
     source: payload.source,
     error_name: payload.name,
@@ -113,6 +115,7 @@ export async function logFirestoreError(payload: FirebaseExceptionPayload): Prom
     version: payload.version,
     source: payload.source,
     fatal: payload.fatal,
+    severity: payload.severity,
     name: payload.name,
     message: payload.message,
     route: payload.route,

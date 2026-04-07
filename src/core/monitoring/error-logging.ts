@@ -28,10 +28,13 @@ const DEDUPE_WINDOW_MS = 5_000;
 const PENDING_ERRORS_KEY = 'sketchy_pending_errors';
 const MAX_PENDING_ERRORS = 50;
 
-/** Browser-noise error messages that should never be reported. */
-const IGNORED_MESSAGES = [
+/** Known-benign error messages — logged with severity 'noise' instead of 'error'. */
+const NOISE_MESSAGES = [
   'ResizeObserver loop completed with undelivered notifications.',
   'ResizeObserver loop limit exceeded',
+  // React/Zustand errors caused by Vite HMR destroying provider context mid-render
+  "Cannot read properties of null (reading 'getSnapshot')",
+  'Rendered more hooks than during the previous render.',
 ];
 
 const recentFingerprints = new Map<string, number>();
@@ -173,11 +176,6 @@ function flushPendingErrors(): void {
 
 export async function reportError(error: unknown, options: ReportErrorOptions): Promise<void> {
   const normalized = normalizeUnknownError(error);
-
-  if (IGNORED_MESSAGES.some((msg) => normalized.message.includes(msg))) {
-    return;
-  }
-
   const route = getCurrentRoute();
   const fingerprint = `${options.source}|${normalized.name}|${normalized.message}|${route}`;
 
@@ -185,10 +183,15 @@ export async function reportError(error: unknown, options: ReportErrorOptions): 
     return;
   }
 
+  const severity = NOISE_MESSAGES.some((msg) => normalized.message.includes(msg))
+    ? 'noise' as const
+    : 'error' as const;
+
   const payload = {
     version: appVersion,
     source: options.source,
     fatal: options.fatal,
+    severity,
     name: normalized.name,
     message: normalized.message,
     route,
