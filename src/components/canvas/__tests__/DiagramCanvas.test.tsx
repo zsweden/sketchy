@@ -252,6 +252,7 @@ vi.mock('@xyflow/react', () => ({
     setCenter: mocks.setCenter,
     viewportInitialized: true,
   }),
+  useUpdateNodeInternals: () => vi.fn(),
   applyNodeChanges: vi.fn((changes, nodes) => nodes),
   applyEdgeChanges: vi.fn((changes, edges) => edges),
 }));

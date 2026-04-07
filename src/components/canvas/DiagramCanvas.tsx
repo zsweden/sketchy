@@ -6,6 +6,7 @@ import {
   MiniMap,
   BackgroundVariant,
   useReactFlow,
+  useUpdateNodeInternals,
   type Edge,
   type Node,
 } from '@xyflow/react';
@@ -73,17 +74,25 @@ export default function DiagramCanvas() {
   }, [rfEdges]);
 
   // After bulk node repositioning (layout, load, framework switch), React Flow
-  // may render edges before it has measured the new handle DOM positions. Force
-  // a deferred edge re-render so RF picks up fresh measurements — mirrors what
-  // "click background" does manually via clearCanvasSelection.
+  // may render edges with stale handle position measurements. Force RF to
+  // remeasure handle bounds via its built-in API. Double rAF ensures React has
+  // committed new node positions and RF has laid them out before we remeasure.
+  const updateNodeInternals = useUpdateNodeInternals();
   const edgeRefreshTrigger = useUIStore((s) => s.edgeRefreshTrigger);
   useEffect(() => {
     if (edgeRefreshTrigger === 0) return;
-    const handle = requestAnimationFrame(() => {
-      setLocalEdges((prev) => prev.map((e) => ({ ...e })));
+    let frame2 = 0;
+    const frame1 = requestAnimationFrame(() => {
+      frame2 = requestAnimationFrame(() => {
+        const nodeIds = localNodes.map((n) => n.id);
+        if (nodeIds.length > 0) updateNodeInternals(nodeIds);
+      });
     });
-    return () => cancelAnimationFrame(handle);
-  }, [edgeRefreshTrigger]);
+    return () => {
+      cancelAnimationFrame(frame1);
+      cancelAnimationFrame(frame2);
+    };
+  }, [edgeRefreshTrigger, updateNodeInternals, localNodes]);
 
   // Sync programmatic selection from store -> RF (selectGraphObject)
   const selectionSyncTrigger = useUIStore((s) => s.selectionSyncTrigger);
