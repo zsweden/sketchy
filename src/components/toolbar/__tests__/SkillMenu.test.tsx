@@ -72,7 +72,7 @@ describe('SkillMenu', () => {
   });
 
   it('does not prepend snapshot for same-framework skills', () => {
-    // Switch to CRT which has the crt-audit skill (no endingFramework)
+    // Switch to CRT which has the crt-best-practices skill (no endingFramework)
     useDiagramStore.getState().setFramework('crt');
 
     const sendSpy = vi.spyOn(useChatStore.getState(), 'sendMessage');
@@ -80,7 +80,7 @@ describe('SkillMenu', () => {
     render(<SkillMenu />);
 
     fireEvent.click(screen.getByLabelText('Skills'));
-    fireEvent.click(screen.getByText('CRT Audit'));
+    fireEvent.click(screen.getByText('Best Practices Review'));
 
     expect(sendSpy).toHaveBeenCalledTimes(1);
     const [message] = sendSpy.mock.calls[0];

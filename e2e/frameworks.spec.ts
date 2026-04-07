@@ -78,7 +78,7 @@ test('PRT framework exposes Obstacle, Intermediate Objective, and Goal tags', as
 
   await page.locator('.tag-chip', { hasText: 'Goal' }).click();
   await expect(page.locator('.tag-chip', { hasText: 'Goal' })).toHaveAttribute('data-active', 'true');
-  await expect(page.locator('.entity-node .badge', { hasText: 'GOAL' })).toBeVisible();
+  await expect(page.locator('.entity-node .badge', { hasText: 'GOA' })).toBeVisible();
 });
 
 test('STT tags appear in both context menu and side panel', async ({ page }) => {

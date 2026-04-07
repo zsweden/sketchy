@@ -150,7 +150,7 @@ describe('EntityNode', () => {
     it('renders derived indicator badges', () => {
       const degreesMap = new Map([['n1', { indegree: 0, outdegree: 1 }]]);
       renderNode({ degreesMap });
-      expect(screen.getByText('Root')).toBeInTheDocument();
+      expect(screen.getByText('Roo')).toBeInTheDocument();
     });
 
     it('renders both tag and derived badges together', () => {
@@ -158,7 +158,7 @@ describe('EntityNode', () => {
       const degreesMap = new Map([['n1', { indegree: 1, outdegree: 1 }]]);
       renderNode({ tags: ['ude'], degreesMap });
       expect(screen.getByText('UDE')).toBeInTheDocument();
-      expect(screen.getByText('Inter')).toBeInTheDocument();
+      expect(screen.getByText('Int')).toBeInTheDocument();
     });
 
     it('does not render badge container when no tags and no derived', () => {

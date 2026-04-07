@@ -258,20 +258,20 @@ test('root cause and intermediate badges appear based on graph topology', async 
 
   const ids = await getNodeIds(page);
 
-  await expect(page.locator('.badge', { hasText: 'Root' })).toHaveCount(3);
-  await expect(page.locator('.badge', { hasText: 'Inter' })).toHaveCount(0);
+  await expect(page.locator('.badge', { hasText: 'Roo' })).toHaveCount(3);
+  await expect(page.locator('.badge', { hasText: 'Int' })).toHaveCount(0);
 
   await addEdge(page, ids[0], ids[1]);
   await addEdge(page, ids[1], ids[2]);
 
-  await expect(page.locator('.badge', { hasText: 'Root' })).toHaveCount(1);
-  await expect(page.locator('.badge', { hasText: 'Inter' })).toHaveCount(1);
+  await expect(page.locator('.badge', { hasText: 'Roo' })).toHaveCount(1);
+  await expect(page.locator('.badge', { hasText: 'Int' })).toHaveCount(1);
 
   const firstNode = page.locator(`[data-node-id="${ids[0]}"]`);
-  await expect(firstNode.locator('.badge', { hasText: 'Root' })).toBeVisible();
+  await expect(firstNode.locator('.badge', { hasText: 'Roo' })).toBeVisible();
 
   const middleNode = page.locator(`[data-node-id="${ids[1]}"]`);
-  await expect(middleNode.locator('.badge', { hasText: 'Inter' })).toBeVisible();
+  await expect(middleNode.locator('.badge', { hasText: 'Int' })).toBeVisible();
 });
 
 test('double-click a node to edit label inline', async ({ page }) => {

@@ -272,7 +272,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
                   color: tag!.color,
                 }}
               >
-                {tag!.shortName}
+                {tag!.shortName.slice(0, 3)}
               </span>
             ))}
             {derived.map((ind) => (
@@ -284,7 +284,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
                   color: ind.color,
                 }}
               >
-                {ind.shortName}
+                {ind.shortName.slice(0, 3)}
               </span>
             ))}
           </div>
