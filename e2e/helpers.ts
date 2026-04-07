@@ -49,7 +49,7 @@ export async function getNodeCenter(page: import('@playwright/test').Page, nodeI
 
 /**
  * Right-click an edge and wait for a specific context menu item to appear.
- * Retries up to 3 times because React Flow edge SVGs may not have settled
+ * Retries up to 5 times because React Flow edge SVGs may not have settled
  * when the bounding box is first captured — the click can land on the pane.
  */
 export async function rightClickEdge(
@@ -58,14 +58,27 @@ export async function rightClickEdge(
 ) {
   const edgePath = page.locator('.react-flow__edge-interaction').first();
   const menuItem = page.locator('.context-menu-item', { hasText: menuItemText });
-  for (let attempt = 0; attempt < 3; attempt++) {
+  const contextMenu = page.locator('.context-menu');
+
+  // Wait for the edge interaction element to have a stable bounding box
+  await edgePath.waitFor({ state: 'attached' });
+
+  for (let attempt = 0; attempt < 5; attempt++) {
     const box = await edgePath.boundingBox();
     expect(box).not.toBeNull();
     await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2, { button: 'right' });
-    await expect(page.locator('.context-menu')).toBeVisible();
+
+    // Soft check: the click may miss the edge entirely (no context menu).
+    const menuVisible = await contextMenu.isVisible().catch(() => false);
+    if (!menuVisible) {
+      // Wait briefly for React Flow to settle before retrying
+      await page.waitForTimeout(200);
+      continue;
+    }
+
     if (await menuItem.isVisible()) return;
     await page.keyboard.press('Escape');
-    await expect(page.locator('.context-menu')).not.toBeVisible();
+    await expect(contextMenu).not.toBeVisible();
   }
   // Final attempt — let Playwright's expect fail with a clear message
   await expect(menuItem).toBeVisible();

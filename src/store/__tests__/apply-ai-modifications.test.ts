@@ -2,18 +2,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useDiagramStore } from '../diagram-store';
 import { useChatStore } from '../chat-store';
 import { applyAiModifications } from '../apply-ai-modifications';
-import type { DiagramModification } from '../../core/ai/openai-client';
+import type { DiagramModification } from '../../core/ai/ai-types';
 
-vi.mock('../../core/ai/openai-client', () => ({
-  streamChatMessage: vi.fn(),
-}));
-
+// ELK WASM binary doesn't load in jsdom — this is the only required mock.
+// openai-client and error-logging are side-effect-free and env-guarded,
+// so they load fine with production code.
 vi.mock('../../core/layout/run-elk-auto-layout', () => ({
   runElkAutoLayout: vi.fn().mockResolvedValue([]),
-}));
-
-vi.mock('../../core/monitoring/error-logging', () => ({
-  reportError: vi.fn().mockResolvedValue(undefined),
 }));
 
 function emptyModification(overrides: Partial<DiagramModification> = {}): DiagramModification {

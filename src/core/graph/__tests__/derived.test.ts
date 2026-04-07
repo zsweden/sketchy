@@ -6,6 +6,8 @@ import {
   getDerivedIndicators,
   getConnectedSubgraph,
   summarizeCausalLoops,
+  labelCausalLoops,
+  getLoopSubgraph,
   MAX_CYCLE_LENGTH,
   MAX_TOTAL_LOOPS,
 } from '../derived';
@@ -231,5 +233,95 @@ describe('summarizeCausalLoops', () => {
       balancingLoops: 1,
       delayedLoops: 1,
     });
+  });
+});
+
+describe('labelCausalLoops', () => {
+  it('labels reinforcing loops as R1, R2, etc.', () => {
+    const loops = findCausalLoops([
+      { ...edge('a', 'b'), polarity: 'positive' as const },
+      { ...edge('b', 'a'), polarity: 'positive' as const },
+    ]);
+    const labeled = labelCausalLoops(loops);
+    expect(labeled).toHaveLength(1);
+    expect(labeled[0].label).toBe('R1');
+    expect(labeled[0].kind).toBe('reinforcing');
+  });
+
+  it('labels balancing loops as B1, B2, etc.', () => {
+    const loops = findCausalLoops([
+      { ...edge('a', 'b'), polarity: 'positive' as const },
+      { ...edge('b', 'a'), polarity: 'negative' as const },
+    ]);
+    const labeled = labelCausalLoops(loops);
+    expect(labeled).toHaveLength(1);
+    expect(labeled[0].label).toBe('B1');
+    expect(labeled[0].kind).toBe('balancing');
+  });
+
+  it('assigns separate counters for R and B loops', () => {
+    // Create a graph with both reinforcing and balancing loops
+    const loops = findCausalLoops([
+      // Reinforcing loop: a→b→a (all positive)
+      { ...edge('a', 'b'), polarity: 'positive' as const },
+      { ...edge('b', 'a'), polarity: 'positive' as const },
+      // Balancing loop: c→d→c (one negative)
+      { ...edge('c', 'd'), polarity: 'positive' as const },
+      { ...edge('d', 'c'), polarity: 'negative' as const },
+    ]);
+    const labeled = labelCausalLoops(loops);
+    expect(labeled.length).toBeGreaterThanOrEqual(2);
+    const rLabels = labeled.filter((l) => l.kind === 'reinforcing').map((l) => l.label);
+    const bLabels = labeled.filter((l) => l.kind === 'balancing').map((l) => l.label);
+    expect(rLabels[0]).toBe('R1');
+    expect(bLabels[0]).toBe('B1');
+  });
+
+  it('preserves all fields from the original loop', () => {
+    const loops = findCausalLoops([
+      { ...edge('a', 'b'), polarity: 'positive' as const },
+      { ...edge('b', 'a'), polarity: 'positive' as const },
+    ]);
+    const labeled = labelCausalLoops(loops);
+    expect(labeled[0].nodeIds).toBeDefined();
+    expect(labeled[0].edgeIds).toBeDefined();
+    expect(labeled[0].id).toBeDefined();
+    expect(labeled[0].negativeEdgeCount).toBe(0);
+  });
+});
+
+describe('getLoopSubgraph', () => {
+  it('returns node and edge IDs as sets', () => {
+    const loops = findCausalLoops([
+      { ...edge('a', 'b'), polarity: 'positive' as const },
+      { ...edge('b', 'c'), polarity: 'positive' as const },
+      { ...edge('c', 'a'), polarity: 'positive' as const },
+    ]);
+    expect(loops).toHaveLength(1);
+
+    const subgraph = getLoopSubgraph(loops[0]);
+    expect(subgraph.nodeIds).toEqual(new Set(['a', 'b', 'c']));
+    expect(subgraph.edgeIds.size).toBe(3);
+  });
+
+  it('works with a 2-node loop', () => {
+    const loops = findCausalLoops([
+      { ...edge('x', 'y'), polarity: 'positive' as const },
+      { ...edge('y', 'x'), polarity: 'positive' as const },
+    ]);
+    const subgraph = getLoopSubgraph(loops[0]);
+    expect(subgraph.nodeIds).toEqual(new Set(['x', 'y']));
+    expect(subgraph.edgeIds.size).toBe(2);
+  });
+
+  it('returns a ConnectedSubgraph compatible with highlight system', () => {
+    const loops = findCausalLoops([
+      { ...edge('a', 'b'), polarity: 'positive' as const },
+      { ...edge('b', 'a'), polarity: 'positive' as const },
+    ]);
+    const subgraph = getLoopSubgraph(loops[0]);
+    // Should have nodeIds and edgeIds as Sets (matches ConnectedSubgraph interface)
+    expect(subgraph.nodeIds).toBeInstanceOf(Set);
+    expect(subgraph.edgeIds).toBeInstanceOf(Set);
   });
 });

@@ -3,13 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAutoSave } from '../useAutoSave';
 import { useDiagramStore } from '../../store/diagram-store';
 
-const mocks = vi.hoisted(() => ({
-  saveDiagram: vi.fn(),
-}));
-
-vi.mock('../../core/persistence/local-storage', () => ({
-  saveDiagram: mocks.saveDiagram,
-}));
+// No mock needed — saveDiagram writes to real sessionStorage (available in jsdom).
 
 function Harness() {
   useAutoSave();
@@ -20,6 +14,7 @@ describe('useAutoSave', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
+    sessionStorage.clear();
     useDiagramStore.getState().setFramework('crt');
     useDiagramStore.getState().newDiagram();
   });
@@ -32,14 +27,16 @@ describe('useAutoSave', () => {
       vi.advanceTimersByTime(499);
     });
 
-    expect(mocks.saveDiagram).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem('sketchy_diagram')).toBeNull();
 
     act(() => {
       vi.advanceTimersByTime(1);
     });
 
-    expect(mocks.saveDiagram).toHaveBeenCalledTimes(1);
-    expect(mocks.saveDiagram).toHaveBeenCalledWith(useDiagramStore.getState().diagram);
+    const stored = sessionStorage.getItem('sketchy_diagram');
+    expect(stored).not.toBeNull();
+    const parsed = JSON.parse(stored!);
+    expect(parsed.nodes).toHaveLength(1);
   });
 
   it('clears the pending save when the hook unmounts', () => {
@@ -55,6 +52,6 @@ describe('useAutoSave', () => {
       vi.runAllTimers();
     });
 
-    expect(mocks.saveDiagram).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem('sketchy_diagram')).toBeNull();
   });
 });
