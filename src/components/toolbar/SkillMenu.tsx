@@ -60,7 +60,7 @@ export default function SkillMenu() {
       useUIStore.getState().setChatPanelMode('shared');
     }
 
-    useChatStore.getState().sendMessage(instructions, undefined, skill.name);
+    useChatStore.getState().sendMessage(instructions, undefined, `Skill: ${skill.name}`);
   }, [frameworkId, setFramework]);
 
   // Close on outside click

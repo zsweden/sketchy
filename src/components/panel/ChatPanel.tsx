@@ -7,6 +7,7 @@ import type { ChatMentionTarget } from '../../core/chat/mentions';
 import { ChatComposer } from './chat/ChatComposer';
 import { ChatMessageList } from './chat/ChatMessageList';
 import { useChatComposer } from './chat/useChatComposer';
+import SkillMenu from '../toolbar/SkillMenu';
 
 export default function ChatPanel() {
   const messages = useChatStore((state) => state.messages);
@@ -71,6 +72,8 @@ export default function ChatPanel() {
           {isConnected && <Check size={14} style={{ color: '#22c55e' }} />}
         </p>
         <div className="chat-header-actions">
+          <SkillMenu />
+          <div className="chat-header-divider" />
           <div className="chat-layout-controls" aria-label="Chat panel layout controls">
             <button
               className={`btn btn-ghost btn-icon-sm chat-layout-btn${chatPanelMode === 'max' ? ' is-active' : ''}`}
@@ -97,16 +100,16 @@ export default function ChatPanel() {
               <Rows2 size={13} />
             </button>
           </div>
-          {messages.length > 0 && (
-            <button
-              className="btn btn-ghost btn-icon-sm"
-              onClick={clearMessages}
-              title="Clear chat"
-              aria-label="Clear chat"
-            >
-              <Trash2 size={13} />
-            </button>
-          )}
+          <div className="chat-header-divider" />
+          <button
+            className="btn btn-ghost btn-icon-sm"
+            onClick={clearMessages}
+            disabled={messages.length === 0}
+            title="Clear chat"
+            aria-label="Clear chat"
+          >
+            <Trash2 size={13} />
+          </button>
         </div>
       </div>
 

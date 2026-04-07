@@ -245,6 +245,13 @@
   flex-shrink: 0;
 }
 
+.chat-header-divider {
+  width: 1px;
+  height: 1rem;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
 .chat-layout-controls {
   display: flex;
   align-items: center;
