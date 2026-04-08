@@ -169,7 +169,11 @@ test('pressing Escape in the node color menu discards pending colors', async ({ 
   await page.keyboard.press('Escape');
   await expect(page.locator('.context-menu')).toBeHidden();
 
-  await page.waitForTimeout(100);
+  await page.waitForFunction(() => {
+    const raw = sessionStorage.getItem('sketchy_diagram');
+    if (!raw) return true;
+    return JSON.parse(raw).nodes?.[0]?.data?.color === undefined;
+  });
   const storedColor = await page.evaluate(() => {
     const raw = sessionStorage.getItem('sketchy_diagram');
     return raw ? JSON.parse(raw).nodes?.[0]?.data?.color : undefined;

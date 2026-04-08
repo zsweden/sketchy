@@ -111,12 +111,12 @@ test('edge panel shows confidence and notes when an edge is clicked', async ({ p
 
   // Click the edge — retry because edge SVG may not have settled
   const edgePath = page.locator('.react-flow__edge-interaction').first();
-  for (let attempt = 0; attempt < 3; attempt++) {
+  await expect(async () => {
     const box = await edgePath.boundingBox();
     expect(box).not.toBeNull();
     await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
-    if (await page.locator('.side-panel-top .section-heading', { hasText: 'Edge' }).isVisible()) break;
-  }
+    await expect(page.locator('.side-panel-top .section-heading', { hasText: 'Edge' })).toBeVisible();
+  }).toPass({ timeout: 5000 });
 
   await expect(page.locator('.side-panel-top .section-heading', { hasText: 'Edge' })).toBeVisible();
   await expect(page.getByLabel('Edge notes')).toBeVisible();

@@ -102,9 +102,9 @@ test('retains chat messages after browser refresh', async ({ page }) => {
 test('shows a recovery toast and backs up corrupted session data after reload', async ({ page }) => {
   const corrupted = '{not valid json!!!';
 
-  // Wait for the autosave debounce (500ms) triggered by beforeEach's setFramework to flush,
+  // Wait for the autosave debounce triggered by beforeEach's setFramework to flush,
   // so the beforeunload handler won't overwrite our corrupted data on reload.
-  await page.waitForTimeout(600);
+  await page.waitForFunction(() => sessionStorage.getItem('sketchy_diagram') !== null);
 
   await page.evaluate((raw) => {
     sessionStorage.setItem('sketchy_diagram', raw);
@@ -180,8 +180,19 @@ test('locked node shows lock indicator and survives auto-layout', async ({ page 
   );
 
   await createNode(page, 400, 400);
+  const secondNodeTransformBefore = await page.locator('.react-flow__node').nth(1).evaluate(
+    (el) => (el as HTMLElement).style.transform,
+  );
   await page.getByRole('button', { name: 'Auto-layout' }).click();
-  await page.waitForTimeout(500);
+  // Wait for the unlocked node to reposition (proves layout completed)
+  await page.waitForFunction(
+    (before) => {
+      const nodes = document.querySelectorAll('.react-flow__node');
+      if (nodes.length < 2) return false;
+      return (nodes[1] as HTMLElement).style.transform !== before;
+    },
+    secondNodeTransformBefore,
+  );
 
   const afterPos = await page.locator('.react-flow__node').first().evaluate(
     (el) => (el as HTMLElement).style.transform,

@@ -28,11 +28,12 @@ test('auto-layout repositions nodes', async ({ page }) => {
 
   const initialPositions = await getPositions();
   await page.getByRole('button', { name: 'Auto-layout' }).click();
-  await page.waitForTimeout(500);
 
-  const newPositions = await getPositions();
-  const changed = initialPositions.some((pos, i) => pos !== newPositions[i]);
-  expect(changed).toBe(true);
+  await expect(async () => {
+    const newPositions = await getPositions();
+    const changed = initialPositions.some((pos, i) => pos !== newPositions[i]);
+    expect(changed).toBe(true);
+  }).toPass({ timeout: 5000 });
 });
 
 test('multi-select nodes and delete all', async ({ page }) => {
@@ -91,11 +92,12 @@ test('aligns selected nodes horizontally by rendered center', async ({ page }) =
     ids,
   );
   await page.locator('header').getByLabel('Align horizontally').click();
-  await page.waitForTimeout(100);
 
-  const firstCenter = await getNodeCenter(page, ids[0]);
-  const secondCenter = await getNodeCenter(page, ids[1]);
-  expect(Math.abs(firstCenter.y - secondCenter.y)).toBeLessThan(1);
+  await expect(async () => {
+    const firstCenter = await getNodeCenter(page, ids[0]);
+    const secondCenter = await getNodeCenter(page, ids[1]);
+    expect(Math.abs(firstCenter.y - secondCenter.y)).toBeLessThan(1);
+  }).toPass({ timeout: 5000 });
 });
 
 test('aligns selected nodes vertically by rendered center', async ({ page }) => {
@@ -117,11 +119,12 @@ test('aligns selected nodes vertically by rendered center', async ({ page }) => 
     ids,
   );
   await page.locator('header').getByLabel('Align vertically').click();
-  await page.waitForTimeout(100);
 
-  const firstCenter = await getNodeCenter(page, ids[0]);
-  const secondCenter = await getNodeCenter(page, ids[1]);
-  expect(Math.abs(firstCenter.x - secondCenter.x)).toBeLessThan(1);
+  await expect(async () => {
+    const firstCenter = await getNodeCenter(page, ids[0]);
+    const secondCenter = await getNodeCenter(page, ids[1]);
+    expect(Math.abs(firstCenter.x - secondCenter.x)).toBeLessThan(1);
+  }).toPass({ timeout: 5000 });
 });
 
 test('distribute buttons require three selected nodes and reposition them', async ({ page }) => {
@@ -153,8 +156,10 @@ test('distribute buttons require three selected nodes and reposition them', asyn
 
   const before = await getPositions();
   await distV.click();
-  await page.waitForTimeout(300);
-  const after = await getPositions();
-  const changed = before.some((pos, i) => pos !== after[i]);
-  expect(changed).toBe(true);
+
+  await expect(async () => {
+    const after = await getPositions();
+    const changed = before.some((pos, i) => pos !== after[i]);
+    expect(changed).toBe(true);
+  }).toPass({ timeout: 5000 });
 });
