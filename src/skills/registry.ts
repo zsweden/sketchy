@@ -17,8 +17,3 @@ for (const [path, mod] of Object.entries(modules)) {
 export function getSkillsForFramework(frameworkId: string): Skill[] {
   return skills.filter((s) => s.startingFramework === frameworkId);
 }
-
-/** Return all registered skills. */
-export function listSkills(): Skill[] {
-  return [...skills];
-}
