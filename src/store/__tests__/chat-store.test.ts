@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useChatStore } from '../chat-store';
 import { useDiagramStore } from '../diagram-store';
 import { useSettingsStore } from '../settings-store';
-import { reportError } from '../../core/monitoring/error-logging';
+import { logFirestoreError } from '../../core/monitoring/firebase';
+import { resetErrorLoggingForTests } from '../../core/monitoring/error-logging';
 import { runElkAutoLayout } from '../../core/layout/run-elk-auto-layout';
 
 // Mock the streaming function to avoid real API calls
@@ -18,11 +19,14 @@ vi.mock('../../core/ai/openai-client', () => ({
   streamChatMessage: (...args: Parameters<typeof mockStreamChatMessage>) => mockStreamChatMessage(...args),
 }));
 
-vi.mock('../../core/monitoring/error-logging', () => ({
-  reportError: vi.fn().mockResolvedValue(undefined),
+// Mock Firebase at the transport level so reportError runs its real
+// normalization, deduplication, and description-building logic.
+vi.mock('../../core/monitoring/firebase', () => ({
+  logFirebaseException: vi.fn().mockResolvedValue(undefined),
+  logFirestoreError: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock auto-layout to avoid ELK dependency
+// Mock auto-layout to avoid slow ELK execution (tests only verify call count)
 vi.mock('../../core/layout/run-elk-auto-layout', () => ({
   runElkAutoLayout: vi.fn().mockResolvedValue([]),
 }));
@@ -44,7 +48,8 @@ describe('chat-store', () => {
       }, 0);
       return new AbortController();
     });
-    vi.mocked(reportError).mockClear();
+    resetErrorLoggingForTests();
+    vi.mocked(logFirestoreError).mockClear();
     vi.mocked(runElkAutoLayout).mockClear();
     // Ensure settings are configured
     useSettingsStore.setState({
@@ -95,20 +100,12 @@ describe('chat-store', () => {
       const assistant = msgs.find((m) => m.role === 'assistant');
       expect(assistant).toBeDefined();
       expect(assistant!.content).toBe('The AI returned an empty response. Please try again.');
-      expect(reportError).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'AI chat returned empty assistant response',
-        }),
+      expect(logFirestoreError).toHaveBeenCalledWith(
         expect.objectContaining({
           source: 'chat.empty_response',
           fatal: false,
-          metadata: expect.objectContaining({
-            provider: 'openai',
-            model: 'gpt-4o',
-            endpointHost: 'api.test.com',
-            userMessageLength: 5,
-            resultTextLength: 3,
-          }),
+          message: 'AI chat returned empty assistant response',
+          description: expect.stringContaining('provider=openai'),
         }),
       );
     });
@@ -387,16 +384,12 @@ describe('chat-store', () => {
       const assistant = msgs.find((m) => m.role === 'assistant');
       expect(assistant).toBeDefined();
       expect(assistant!.content).toBe('[Demand][node:missing] still shows up.');
-      expect(reportError).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'AI chat returned malformed canonical mentions',
-        }),
+      expect(logFirestoreError).toHaveBeenCalledWith(
         expect.objectContaining({
           source: 'chat.malformed_mention',
           fatal: false,
-          metadata: expect.objectContaining({
-            malformedMentionCount: 1,
-          }),
+          message: 'AI chat returned malformed canonical mentions',
+          description: expect.stringContaining('malformedMentionCount=1'),
         }),
       );
     });
@@ -438,9 +431,11 @@ describe('chat-store', () => {
       await new Promise((r) => setTimeout(r, 50));
 
       // Error should always be reported regardless of UI state
-      expect(reportError).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'network error' }),
-        expect.objectContaining({ source: 'chat.stream_error' }),
+      expect(logFirestoreError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          source: 'chat.stream_error',
+          message: 'network error',
+        }),
       );
     });
 

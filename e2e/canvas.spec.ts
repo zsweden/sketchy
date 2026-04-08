@@ -313,6 +313,26 @@ test('double-click a node to edit label inline', async ({ page }) => {
   });
 });
 
+test('scroll wheel zooms the canvas viewport', async ({ page }) => {
+  await createNode(page, 200, 250);
+
+  const viewport = page.locator('.react-flow__viewport');
+  const getTransform = () => viewport.evaluate((el) => (el as HTMLElement).style.transform);
+
+  const transformBefore = await getTransform();
+
+  // Ctrl+scroll to zoom in
+  const pane = page.locator(PANE);
+  const box = await pane.boundingBox();
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  await page.mouse.wheel(0, -200);
+
+  await expect(async () => {
+    const transformAfter = await getTransform();
+    expect(transformAfter).not.toBe(transformBefore);
+  }).toPass({ timeout: 5000 });
+});
+
 test('dragging multiple selected nodes moves them together', async ({ page }) => {
   await createNode(page, 100, 200);
   await createNode(page, 300, 200);

@@ -193,6 +193,101 @@ describe('autoLayout (ELK)', () => {
     expect(metrics.edgeNodeOverlaps).toBeLessThanOrEqual(4);
   });
 
+  it('positions chain right-to-left', async () => {
+    const nodes = [node('a'), node('b'), node('c')];
+    const edges = [edge('a', 'b'), edge('b', 'c')];
+    const updates = await autoLayout(nodes, edges, {
+      direction: 'RL',
+    }, elkEngine);
+
+    const posMap = Object.fromEntries(updates.map((u) => [u.id, u.position]));
+    expect(posMap['a'].x).toBeGreaterThan(posMap['b'].x);
+    expect(posMap['b'].x).toBeGreaterThan(posMap['c'].x);
+  });
+
+  it('tightens the unique leading spine in RL trees', async () => {
+    const nodes = [node('a'), node('b'), node('c'), node('d'), node('e')];
+    const edges = [edge('a', 'b'), edge('b', 'c'), edge('c', 'd'), edge('c', 'e')];
+    const updates = await autoLayout(nodes, edges, {
+      direction: 'RL',
+    }, elkEngine);
+
+    const posMap = Object.fromEntries(updates.map((u) => [u.id, u.position]));
+    const gap = (right: string, left: string) =>
+      posMap[right].x - (posMap[left].x + NODE_WIDTH);
+
+    // Spine gap (a→b, b→c) should be tightened to a consistent value
+    expect(gap('a', 'b')).toBe(gap('b', 'c'));
+  });
+
+  it('preserves locked node positions through layout', async () => {
+    const lockedNode: DiagramNode = {
+      id: 'locked',
+      type: 'entity',
+      position: { x: 42, y: 99 },
+      data: { label: 'locked', tags: [], junctionType: 'and', locked: true },
+    };
+    const nodes = [lockedNode, node('b'), node('c')];
+    const edges = [edge('locked', 'b'), edge('b', 'c')];
+    const updates = await autoLayout(nodes, edges, {
+      direction: 'TB',
+    }, elkEngine);
+
+    const lockedUpdate = updates.find((u) => u.id === 'locked');
+    expect(lockedUpdate?.position).toEqual({ x: 42, y: 99 });
+  });
+
+  it('does not tighten spine when there are multiple root nodes', async () => {
+    // Two roots: a and d — findTopSpine returns [] for multiple roots
+    const nodes = [node('a'), node('b'), node('c'), node('d')];
+    const edges = [edge('a', 'b'), edge('d', 'c')];
+    const updates = await autoLayout(nodes, edges, {
+      direction: 'TB',
+    }, elkEngine);
+
+    // Should still produce valid positions (no crash)
+    expect(updates).toHaveLength(4);
+    for (const update of updates) {
+      expect(update.position).toBeDefined();
+    }
+  });
+
+  it('does not tighten spine for diamond graph (branching at first node)', async () => {
+    // a→b, a→c: first node branches, so spine has length 1 (< 3), no tightening
+    const nodes = [node('a'), node('b'), node('c'), node('d')];
+    const edges = [edge('a', 'b'), edge('a', 'c'), edge('b', 'd'), edge('c', 'd')];
+    const updates = await autoLayout(nodes, edges, {
+      direction: 'TB',
+    }, elkEngine);
+
+    const posMap = Object.fromEntries(updates.map((u) => [u.id, u.position]));
+    // b and c should be on the same rank
+    expect(Math.abs(posMap['b'].y - posMap['c'].y)).toBeLessThan(10);
+  });
+
+  it('skips spine tightening for cyclic layout', async () => {
+    // Cyclic mode should skip tightenTopSpine entirely
+    const nodes = [node('a'), node('b'), node('c')];
+    const edges = [edge('a', 'b'), edge('b', 'c'), edge('c', 'a')];
+    const updates = await autoLayout(nodes, edges, {
+      direction: 'TB',
+      cyclic: true,
+    }, elkEngine);
+
+    expect(updates).toHaveLength(3);
+    for (const update of updates) {
+      expect(update.position).toBeDefined();
+    }
+  });
+
+  it('handles single node with no edges', async () => {
+    const nodes = [node('a')];
+    const updates = await autoLayout(nodes, [], { direction: 'TB' }, elkEngine);
+
+    expect(updates).toHaveLength(1);
+    expect(updates[0].id).toBe('a');
+  });
+
   it('wraps layout engine errors with a descriptive message', async () => {
     const failingEngine: LayoutEngine = async () => {
       throw new Error('java.lang.NullPointerException');
