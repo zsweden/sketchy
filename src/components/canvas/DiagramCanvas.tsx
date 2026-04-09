@@ -49,7 +49,6 @@ export default function DiagramCanvas() {
   const [localEdges, setLocalEdges] = useState<Edge[]>(rfEdges);
   const canvasRef = useRef<HTMLDivElement>(null);
   const latestRFNodeIdsRef = useRef<string[]>([]);
-  latestRFNodeIdsRef.current = rfNodes.map((node) => node.id);
   const updateNodeInternals = useUpdateNodeInternals();
 
   // Viewport focus & fit-view (extracted hook)
@@ -59,6 +58,7 @@ export default function DiagramCanvas() {
   // runtime measurement fields. Replacing nodes from builder output must not
   // wipe measured dimensions, or RF will drop cached handle bounds.
   useEffect(() => {
+    latestRFNodeIdsRef.current = rfNodes.map((n) => n.id);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalNodes((prev) => mergeRFNodesWithLocalState(prev, rfNodes));
   }, [rfNodes]);
