@@ -43,6 +43,38 @@ export function getDefaultJunctionType(framework: Framework): string {
   return options.length > 0 ? options[0].id : 'or';
 }
 
+export interface JunctionState {
+  visible: boolean;
+  isMath: boolean;
+  options: JunctionOption[];
+  current: JunctionOption;
+  next: JunctionOption;
+}
+
+/**
+ * Compute junction visibility and current/next option for a node.
+ * Returns null when the junction toggle should not be shown.
+ */
+export function getJunctionState(
+  framework: Framework,
+  indegree: number,
+  currentJunctionType: string,
+): JunctionState | null {
+  const options = getJunctionOptions(framework);
+  if (options.length === 0) return null;
+  const isMath = options.some((o) => o.id === 'add' || o.id === 'multiply');
+  if (isMath ? indegree < 1 : indegree < 2) return null;
+  const currentIdx = options.findIndex((o) => o.id === currentJunctionType);
+  const safeIdx = currentIdx >= 0 ? currentIdx : 0;
+  return {
+    visible: true,
+    isMath,
+    options,
+    current: options[safeIdx],
+    next: options[(safeIdx + 1) % options.length],
+  };
+}
+
 export interface NodeTag {
   id: string;
   name: string;

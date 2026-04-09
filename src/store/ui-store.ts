@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { uiEvents } from './ui-events';
 
 type InteractionMode = 'select' | 'pan';
 export type GraphObjectKind = 'node' | 'edge' | 'loop';
@@ -16,12 +17,6 @@ interface UIState {
   sidePanelOpen: boolean;
   chatPanelMode: ChatPanelMode;
   interactionMode: InteractionMode;
-  fitViewTrigger: number;
-  edgeRefreshTrigger: number;
-  clearSelectionTrigger: number;
-  selectionSyncTrigger: number;
-  viewportFocusTarget: GraphObjectTarget | null;
-  viewportFocusTrigger: number;
   searchQuery: string;
 
   setSelectedNodes: (ids: string[]) => void;
@@ -48,12 +43,6 @@ export const useUIStore = create<UIState>((set) => ({
   sidePanelOpen: true,
   chatPanelMode: 'shared',
   interactionMode: 'select',
-  fitViewTrigger: 0,
-  edgeRefreshTrigger: 0,
-  clearSelectionTrigger: 0,
-  selectionSyncTrigger: 0,
-  viewportFocusTarget: null,
-  viewportFocusTrigger: 0,
   searchQuery: '',
 
   setSelectedNodes: (ids) => set({ selectedNodeIds: ids }),
@@ -74,36 +63,31 @@ export const useUIStore = create<UIState>((set) => ({
 
   setInteractionMode: (mode) => set({ interactionMode: mode }),
 
-  requestFitView: () => set((s) => ({ fitViewTrigger: s.fitViewTrigger + 1 })),
+  requestFitView: () => { uiEvents.emit('fitView'); },
 
-  requestEdgeRefresh: () => set((s) => ({ edgeRefreshTrigger: s.edgeRefreshTrigger + 1 })),
+  requestEdgeRefresh: () => { uiEvents.emit('edgeRefresh'); },
 
-  requestClearSelection: () => set((s) => ({
-    selectedNodeIds: [],
-    selectedEdgeIds: [],
-    selectedLoopId: null,
-    clearSelectionTrigger: s.clearSelectionTrigger + 1,
-    selectionSyncTrigger: s.selectionSyncTrigger + 1,
-  })),
+  requestClearSelection: () => {
+    set({
+      selectedNodeIds: [],
+      selectedEdgeIds: [],
+      selectedLoopId: null,
+    });
+    uiEvents.emit('selectionSync');
+  },
 
   selectGraphObject: ({ kind, id }) => {
     if (kind === 'node') {
-      set((s) => ({ selectedNodeIds: [id], selectedEdgeIds: [], selectedLoopId: null, selectionSyncTrigger: s.selectionSyncTrigger + 1 }));
-      return;
+      set({ selectedNodeIds: [id], selectedEdgeIds: [], selectedLoopId: null });
+    } else if (kind === 'edge') {
+      set({ selectedNodeIds: [], selectedEdgeIds: [id], selectedLoopId: null });
+    } else {
+      set({ selectedNodeIds: [], selectedEdgeIds: [], selectedLoopId: id });
     }
-
-    if (kind === 'edge') {
-      set((s) => ({ selectedNodeIds: [], selectedEdgeIds: [id], selectedLoopId: null, selectionSyncTrigger: s.selectionSyncTrigger + 1 }));
-      return;
-    }
-
-    set((s) => ({ selectedNodeIds: [], selectedEdgeIds: [], selectedLoopId: id, selectionSyncTrigger: s.selectionSyncTrigger + 1 }));
+    uiEvents.emit('selectionSync');
   },
 
-  focusGraphObject: (target) => set((s) => ({
-    viewportFocusTarget: target,
-    viewportFocusTrigger: s.viewportFocusTrigger + 1,
-  })),
+  focusGraphObject: (target) => { uiEvents.emit('viewportFocus', target); },
 
   setSearchQuery: (query) => set({ searchQuery: query }),
 }));

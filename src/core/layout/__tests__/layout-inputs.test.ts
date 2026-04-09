@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeLayoutDegrees, prepareLayoutEdges, prepareLayoutNodes } from '../layout-inputs';
+import { prepareLayoutEdges, prepareLayoutNodes } from '../layout-inputs';
 import { NODE_WIDTH, estimateHeight } from '../layout-engine';
 import type { DiagramEdge, DiagramNode } from '../../types';
 
@@ -16,39 +16,6 @@ function makeNode(id: string, overrides?: Partial<DiagramNode>): DiagramNode {
 function makeEdge(source: string, target: string): DiagramEdge {
   return { id: `${source}-${target}`, source, target };
 }
-
-describe('computeLayoutDegrees', () => {
-  it('returns zero degrees for isolated nodes', () => {
-    const nodes = [makeNode('a'), makeNode('b')];
-    const degrees = computeLayoutDegrees(nodes, []);
-    expect(degrees.get('a')).toEqual({ indegree: 0, outdegree: 0 });
-    expect(degrees.get('b')).toEqual({ indegree: 0, outdegree: 0 });
-  });
-
-  it('computes correct degrees for a chain', () => {
-    const nodes = [makeNode('a'), makeNode('b'), makeNode('c')];
-    const edges = [makeEdge('a', 'b'), makeEdge('b', 'c')];
-    const degrees = computeLayoutDegrees(nodes, edges);
-    expect(degrees.get('a')).toEqual({ indegree: 0, outdegree: 1 });
-    expect(degrees.get('b')).toEqual({ indegree: 1, outdegree: 1 });
-    expect(degrees.get('c')).toEqual({ indegree: 1, outdegree: 0 });
-  });
-
-  it('counts multiple edges to the same target', () => {
-    const nodes = [makeNode('a'), makeNode('b'), makeNode('c')];
-    const edges = [makeEdge('a', 'c'), makeEdge('b', 'c')];
-    const degrees = computeLayoutDegrees(nodes, edges);
-    expect(degrees.get('c')).toEqual({ indegree: 2, outdegree: 0 });
-  });
-
-  it('includes nodes with no edges in the result', () => {
-    const nodes = [makeNode('a'), makeNode('orphan'), makeNode('b')];
-    const edges = [makeEdge('a', 'b')];
-    const degrees = computeLayoutDegrees(nodes, edges);
-    expect(degrees.has('orphan')).toBe(true);
-    expect(degrees.get('orphan')).toEqual({ indegree: 0, outdegree: 0 });
-  });
-});
 
 describe('prepareLayoutNodes', () => {
   it('sets width to NODE_WIDTH for all nodes', () => {

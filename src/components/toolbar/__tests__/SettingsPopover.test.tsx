@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import SettingsPopover from '../SettingsPopover';
 import { useSettingsStore } from '../../../store/settings-store';
 import { useDiagramStore } from '../../../store/diagram-store';
-import { useUIStore } from '../../../store/ui-store';
 import { THEMES } from '../../../styles/themes';
 import { getWebStorage } from '../../../utils/web-storage';
 
@@ -27,7 +26,6 @@ function resetStores() {
   });
   useDiagramStore.getState().setFramework('crt');
   useDiagramStore.getState().newDiagram();
-  useUIStore.setState({ fitViewTrigger: 0 });
 }
 
 describe('SettingsPopover', () => {

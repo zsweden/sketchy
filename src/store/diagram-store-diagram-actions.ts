@@ -1,9 +1,8 @@
-import { toast } from 'sonner';
 import { getFramework, getDefaultFramework } from '../frameworks/registry';
 import { DEFAULT_EDGE_ROUTING_CONFIG, DEFAULT_EDGE_ROUTING_POLICY } from '../core/edge-routing';
 import { reportError } from '../core/monitoring/error-logging';
 import { runElkAutoLayout } from '../core/layout/run-elk-auto-layout';
-import { useUIStore } from './ui-store';
+import { uiEvents } from './ui-events';
 import {
   createDiagramForFramework,
   ensureFixedEdgeSides,
@@ -38,7 +37,7 @@ export function createDiagramActions(
   const { get, history, moveNodes, pushHistorySnapshot, set, undoState, clearPendingNodeMove } = context;
   const focusInitialNode = (nodeId?: string) => {
     if (!nodeId) return;
-    useUIStore.getState().focusGraphObject({ kind: 'node', id: nodeId });
+    uiEvents.emit('viewportFocus', { kind: 'node', id: nodeId });
   };
 
   return {
@@ -84,7 +83,7 @@ export function createDiagramActions(
         });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        toast.error(`Auto-layout failed: ${msg}`);
+        uiEvents.emit('toastError', `Auto-layout failed: ${msg}`);
         void reportError(err, { source: 'layout.elk_error', fatal: false });
         return false;
       }
@@ -104,9 +103,9 @@ export function createDiagramActions(
         set(undoState);
       }
       if (fitView) {
-        useUIStore.getState().requestFitView();
+        uiEvents.emit('fitView');
       }
-      useUIStore.getState().requestEdgeRefresh();
+      uiEvents.emit('edgeRefresh');
 
       return true;
     },
@@ -123,7 +122,7 @@ export function createDiagramActions(
         ...undoState,
       });
       focusInitialNode(diagram.nodes[0]?.id);
-      useUIStore.getState().requestEdgeRefresh();
+      uiEvents.emit('edgeRefresh');
     },
 
     updateSettings: (settings) => {
@@ -176,7 +175,7 @@ export function createDiagramActions(
         },
         ...undoState,
       });
-      useUIStore.getState().requestEdgeRefresh();
+      uiEvents.emit('edgeRefresh');
     },
 
     newDiagram: () => {
@@ -188,7 +187,7 @@ export function createDiagramActions(
         ...undoState,
       });
       focusInitialNode(diagram.nodes[0]?.id);
-      useUIStore.getState().requestEdgeRefresh();
+      uiEvents.emit('edgeRefresh');
     },
 
     setDiagramName: (name) => {

@@ -42,7 +42,6 @@ function resetStores() {
     sidePanelOpen: true,
     chatPanelMode: 'shared',
     interactionMode: 'select',
-    fitViewTrigger: 0,
   });
   useSettingsStore.setState({ openaiApiKey: 'sk-test' });
 }

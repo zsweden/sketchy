@@ -14,6 +14,7 @@ import '@xyflow/react/dist/style.css';
 import EntityNode from './EntityNode';
 import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
+import { useUIEvent } from '../../store/ui-events';
 import { FIT_VIEW_OPTIONS } from '../../core/layout/fit-view-options';
 import { getDerivedIndicators } from '../../core/graph/derived';
 import { useCanvasHighlighting } from '../../hooks/useCanvasHighlighting';
@@ -78,9 +79,7 @@ export default function DiagramCanvas() {
   // remeasure handle bounds via its built-in API. Double rAF ensures React has
   // committed new node positions and RF has laid them out before we remeasure.
   const updateNodeInternals = useUpdateNodeInternals();
-  const edgeRefreshTrigger = useUIStore((s) => s.edgeRefreshTrigger);
-  useEffect(() => {
-    if (edgeRefreshTrigger === 0) return;
+  useUIEvent('edgeRefresh', () => {
     let frame2 = 0;
     const frame1 = requestAnimationFrame(() => {
       frame2 = requestAnimationFrame(() => {
@@ -92,19 +91,16 @@ export default function DiagramCanvas() {
       cancelAnimationFrame(frame1);
       cancelAnimationFrame(frame2);
     };
-  }, [edgeRefreshTrigger, updateNodeInternals, localNodes]);
+  });
 
   // Sync programmatic selection from store -> RF (selectGraphObject)
-  const selectionSyncTrigger = useUIStore((s) => s.selectionSyncTrigger);
-  useEffect(() => {
-    if (selectionSyncTrigger === 0) return;
+  useUIEvent('selectionSync', () => {
     const { selectedNodeIds: nodeIds, selectedEdgeIds: edgeIds } = useUIStore.getState();
     const nodeSet = new Set(nodeIds);
     const edgeSet = new Set(edgeIds);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalNodes((nds) => nds.map((n) => ({ ...n, selected: nodeSet.has(n.id) })));
     setLocalEdges((eds) => eds.map((e) => ({ ...e, selected: edgeSet.has(e.id) })));
-  }, [selectionSyncTrigger]);
+  });
 
   // Touch gestures — owns ignoreNextPaneClickRef and suppressSelectionUntilRef
   const {

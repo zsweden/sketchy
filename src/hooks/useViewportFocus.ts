@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { useReactFlow, type Rect } from '@xyflow/react';
-import { useUIStore } from '../store/ui-store';
 import { useDiagramStore } from '../store/diagram-store';
+import { useUIEvent } from '../store/ui-events';
 import { findCausalLoops } from '../core/graph/derived';
 import { FIT_VIEW_OPTIONS } from '../core/layout/fit-view-options';
 import { DEFAULT_NODE_WIDTH, DEFAULT_NODE_HEIGHT } from '../constants/layout';
@@ -51,12 +51,8 @@ export function useViewportFocus(canvasRef: React.RefObject<HTMLDivElement | nul
   const pendingFitView = useRef(false);
 
   // Pan to focused graph object when off-screen
-  const viewportFocusTrigger = useUIStore((s) => s.viewportFocusTrigger);
-  useEffect(() => {
-    if (viewportFocusTrigger === 0 || !viewportInitialized) return;
-
-    const target = useUIStore.getState().viewportFocusTarget;
-    if (!target) return;
+  useUIEvent('viewportFocus', (target) => {
+    if (!viewportInitialized) return;
 
     const currentDiagram = useDiagramStore.getState().diagram;
     const getNodeRect = (nodeId: string): Rect | null => {
@@ -123,27 +119,20 @@ export function useViewportFocus(canvasRef: React.RefObject<HTMLDivElement | nul
     const centerX = targetRect.x + targetRect.width / 2;
     const centerY = targetRect.y + targetRect.height / 2;
     void setCenter(centerX, centerY, { zoom: viewport.zoom });
-  }, [canvasRef, getInternalNode, getViewport, setCenter, viewportFocusTrigger, viewportInitialized]);
+  });
 
   // Fit view when requested (after layout, etc.)
-  const fitViewTrigger = useUIStore((s) => s.fitViewTrigger);
-  useEffect(() => {
-    if (fitViewTrigger === 0) return;
+  useUIEvent('fitView', () => {
     pendingFitView.current = true;
-    let frame2 = 0;
-    const frame1 = requestAnimationFrame(() => {
-      frame2 = requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
         if (pendingFitView.current) {
           pendingFitView.current = false;
           fitView(FIT_VIEW_OPTIONS);
         }
       });
     });
-    return () => {
-      cancelAnimationFrame(frame1);
-      cancelAnimationFrame(frame2);
-    };
-  }, [fitViewTrigger, fitView]);
+  });
 
   const tryFitViewOnDimensions = useCallback(() => {
     if (pendingFitView.current) {

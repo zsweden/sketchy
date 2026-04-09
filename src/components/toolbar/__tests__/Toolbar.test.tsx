@@ -8,6 +8,7 @@ import { useChatStore } from '../../../store/chat-store';
 import { useDiagramStore } from '../../../store/diagram-store';
 import { useSettingsStore, PROVIDERS } from '../../../store/settings-store';
 import { useUIStore } from '../../../store/ui-store';
+import { uiEvents } from '../../../store/ui-events';
 import { getWebStorage } from '../../../utils/web-storage';
 
 const rfMocks = vi.hoisted(() => ({
@@ -65,7 +66,6 @@ function resetStores() {
     sidePanelOpen: true,
     chatPanelMode: 'shared',
     interactionMode: 'select',
-    fitViewTrigger: 0,
   });
   useSettingsStore.setState({
     provider: PROVIDERS[0].id,
@@ -92,6 +92,8 @@ describe('Toolbar', () => {
   it('creates a new diagram, clears chat state, and requests fit view', async () => {
     const user = userEvent.setup();
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const fitViewHandler = vi.fn();
+    uiEvents.on('fitView', fitViewHandler);
 
     const nodeId = useDiagramStore.getState().addNode({ x: 1, y: 2 });
     useDiagramStore.getState().updateNodeText(nodeId, 'Existing');
@@ -107,8 +109,9 @@ describe('Toolbar', () => {
     expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
     expect(useChatStore.getState().messages).toEqual([]);
     expect(useChatStore.getState().aiModifiedNodeIds.size).toBe(0);
-    expect(useUIStore.getState().fitViewTrigger).toBe(1);
+    expect(fitViewHandler).toHaveBeenCalled();
 
+    uiEvents.off('fitView', fitViewHandler);
     confirmSpy.mockRestore();
   });
 
@@ -129,6 +132,8 @@ describe('Toolbar', () => {
 
   it('runs auto-layout and stores the resulting node positions', async () => {
     const user = userEvent.setup();
+    const fitViewHandler = vi.fn();
+    uiEvents.on('fitView', fitViewHandler);
     const nodeId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
     mocks.runElkAutoLayout.mockResolvedValue([{ id: nodeId, position: { x: 200, y: 120 } }]);
 
@@ -141,7 +146,9 @@ describe('Toolbar', () => {
       ).toEqual({ x: 200, y: 120 });
     });
 
-    expect(useUIStore.getState().fitViewTrigger).toBe(1);
+    expect(fitViewHandler).toHaveBeenCalled();
+
+    uiEvents.off('fitView', fitViewHandler);
   });
 
   it('hides layout lab controls from the toolbar', () => {

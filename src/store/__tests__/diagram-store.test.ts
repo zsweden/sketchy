@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useDiagramStore } from '../diagram-store';
 import { getOptimizedEdgePlacements } from '../diagram-helpers';
 import { useUIStore } from '../ui-store';
+import { uiEvents } from '../ui-events';
 
 function resetStore() {
   useDiagramStore.getState().setFramework('crt');
@@ -16,11 +17,6 @@ function resetStore() {
     sidePanelOpen: true,
     chatPanelMode: 'shared',
     interactionMode: 'select',
-    fitViewTrigger: 0,
-    clearSelectionTrigger: 0,
-    selectionSyncTrigger: 0,
-    viewportFocusTarget: null,
-    viewportFocusTrigger: 0,
   });
 }
 
@@ -48,11 +44,15 @@ describe('diagram store', () => {
   });
 
   it('creates an empty new diagram without requesting viewport focus', () => {
+    const focusHandler = vi.fn();
+    uiEvents.on('viewportFocus', focusHandler);
+
     useDiagramStore.getState().newDiagram();
 
     expect(useDiagramStore.getState().diagram.nodes).toEqual([]);
-    expect(useUIStore.getState().viewportFocusTarget).toBeNull();
-    expect(useUIStore.getState().viewportFocusTrigger).toBe(0);
+    expect(focusHandler).not.toHaveBeenCalled();
+
+    uiEvents.off('viewportFocus', focusHandler);
   });
 
   describe('addNode', () => {

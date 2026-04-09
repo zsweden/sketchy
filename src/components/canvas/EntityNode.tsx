@@ -3,7 +3,7 @@ import { Handle, Position, useConnection, type NodeProps } from '@xyflow/react';
 import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
 import { getDerivedIndicators } from '../../core/graph/derived';
-import { getJunctionOptions } from '../../core/framework-types';
+import { getJunctionOptions, getJunctionState } from '../../core/framework-types';
 import {
   HANDLE_CORNER_OFFSET,
   VISIBLE_HANDLE_SIDES,
@@ -118,17 +118,16 @@ function EntityNode({ id, data, selected }: NodeProps) {
   }, []);
 
   const junctionOptions = getJunctionOptions(framework);
-  const isMathJunction = junctionOptions.some((o) => o.id === 'add' || o.id === 'multiply');
-  const showJunction = framework.supportsJunctions && (isMathJunction ? degrees.indegree >= 1 : degrees.indegree >= 2);
+  const junctionState = getJunctionState(framework, degrees.indegree, nodeData.junctionType);
+  const showJunction = junctionState !== null;
+  const nextJunctionId = junctionState?.next.id;
   const handleJunctionToggle = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
       (e.currentTarget as HTMLElement).blur();
-      const currentIdx = junctionOptions.findIndex((o) => o.id === nodeData.junctionType);
-      const nextIdx = (currentIdx + 1) % junctionOptions.length;
-      updateNodeJunction(id, junctionOptions[nextIdx].id as EntityNodeData['junctionType']);
+      if (nextJunctionId) updateNodeJunction(id, nextJunctionId as EntityNodeData['junctionType']);
     },
-    [id, nodeData.junctionType, updateNodeJunction, junctionOptions],
+    [id, nextJunctionId, updateNodeJunction],
   );
 
   const handleBlur = useCallback(() => {
@@ -191,13 +190,13 @@ function EntityNode({ id, data, selected }: NodeProps) {
         />
       )}
 
-      {showJunction && isMathJunction && (() => {
-        const sym = junctionOptions.find((o) => o.id === nodeData.junctionType)?.symbol;
+      {junctionState?.isMath && (() => {
+        const sym = junctionState.current.symbol;
         return sym ? (
           <button
             className="operator-chip nodrag"
             onClick={handleJunctionToggle}
-            title={`Operator: ${junctionOptions.find((o) => o.id === nodeData.junctionType)?.label} — click to toggle`}
+            title={`Operator: ${junctionState.current.label} — click to toggle`}
           >
             {sym}
           </button>

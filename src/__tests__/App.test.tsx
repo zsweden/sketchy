@@ -63,7 +63,6 @@ function resetStores() {
     sidePanelOpen: true,
     chatPanelMode: 'shared',
     interactionMode: 'select',
-    fitViewTrigger: 0,
   });
 }
 

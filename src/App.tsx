@@ -9,6 +9,7 @@ import { useAutoSave } from './hooks/useAutoSave';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useThemeEffect } from './hooks/useThemeEffect';
 import { useViewportInsets } from './hooks/useViewportInsets';
+import { useUIEvent } from './store/ui-events';
 import { loadDiagram } from './core/persistence/local-storage';
 import { useDiagramStore } from './store/diagram-store';
 
@@ -17,6 +18,7 @@ export default function App() {
   useKeyboardShortcuts();
   useThemeEffect();
   useViewportInsets();
+  useUIEvent('toastError', (msg) => toast.error(msg));
 
   // Load from localStorage on mount
   useEffect(() => {

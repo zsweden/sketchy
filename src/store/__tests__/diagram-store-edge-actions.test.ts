@@ -15,11 +15,6 @@ function resetStore() {
     sidePanelOpen: true,
     chatPanelMode: 'shared',
     interactionMode: 'select',
-    fitViewTrigger: 0,
-    clearSelectionTrigger: 0,
-    selectionSyncTrigger: 0,
-    viewportFocusTarget: null,
-    viewportFocusTrigger: 0,
   });
 }
 

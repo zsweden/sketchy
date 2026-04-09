@@ -8,6 +8,7 @@ import { useDiagramStore } from '../../../store/diagram-store';
 import { resolveFramework } from '../../../store/diagram-helpers';
 import { useSettingsStore } from '../../../store/settings-store';
 import { useUIStore } from '../../../store/ui-store';
+import { uiEvents } from '../../../store/ui-events';
 import { buildChatMessageRenderData } from '../../../core/chat/mentions';
 
 function resetStore() {
@@ -47,11 +48,6 @@ function resetStore() {
     sidePanelOpen: true,
     chatPanelMode: 'shared',
     interactionMode: 'select',
-    fitViewTrigger: 0,
-    clearSelectionTrigger: 0,
-    selectionSyncTrigger: 0,
-    viewportFocusTarget: null,
-    viewportFocusTrigger: 0,
   });
 }
 
@@ -256,6 +252,8 @@ describe('ChatPanel', () => {
 
   it('renders clickable node, edge, and loop mentions and selects them', async () => {
     const user = userEvent.setup();
+    const focusHandler = vi.fn();
+    uiEvents.on('viewportFocus', focusHandler);
 
     useChatStore.setState({
       messages: [
@@ -272,20 +270,22 @@ describe('ChatPanel', () => {
     expect(useUIStore.getState().selectedNodeIds).toEqual(['n1']);
     expect(useUIStore.getState().selectedEdgeIds).toEqual([]);
     expect(useUIStore.getState().selectedLoopId).toBeNull();
-    expect(useUIStore.getState().viewportFocusTarget).toEqual({ kind: 'node', id: 'n1' });
+    expect(focusHandler).toHaveBeenLastCalledWith({ kind: 'node', id: 'n1' });
 
     await user.click(screen.getByRole('button', { name: 'Demand -> Growth' }));
     expect(useUIStore.getState().selectedNodeIds).toEqual([]);
     expect(useUIStore.getState().selectedEdgeIds).toEqual(['e1']);
     expect(useUIStore.getState().selectedLoopId).toBeNull();
-    expect(useUIStore.getState().viewportFocusTarget).toEqual({ kind: 'edge', id: 'e1' });
+    expect(focusHandler).toHaveBeenLastCalledWith({ kind: 'edge', id: 'e1' });
 
     await user.click(screen.getByRole('button', { name: 'R1' }));
     expect(useUIStore.getState().selectedNodeIds).toEqual([]);
     expect(useUIStore.getState().selectedEdgeIds).toEqual([]);
     expect(useUIStore.getState().selectedLoopId).toBe('n1>n2');
-    expect(useUIStore.getState().viewportFocusTarget).toEqual({ kind: 'loop', id: 'n1>n2' });
-    expect(useUIStore.getState().viewportFocusTrigger).toBe(3);
+    expect(focusHandler).toHaveBeenLastCalledWith({ kind: 'loop', id: 'n1>n2' });
+    expect(focusHandler).toHaveBeenCalledTimes(3);
+
+    uiEvents.off('viewportFocus', focusHandler);
   });
 
   it('renders empty node mentions with a node fallback label', async () => {
@@ -309,9 +309,14 @@ describe('ChatPanel', () => {
 
     render(<ChatPanel />);
 
+    const focusHandler = vi.fn();
+    uiEvents.on('viewportFocus', focusHandler);
+
     await user.click(screen.getByRole('button', { name: 'node' }));
     expect(useUIStore.getState().selectedNodeIds).toEqual(['n3']);
-    expect(useUIStore.getState().viewportFocusTarget).toEqual({ kind: 'node', id: 'n3' });
+    expect(focusHandler).toHaveBeenCalledWith({ kind: 'node', id: 'n3' });
+
+    uiEvents.off('viewportFocus', focusHandler);
     expect(screen.queryByText('There is one [][node:n3].')).not.toBeInTheDocument();
   });
 

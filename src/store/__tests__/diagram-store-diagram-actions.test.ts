@@ -18,9 +18,6 @@ function resetStore() {
     selectedEdgeIds: [],
     selectedLoopId: null,
     contextMenu: null,
-    fitViewTrigger: 0,
-    viewportFocusTarget: null,
-    viewportFocusTrigger: 0,
   });
 }
 

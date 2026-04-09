@@ -6,7 +6,7 @@ import { useUIStore } from '../store/ui-store';
 import { useSettingsStore } from '../store/settings-store';
 import { getSourceHandleId, getTargetHandleId, type EdgeHandlePlacement } from '../core/graph/ports';
 import { getAutomaticEdgeSides, getOptimizedEdgePlacements, getStoredOrAutomaticEdgeSides } from '../store/diagram-helpers';
-import { getJunctionOptions } from '../core/framework-types';
+import { computeNodeHighlightState, computeEdgeLabel } from '../core/graph/rendering';
 import { getTheme } from '../styles/themes';
 import { ARROW_MARKER_SIZE } from '../constants/layout';
 import type { ConnectedSubgraph, NamedCausalLoop, NodeDegrees } from '../core/graph/derived';
@@ -67,45 +67,32 @@ export function useRFNodeEdgeBuilder(
 
   const searchLower = useMemo(() => searchQuery.toLowerCase(), [searchQuery]);
 
+  const highlightCtx = useMemo(() => ({
+    searchLower,
+    highlightSets,
+    selectedNodeIds,
+    selectedEdgeIds,
+    selectedLoopId: selectedLoop?.id ?? null,
+  }), [searchLower, highlightSets, selectedNodeIds, selectedEdgeIds, selectedLoop]);
+
   const rfNodes: Node[] = useMemo(
     () =>
-      nodes.map((n) => {
-        let highlightState: 'highlighted' | 'dimmed' | 'none' = 'none';
-
-        if (searchLower) {
-          const matches = n.data.label.toLowerCase().includes(searchLower);
-          highlightState = matches ? 'highlighted' : 'dimmed';
-        } else if (highlightSets) {
-          const inHighlightedSet = highlightSets.nodeIds.has(n.id);
-
-          if (selectedLoop || (selectedEdgeIds.length === 1 && selectedNodeIds.length === 0)) {
-            highlightState = inHighlightedSet ? 'highlighted' : 'dimmed';
-          } else if (selectedNodeIds.length === 1) {
-            if (n.id === selectedNodeIds[0]) {
-              highlightState = 'highlighted';
-            } else if (!inHighlightedSet) {
-              highlightState = 'dimmed';
-            }
-          }
-        }
-
-        return {
-          id: n.id,
-          type: n.type,
-          position: n.position,
-          draggable: !n.data.locked,
-          data: {
-            ...n.data,
-            degreesMap,
-            activeHandles: activeHandlesByNode.get(n.id),
-            highlightState,
-            loopKind: selectedLoop && highlightSets?.nodeIds.has(n.id)
-              ? selectedLoop.kind
-              : undefined,
-          },
-        };
-      }),
-    [nodes, degreesMap, activeHandlesByNode, highlightSets, selectedLoop, selectedEdgeIds, selectedNodeIds, searchLower],
+      nodes.map((n) => ({
+        id: n.id,
+        type: n.type,
+        position: n.position,
+        draggable: !n.data.locked,
+        data: {
+          ...n.data,
+          degreesMap,
+          activeHandles: activeHandlesByNode.get(n.id),
+          highlightState: computeNodeHighlightState(n.id, n.data.label, highlightCtx),
+          loopKind: selectedLoop && highlightSets?.nodeIds.has(n.id)
+            ? selectedLoop.kind
+            : undefined,
+        },
+      })),
+    [nodes, degreesMap, activeHandlesByNode, highlightSets, selectedLoop, highlightCtx],
   );
 
   const rfEdges: Edge[] = useMemo(
@@ -115,25 +102,15 @@ export function useRFNodeEdgeBuilder(
           ? getStoredOrAutomaticEdgeSides(e, nodes, settings)
           : optimizedPlacements.get(e.id) ?? getAutomaticEdgeSides(e.source, e.target, nodes, settings);
 
+        const targetNode = nodes.find((n) => n.id === e.target);
+        const edgeLabel = computeEdgeLabel(e, framework, targetNode?.data.junctionType);
+
         return {
           id: e.id,
           source: e.source,
           target: e.target,
-          label: [
-            framework.supportsEdgePolarity
-              ? (() => {
-                  const isMath = getJunctionOptions(framework).some((o) => o.id === 'add' || o.id === 'multiply');
-                  if (!isMath) return e.polarity === 'negative' ? '-' : '+';
-                  const targetNode = nodes.find((n) => n.id === e.target);
-                  const isMultiply = targetNode?.data.junctionType === 'multiply';
-                  if (e.polarity === 'negative') return isMultiply ? '÷' : '-';
-                  return isMultiply ? '×' : '+';
-                })()
-              : null,
-            framework.supportsEdgeDelay && e.delay ? 'D' : null,
-            e.edgeTag ? framework.edgeTags?.find((t) => t.id === e.edgeTag)?.shortName ?? null : null,
-          ].filter(Boolean).join(' '),
-          labelShowBg: framework.supportsEdgePolarity || (framework.supportsEdgeDelay && e.delay) || !!e.edgeTag,
+          label: edgeLabel.label,
+          labelShowBg: edgeLabel.showBg,
           labelBgPadding: [4, 2],
           labelBgBorderRadius: 0,
           labelBgStyle: {

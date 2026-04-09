@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Lock, Unlock } from 'lucide-react';
 import type { DiagramNode, JunctionType } from '../../core/types';
-import { getJunctionOptions } from '../../core/framework-types';
+import { getJunctionState } from '../../core/framework-types';
 import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
 import FormField from '../form/FormField';
@@ -228,22 +228,18 @@ export default function NodePanel({ node }: Props) {
 
       {/* Junction / Operator */}
       {(() => {
-        const options = getJunctionOptions(framework);
-        const isMath = options.some((o) => o.id === 'add' || o.id === 'multiply');
-        if (!framework.supportsJunctions || (isMath ? degrees.indegree < 1 : degrees.indegree < 2)) return null;
-        const current = options.find((o) => o.id === node.data.junctionType);
+        const js = getJunctionState(framework, degrees.indegree, node.data.junctionType);
+        if (!js) return null;
         return (
-          <FormField label={isMath ? 'Operator' : 'Junction Logic'}>
+          <FormField label={js.isMath ? 'Operator' : 'Junction Logic'}>
             <ButtonGroup
-              items={options.map((o) => ({ value: o.id as JunctionType, label: o.label }))}
+              items={js.options.map((o) => ({ value: o.id as JunctionType, label: o.label }))}
               selected={node.data.junctionType}
               onSelect={(v) => updateNodeJunction(node.id, v)}
             />
-            {current && (
-              <p className="field-label" style={{ marginTop: '-0.25rem' }}>
-                {current.description}
-              </p>
-            )}
+            <p className="field-label" style={{ marginTop: '-0.25rem' }}>
+              {js.current.description}
+            </p>
           </FormField>
         );
       })()}

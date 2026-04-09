@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import DiagramCanvas from '../DiagramCanvas';
 import { useDiagramStore } from '../../../store/diagram-store';
 import { useUIStore } from '../../../store/ui-store';
+import { uiEvents } from '../../../store/ui-events';
 import type { EdgeChange, NodeChange } from '@xyflow/react';
 
 const mocks = vi.hoisted(() => ({
@@ -283,11 +284,6 @@ function resetStores() {
     sidePanelOpen: true,
     chatPanelMode: 'shared',
     interactionMode: 'select',
-    fitViewTrigger: 0,
-    clearSelectionTrigger: 0,
-    selectionSyncTrigger: 0,
-    viewportFocusTarget: null,
-    viewportFocusTrigger: 0,
   });
 }
 
@@ -376,7 +372,7 @@ describe('DiagramCanvas', () => {
     expect(useDiagramStore.getState().diagram.edges).toHaveLength(1);
   });
 
-  it('clears RF selection when clearSelectionTrigger fires', async () => {
+  it('clears RF selection when requestClearSelection fires', async () => {
     mocks.rfNodes = [
       { id: 'n1', position: { x: 0, y: 0 }, data: {} } as never,
       { id: 'n2', position: { x: 0, y: 100 }, data: {} } as never,
@@ -505,6 +501,9 @@ describe('DiagramCanvas', () => {
   });
 
   it('does not recenter on a chat-focused node that is already visible', async () => {
+    const focusHandler = vi.fn();
+    uiEvents.on('viewportFocus', focusHandler);
+
     mocks.rfNodes = [
       { id: 'n1', position: { x: 120, y: 80 }, data: {} } as never,
     ];
@@ -522,10 +521,13 @@ describe('DiagramCanvas', () => {
 
     useUIStore.getState().focusGraphObject({ kind: 'node', id: 'n1' });
 
+    // Confirm the event was emitted, then verify setCenter was not called
     await waitFor(() => {
-      expect(useUIStore.getState().viewportFocusTrigger).toBe(1);
+      expect(focusHandler).toHaveBeenCalledTimes(1);
     });
     expect(mocks.setCenter).not.toHaveBeenCalled();
+
+    uiEvents.off('viewportFocus', focusHandler);
   });
 
   it('recenters on a chat-focused loop when part of the loop is off-screen', async () => {

@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useUIStore } from '../ui-store';
+import { uiEvents } from '../ui-events';
 
 function resetStore() {
   useUIStore.setState({
@@ -10,11 +11,6 @@ function resetStore() {
     sidePanelOpen: true,
     chatPanelMode: 'shared',
     interactionMode: 'select',
-    fitViewTrigger: 0,
-    clearSelectionTrigger: 0,
-    selectionSyncTrigger: 0,
-    viewportFocusTarget: null,
-    viewportFocusTrigger: 0,
   });
 }
 
@@ -169,42 +165,55 @@ describe('ui store', () => {
     });
   });
 
-  describe('fit view trigger', () => {
-    it('starts at 0', () => {
-      expect(useUIStore.getState().fitViewTrigger).toBe(0);
+  describe('fit view event', () => {
+    let fitViewHandler: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      fitViewHandler = vi.fn();
+      uiEvents.on('fitView', fitViewHandler);
     });
 
-    it('increments on requestFitView', () => {
-      useUIStore.getState().requestFitView();
-      expect(useUIStore.getState().fitViewTrigger).toBe(1);
+    afterEach(() => {
+      uiEvents.off('fitView', fitViewHandler);
     });
 
-    it('increments each time requestFitView is called', () => {
+    it('emits fitView on requestFitView', () => {
+      useUIStore.getState().requestFitView();
+      expect(fitViewHandler).toHaveBeenCalledTimes(1);
+    });
+
+    it('emits fitView each time requestFitView is called', () => {
       useUIStore.getState().requestFitView();
       useUIStore.getState().requestFitView();
       useUIStore.getState().requestFitView();
-      expect(useUIStore.getState().fitViewTrigger).toBe(3);
+      expect(fitViewHandler).toHaveBeenCalledTimes(3);
     });
   });
 
-  describe('viewport focus trigger', () => {
-    it('starts cleared', () => {
-      expect(useUIStore.getState().viewportFocusTarget).toBeNull();
-      expect(useUIStore.getState().viewportFocusTrigger).toBe(0);
+  describe('viewport focus event', () => {
+    let focusHandler: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      focusHandler = vi.fn();
+      uiEvents.on('viewportFocus', focusHandler);
     });
 
-    it('stores the target and increments on focusGraphObject', () => {
+    afterEach(() => {
+      uiEvents.off('viewportFocus', focusHandler);
+    });
+
+    it('emits viewportFocus with the target on focusGraphObject', () => {
       useUIStore.getState().focusGraphObject({ kind: 'node', id: 'n1' });
 
-      expect(useUIStore.getState().viewportFocusTarget).toEqual({ kind: 'node', id: 'n1' });
-      expect(useUIStore.getState().viewportFocusTrigger).toBe(1);
+      expect(focusHandler).toHaveBeenCalledTimes(1);
+      expect(focusHandler).toHaveBeenCalledWith({ kind: 'node', id: 'n1' });
     });
 
-    it('increments on repeated focusGraphObject calls', () => {
+    it('emits viewportFocus on repeated focusGraphObject calls', () => {
       useUIStore.getState().focusGraphObject({ kind: 'edge', id: 'e1' });
       useUIStore.getState().focusGraphObject({ kind: 'edge', id: 'e1' });
 
-      expect(useUIStore.getState().viewportFocusTrigger).toBe(2);
+      expect(focusHandler).toHaveBeenCalledTimes(2);
     });
   });
 });
