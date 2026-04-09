@@ -33,7 +33,6 @@ const defaultSettings: DiagramSettings = {
   showGrid: true,
   snapToGrid: false,
   edgeRoutingMode: 'fixed',
-  showActiveAttachments: true,
 };
 
 describe('diagram-helpers', () => {

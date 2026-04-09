@@ -28,7 +28,6 @@ export interface DiagramSettings {
   showGrid: boolean;
   snapToGrid: boolean;
   edgeRoutingMode: EdgeRoutingMode;
-  showActiveAttachments: boolean;
 }
 
 export type JunctionType = 'and' | 'or' | 'add' | 'multiply';
@@ -77,7 +76,6 @@ export function createEmptyDiagram(frameworkId: string, id?: string): Diagram {
       showGrid: true,
       snapToGrid: false,
       edgeRoutingMode: 'fixed',
-      showActiveAttachments: true,
     },
     nodes: [],
     edges: [],

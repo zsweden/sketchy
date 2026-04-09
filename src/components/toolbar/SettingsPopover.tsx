@@ -95,25 +95,6 @@ export default function SettingsPopover() {
           </button>
         </div>
       </div>
-
-      <div className="settings-divider" />
-
-      {/* Visualization */}
-      <div className="settings-section">
-        <p className="section-heading">Visualization</p>
-        <div className="control-row split-row">
-          <p className="section-label">Show Active Attachments</p>
-          <button
-            className="toggle-track"
-            data-active={diagramSettings.showActiveAttachments}
-            onClick={() => updateDiagramSettings({ showActiveAttachments: !diagramSettings.showActiveAttachments })}
-            aria-label="Toggle active attachments"
-          >
-            <div className="toggle-thumb" />
-          </button>
-        </div>
-      </div>
-
       <div className="settings-divider" />
 
       {/* Layout */}

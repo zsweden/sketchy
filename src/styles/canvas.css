@@ -138,24 +138,64 @@
 .react-flow__handle {
   width: 12px !important;
   height: 12px !important;
-  border: 2px solid var(--border-strong) !important;
-  background: var(--surface) !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
   opacity: 0;
-  scale: 0.75;
   pointer-events: none;
+  overflow: visible;
+  transition: opacity 0.14s ease;
+}
+
+/* Draw the visible anchor marker separately so it stays centered on
+   React Flow's actual edge anchor without changing the measured handle box. */
+.react-flow__handle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--border-strong);
+  background: var(--surface);
+  border-radius: 999px;
+  box-sizing: border-box;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.75);
+  transform-origin: center;
   transition:
     border-color 0.2s ease,
     background 0.2s ease,
     opacity 0.14s ease,
-    scale 0.14s ease;
+    transform 0.14s ease;
+}
+
+.react-flow__handle.react-flow__handle-top::after {
+  top: 0;
+}
+
+.react-flow__handle.react-flow__handle-right::after {
+  left: 100%;
+}
+
+.react-flow__handle.react-flow__handle-bottom::after {
+  top: 100%;
+}
+
+.react-flow__handle.react-flow__handle-left::after {
+  left: 0;
 }
 
 .entity-node.handles-visible .react-flow__handle,
-.entity-node:focus-within .react-flow__handle,
-.react-flow__handle.handle-active {
+.entity-node:focus-within .react-flow__handle {
   opacity: 1;
-  scale: 1;
   pointer-events: auto;
+}
+
+.entity-node.handles-visible .react-flow__handle::after,
+.entity-node:focus-within .react-flow__handle::after {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
 }
 
 .entity-node.connection-in-progress:not(.connection-source-node) .handle-source {
@@ -168,9 +208,16 @@
   pointer-events: none;
 }
 
-.react-flow__handle:hover {
+.react-flow__handle:hover::after {
   border-color: var(--accent) !important;
   background: var(--accent) !important;
+}
+
+.react-flow__handle.junction-handle .junction-symbol {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -50%);
 }
 
 /* Base edge styling */

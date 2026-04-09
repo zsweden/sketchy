@@ -86,7 +86,6 @@ function EntityNode({ id, data, selected }: NodeProps) {
 
   const commitNodeText = useDiagramStore((s) => s.commitNodeText);
   const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
-  const showActiveAttachments = useDiagramStore((s) => s.diagram.settings.showActiveAttachments);
   const framework = useFramework();
   const isAiModified = useChatStore((s) => s.aiModifiedNodeIds.has(id));
   const connection = useConnection();
@@ -98,8 +97,6 @@ function EntityNode({ id, data, selected }: NodeProps) {
     ? getDerivedIndicators(id, degreesMap, framework.derivedIndicators)
     : [];
   const degrees = degreesMap?.get(id) ?? { indegree: 0, outdegree: 0 };
-  const activeHandles = nodeData.activeHandles as Set<string> | undefined;
-
   useEffect(() => {
     // Keep the inline draft aligned when the store updates this node externally.
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -220,7 +217,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
           position={getPositionForBaseSide(getBaseHandleSide(side))}
           id={`target-${side}`}
           style={getVisibleHandleStyle(side)}
-          className={`handle-target handle-${side} ${showJunction ? 'junction-handle nodrag' : ''} ${showActiveAttachments && activeHandles?.has(`target-${side}`) ? 'handle-active' : ''}`}
+          className={`handle-target handle-${side} ${showJunction ? 'junction-handle nodrag' : ''}`}
           onClick={showJunction ? handleJunctionToggle : undefined}
           title={showJunction ? `Junction: ${junctionOptions.find((o) => o.id === nodeData.junctionType)?.label ?? nodeData.junctionType} — click to toggle` : undefined}
         >
@@ -297,7 +294,7 @@ function EntityNode({ id, data, selected }: NodeProps) {
           position={getPositionForBaseSide(getBaseHandleSide(side))}
           id={`source-${side}`}
           style={getVisibleHandleStyle(side)}
-          className={`handle-source handle-${side} ${showActiveAttachments && activeHandles?.has(`source-${side}`) ? 'handle-active' : ''}`}
+          className={`handle-source handle-${side}`}
         />
       ))}
     </div>

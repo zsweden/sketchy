@@ -22,6 +22,7 @@ import { useRFNodeEdgeBuilder } from '../../hooks/useRFNodeEdgeBuilder';
 import { useViewportFocus } from '../../hooks/useViewportFocus';
 import { useTouchGestures } from '../../hooks/useTouchGestures';
 import { useCanvasHandlers } from '../../hooks/useCanvasHandlers';
+import { mergeRFNodesWithLocalState } from './local-node-state';
 
 const nodeTypes = { entity: EntityNode };
 
@@ -47,20 +48,19 @@ export default function DiagramCanvas() {
   const [localNodes, setLocalNodes] = useState<Node[]>(rfNodes);
   const [localEdges, setLocalEdges] = useState<Edge[]>(rfEdges);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const latestRFNodeIdsRef = useRef<string[]>([]);
+  latestRFNodeIdsRef.current = rfNodes.map((node) => node.id);
+  const updateNodeInternals = useUpdateNodeInternals();
 
   // Viewport focus & fit-view (extracted hook)
   const { tryFitViewOnDimensions } = useViewportFocus(canvasRef);
 
-  // Sync store -> local when diagram DATA changes (preserving RF selection)
+  // Sync store -> local when diagram DATA changes while preserving React Flow's
+  // runtime measurement fields. Replacing nodes from builder output must not
+  // wipe measured dimensions, or RF will drop cached handle bounds.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLocalNodes((prev) => {
-      const selectionMap = new Map(prev.map((n) => [n.id, n.selected]));
-      return rfNodes.map((n) => ({
-        ...n,
-        selected: selectionMap.get(n.id) ?? false,
-      }));
-    });
+    setLocalNodes((prev) => mergeRFNodesWithLocalState(prev, rfNodes));
   }, [rfNodes]);
 
   useEffect(() => {
@@ -74,16 +74,14 @@ export default function DiagramCanvas() {
     });
   }, [rfEdges]);
 
-  // After bulk node repositioning (layout, load, framework switch), React Flow
-  // may render edges with stale handle position measurements. Force RF to
-  // remeasure handle bounds via its built-in API. Double rAF ensures React has
-  // committed new node positions and RF has laid them out before we remeasure.
-  const updateNodeInternals = useUpdateNodeInternals();
+  // Fallback after bulk node repositioning (layout, load, framework switch):
+  // force RF to remeasure handle bounds. Read ids from a live ref so events
+  // emitted before the next render commit don't lock in stale node ids.
   useUIEvent('edgeRefresh', () => {
     let frame2 = 0;
     const frame1 = requestAnimationFrame(() => {
       frame2 = requestAnimationFrame(() => {
-        const nodeIds = localNodes.map((n) => n.id);
+        const nodeIds = latestRFNodeIdsRef.current;
         if (nodeIds.length > 0) updateNodeInternals(nodeIds);
       });
     });

@@ -1,7 +1,8 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import DiagramCanvas from '../DiagramCanvas';
+import { mergeRFNodesWithLocalState } from '../local-node-state';
 import { useDiagramStore } from '../../../store/diagram-store';
 import { useUIStore } from '../../../store/ui-store';
 import { uiEvents } from '../../../store/ui-events';
@@ -20,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   getViewport: vi.fn(() => ({ x: 0, y: 0, zoom: 1 })),
   getInternalNode: vi.fn(() => undefined),
   setCenter: vi.fn(),
+  updateNodeInternals: vi.fn(),
   toast: Object.assign(vi.fn(), {
     error: vi.fn(),
     warning: vi.fn(),
@@ -253,7 +255,7 @@ vi.mock('@xyflow/react', () => ({
     setCenter: mocks.setCenter,
     viewportInitialized: true,
   }),
-  useUpdateNodeInternals: () => vi.fn(),
+  useUpdateNodeInternals: () => mocks.updateNodeInternals,
   applyNodeChanges: vi.fn((changes, nodes) => nodes),
   applyEdgeChanges: vi.fn((changes, edges) => edges),
 }));
@@ -286,6 +288,104 @@ function resetStores() {
     interactionMode: 'select',
   });
 }
+
+function makeNodeState(id: string, overrides: Record<string, unknown> = {}) {
+  return {
+    id,
+    position: { x: 0, y: 0 },
+    data: {},
+    ...overrides,
+  };
+}
+
+describe('mergeRFNodesWithLocalState', () => {
+  it('preserves measured size and selection for matching ids', () => {
+    const prevLocalNodes = [
+      makeNodeState('n1', {
+        position: { x: 0, y: 0 },
+        data: { label: 'Old' },
+        selected: true,
+        measured: { width: 160, height: 90 },
+        width: 160,
+        height: 90,
+      }),
+    ];
+    const rfNodes = [
+      makeNodeState('n1', {
+        position: { x: 200, y: 120 },
+        data: { label: 'New' },
+        draggable: false,
+      }),
+    ];
+
+    const result = mergeRFNodesWithLocalState(prevLocalNodes as never[], rfNodes as never[]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      id: 'n1',
+      position: { x: 200, y: 120 },
+      data: { label: 'New' },
+      draggable: false,
+      selected: true,
+      measured: { width: 160, height: 90 },
+      width: 160,
+      height: 90,
+    });
+  });
+
+  it('does not inherit measurements for new ids', () => {
+    const prevLocalNodes = [
+      makeNodeState('n1', {
+        measured: { width: 160, height: 90 },
+        width: 160,
+        height: 90,
+        selected: true,
+      }),
+    ];
+    const rfNodes = [
+      makeNodeState('n2', {
+        position: { x: 20, y: 40 },
+        data: { label: 'Fresh' },
+      }),
+    ];
+
+    const result = mergeRFNodesWithLocalState(prevLocalNodes as never[], rfNodes as never[]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      id: 'n2',
+      position: { x: 20, y: 40 },
+      data: { label: 'Fresh' },
+      selected: false,
+    });
+    expect(result[0].measured).toBeUndefined();
+    expect(result[0].width).toBeUndefined();
+    expect(result[0].height).toBeUndefined();
+  });
+
+  it('drops nodes that are no longer present', () => {
+    const prevLocalNodes = [
+      makeNodeState('n1', { selected: true }),
+      makeNodeState('n2', { selected: false }),
+    ];
+    const rfNodes = [
+      makeNodeState('n2', {
+        position: { x: 50, y: 75 },
+        data: { label: 'Kept' },
+      }),
+    ];
+
+    const result = mergeRFNodesWithLocalState(prevLocalNodes as never[], rfNodes as never[]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      id: 'n2',
+      position: { x: 50, y: 75 },
+      data: { label: 'Kept' },
+      selected: false,
+    });
+  });
+});
 
 describe('DiagramCanvas', () => {
   beforeEach(() => {
@@ -470,6 +570,52 @@ describe('DiagramCanvas', () => {
       expect(screen.getByTestId('selected-edges')).toHaveTextContent('e1');
     });
     expect(screen.getByTestId('selected-nodes')).toHaveTextContent('');
+  });
+
+  it('refreshes node internals with the latest node ids when edgeRefresh is queued before rerender', () => {
+    const rafQueue: Array<{ id: number; callback: FrameRequestCallback }> = [];
+    const cancelledIds = new Set<number>();
+    let nextFrameId = 1;
+
+    vi.stubGlobal('requestAnimationFrame', vi.fn((callback: FrameRequestCallback) => {
+      const id = nextFrameId++;
+      rafQueue.push({ id, callback });
+      return id;
+    }));
+    vi.stubGlobal('cancelAnimationFrame', vi.fn((id: number) => {
+      cancelledIds.add(id);
+    }));
+
+    try {
+      mocks.rfNodes = [
+        { id: 'old-node', position: { x: 0, y: 0 }, data: {} } as never,
+      ];
+
+      const { rerender } = render(<DiagramCanvas />);
+
+      act(() => {
+        uiEvents.emit('edgeRefresh');
+      });
+
+      mocks.rfNodes = [
+        { id: 'new-node', position: { x: 100, y: 100 }, data: {} } as never,
+      ];
+
+      rerender(<DiagramCanvas />);
+
+      act(() => {
+        while (rafQueue.length > 0) {
+          const next = rafQueue.shift()!;
+          if (!cancelledIds.has(next.id)) {
+            next.callback(0);
+          }
+        }
+      });
+
+      expect(mocks.updateNodeInternals).toHaveBeenCalledWith(['new-node']);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('recenters on a chat-focused node when it is off-screen and preserves zoom', async () => {

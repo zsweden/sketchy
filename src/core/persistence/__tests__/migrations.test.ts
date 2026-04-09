@@ -72,7 +72,6 @@ describe('migrations', () => {
           showGrid: true,
           snapToGrid: false,
           edgeRoutingMode: 'fixed',
-          showActiveAttachments: true,
         },
         nodes: [
           { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'Revenue', tags: [], junctionType: 'add' } },

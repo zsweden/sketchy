@@ -51,20 +51,6 @@ export function useRFNodeEdgeBuilder(
     style: { strokeWidth: 2 },
   }), [activeTheme]);
 
-  const activeHandlesByNode = useMemo(() => {
-    const map = new Map<string, Set<string>>();
-    for (const e of edges) {
-      const { sourceSide, targetSide } = edgeRoutingMode === 'fixed'
-        ? getStoredOrAutomaticEdgeSides(e, nodes, settings)
-        : optimizedPlacements.get(e.id) ?? getAutomaticEdgeSides(e.source, e.target, nodes, settings);
-      if (!map.has(e.source)) map.set(e.source, new Set());
-      map.get(e.source)!.add(`source-${sourceSide}`);
-      if (!map.has(e.target)) map.set(e.target, new Set());
-      map.get(e.target)!.add(`target-${targetSide}`);
-    }
-    return map;
-  }, [edges, nodes, settings, edgeRoutingMode, optimizedPlacements]);
-
   const searchLower = useMemo(() => searchQuery.toLowerCase(), [searchQuery]);
 
   const highlightCtx = useMemo(() => ({
@@ -85,14 +71,13 @@ export function useRFNodeEdgeBuilder(
         data: {
           ...n.data,
           degreesMap,
-          activeHandles: activeHandlesByNode.get(n.id),
           highlightState: computeNodeHighlightState(n.id, n.data.label, highlightCtx),
           loopKind: selectedLoop && highlightSets?.nodeIds.has(n.id)
             ? selectedLoop.kind
             : undefined,
         },
       })),
-    [nodes, degreesMap, activeHandlesByNode, highlightSets, selectedLoop, highlightCtx],
+    [nodes, degreesMap, highlightSets, selectedLoop, highlightCtx],
   );
 
   const rfEdges: Edge[] = useMemo(

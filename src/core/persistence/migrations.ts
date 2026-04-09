@@ -78,14 +78,9 @@ export const migrations: Record<
     };
   },
   4: (data) => {
-    const settings = (data.settings as Record<string, unknown> | undefined) ?? {};
     return {
       ...data,
       schemaVersion: 5,
-      settings: {
-        ...settings,
-        showActiveAttachments: settings.showActiveAttachments ?? true,
-      },
     };
   },
   5: (data) => {
