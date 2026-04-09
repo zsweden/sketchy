@@ -3,7 +3,7 @@ import type { Framework } from '../framework-types';
 import { getJunctionOptions } from '../framework-types';
 import type { ConnectedSubgraph } from './derived';
 
-export type HighlightState = 'highlighted' | 'dimmed' | 'none';
+type HighlightState = 'highlighted' | 'dimmed' | 'none';
 
 interface HighlightContext {
   searchLower: string;

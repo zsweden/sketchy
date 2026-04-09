@@ -43,7 +43,7 @@ export function getDefaultJunctionType(framework: Framework): string {
   return options.length > 0 ? options[0].id : 'or';
 }
 
-export interface JunctionState {
+interface JunctionState {
   visible: boolean;
   isMath: boolean;
   options: JunctionOption[];

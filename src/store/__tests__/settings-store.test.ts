@@ -346,8 +346,9 @@ describe('settings store', () => {
 
       mockStorage.setItem(STORAGE_KEY, JSON.stringify({ apiKey: 'sk-x', model: 'gpt-4o-mini' }));
 
+      // importFreshStore triggers module-level refreshModels() automatically
+      // because apiKey is truthy — no need to call it again (double-call races)
       const useSettingsStore = await importFreshStore();
-      useSettingsStore.getState().refreshModels();
 
       await vi.waitFor(() => {
         expect(useSettingsStore.getState().modelsLoading).toBe(false);
