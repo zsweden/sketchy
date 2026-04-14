@@ -32,9 +32,10 @@ const MAX_PENDING_ERRORS = 50;
 const NOISE_MESSAGES = [
   'ResizeObserver loop completed with undelivered notifications.',
   'ResizeObserver loop limit exceeded',
-  // React/Zustand errors caused by Vite HMR destroying provider context mid-render
+  // React/Zustand store teardown race (HMR + concurrent render edge cases)
   "Cannot read properties of null (reading 'getSnapshot')",
   'Rendered more hooks than during the previous render.',
+  "Cannot access 'updateNodeInternals' before initialization",
 ];
 
 const recentFingerprints = new Map<string, number>();
