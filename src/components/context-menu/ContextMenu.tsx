@@ -3,7 +3,8 @@ import { Plus } from 'lucide-react';
 import { useReactFlow } from '@xyflow/react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
-import { computeNodeDegrees } from '../../core/graph/derived';
+import { useGraphDerivations } from '../../hooks/useGraphDerivations';
+import { useFramework } from '../../store/diagram-store';
 import NodeContextMenu from './NodeContextMenu';
 import EdgeContextMenu from './EdgeContextMenu';
 
@@ -15,6 +16,8 @@ export default function ContextMenu() {
   const nodes = useDiagramStore((s) => s.diagram.nodes);
   const edges = useDiagramStore((s) => s.diagram.edges);
   const addNode = useDiagramStore((s) => s.addNode);
+  const framework = useFramework();
+  const { degreesMap } = useGraphDerivations(edges, framework.allowsCycles);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const suppressOutsideCloseRef = useRef(false);
@@ -59,8 +62,7 @@ export default function ContextMenu() {
     ? edges.find((e) => e.id === contextMenu.edgeId)
     : null;
 
-  const degreesMap = node ? computeNodeDegrees(edges) : null;
-  const degrees = node && degreesMap
+  const degrees = node
     ? degreesMap.get(node.id) ?? { indegree: 0, outdegree: 0 }
     : null;
 

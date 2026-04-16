@@ -1,285 +1,75 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Lock, Unlock } from 'lucide-react';
-import type { DiagramNode, JunctionType } from '../../core/types';
-import { getJunctionState } from '../../core/framework-types';
+import { useEffect, useMemo } from 'react';
+import type { DiagramNode } from '../../core/types';
 import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
-import FormField from '../form/FormField';
-import ButtonGroup from '../form/ButtonGroup';
-import LoopCard from '../form/LoopCard';
-import {
-  findCausalLoops,
-  labelCausalLoops,
-  computeNodeDegrees,
-  getDerivedIndicators,
-} from '../../core/graph/derived';
-import { useUIStore } from '../../store/ui-store';
+import { getDerivedIndicators } from '../../core/graph/derived';
+import { useGraphDerivations } from '../../hooks/useGraphDerivations';
+import NodeHeader from './node/NodeHeader';
+import NodeTextFields from './node/NodeTextFields';
+import NodeValueUnit from './node/NodeValueUnit';
+import NodeTagsEditor from './node/NodeTagsEditor';
+import NodeJunctionEditor from './node/NodeJunctionEditor';
+import NodeDerivedIndicators from './node/NodeDerivedIndicators';
+import NodeLoopMembership from './node/NodeLoopMembership';
 
 interface Props {
   node: DiagramNode;
 }
 
 export default function NodePanel({ node }: Props) {
-  const [text, setText] = useState(node.data.label);
-  const [notes, setNotes] = useState(node.data.notes ?? '');
-  const [valueStr, setValueStr] = useState(node.data.value != null ? String(node.data.value) : '');
-  const [unit, setUnit] = useState(node.data.unit ?? '');
-
   const framework = useFramework();
   const nodes = useDiagramStore((s) => s.diagram.nodes);
   const edges = useDiagramStore((s) => s.diagram.edges);
-  const commitNodeText = useDiagramStore((s) => s.commitNodeText);
-  const updateNodeTags = useDiagramStore((s) => s.updateNodeTags);
-  const updateNodeJunction = useDiagramStore((s) => s.updateNodeJunction);
-  const commitNodeNotes = useDiagramStore((s) => s.commitNodeNotes);
-  const commitNodeValue = useDiagramStore((s) => s.commitNodeValue);
-  const commitNodeUnit = useDiagramStore((s) => s.commitNodeUnit);
-  const toggleNodeLocked = useDiagramStore((s) => s.toggleNodeLocked);
   const removeAiModified = useChatStore((s) => s.removeAiModified);
-  const selectedLoopId = useUIStore((s) => s.selectedLoopId);
-  const setSelectedLoop = useUIStore((s) => s.setSelectedLoop);
 
   // Clear the AI-modified green dot when the user views this node
   useEffect(() => {
     removeAiModified(node.id);
   }, [node.id, removeAiModified]);
 
-  const degreesMap = computeNodeDegrees(edges);
+  const { degreesMap, labeledLoops } = useGraphDerivations(edges, framework.allowsCycles);
   const degrees = degreesMap.get(node.id) ?? { indegree: 0, outdegree: 0 };
   const derived = getDerivedIndicators(node.id, degreesMap, framework.derivedIndicators);
-  const loops = framework.allowsCycles ? labelCausalLoops(findCausalLoops(edges)) : [];
-  const nodeLoops = loops.filter((loop) => loop.nodeIds.includes(node.id));
-  const nodeLabels = new Map(nodes.map((entry) => [entry.id, entry.data.label || entry.id]));
-
-  useEffect(() => {
-    // Keep the text draft aligned when the selected node changes externally.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setText(node.data.label);
-  }, [node.data.label]);
-
-  useEffect(() => {
-    // Keep the notes draft aligned when the selected node changes externally.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setNotes(node.data.notes ?? '');
-  }, [node.data.notes]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setValueStr(node.data.value != null ? String(node.data.value) : '');
-  }, [node.data.value]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setUnit(node.data.unit ?? '');
-  }, [node.data.unit]);
-
-  const handleValueBlur = useCallback(() => {
-    const trimmed = valueStr.trim();
-    const parsed = trimmed === '' ? undefined : Number(trimmed);
-    const current = node.data.value;
-    if (parsed === current) return;
-    if (trimmed !== '' && isNaN(parsed!)) {
-      // Reset to stored value on invalid input
-      setValueStr(current != null ? String(current) : '');
-      return;
-    }
-    commitNodeValue(node.id, parsed);
-  }, [valueStr, node.data.value, node.id, commitNodeValue]);
-
-  const handleUnitBlur = useCallback(() => {
-    const current = node.data.unit ?? '';
-    if (unit !== current) {
-      commitNodeUnit(node.id, unit);
-    }
-  }, [unit, node.data.unit, node.id, commitNodeUnit]);
-
-  const handleNotesBlur = useCallback(() => {
-    const current = node.data.notes ?? '';
-    if (notes !== current) {
-      commitNodeNotes(node.id, notes);
-    }
-  }, [notes, node.data.notes, node.id, commitNodeNotes]);
-
-  const handleTextBlur = useCallback(() => {
-    if (text !== node.data.label) {
-      commitNodeText(node.id, text);
-    }
-  }, [text, node.data.label, node.id, commitNodeText]);
-
-  const handleTextKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        (e.target as HTMLTextAreaElement).blur();
-      }
-    },
-    [],
+  const nodeLoops = useMemo(
+    () => labeledLoops.filter((loop) => loop.nodeIds.includes(node.id)),
+    [labeledLoops, node.id],
   );
-
-  const toggleTag = useCallback(
-    (tagId: string) => {
-      const current = node.data.tags;
-      const next = current.includes(tagId)
-        ? current.filter((t) => t !== tagId)
-        : [...current, tagId];
-      updateNodeTags(node.id, next);
-    },
-    [node.id, node.data.tags, updateNodeTags],
+  const nodeLabels = useMemo(
+    () => new Map(nodes.map((entry) => [entry.id, entry.data.label || entry.id])),
+    [nodes],
   );
 
   return (
     <div className="section-stack">
-      <div className="control-row split-row">
-        <p className="section-heading">Node</p>
-        <button
-          className="btn btn-secondary btn-xs"
-          title={node.data.locked ? 'Unlock position' : 'Lock position'}
-          onClick={() => toggleNodeLocked([node.id], !node.data.locked)}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-        >
-          {node.data.locked ? <Lock size={12} /> : <Unlock size={12} />}
-          {node.data.locked ? 'Locked' : 'Unlocked'}
-        </button>
-      </div>
-      <FormField label="Name">
-        <textarea
-          className="input-text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onBlur={handleTextBlur}
-          onKeyDown={handleTextKeyDown}
-          rows={3}
-          placeholder="Enter text..."
-          aria-label="Node text"
-        />
-      </FormField>
-
-      <FormField label="Notes">
-        <textarea
-          className="input-text"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          onBlur={handleNotesBlur}
-          rows={4}
-          placeholder="Add notes..."
-          style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}
-          aria-label="Node notes"
-        />
-      </FormField>
-
-      {/* Value & Unit — only for frameworks that support quantitative metrics */}
+      <NodeHeader nodeId={node.id} locked={node.data.locked ?? false} />
+      <NodeTextFields
+        nodeId={node.id}
+        label={node.data.label}
+        notes={node.data.notes ?? ''}
+      />
       {framework.supportsNodeValues && (
-        <FormField label="Value">
-          <div className="control-row" style={{ gap: '0.5rem' }}>
-            <input
-              type="text"
-              inputMode="decimal"
-              className="input-text"
-              value={valueStr}
-              onChange={(e) => setValueStr(e.target.value)}
-              onBlur={handleValueBlur}
-              onKeyDown={handleTextKeyDown}
-              placeholder="e.g. 3000000"
-              aria-label="Node value"
-              style={{ flex: 2 }}
-            />
-            <input
-              type="text"
-              className="input-text"
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              onBlur={handleUnitBlur}
-              onKeyDown={handleTextKeyDown}
-              placeholder="e.g. $"
-              aria-label="Node unit"
-              style={{ flex: 1 }}
-            />
-          </div>
-        </FormField>
+        <NodeValueUnit
+          nodeId={node.id}
+          value={node.data.value}
+          unit={node.data.unit ?? ''}
+        />
       )}
-
-      {/* Tags */}
       {framework.nodeTags.length > 0 && (
-        <FormField label="Tags">
-          <div className="control-row">
-            {framework.nodeTags.map((tag) => (
-              <button
-                key={tag.id}
-                className="tag-chip"
-                data-active={node.data.tags.includes(tag.id)}
-                onClick={() => toggleTag(tag.id)}
-                style={
-                  node.data.tags.includes(tag.id)
-                    ? { color: tag.color, borderColor: tag.color }
-                    : undefined
-                }
-                title={tag.description}
-              >
-                <span
-                  className="tag-chip-dot"
-                  style={{ backgroundColor: tag.color }}
-                />
-                {tag.name}
-              </button>
-            ))}
-          </div>
-        </FormField>
+        <NodeTagsEditor
+          nodeId={node.id}
+          tags={node.data.tags}
+          availableTags={framework.nodeTags}
+        />
       )}
-
-      {/* Junction / Operator */}
-      {(() => {
-        const js = getJunctionState(framework, degrees.indegree, node.data.junctionType);
-        if (!js) return null;
-        return (
-          <FormField label={js.isMath ? 'Operator' : 'Junction Logic'}>
-            <ButtonGroup
-              items={js.options.map((o) => ({ value: o.id as JunctionType, label: o.label }))}
-              selected={node.data.junctionType}
-              onSelect={(v) => updateNodeJunction(node.id, v)}
-            />
-            <p className="field-label" style={{ marginTop: '-0.25rem' }}>
-              {js.current.description}
-            </p>
-          </FormField>
-        );
-      })()}
-
-      {/* Derived indicators */}
-      {derived.length > 0 && (
-        <FormField label="Derived Properties">
-          {derived.map((ind) => (
-            <div key={ind.id} className="control-row gap-md">
-              <span
-                className="badge"
-                style={{
-                  backgroundColor: `${ind.color}15`,
-                  color: ind.color,
-                }}
-              >
-                {ind.shortName}
-              </span>
-              <span className="field-label">{ind.description}</span>
-            </div>
-          ))}
-        </FormField>
-      )}
-
+      <NodeJunctionEditor
+        nodeId={node.id}
+        framework={framework}
+        indegree={degrees.indegree}
+        junctionType={node.data.junctionType}
+      />
+      <NodeDerivedIndicators indicators={derived} />
       {framework.allowsCycles && (
-        <FormField label="Loop Membership">
-          {nodeLoops.length === 0 ? (
-            <p className="field-label">This variable is not part of a detected feedback loop.</p>
-          ) : (
-            nodeLoops.map((loop) => (
-              <LoopCard
-                key={loop.id}
-                loop={loop}
-                selected={selectedLoopId === loop.id}
-                onSelect={() => setSelectedLoop(selectedLoopId === loop.id ? null : loop.id)}
-                nodeLabels={nodeLabels}
-              />
-            ))
-          )}
-        </FormField>
+        <NodeLoopMembership loops={nodeLoops} nodeLabels={nodeLabels} />
       )}
     </div>
   );
