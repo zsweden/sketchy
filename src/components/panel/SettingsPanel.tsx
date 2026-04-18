@@ -27,7 +27,7 @@ export default function SettingsPanel() {
   }, [loops, selectedLoopId, setSelectedLoop]);
 
   useEffect(() => {
-    // Keep the name draft aligned when the diagram name changes externally.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- keep the name draft aligned when the diagram name changes externally
     setNameDraft(diagramName);
   }, [diagramName]);
 

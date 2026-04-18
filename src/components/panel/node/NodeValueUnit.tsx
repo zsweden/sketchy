@@ -22,10 +22,12 @@ function NodeValueUnit({ nodeId, value, unit }: Props) {
   const [unitDraft, setUnitDraft] = useState(unit);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync draft to external prop changes (e.g. AI updates)
     setValueStr(value != null ? String(value) : '');
   }, [value]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync draft to external prop changes (e.g. AI updates)
     setUnitDraft(unit);
   }, [unit]);
 

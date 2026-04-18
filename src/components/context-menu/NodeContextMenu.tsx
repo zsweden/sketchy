@@ -74,6 +74,17 @@ export default function NodeContextMenu({
     closeContextMenu();
   }, [closeContextMenu, commitColors]);
 
+  const junctionToggle = degrees
+    ? (() => {
+        const js = getJunctionState(framework, degrees.indegree, node.data.junctionType);
+        if (!js) return null;
+        return {
+          nextId: js.next.id as JunctionType,
+          label: `${js.current.label} → ${js.next.label}`,
+        };
+      })()
+    : null;
+
   return (
     <>
       {framework.nodeTags.length > 0 && (
@@ -124,24 +135,20 @@ export default function NodeContextMenu({
         onPickerFocus={beginColorPickerInteraction}
         onPickerBlur={endColorPickerInteraction}
       />
-      {degrees && (() => {
-        const js = getJunctionState(framework, degrees.indegree, node.data.junctionType);
-        if (!js) return null;
-        return (
-          <>
-            <div className="context-menu-separator" />
-            <button
-              className="context-menu-item"
-              onClick={() => {
-                updateNodeJunction(node.id, js.next.id as JunctionType);
-                applyAndClose();
-              }}
-            >
-              {js.current.label} → {js.next.label}
-            </button>
-          </>
-        );
-      })()}
+      {junctionToggle && (
+        <>
+          <div className="context-menu-separator" />
+          <button
+            className="context-menu-item"
+            onClick={() => {
+              updateNodeJunction(node.id, junctionToggle.nextId);
+              applyAndClose();
+            }}
+          >
+            {junctionToggle.label}
+          </button>
+        </>
+      )}
 
       <div className="context-menu-separator" />
       <button

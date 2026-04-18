@@ -22,10 +22,12 @@ function NodeTextFields({ nodeId, label, notes }: Props) {
   const [notesDraft, setNotesDraft] = useState(notes);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync draft to external prop changes (e.g. AI updates)
     setText(label);
   }, [label]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync draft to external prop changes (e.g. AI updates)
     setNotesDraft(notes);
   }, [notes]);
 
