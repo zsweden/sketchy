@@ -147,7 +147,7 @@ export function findStronglyConnectedComponents(
     if (lowLinks.get(nodeId) !== indices.get(nodeId)) return;
 
     const component: string[] = [];
-    let current = '';
+    let current: string;
     do {
       current = stack.pop()!;
       onStack.delete(current);

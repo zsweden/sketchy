@@ -83,7 +83,7 @@ function createElkEngine(algorithm: ElkAlgorithm): LayoutEngine {
       laid = await elk.layout(graph);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      throw new Error(`Layout engine failed: ${msg}`);
+      throw new Error(`Layout engine failed: ${msg}`, { cause: err });
     }
 
     return (laid.children ?? [])
