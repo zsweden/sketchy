@@ -104,6 +104,70 @@ describe('migrations', () => {
       expect(result.edges[0]).toMatchObject({ confidence: 'high' });
     });
 
+    it('fills missing settings with defaults when schemaVersion is current', () => {
+      const data = {
+        schemaVersion: SCHEMA_VERSION,
+        id: 'test',
+        name: 'Test',
+        frameworkId: 'crt',
+        nodes: [],
+        edges: [],
+      };
+
+      const result = migrate(data);
+      expect(result.settings).toEqual({
+        layoutDirection: 'BT',
+        showGrid: true,
+        snapToGrid: false,
+        edgeRoutingMode: 'dynamic',
+      });
+    });
+
+    it('fills partial settings with defaults for missing fields', () => {
+      const data = {
+        schemaVersion: SCHEMA_VERSION,
+        id: 'test',
+        name: 'Test',
+        frameworkId: 'crt',
+        settings: { layoutDirection: 'LR' },
+        nodes: [],
+        edges: [],
+      };
+
+      const result = migrate(data);
+      expect(result.settings).toEqual({
+        layoutDirection: 'LR',
+        showGrid: true,
+        snapToGrid: false,
+        edgeRoutingMode: 'dynamic',
+      });
+    });
+
+    it('discards invalid settings values and substitutes defaults', () => {
+      const data = {
+        schemaVersion: SCHEMA_VERSION,
+        id: 'test',
+        name: 'Test',
+        frameworkId: 'crt',
+        settings: {
+          layoutDirection: 'diagonal',
+          showGrid: 'yes',
+          snapToGrid: 1,
+          edgeRoutingMode: 'auto',
+        },
+        nodes: [],
+        edges: [],
+      };
+
+      const result = migrate(data);
+      expect(result.settings).toEqual({
+        layoutDirection: 'BT',
+        showGrid: true,
+        snapToGrid: false,
+        edgeRoutingMode: 'dynamic',
+      });
+    });
+
     it('normalizes legacy corner handles to explicit directional handles', () => {
       const v3Data = {
         schemaVersion: 3,
