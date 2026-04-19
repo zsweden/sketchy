@@ -18,6 +18,8 @@ import { getFramework } from '../frameworks/registry';
 const crtFramework = getFramework('crt')!;
 import { migrate, validateDiagramShape } from '../core/persistence/schema';
 import { buildChain, buildCyclicGraph, buildDenseGraph, buildTree } from '../test/layout-benchmark-fixtures';
+import { getOptimizedEdgePlacements } from '../store/diagram-helpers';
+import { DEFAULT_EDGE_ROUTING_CONFIG, DEFAULT_EDGE_ROUTING_POLICY } from '../core/edge-routing';
 
 const describePerf = process.env.RUN_PERF_TESTS === '1' ? describe : describe.skip;
 
@@ -513,6 +515,211 @@ describePerf('perf: full workflow', () => {
 
     expect(total).toBeLessThan(1000);
   });
+});
+
+// ---------------------------------------------------------------------------
+// 11. Zustand selector referential stability
+// ---------------------------------------------------------------------------
+// Baseline for opportunity #1: every store mutation returns a new `diagram`
+// object — and therefore new `nodes` / `edges` array refs — even if the
+// mutation didn't touch that slice. Downstream useMemo() dependencies that key
+// off these refs re-run on every unrelated mutation.
+
+describePerf('perf: zustand selector stability', () => {
+  beforeEach(() => {
+    useDiagramStore.getState().setFramework('crt');
+    useDiagramStore.getState().newDiagram();
+  });
+
+  it('records how many unrelated mutations invalidate the nodes ref', () => {
+    // Seed with some nodes so we have something to watch.
+    const ids: string[] = [];
+    for (let i = 0; i < 20; i++) {
+      ids.push(useDiagramStore.getState().addNode({ x: i * 10, y: 0 }));
+    }
+
+    const startingNodesRef = useDiagramStore.getState().diagram.nodes;
+    const startingEdgesRef = useDiagramStore.getState().diagram.edges;
+
+    // A batch of mutations that DO NOT logically change nodes or edges.
+    // Ideally, the nodes/edges refs remain === after each.
+    useDiagramStore.getState().setDiagramName('renamed');
+    const afterRenameNodes = useDiagramStore.getState().diagram.nodes;
+    const afterRenameEdges = useDiagramStore.getState().diagram.edges;
+
+    useDiagramStore.getState().updateSettings({ layoutDirection: 'LR' });
+    const afterSettingsNodes = useDiagramStore.getState().diagram.nodes;
+    const afterSettingsEdges = useDiagramStore.getState().diagram.edges;
+
+    // Count how many of these "unrelated" mutations invalidated each ref.
+    const nodeRefInvalidations = [afterRenameNodes, afterSettingsNodes].filter(
+      (ref) => ref !== startingNodesRef,
+    ).length;
+    const edgeRefInvalidations = [afterRenameEdges, afterSettingsEdges].filter(
+      (ref) => ref !== startingEdgesRef,
+    ).length;
+
+    recordBenchResult('selector-node-ref-invalidations-per-2-unrelated-mutations', nodeRefInvalidations);
+    recordBenchResult('selector-edge-ref-invalidations-per-2-unrelated-mutations', edgeRefInvalidations);
+
+    // Baseline: document current behaviour (expected 2/2 today).
+    expect(nodeRefInvalidations).toBeLessThanOrEqual(2);
+    expect(edgeRefInvalidations).toBeLessThanOrEqual(2);
+  });
+
+  it('times 500 position-only drag updates (new array allocation per frame)', () => {
+    const nodeIds: string[] = [];
+    for (let i = 0; i < 100; i++) {
+      nodeIds.push(useDiagramStore.getState().addNode({ x: i * 10, y: 0 }));
+    }
+
+    const t = bench('drag-500-frames-100-nodes', () => {
+      for (let frame = 0; frame < 500; frame++) {
+        useDiagramStore.getState().dragNodes([
+          { id: nodeIds[0], position: { x: frame, y: frame } },
+        ]);
+      }
+    });
+    // 500 frames ≈ 8 seconds of dragging at 60fps. Hard ceiling is generous;
+    // the real signal is the baseline number recorded here.
+    expect(t).toBeLessThan(500);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 12. Autosave subscription frequency
+// ---------------------------------------------------------------------------
+// Baseline for opportunity #2: useAutoSave subscribes to the whole diagram
+// store. Any setState — even ones that don't change the diagram payload —
+// triggers a debounce reset and eventually a full JSON.stringify.
+
+describePerf('perf: autosave subscription frequency', () => {
+  beforeEach(() => {
+    useDiagramStore.getState().setFramework('crt');
+    useDiagramStore.getState().newDiagram();
+  });
+
+  it('counts subscribe fires across 50 mixed mutations', () => {
+    let fires = 0;
+    const unsubscribe = useDiagramStore.subscribe(() => {
+      fires += 1;
+    });
+
+    try {
+      for (let i = 0; i < 25; i++) {
+        useDiagramStore.getState().addNode({ x: i, y: 0 });
+      }
+      // 25 "unrelated" toggles that don't change nodes/edges.
+      for (let i = 0; i < 25; i++) {
+        useDiagramStore.getState().setDiagramName(`name-${i}`);
+      }
+    } finally {
+      unsubscribe();
+    }
+
+    recordBenchResult('autosave-subscribe-fires-per-50-mixed-mutations', fires);
+    // Baseline: today every setState fires the subscriber (expect 50).
+    expect(fires).toBeLessThanOrEqual(50);
+  });
+
+  it('times 100 serialize+debounce cycles on a 200-node diagram', () => {
+    const { nodes, edges } = buildChain(200);
+    const diagram = makeDiagram(nodes, edges);
+
+    const t = bench('autosave-serialize-100x-200-nodes', () => {
+      for (let i = 0; i < 100; i++) {
+        // Simulate the flush path: capture + stringify.
+        const payload = diagram;
+        JSON.stringify(payload);
+      }
+    });
+    expect(t).toBeLessThan(500);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 13. Edge routing optimization
+// ---------------------------------------------------------------------------
+// Baseline for opportunity #4: computeEdgeRoutingPlacements runs inside a
+// useMemo whose deps include nodes, edges, and settings — it recomputes on
+// every store update that touches any of those, including drags.
+
+describePerf('perf: edge routing optimization', () => {
+  it('cost of 20 synchronous getOptimizedEdgePlacements calls on 50-chain (pre-debounce baseline)', () => {
+    // Reference point: what dragging a 50-edge chain would cost WITHOUT the
+    // debounced hook — a full recompute on every drag frame. The debounced
+    // hook collapses N frames of drag into a single compute after 120ms of
+    // stability, so this number × (1 - 1/N) is the rough per-drag saving.
+    const { nodes, edges } = buildChain(51);
+    const diagram = makeDiagram(nodes, edges);
+    const t = bench('drag-20-frames-50-chain-uncached', () => {
+      for (let i = 0; i < 20; i++) {
+        const shifted = nodes.map((n) => ({
+          ...n,
+          position: { x: n.position.x + i, y: n.position.y },
+        }));
+        getOptimizedEdgePlacements(
+          edges,
+          shifted,
+          diagram.settings,
+          DEFAULT_EDGE_ROUTING_POLICY,
+          DEFAULT_EDGE_ROUTING_CONFIG,
+        );
+      }
+    });
+    // Baseline ~4.4s (20 × ~220ms). Generous ceiling — this is a reference
+    // point, not a ratchet.
+    expect(t).toBeLessThan(15_000);
+  }, 30_000);
+
+  it('optimizes placements for 50-edge chain', () => {
+    const { nodes, edges } = buildChain(51);
+    const diagram = makeDiagram(nodes, edges);
+    const t = bench('edge-routing-50-chain', () => {
+      getOptimizedEdgePlacements(
+        edges,
+        nodes,
+        diagram.settings,
+        DEFAULT_EDGE_ROUTING_POLICY,
+        DEFAULT_EDGE_ROUTING_CONFIG,
+      );
+    });
+    // Baseline ~220ms per call today — generous ceiling catches 2× regressions.
+    expect(t).toBeLessThan(500);
+  }, 10_000);
+
+  it('optimizes placements for 127-node binary tree', () => {
+    const { nodes, edges } = buildTree(7, 2);
+    const diagram = makeDiagram(nodes, edges);
+    const t = bench('edge-routing-127-tree', () => {
+      getOptimizedEdgePlacements(
+        edges,
+        nodes,
+        diagram.settings,
+        DEFAULT_EDGE_ROUTING_POLICY,
+        DEFAULT_EDGE_ROUTING_CONFIG,
+      );
+    });
+    // Baseline ~1500ms per call today.
+    expect(t).toBeLessThan(3500);
+  }, 15_000);
+
+  it('optimizes placements for 100-node dense graph', () => {
+    const { nodes, edges } = buildDenseGraph(100, 3);
+    const diagram = makeDiagram(nodes, edges);
+    const t = bench('edge-routing-100-dense', () => {
+      getOptimizedEdgePlacements(
+        edges,
+        nodes,
+        diagram.settings,
+        DEFAULT_EDGE_ROUTING_POLICY,
+        DEFAULT_EDGE_ROUTING_CONFIG,
+      );
+    });
+    // Baseline ~4800ms per call today — this is the clearest signal that
+    // edge routing per-render is a real problem.
+    expect(t).toBeLessThan(12_000);
+  }, 30_000);
 });
 
 // ---------------------------------------------------------------------------

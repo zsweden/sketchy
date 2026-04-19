@@ -4,12 +4,13 @@ import { DEFAULT_EDGE_ROUTING_CONFIG, DEFAULT_EDGE_ROUTING_POLICY } from '../cor
 import { useDiagramStore, useFramework } from '../store/diagram-store';
 import { useUIStore } from '../store/ui-store';
 import { useSettingsStore } from '../store/settings-store';
-import { getSourceHandleId, getTargetHandleId, type EdgeHandlePlacement } from '../core/graph/ports';
-import { getAutomaticEdgeSides, getOptimizedEdgePlacements, getStoredOrAutomaticEdgeSides } from '../store/diagram-helpers';
+import { getSourceHandleId, getTargetHandleId } from '../core/graph/ports';
+import { getAutomaticEdgeSides, getStoredOrAutomaticEdgeSides } from '../store/diagram-helpers';
 import { computeNodeHighlightState, computeEdgeLabel } from '../core/graph/rendering';
 import { getTheme } from '../styles/themes';
 import { ARROW_MARKER_SIZE } from '../constants/layout';
 import type { ConnectedSubgraph, NamedCausalLoop, NodeDegrees } from '../core/graph/derived';
+import { useDebouncedEdgePlacements } from './useDebouncedEdgePlacements';
 
 interface BuilderResult {
   rfNodes: Node[];
@@ -38,12 +39,14 @@ export function useRFNodeEdgeBuilder(
       ? { ...DEFAULT_EDGE_ROUTING_CONFIG, flowAlignedBonus: 0 }
       : DEFAULT_EDGE_ROUTING_CONFIG
   ), [framework.allowsCycles]);
-  const optimizedPlacements = useMemo(() => {
-    if (edgeRoutingMode !== 'dynamic') {
-      return new Map<string, EdgeHandlePlacement>();
-    }
-    return getOptimizedEdgePlacements(edges, nodes, settings, DEFAULT_EDGE_ROUTING_POLICY, edgeRoutingConfig);
-  }, [edges, nodes, settings, edgeRoutingMode, edgeRoutingConfig]);
+  const optimizedPlacements = useDebouncedEdgePlacements(
+    edges,
+    nodes,
+    settings,
+    DEFAULT_EDGE_ROUTING_POLICY,
+    edgeRoutingConfig,
+    edgeRoutingMode === 'dynamic',
+  );
 
   const defaultEdgeOptions = useMemo(() => ({
     type: 'smoothstep',
