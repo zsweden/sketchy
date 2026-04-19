@@ -135,6 +135,69 @@ describe('useDebouncedEdgePlacements', () => {
     expect(spy.mock.calls.length).toBe(callsAfterInit + 1);
   });
 
+  it('recomputes synchronously when edges are added (topology change)', () => {
+    const { nodes, edges } = buildChain(10);
+    const settings = createEmptyDiagram('crt').settings;
+
+    const spy = vi.spyOn(diagramHelpers, 'getOptimizedEdgePlacements');
+
+    const { result, rerender } = renderHook(
+      ({ e }) =>
+        useDebouncedEdgePlacements(
+          e,
+          nodes,
+          settings,
+          DEFAULT_EDGE_ROUTING_POLICY,
+          DEFAULT_EDGE_ROUTING_CONFIG,
+          true,
+        ),
+      { initialProps: { e: edges } },
+    );
+
+    const callsAfterInit = spy.mock.calls.length;
+    const initialPlacements = result.current;
+
+    const newEdge = { id: 'new', source: '0', target: '2' };
+    const nextEdges = [...edges, newEdge];
+
+    act(() => {
+      rerender({ e: nextEdges });
+    });
+
+    // Topology changed → must recompute synchronously, no timer advance needed
+    expect(spy.mock.calls.length).toBe(callsAfterInit + 1);
+    expect(result.current).not.toBe(initialPlacements);
+    expect(result.current.size).toBe(nextEdges.length);
+  });
+
+  it('recomputes synchronously when settings change', () => {
+    const { nodes, edges } = buildChain(10);
+    const settings = createEmptyDiagram('crt').settings;
+
+    const spy = vi.spyOn(diagramHelpers, 'getOptimizedEdgePlacements');
+
+    const { rerender } = renderHook(
+      ({ s }) =>
+        useDebouncedEdgePlacements(
+          edges,
+          nodes,
+          s,
+          DEFAULT_EDGE_ROUTING_POLICY,
+          DEFAULT_EDGE_ROUTING_CONFIG,
+          true,
+        ),
+      { initialProps: { s: settings } },
+    );
+
+    const callsAfterInit = spy.mock.calls.length;
+
+    act(() => {
+      rerender({ s: { ...settings, layoutDirection: 'LR' } });
+    });
+
+    expect(spy.mock.calls.length).toBe(callsAfterInit + 1);
+  });
+
   it('resets debounce timer on each rapid input change', () => {
     const { nodes, edges } = buildChain(10);
     const settings = createEmptyDiagram('crt').settings;
