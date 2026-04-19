@@ -100,6 +100,19 @@ describe('error logging', () => {
     );
   });
 
+  it('logs HMR hooks-queue noise with severity "noise"', async () => {
+    await reportError(
+      new Error(
+        'Should have a queue. You are likely calling Hooks conditionally, which is not allowed. (https://react.dev/link/invalid-hook-call)',
+      ),
+      { source: 'react.error_boundary', fatal: true },
+    );
+
+    expect(logFirestoreError).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'noise' }),
+    );
+  });
+
   it('dedupes repeated errors in the same window', async () => {
     await reportError(new Error('Boom'), {
       source: 'window.error',

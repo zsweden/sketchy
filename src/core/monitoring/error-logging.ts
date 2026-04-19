@@ -35,6 +35,7 @@ const NOISE_MESSAGES = [
   // React/Zustand store teardown race (HMR + concurrent render edge cases)
   "Cannot read properties of null (reading 'getSnapshot')",
   'Rendered more hooks than during the previous render.',
+  'Should have a queue. You are likely calling Hooks conditionally',
   "Cannot access 'updateNodeInternals' before initialization",
 ];
 
