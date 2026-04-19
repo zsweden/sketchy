@@ -1,4 +1,5 @@
-import type { EdgeRoutingInput, EdgeRoutingPlacement } from './shared';
+import RBush from 'rbush';
+import type { EdgeRoutingEdge, EdgeRoutingInput, EdgeRoutingNodeBox, EdgeRoutingPlacement } from './shared';
 import { isCornerHandleSide, getBaseHandleSide, getPrimaryFlowSides } from '../graph/ports';
 import {
   buildEdgeRoutingGeometry,
@@ -9,6 +10,7 @@ import {
   shouldRewardSharedEndpointCrossingAlignment,
   shouldCountCrossingBetweenEdges,
 } from './shared';
+import type { Point } from './geometry';
 
 const EDGE_LENGTH_PENALTY = 1;
 const EDGE_SAME_TYPE_BUFFER_ALIGNMENT_REWARD = 400;
@@ -28,6 +30,39 @@ interface GeometrySnapshot {
   points: ReturnType<typeof buildEdgeRoutingGeometry>['points'];
 }
 
+interface NodeTreeItem {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+  nodeId: string;
+  box: EdgeRoutingNodeBox;
+}
+
+interface EdgeTreeItem {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+  edgeId: string;
+  edge: EdgeRoutingEdge;
+  geometry: GeometrySnapshot;
+}
+
+function getPolylineBbox(points: Point[]): { minX: number; minY: number; maxX: number; maxY: number } {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const p of points) {
+    if (p.x < minX) minX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y > maxY) maxY = p.y;
+  }
+  return { minX, minY, maxX, maxY };
+}
+
 export function computeLegacyPlusEdgeRoutingPlacements({
   edges,
   nodeBoxes,
@@ -39,7 +74,6 @@ export function computeLegacyPlusEdgeRoutingPlacements({
   const config = configOverride ?? DEFAULT_EDGE_ROUTING_CONFIG;
   const effectivePolicy = configOverride?.crossingPolicy ?? policy;
   const placements = new Map<string, EdgeRoutingPlacement>();
-  const nodeBoxEntries = [...nodeBoxes.entries()];
   const flowSides = getPrimaryFlowSides(layoutDirection);
 
   const getGeometry = (
@@ -50,6 +84,22 @@ export function computeLegacyPlusEdgeRoutingPlacements({
     return { points: geometry.points };
   };
 
+  // Build a static R-tree over node boxes once. This replaces the O(N) scan
+  // previously done per candidate with an O(log N + k) lookup.
+  const nodeTree = new RBush<NodeTreeItem>();
+  const nodeItems: NodeTreeItem[] = [];
+  for (const [nodeId, box] of nodeBoxes) {
+    nodeItems.push({
+      minX: box.left,
+      minY: box.top,
+      maxX: box.right,
+      maxY: box.bottom,
+      nodeId,
+      box,
+    });
+  }
+  nodeTree.load(nodeItems);
+
   for (const edge of edges) {
     placements.set(edge.id, createPlacementCandidates(edge, nodeBoxes, layoutDirection)[0]);
   }
@@ -57,12 +107,24 @@ export function computeLegacyPlusEdgeRoutingPlacements({
   const passes = 2;
   for (let pass = 0; pass < passes; pass++) {
     const handleUsage = createHandleUsageMap(edges, placements);
-    const selectedGeometryCache = new Map(
-      edges.flatMap((edge) => {
-        const placement = placements.get(edge.id);
-        return placement ? [[edge.id, getGeometry(edge, placement)] as const] : [];
-      }),
-    );
+
+    // Build a dynamic R-tree over edge geometries for this pass. We'll mutate
+    // it in place as placements update: `remove` + `insert` after each edge is
+    // scored. This keeps neighbour queries accurate within the pass.
+    const edgeTree = new RBush<EdgeTreeItem>();
+    const edgeItemById = new Map<string, EdgeTreeItem>();
+    const initialEdgeItems: EdgeTreeItem[] = [];
+    for (const edge of edges) {
+      const placement = placements.get(edge.id);
+      if (!placement) continue;
+      const geometry = getGeometry(edge, placement);
+      if (geometry.points.length === 0) continue;
+      const bbox = getPolylineBbox(geometry.points);
+      const item: EdgeTreeItem = { ...bbox, edgeId: edge.id, edge, geometry };
+      initialEdgeItems.push(item);
+      edgeItemById.set(edge.id, item);
+    }
+    edgeTree.load(initialEdgeItems);
 
     for (const edge of edges) {
       const currentPlacement = placements.get(edge.id)
@@ -80,19 +142,27 @@ export function computeLegacyPlusEdgeRoutingPlacements({
 
         const length = getPolylineLength(geometry.points);
         let score = length * EDGE_LENGTH_PENALTY;
+        const candidateBbox = getPolylineBbox(geometry.points);
 
-        for (const [nodeId, box] of nodeBoxEntries) {
-          if (nodeId === edge.source || nodeId === edge.target) continue;
-          if (polylineIntersectsBox(geometry.points, box)) {
+        // Node overlap: query the node R-tree for nodes whose bbox overlaps
+        // the candidate's polyline bbox, then run the exact polyline–box
+        // intersection only on that subset.
+        const overlappingNodes = nodeTree.search(candidateBbox);
+        for (const nodeItem of overlappingNodes) {
+          if (nodeItem.nodeId === edge.source || nodeItem.nodeId === edge.target) continue;
+          if (polylineIntersectsBox(geometry.points, nodeItem.box)) {
             score += config.edgeNodeOverlapPenalty;
           }
         }
 
-        for (const other of edges) {
-          if (other.id === edge.id) continue;
-          const otherPlacement = placements.get(other.id);
-          if (!otherPlacement) continue;
-          const otherGeometry = selectedGeometryCache.get(other.id) ?? getGeometry(other, otherPlacement);
+        // Edge crossing / alignment: query the edge R-tree for edges whose
+        // geometry bbox overlaps the candidate's bbox. The exact crossing
+        // check runs only on that subset.
+        const overlappingEdges = edgeTree.search(candidateBbox);
+        for (const otherItem of overlappingEdges) {
+          if (otherItem.edgeId === edge.id) continue;
+          const other = otherItem.edge;
+          const otherGeometry = otherItem.geometry;
           if (otherGeometry.points.length === 0) continue;
           if (shouldCountCrossingBetweenEdges(
             edge,
@@ -145,11 +215,29 @@ export function computeLegacyPlusEdgeRoutingPlacements({
 
       placements.set(edge.id, bestPlacement);
       addPlacementUsage(handleUsage, edge, bestPlacement);
-      selectedGeometryCache.set(edge.id, getGeometry(edge, bestPlacement));
+
+      // Keep the edge tree in sync: remove the stale geometry for this edge
+      // and insert the freshly-chosen one so subsequent edges in this pass
+      // score against the updated placement.
+      const oldItem = edgeItemById.get(edge.id);
+      if (oldItem) edgeTree.remove(oldItem, edgeItemEquals);
+      const newGeometry = getGeometry(edge, bestPlacement);
+      if (newGeometry.points.length === 0) {
+        edgeItemById.delete(edge.id);
+      } else {
+        const newBbox = getPolylineBbox(newGeometry.points);
+        const newItem: EdgeTreeItem = { ...newBbox, edgeId: edge.id, edge, geometry: newGeometry };
+        edgeTree.insert(newItem);
+        edgeItemById.set(edge.id, newItem);
+      }
     }
   }
 
   return placements;
+}
+
+function edgeItemEquals(a: EdgeTreeItem, b: EdgeTreeItem): boolean {
+  return a.edgeId === b.edgeId;
 }
 
 function createHandleUsageMap(

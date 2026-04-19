@@ -1,0 +1,2801 @@
+[
+  {
+    "name": "chain-10",
+    "placements": {
+      "0->1": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "1->2": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "2->3": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "3->4": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "4->5": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "5->6": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "6->7": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "7->8": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "8->9": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      }
+    }
+  },
+  {
+    "name": "chain-30",
+    "placements": {
+      "0->1": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "1->2": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "2->3": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "3->4": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "4->5": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "5->6": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "6->7": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "7->8": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "8->9": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "9->10": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "10->11": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "11->12": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "12->13": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "13->14": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "14->15": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "15->16": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "16->17": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "17->18": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "18->19": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "19->20": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "20->21": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "21->22": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "22->23": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "23->24": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "24->25": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "25->26": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "26->27": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "27->28": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "28->29": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      }
+    }
+  },
+  {
+    "name": "tree-depth-5",
+    "placements": {
+      "0->1": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "1->2": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "2->3": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "3->4": {
+        "sourceSide": "bottomleft-bottom",
+        "targetSide": "topleft-top"
+      },
+      "3->5": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "2->6": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "6->7": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "6->8": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "1->9": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "9->10": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "10->11": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "10->12": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "9->13": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "13->14": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "13->15": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "0->16": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "16->17": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "17->18": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "18->19": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "18->20": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "17->21": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "21->22": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "21->23": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "16->24": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "24->25": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "25->26": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "25->27": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "24->28": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "28->29": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "28->30": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      }
+    }
+  },
+  {
+    "name": "tree-depth-6",
+    "placements": {
+      "0->1": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "1->2": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "2->3": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "3->4": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "4->5": {
+        "sourceSide": "bottomleft-bottom",
+        "targetSide": "topleft-top"
+      },
+      "4->6": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "4->7": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "3->8": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "8->9": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "8->10": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "8->11": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "3->12": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "12->13": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "12->14": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "12->15": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "2->16": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "16->17": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "17->18": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "17->19": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "17->20": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "16->21": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "21->22": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "21->23": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "21->24": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "16->25": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "25->26": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "25->27": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "25->28": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "2->29": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "29->30": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "30->31": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "30->32": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "30->33": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "29->34": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "34->35": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "34->36": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "34->37": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "29->38": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "38->39": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "38->40": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "38->41": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "1->42": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "42->43": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "43->44": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "44->45": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "44->46": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "44->47": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "43->48": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "48->49": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "48->50": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "48->51": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "43->52": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "52->53": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "52->54": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "52->55": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "42->56": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "56->57": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "57->58": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "57->59": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "57->60": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "56->61": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "61->62": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "61->63": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "61->64": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "56->65": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "65->66": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "65->67": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "65->68": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "42->69": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "69->70": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "70->71": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "70->72": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "70->73": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "69->74": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "74->75": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "74->76": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "74->77": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "69->78": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "78->79": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "78->80": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "78->81": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "1->82": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "82->83": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "83->84": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "84->85": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "84->86": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "84->87": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "83->88": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "88->89": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "88->90": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "88->91": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "83->92": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "92->93": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "92->94": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "92->95": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "82->96": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "96->97": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "97->98": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "97->99": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "97->100": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "96->101": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "101->102": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "101->103": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "101->104": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "96->105": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "105->106": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "105->107": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "105->108": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "82->109": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "109->110": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "110->111": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "110->112": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "110->113": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "109->114": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "114->115": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "114->116": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "114->117": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "109->118": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "118->119": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "118->120": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "118->121": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "0->122": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "122->123": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "123->124": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "124->125": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "125->126": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "125->127": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "125->128": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "124->129": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "129->130": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "129->131": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "129->132": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "124->133": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "133->134": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "133->135": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "133->136": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "123->137": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "137->138": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "138->139": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "138->140": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "138->141": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "137->142": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "142->143": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "142->144": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "142->145": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "137->146": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "146->147": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "146->148": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "146->149": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "123->150": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "150->151": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "151->152": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "151->153": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "151->154": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "150->155": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "155->156": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "155->157": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "155->158": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "150->159": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "159->160": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "159->161": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "159->162": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "122->163": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "163->164": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "164->165": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "165->166": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "165->167": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "165->168": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "164->169": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "169->170": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "169->171": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "169->172": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "164->173": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "173->174": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "173->175": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "173->176": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "163->177": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "177->178": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "178->179": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "178->180": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "178->181": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "177->182": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "182->183": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "182->184": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "182->185": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "177->186": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "186->187": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "186->188": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "186->189": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "163->190": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "190->191": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "191->192": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "191->193": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "191->194": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "190->195": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "195->196": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "195->197": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "195->198": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "190->199": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "199->200": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "199->201": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "199->202": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "122->203": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "203->204": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "204->205": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "205->206": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "205->207": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "205->208": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "204->209": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "209->210": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "209->211": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "209->212": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "204->213": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "213->214": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "213->215": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "213->216": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "203->217": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "217->218": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "218->219": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "218->220": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "218->221": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "217->222": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "222->223": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "222->224": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "222->225": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "217->226": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "226->227": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "226->228": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "226->229": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "203->230": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "230->231": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "231->232": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "231->233": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "231->234": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "230->235": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "235->236": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "235->237": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "235->238": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "230->239": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "239->240": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "239->241": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "239->242": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "0->243": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "243->244": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "244->245": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "245->246": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "246->247": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "246->248": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "246->249": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "245->250": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "250->251": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "250->252": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "250->253": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "245->254": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "254->255": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "254->256": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "254->257": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "244->258": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "258->259": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "259->260": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "259->261": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "259->262": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "258->263": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "263->264": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "263->265": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "263->266": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "258->267": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "267->268": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "267->269": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "267->270": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "244->271": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "271->272": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "272->273": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "272->274": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "272->275": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "271->276": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "276->277": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "276->278": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "276->279": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "271->280": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "280->281": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "280->282": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "280->283": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "243->284": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "284->285": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "285->286": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "286->287": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "286->288": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "286->289": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "285->290": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "290->291": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "290->292": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "290->293": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "285->294": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "294->295": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "294->296": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "294->297": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "284->298": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "298->299": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "299->300": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "299->301": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "299->302": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "298->303": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "303->304": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "303->305": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "303->306": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "298->307": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "307->308": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "307->309": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "307->310": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "284->311": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "311->312": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "312->313": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "312->314": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "312->315": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "311->316": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "316->317": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "316->318": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "316->319": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "311->320": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "320->321": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "320->322": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "320->323": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "243->324": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "324->325": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "325->326": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "326->327": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "326->328": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "326->329": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "325->330": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "330->331": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "330->332": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "330->333": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "325->334": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "334->335": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "334->336": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "334->337": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "324->338": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "338->339": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "339->340": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "339->341": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "339->342": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "338->343": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "343->344": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "343->345": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "343->346": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "338->347": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "347->348": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "347->349": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "347->350": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "324->351": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "351->352": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "352->353": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "352->354": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "352->355": {
+        "sourceSide": "bottom",
+        "targetSide": "topleft-top"
+      },
+      "351->356": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "356->357": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "356->358": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "356->359": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "351->360": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "top"
+      },
+      "360->361": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "360->362": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "360->363": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      }
+    }
+  },
+  {
+    "name": "cyclic-20-4",
+    "placements": {
+      "0->1": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "1->2": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "2->3": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "3->0": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "4->5": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "5->6": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "6->7": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "7->4": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "8->9": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "9->10": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "10->11": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "11->8": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "12->13": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "13->14": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "14->15": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "15->12": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "16->17": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "17->18": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "18->19": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      },
+      "19->16": {
+        "sourceSide": "bottom",
+        "targetSide": "top"
+      }
+    }
+  },
+  {
+    "name": "dense-30-3",
+    "placements": {
+      "0->1": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "0->2": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "0->3": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "1->2": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "1->3": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "1->4": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "2->3": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "2->4": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "2->5": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "3->4": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "3->5": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "3->6": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "4->5": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "4->6": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "4->7": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "5->6": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "5->7": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "5->8": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "6->7": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "6->8": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "6->9": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "7->8": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "7->9": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "7->10": {
+        "sourceSide": "bottomleft-bottom",
+        "targetSide": "topleft-top"
+      },
+      "8->9": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottom"
+      },
+      "8->10": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "8->11": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "9->10": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "9->11": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "9->12": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "10->11": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "10->12": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "10->13": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "11->12": {
+        "sourceSide": "bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "11->13": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "11->14": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "12->13": {
+        "sourceSide": "bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "12->14": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "12->15": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "13->14": {
+        "sourceSide": "bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "13->15": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "13->16": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "14->15": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "14->16": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "14->17": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "15->16": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "15->17": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "15->18": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "16->17": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "16->18": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "16->19": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "17->18": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "17->19": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "17->20": {
+        "sourceSide": "bottomleft-bottom",
+        "targetSide": "topleft-top"
+      },
+      "18->19": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottom"
+      },
+      "18->20": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "18->21": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "19->20": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "19->21": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "19->22": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "20->21": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "20->22": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "20->23": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "21->22": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "21->23": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "21->24": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "22->23": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "22->24": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "22->25": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "23->24": {
+        "sourceSide": "bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "23->25": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "23->26": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "24->25": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "24->26": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "24->27": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "25->26": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "25->27": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "25->28": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "26->27": {
+        "sourceSide": "bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "26->28": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "26->29": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "27->28": {
+        "sourceSide": "bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "27->29": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "27->0": {
+        "sourceSide": "bottomleft-left",
+        "targetSide": "bottomleft-bottom"
+      },
+      "28->29": {
+        "sourceSide": "topright-top",
+        "targetSide": "top"
+      },
+      "28->0": {
+        "sourceSide": "topleft-left",
+        "targetSide": "bottomleft-bottom"
+      },
+      "28->1": {
+        "sourceSide": "topleft-left",
+        "targetSide": "bottomright-right"
+      },
+      "29->0": {
+        "sourceSide": "topright-top",
+        "targetSide": "topright-right"
+      },
+      "29->1": {
+        "sourceSide": "topright-top",
+        "targetSide": "bottomright-right"
+      },
+      "29->2": {
+        "sourceSide": "topright-top",
+        "targetSide": "topright-right"
+      }
+    }
+  },
+  {
+    "name": "dense-50-3",
+    "placements": {
+      "0->1": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "0->2": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "0->3": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "1->2": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "1->3": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "1->4": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "2->3": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "2->4": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "2->5": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "3->4": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "3->5": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "3->6": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "4->5": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "4->6": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "4->7": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "5->6": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "5->7": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "5->8": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "6->7": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "6->8": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "6->9": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "7->8": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "7->9": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "7->10": {
+        "sourceSide": "bottomleft-bottom",
+        "targetSide": "topleft-top"
+      },
+      "8->9": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottom"
+      },
+      "8->10": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "8->11": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "9->10": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "9->11": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "9->12": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "10->11": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "10->12": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "10->13": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "11->12": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "11->13": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "11->14": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "12->13": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "12->14": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "12->15": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "13->14": {
+        "sourceSide": "bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "13->15": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "13->16": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "14->15": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "14->16": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "14->17": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "15->16": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "15->17": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "15->18": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "16->17": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "16->18": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "16->19": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "17->18": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "17->19": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "17->20": {
+        "sourceSide": "bottomleft-bottom",
+        "targetSide": "topleft-top"
+      },
+      "18->19": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottom"
+      },
+      "18->20": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "18->21": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "19->20": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "19->21": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "19->22": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "20->21": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "20->22": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "20->23": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "21->22": {
+        "sourceSide": "bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "21->23": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "21->24": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "22->23": {
+        "sourceSide": "bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "22->24": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "22->25": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "23->24": {
+        "sourceSide": "bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "23->25": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "23->26": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "24->25": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "24->26": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "24->27": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "25->26": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "25->27": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "25->28": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "26->27": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "26->28": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "26->29": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "27->28": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "27->29": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "27->30": {
+        "sourceSide": "bottomleft-bottom",
+        "targetSide": "topleft-top"
+      },
+      "28->29": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottom"
+      },
+      "28->30": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "28->31": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "29->30": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "29->31": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "29->32": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "30->31": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "30->32": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "30->33": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "31->32": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "31->33": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "31->34": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "32->33": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "32->34": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "32->35": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "33->34": {
+        "sourceSide": "bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "33->35": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "33->36": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "34->35": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "34->36": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "34->37": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "35->36": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "35->37": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "35->38": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "36->37": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "36->38": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "36->39": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "37->38": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "37->39": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "37->40": {
+        "sourceSide": "bottomleft-bottom",
+        "targetSide": "topleft-top"
+      },
+      "38->39": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottom"
+      },
+      "38->40": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "38->41": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "39->40": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "39->41": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topleft-top"
+      },
+      "39->42": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "topright-top"
+      },
+      "40->41": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "40->42": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "40->43": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "41->42": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "41->43": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "41->44": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "42->43": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "42->44": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "42->45": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "43->44": {
+        "sourceSide": "bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "43->45": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "43->46": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "44->45": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "44->46": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "44->47": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "45->46": {
+        "sourceSide": "top",
+        "targetSide": "topleft-top"
+      },
+      "45->47": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "45->48": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "46->47": {
+        "sourceSide": "bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "46->48": {
+        "sourceSide": "bottomright-bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "46->49": {
+        "sourceSide": "right",
+        "targetSide": "left"
+      },
+      "47->48": {
+        "sourceSide": "bottom",
+        "targetSide": "bottomleft-bottom"
+      },
+      "47->49": {
+        "sourceSide": "topright-top",
+        "targetSide": "topleft-top"
+      },
+      "47->0": {
+        "sourceSide": "bottomleft-left",
+        "targetSide": "bottomleft-bottom"
+      },
+      "48->49": {
+        "sourceSide": "topright-top",
+        "targetSide": "top"
+      },
+      "48->0": {
+        "sourceSide": "topleft-left",
+        "targetSide": "bottomleft-bottom"
+      },
+      "48->1": {
+        "sourceSide": "topleft-left",
+        "targetSide": "bottomright-right"
+      },
+      "49->0": {
+        "sourceSide": "topright-top",
+        "targetSide": "topright-right"
+      },
+      "49->1": {
+        "sourceSide": "topright-top",
+        "targetSide": "bottomright-right"
+      },
+      "49->2": {
+        "sourceSide": "topright-top",
+        "targetSide": "topright-right"
+      }
+    }
+  }
+]

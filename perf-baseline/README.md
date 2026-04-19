@@ -28,31 +28,31 @@ Each entry records `samples` (5 values), `min`, `median`, `mean`, `max`. Use `me
 - **Autosave subscription** (new): counts how many times a whole-store subscribe callback fires across mixed mutations
 - **Edge routing** (new): `computeEdgeRoutingPlacements` on 50-chain / 127-tree / 100-dense
 
-## Headline numbers (2026-04-19, post-debounce)
+## Headline numbers (2026-04-19, post-R-tree refactor)
 
-| Benchmark | Median |
-|---|---|
-| `edge-routing-100-dense` (raw compute) | **4896 ms** — the algorithm is still the algorithm |
-| `edge-routing-127-tree` (raw compute) | 1547 ms |
-| `edge-routing-50-chain` (raw compute) | 222 ms |
-| `drag-20-frames-50-chain-uncached` | **4550 ms** — avoided by the debounced hook |
-| `layout-100-dense` | 142 ms |
-| `layout-500-chain` | 59 ms |
-| `autosave-subscribe-fires-per-50-mixed-mutations` | 50 (fires on every setState) |
-| `selector-node-ref-invalidations-per-2-unrelated-mutations` | **0** (store refs are stable) |
-| `drag-500-frames-100-nodes` (store cost only) | 4 ms |
+| Benchmark | Median | Change vs pre-refactor |
+|---|---|---|
+| `edge-routing-100-dense` | **454 ms** | **−91 %** (from 4920 ms) |
+| `edge-routing-127-tree` | **61 ms** | **−96 %** (from 1560 ms) |
+| `edge-routing-50-chain` | **17 ms** | **−93 %** (from 232 ms) |
+| `drag-20-frames-50-chain-uncached` | **333 ms** | **−93 %** (from 4550 ms) |
+| `layout-100-dense` | 139 ms | unchanged |
+| `layout-500-chain` | 59 ms | unchanged |
+| `autosave-subscribe-fires-per-50-mixed-mutations` | 50 | unchanged (fires on every setState) |
+| `selector-node-ref-invalidations-per-2-unrelated-mutations` | 0 | unchanged (store refs are stable) |
+| `drag-500-frames-100-nodes` (store cost only) | 4 ms | unchanged |
 
 ## What this tells us
 
-- **Edge routing algorithm itself is unchanged** — 4.9 s for a 100-edge dense graph. The `edge-routing-*` benches measure the raw `getOptimizedEdgePlacements` call; those numbers track the algorithm's cost and won't move until the algorithm is optimized.
-- **Drag no longer pays that cost per frame** — `useDebouncedEdgePlacements` (see `src/hooks/useDebouncedEdgePlacements.ts`) defers recomputes for 120 ms after inputs settle. 20 drag frames on a 50-chain would otherwise cost ~4.5 s (`drag-20-frames-50-chain-uncached`); with debouncing, at most one recompute fires after the drag ends.
-- **Zustand selectors are NOT the problem** — `s.diagram.nodes` keeps the same ref across unrelated mutations, so the earlier hypothesis was wrong.
-- **Autosave subscribes to every setState** — 50/50 fires. Not a hot path given serialize is sub-millisecond, but still wasteful. Fix is cheap (selector-aware subscribe).
+- **Edge routing was O(E²); now it's ~O(E log E).** `src/core/edge-routing/edge-optimization-algorithm.ts` uses an `rbush` R-tree over both node boxes and edge geometries, replacing the two inner linear scans with spatial lookups. Placements are bitwise-identical to the previous algorithm (verified by `placement-consistency.test.ts`).
+- **Two compounding wins on drag.** `useDebouncedEdgePlacements` still collapses rapid drag frames into a single recompute after 120 ms, and that recompute is now ~11× cheaper.
+- **Zustand selectors are NOT the problem.** `s.diagram.nodes` keeps the same ref across unrelated mutations.
+- **Autosave subscribes to every setState** — 50 fires per 50 mixed mutations. Still wasteful but cheap (serialize is sub-millisecond); low priority.
 
 ## History
 
-- `baseline.json` — current baseline
-- `baseline-before-debounce.json` — pre-`useDebouncedEdgePlacements` snapshot (2026-04-19), kept for reference
+- `baseline.json` — current baseline (post-R-tree)
+- `baseline-before-debounce.json` — pre-`useDebouncedEdgePlacements`, pre-R-tree snapshot (2026-04-19)
 
 ## Compare a new run
 
