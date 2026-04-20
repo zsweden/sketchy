@@ -3,7 +3,7 @@
   "name": "Evaporating Cloud",
   "abbreviation": "EC",
   "description": "Surface and dissolve the assumptions behind a conflict between two legitimate needs",
-  "defaultLayoutDirection": "LR",
+  "defaultLayoutDirection": "RL",
   "supportsJunctions": false,
   "edgeLabel": "required for",
   "systemPromptHint": "An Evaporating Cloud has a fixed 5-node topology: one Objective (A), two Requirements (B and C) that both serve A, and two Prerequisites (D and D') that directly conflict with each other. The chain reads \"in order to [target] we must [source]\" — so arrows flow prerequisite → requirement → objective (D → B → A and D' → C → A). The conflict between D and D' is tagged on a separate edge; never tag B↔C as conflicting and never question A. Name A as a shared goal both sides genuinely want — if either side rejects it, you have the wrong objective. B and C must each be legitimate, necessary, and distinct from the prerequisites. Progress comes from surfacing the hidden assumption behind each of the 5 arrows and finding an injection that invalidates one assumption — not from compromising between D and D'.",
@@ -11,7 +11,7 @@
     {
       "id": "objective",
       "name": "Objective",
-      "shortName": "A",
+      "shortName": "Obj",
       "color": "#5C8DB5",
       "description": "The common goal both sides share — what everyone ultimately wants",
       "exclusive": true

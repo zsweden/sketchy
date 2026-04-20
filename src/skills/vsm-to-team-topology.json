@@ -1,5 +1,6 @@
 {
   "id": "vsm-to-team-topology",
+  "kind": "ai",
   "name": "Create Team Topology",
   "startingFramework": "value-stream",
   "endingFramework": "team-topology",

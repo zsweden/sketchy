@@ -412,7 +412,9 @@
 }
 
 .skill-menu-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   width: 100%;
   text-align: left;
   padding: 0.5rem 0.625rem;
@@ -426,6 +428,26 @@
 
 .skill-menu-item:hover {
   background: var(--hover);
+}
+
+.skill-menu-item-icon {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.skill-menu-item--template .skill-menu-item-icon {
+  color: var(--accent, #5C8DB5);
+  opacity: 1;
+}
+
+.skill-menu-item--ai .skill-menu-item-icon {
+  color: #9370DB;
+  opacity: 0.85;
+}
+
+.skill-menu-item-label {
+  flex: 1;
+  min-width: 0;
 }
 
 .search-bar {

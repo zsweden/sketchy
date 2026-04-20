@@ -87,4 +87,36 @@ describe('SkillMenu', () => {
     expect(message).not.toContain('SOURCE DIAGRAM');
     expect(useDiagramStore.getState().diagram.frameworkId).toBe('crt');
   });
+
+  it('runs template skill deterministically without calling chat', async () => {
+    useDiagramStore.getState().setFramework('evaporating-cloud');
+    useDiagramStore.getState().newDiagram();
+
+    const sendSpy = vi.spyOn(useChatStore.getState(), 'sendMessage');
+
+    render(<SkillMenu />);
+
+    fireEvent.click(screen.getByLabelText('Skills'));
+    fireEvent.click(screen.getByText('Insert EC Template'));
+
+    // Wait for batchApply + runAutoLayout to complete
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(sendSpy).not.toHaveBeenCalled();
+    expect(useDiagramStore.getState().diagram.nodes).toHaveLength(5);
+    expect(useDiagramStore.getState().diagram.edges).toHaveLength(5);
+    expect(useDiagramStore.getState().diagram.edges.some((e) => e.edgeTag === 'conflict')).toBe(true);
+  });
+
+  it('tags menu items with kind-specific class for visual distinction', () => {
+    useDiagramStore.getState().setFramework('evaporating-cloud');
+
+    render(<SkillMenu />);
+    fireEvent.click(screen.getByLabelText('Skills'));
+
+    const templateItem = screen.getByText('Insert EC Template').closest('button')!;
+    const aiItem = screen.getByText('Best Practices Review').closest('button')!;
+    expect(templateItem.className).toContain('skill-menu-item--template');
+    expect(aiItem.className).toContain('skill-menu-item--ai');
+  });
 });

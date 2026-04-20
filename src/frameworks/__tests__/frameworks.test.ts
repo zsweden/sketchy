@@ -249,8 +249,8 @@ describe('framework definitions', () => {
   describe('Evaporating Cloud', () => {
     const ecFramework = getFramework('evaporating-cloud')!;
 
-    it('has left-to-right direction', () => {
-      expect(ecFramework.defaultLayoutDirection).toBe('LR');
+    it('has right-to-left direction (objective on the left, per Goldratt convention)', () => {
+      expect(ecFramework.defaultLayoutDirection).toBe('RL');
     });
 
     it('does not support junctions', () => {

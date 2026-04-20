@@ -42,6 +42,7 @@ export interface BatchMutations {
     polarity?: EdgePolarity;
     delay?: boolean;
     notes?: string;
+    edgeTag?: string;
   }[];
   updateEdges?: {
     id: string;

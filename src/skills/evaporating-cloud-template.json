@@ -1,0 +1,22 @@
+{
+  "id": "evaporating-cloud-template",
+  "kind": "template",
+  "name": "Insert EC Template",
+  "startingFramework": "evaporating-cloud",
+  "template": {
+    "nodes": [
+      { "id": "a", "label": "A — Common Objective", "tags": ["objective"] },
+      { "id": "b", "label": "B — Requirement", "tags": ["requirement"] },
+      { "id": "c", "label": "C — Requirement", "tags": ["requirement"] },
+      { "id": "d", "label": "D — Prerequisite", "tags": ["prerequisite"] },
+      { "id": "dp", "label": "D' — Prerequisite", "tags": ["prerequisite"] }
+    ],
+    "edges": [
+      { "source": "d", "target": "b" },
+      { "source": "dp", "target": "c" },
+      { "source": "b", "target": "a" },
+      { "source": "c", "target": "a" },
+      { "source": "d", "target": "dp", "edgeTag": "conflict" }
+    ]
+  }
+}

@@ -1,11 +1,12 @@
-import { Zap } from 'lucide-react';
+import { LayoutTemplate, Sparkles, Zap } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
 import { useUIStore } from '../../store/ui-store';
 import { getSkillsForFramework } from '../../skills/registry';
 import { getFramework } from '../../frameworks/registry';
-import type { Skill } from '../../core/skill-types';
+import { applyTemplateSkill } from '../../skills/apply-template-skill';
+import type { AISkill, Skill, TemplateSkill } from '../../core/skill-types';
 import type { Diagram } from '../../core/types';
 
 /** Serialize a diagram's nodes and edges into a readable snapshot for the AI. */
@@ -32,6 +33,37 @@ function serializeDiagramSnapshot(diagram: Diagram): string {
   return `SOURCE DIAGRAM ("${diagram.name}", framework: ${diagram.frameworkId})\n\nNodes:\n${nodes || '  (none)'}\n\nEdges:\n${edges || '  (none)'}`;
 }
 
+function runAiSkill(skill: AISkill, frameworkId: string, setFramework: (id: string) => void): void {
+  let instructions = skill.instructions;
+  const switchesFramework = skill.endingFramework && skill.endingFramework !== frameworkId;
+  if (switchesFramework) {
+    if (!window.confirm('This skill will switch to a different framework. The current diagram will be reset. Continue?')) {
+      return;
+    }
+    const snapshot = serializeDiagramSnapshot(useDiagramStore.getState().diagram);
+    instructions = `${snapshot}\n\n---\n\n${skill.instructions}`;
+    setFramework(skill.endingFramework!);
+  }
+
+  const chatMode = useUIStore.getState().chatPanelMode;
+  if (chatMode === 'min') {
+    useUIStore.getState().setChatPanelMode('shared');
+  }
+
+  useChatStore.getState().sendMessage(instructions, undefined, `Skill: ${skill.name}`);
+}
+
+function runTemplateSkill(skill: TemplateSkill): void {
+  const diagram = useDiagramStore.getState().diagram;
+  const nonEmpty = diagram.nodes.length > 0 || diagram.edges.length > 0;
+  if (nonEmpty) {
+    if (!window.confirm('This will add template nodes and edges to the current diagram. Continue?')) {
+      return;
+    }
+  }
+  void applyTemplateSkill(skill);
+}
+
 export default function SkillMenu() {
   const frameworkId = useDiagramStore((s) => s.diagram.frameworkId);
   const setFramework = useDiagramStore((s) => s.setFramework);
@@ -41,29 +73,13 @@ export default function SkillMenu() {
 
   const handleRun = useCallback((skill: Skill) => {
     setOpen(false);
-
-    // Capture the current diagram BEFORE switching frameworks so the AI sees it
-    let instructions = skill.instructions;
-    const switchesFramework = skill.endingFramework && skill.endingFramework !== frameworkId;
-    if (switchesFramework) {
-      if (!window.confirm('This skill will switch to a different framework. The current diagram will be reset. Continue?')) {
-        return;
-      }
-      const snapshot = serializeDiagramSnapshot(useDiagramStore.getState().diagram);
-      instructions = `${snapshot}\n\n---\n\n${skill.instructions}`;
-      setFramework(skill.endingFramework!);
+    if (skill.kind === 'template') {
+      runTemplateSkill(skill);
+    } else {
+      runAiSkill(skill, frameworkId, setFramework);
     }
-
-    // Open chat panel if minimized
-    const chatMode = useUIStore.getState().chatPanelMode;
-    if (chatMode === 'min') {
-      useUIStore.getState().setChatPanelMode('shared');
-    }
-
-    useChatStore.getState().sendMessage(instructions, undefined, `Skill: ${skill.name}`);
   }, [frameworkId, setFramework]);
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
     const handleClick = (e: MouseEvent) => {
@@ -92,16 +108,22 @@ export default function SkillMenu() {
       {open && (
         <div className="skill-menu-dropdown">
           {skills.map((skill) => {
-            const targetAbbr = skill.endingFramework && skill.endingFramework !== frameworkId
+            const targetAbbr = skill.kind === 'ai' && skill.endingFramework && skill.endingFramework !== frameworkId
               ? getFramework(skill.endingFramework)?.abbreviation ?? skill.endingFramework
               : null;
+            const Icon = skill.kind === 'template' ? LayoutTemplate : Sparkles;
+            const kindLabel = skill.kind === 'template' ? 'Template (deterministic)' : 'AI skill';
             return (
               <button
                 key={skill.id}
-                className="skill-menu-item"
+                className={`skill-menu-item skill-menu-item--${skill.kind}`}
                 onClick={() => handleRun(skill)}
+                title={kindLabel}
               >
-                {skill.name}{targetAbbr && ` (\u2192 ${targetAbbr})`}
+                <Icon size={14} className="skill-menu-item-icon" aria-hidden="true" />
+                <span className="skill-menu-item-label">
+                  {skill.name}{targetAbbr && ` (\u2192 ${targetAbbr})`}
+                </span>
               </button>
             );
           })}

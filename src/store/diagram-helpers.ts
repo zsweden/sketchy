@@ -263,6 +263,7 @@ export function batchAddEdges(
         ...(framework.supportsEdgePolarity ? { polarity: e.polarity ?? 'positive' as EdgePolarity } : {}),
         ...(framework.supportsEdgeDelay && e.delay ? { delay: true } : {}),
         ...(e.notes ? { notes: e.notes } : {}),
+        ...(e.edgeTag ? { edgeTag: e.edgeTag } : {}),
       });
       const incomingCount = edges.filter((ex) => ex.target === target).length;
       if (framework.supportsJunctions && incomingCount === 2) {

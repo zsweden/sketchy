@@ -1,6 +1,6 @@
 # Sketchy
 
-A web-based thinking-frameworks diagram editor focused on structured reasoning. Ships with 9 frameworks: CRT, FRT, PRT, Success Tree, STT, CLD, Goal Tree, VDT, and VSM.
+A web-based thinking-frameworks diagram editor focused on structured reasoning. Frameworks are auto-discovered from `src/frameworks/*.json` — see that directory for the current list (as of this writing: CLD, CRT, Evaporating Cloud, FRT, Goal Tree, Issue Tree, Org Structure, PRT, STT, Success Tree, Team Topology, Value Stream, VDT).
 
 ## Commands
 
