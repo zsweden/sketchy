@@ -246,6 +246,40 @@ describe('framework definitions', () => {
     });
   });
 
+  describe('Evaporating Cloud', () => {
+    const ecFramework = getFramework('evaporating-cloud')!;
+
+    it('has left-to-right direction', () => {
+      expect(ecFramework.defaultLayoutDirection).toBe('LR');
+    });
+
+    it('does not support junctions', () => {
+      expect(ecFramework.supportsJunctions).toBe(false);
+    });
+
+    it('does not allow cycles', () => {
+      expect(ecFramework.allowsCycles).toBeFalsy();
+    });
+
+    it('has objective, requirement, and prerequisite tags', () => {
+      expect(ecFramework.nodeTags).toHaveLength(3);
+      const tagIds = ecFramework.nodeTags.map((t) => t.id);
+      expect(tagIds).toContain('objective');
+      expect(tagIds).toContain('requirement');
+      expect(tagIds).toContain('prerequisite');
+    });
+
+    it('has all role tags marked exclusive', () => {
+      expect(ecFramework.nodeTags.every((t) => t.exclusive)).toBe(true);
+    });
+
+    it('has a conflict edge tag', () => {
+      expect(ecFramework.edgeTags).toBeDefined();
+      const edgeTagIds = ecFramework.edgeTags!.map((t) => t.id);
+      expect(edgeTagIds).toContain('conflict');
+    });
+  });
+
   describe('tag properties', () => {
     it.each(
       ALL_FRAMEWORKS.flatMap((fw) =>
