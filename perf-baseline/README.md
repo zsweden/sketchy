@@ -11,7 +11,7 @@ for i in 1 2 3 4 5; do
     src/core/layout/__tests__/cld-layout-metrics.test.ts \
     --reporter=verbose 2>&1 | grep -E '^\[perf\]' > /tmp/perf-run-$i.txt
 done
-node /tmp/aggregate-perf.mjs  # writes perf-baseline/baseline.json
+npm run perf:aggregate  # writes perf-baseline/baseline.json
 ```
 
 Each entry records `samples` (5 values), `min`, `median`, `mean`, `max`. Use `median` as the headline.

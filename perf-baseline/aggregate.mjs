@@ -43,7 +43,7 @@ const baseline = {
 };
 
 writeFileSync(
-  '/Volumes/WD_BLACK/GitHub/sketchy/perf-baseline/baseline.json',
+  new URL('./baseline.json', import.meta.url),
   JSON.stringify(baseline, null, 2) + '\n',
 );
 
