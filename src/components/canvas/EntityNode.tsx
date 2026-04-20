@@ -48,27 +48,21 @@ function getPositionForBaseSide(side: CardinalHandleSide): Position {
   }
 }
 
+const NEAR = HANDLE_CORNER_OFFSET;
+const FAR = `calc(100% - ${HANDLE_CORNER_OFFSET}px)`;
+const HANDLE_STYLES: Partial<Record<HandleSide, CSSProperties>> = {
+  'topleft-top': { left: NEAR },
+  'topleft-left': { top: NEAR },
+  'topright-top': { left: FAR },
+  'topright-right': { top: NEAR },
+  'bottomright-right': { top: FAR },
+  'bottomright-bottom': { left: FAR },
+  'bottomleft-bottom': { left: NEAR },
+  'bottomleft-left': { top: FAR },
+};
+
 function getVisibleHandleStyle(side: HandleSide): CSSProperties | undefined {
-  switch (side) {
-    case 'topleft-top':
-      return { left: HANDLE_CORNER_OFFSET };
-    case 'topleft-left':
-      return { top: HANDLE_CORNER_OFFSET };
-    case 'topright-top':
-      return { left: `calc(100% - ${HANDLE_CORNER_OFFSET}px)` };
-    case 'topright-right':
-      return { top: HANDLE_CORNER_OFFSET };
-    case 'bottomright-right':
-      return { top: `calc(100% - ${HANDLE_CORNER_OFFSET}px)` };
-    case 'bottomright-bottom':
-      return { left: `calc(100% - ${HANDLE_CORNER_OFFSET}px)` };
-    case 'bottomleft-bottom':
-      return { left: HANDLE_CORNER_OFFSET };
-    case 'bottomleft-left':
-      return { top: `calc(100% - ${HANDLE_CORNER_OFFSET}px)` };
-    default:
-      return undefined;
-  }
+  return HANDLE_STYLES[side];
 }
 
 function EntityNode({ id, data, selected }: NodeProps) {

@@ -6,9 +6,15 @@ import {
   captureOptimizedEdgeSides,
   resolveFramework,
 } from './diagram-helpers';
-import { getDefaultJunctionType } from '../core/framework-types';
+import { getDefaultJunctionType, type Framework } from '../core/framework-types';
 import type { DiagramEdge, JunctionType } from '../core/types';
 import type { DiagramState, DiagramStoreContext } from './diagram-store-types';
+
+function createEdgeRoutingConfig(framework: Framework) {
+  return framework.allowsCycles
+    ? { ...DEFAULT_EDGE_ROUTING_CONFIG, flowAlignedBonus: 0 }
+    : DEFAULT_EDGE_ROUTING_CONFIG;
+}
 
 export function createDiagramEdgeActions(
   context: DiagramStoreContext,
@@ -26,6 +32,19 @@ export function createDiagramEdgeActions(
   | 'optimizeEdgesAfterLayout'
 > {
   const { applyDiagramChange, get, set, setDiagram, pushHistorySnapshot, undoState, updateEdges } = context;
+
+  function setEdgeField<K extends keyof DiagramEdge>(
+    field: K,
+    options: { coerceEmpty?: boolean } = {},
+  ) {
+    return (id: string, value: DiagramEdge[K]) => {
+      const finalValue = options.coerceEmpty ? ((value as unknown) || undefined) : value;
+      updateEdges(
+        (edge) => (edge.id === id ? { ...edge, [field]: finalValue } : edge),
+        { trackHistory: true },
+      );
+    };
+  }
 
   return {
     addEdge: (source, target, handles) => {
@@ -117,33 +136,10 @@ export function createDiagramEdgeActions(
       );
     },
 
-    setEdgeConfidence: (id, confidence) => {
-      updateEdges(
-        (edge) => (edge.id === id ? { ...edge, confidence } : edge),
-        { trackHistory: true },
-      );
-    },
-
-    setEdgePolarity: (id, polarity) => {
-      updateEdges(
-        (edge) => (edge.id === id ? { ...edge, polarity } : edge),
-        { trackHistory: true },
-      );
-    },
-
-    setEdgeDelay: (id, delay) => {
-      updateEdges(
-        (edge) => (edge.id === id ? { ...edge, delay } : edge),
-        { trackHistory: true },
-      );
-    },
-
-    setEdgeTag: (id, edgeTag) => {
-      updateEdges(
-        (edge) => (edge.id === id ? { ...edge, edgeTag: edgeTag || undefined } : edge),
-        { trackHistory: true },
-      );
-    },
+    setEdgeConfidence: setEdgeField('confidence'),
+    setEdgePolarity: setEdgeField('polarity'),
+    setEdgeDelay: setEdgeField('delay'),
+    setEdgeTag: setEdgeField('edgeTag', { coerceEmpty: true }),
 
     updateEdgeNotes: (id, notes) => {
       updateEdges((edge) => (
@@ -151,28 +147,18 @@ export function createDiagramEdgeActions(
       ));
     },
 
-    commitEdgeNotes: (id, notes) => {
-      updateEdges(
-        (edge) => (edge.id === id ? { ...edge, notes: notes || undefined } : edge),
-        { trackHistory: true },
-      );
-    },
+    commitEdgeNotes: setEdgeField('notes', { coerceEmpty: true }),
 
     optimizeEdges: () => {
       const state = get();
       if (state.diagram.settings.edgeRoutingMode !== 'fixed') return false;
-
-      const fw = resolveFramework(state.diagram.frameworkId);
-      const config = fw.allowsCycles
-        ? { ...DEFAULT_EDGE_ROUTING_CONFIG, flowAlignedBonus: 0 }
-        : DEFAULT_EDGE_ROUTING_CONFIG;
 
       const optimizedEdges = captureOptimizedEdgeSides(
         state.diagram.edges,
         state.diagram.nodes,
         state.diagram.settings,
         DEFAULT_EDGE_ROUTING_POLICY,
-        config,
+        createEdgeRoutingConfig(resolveFramework(state.diagram.frameworkId)),
       );
       const changed = optimizedEdges.some((edge, index) => {
         const current = state.diagram.edges[index];
@@ -182,10 +168,7 @@ export function createDiagramEdgeActions(
       if (!changed) return false;
 
       applyDiagramChange(
-        (diagram) => ({
-          ...diagram,
-          edges: optimizedEdges,
-        }),
+        (diagram) => ({ ...diagram, edges: optimizedEdges }),
         { trackHistory: true },
       );
       return true;
@@ -195,17 +178,12 @@ export function createDiagramEdgeActions(
       const state = get();
       if (state.diagram.settings.edgeRoutingMode !== 'fixed') return;
 
-      const fw = resolveFramework(state.diagram.frameworkId);
-      const config = fw.allowsCycles
-        ? { ...DEFAULT_EDGE_ROUTING_CONFIG, flowAlignedBonus: 0 }
-        : DEFAULT_EDGE_ROUTING_CONFIG;
-
       const optimizedEdges = captureOptimizedEdgeSides(
         state.diagram.edges,
         state.diagram.nodes,
         state.diagram.settings,
         DEFAULT_EDGE_ROUTING_POLICY,
-        config,
+        createEdgeRoutingConfig(resolveFramework(state.diagram.frameworkId)),
       );
       setDiagram((diagram) => ({ ...diagram, edges: optimizedEdges }));
     },

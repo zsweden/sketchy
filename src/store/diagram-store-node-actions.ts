@@ -47,6 +47,19 @@ export function createDiagramNodeActions(
     updateNodes,
   } = context;
 
+  function setNodeDataField<V>(
+    field: string,
+    options: { trackHistory?: boolean; coerceEmpty?: boolean } = {},
+  ) {
+    return (id: string, value: V) => {
+      const finalValue = options.coerceEmpty ? ((value as unknown) || undefined) : value;
+      updateNodes(
+        (node) => (node.id === id ? { ...node, data: { ...node.data, [field]: finalValue } } : node),
+        options.trackHistory ? { trackHistory: true } : undefined,
+      );
+    };
+  }
+
   return {
     addNode: (position) => {
       const id = crypto.randomUUID();
@@ -71,11 +84,7 @@ export function createDiagramNodeActions(
       return id;
     },
 
-    updateNodeText: (id, label) => {
-      updateNodes((node) =>
-        node.id === id ? { ...node, data: { ...node.data, label } } : node,
-      );
-    },
+    updateNodeText: setNodeDataField<string>('label'),
 
     updateNodeTags: (id, tags) => {
       const state = context.get();
@@ -104,92 +113,16 @@ export function createDiagramNodeActions(
       );
     },
 
-    updateNodeJunction: (id, type) => {
-      updateNodes(
-        (node) => (
-          node.id === id ? { ...node, data: { ...node.data, junctionType: type } } : node
-        ),
-        { trackHistory: true },
-      );
-    },
-
-    previewNodeColor: (id, color) => {
-      updateNodes(
-        (node) => (node.id === id ? { ...node, data: { ...node.data, color } } : node),
-      );
-    },
-
-    previewNodeTextColor: (id, textColor) => {
-      updateNodes(
-        (node) => (
-          node.id === id ? { ...node, data: { ...node.data, textColor } } : node
-        ),
-      );
-    },
-
-    updateNodeColor: (id, color) => {
-      updateNodes(
-        (node) => (node.id === id ? { ...node, data: { ...node.data, color } } : node),
-        { trackHistory: true },
-      );
-    },
-
-    updateNodeTextColor: (id, textColor) => {
-      updateNodes(
-        (node) => (
-          node.id === id ? { ...node, data: { ...node.data, textColor } } : node
-        ),
-        { trackHistory: true },
-      );
-    },
-
-    updateNodeNotes: (id, notes) => {
-      updateNodes((node) => (
-        node.id === id
-          ? { ...node, data: { ...node.data, notes: notes || undefined } }
-          : node
-      ));
-    },
-
-    commitNodeText: (id, label) => {
-      updateNodes(
-        (node) => (node.id === id ? { ...node, data: { ...node.data, label } } : node),
-        { trackHistory: true },
-      );
-    },
-
-    commitNodeNotes: (id, notes) => {
-      updateNodes(
-        (node) => (
-          node.id === id
-            ? { ...node, data: { ...node.data, notes: notes || undefined } }
-            : node
-        ),
-        { trackHistory: true },
-      );
-    },
-
-    commitNodeValue: (id, value) => {
-      updateNodes(
-        (node) => (
-          node.id === id
-            ? { ...node, data: { ...node.data, value } }
-            : node
-        ),
-        { trackHistory: true },
-      );
-    },
-
-    commitNodeUnit: (id, unit) => {
-      updateNodes(
-        (node) => (
-          node.id === id
-            ? { ...node, data: { ...node.data, unit: unit || undefined } }
-            : node
-        ),
-        { trackHistory: true },
-      );
-    },
+    updateNodeJunction: setNodeDataField<JunctionType>('junctionType', { trackHistory: true }),
+    previewNodeColor: setNodeDataField<string | undefined>('color'),
+    previewNodeTextColor: setNodeDataField<string | undefined>('textColor'),
+    updateNodeColor: setNodeDataField<string | undefined>('color', { trackHistory: true }),
+    updateNodeTextColor: setNodeDataField<string | undefined>('textColor', { trackHistory: true }),
+    updateNodeNotes: setNodeDataField<string>('notes', { coerceEmpty: true }),
+    commitNodeText: setNodeDataField<string>('label', { trackHistory: true }),
+    commitNodeNotes: setNodeDataField<string>('notes', { trackHistory: true, coerceEmpty: true }),
+    commitNodeValue: setNodeDataField<number | undefined>('value', { trackHistory: true }),
+    commitNodeUnit: setNodeDataField<string>('unit', { trackHistory: true, coerceEmpty: true }),
 
     toggleNodeLocked: (ids, locked) => {
       const idSet = new Set(ids);

@@ -13,34 +13,32 @@ interface PositionUpdate {
   position: { x: number; y: number };
 }
 
-export function alignHorizontal(items: SizedPositionedItem[]): PositionUpdate[] {
-  const avgCenterY = items.reduce((sum, n) => sum + n.position.y + n.height / 2, 0) / items.length;
+type Axis = 'x' | 'y';
+
+const SIZE: Record<Axis, 'width' | 'height'> = { x: 'width', y: 'height' };
+
+function align(items: SizedPositionedItem[], axis: Axis): PositionUpdate[] {
+  const size = SIZE[axis];
+  const avgCenter =
+    items.reduce((sum, n) => sum + n.position[axis] + n[size] / 2, 0) / items.length;
   return items.map((n) => ({
     id: n.id,
-    position: { x: n.position.x, y: avgCenterY - n.height / 2 },
+    position: { ...n.position, [axis]: avgCenter - n[size] / 2 },
   }));
 }
 
-export function alignVertical(items: SizedPositionedItem[]): PositionUpdate[] {
-  const avgCenterX = items.reduce((sum, n) => sum + n.position.x + n.width / 2, 0) / items.length;
-  return items.map((n) => ({
+function distribute(items: PositionedItem[], axis: Axis): PositionUpdate[] {
+  const sorted = [...items].sort((a, b) => a.position[axis] - b.position[axis]);
+  const min = sorted[0].position[axis];
+  const max = sorted[sorted.length - 1].position[axis];
+  const step = (max - min) / (sorted.length - 1);
+  return sorted.map((n, i) => ({
     id: n.id,
-    position: { x: avgCenterX - n.width / 2, y: n.position.y },
+    position: { ...n.position, [axis]: min + step * i },
   }));
 }
 
-export function distributeHorizontal(items: PositionedItem[]): PositionUpdate[] {
-  const sorted = [...items].sort((a, b) => a.position.x - b.position.x);
-  const minX = sorted[0].position.x;
-  const maxX = sorted[sorted.length - 1].position.x;
-  const step = (maxX - minX) / (sorted.length - 1);
-  return sorted.map((n, i) => ({ id: n.id, position: { x: minX + step * i, y: n.position.y } }));
-}
-
-export function distributeVertical(items: PositionedItem[]): PositionUpdate[] {
-  const sorted = [...items].sort((a, b) => a.position.y - b.position.y);
-  const minY = sorted[0].position.y;
-  const maxY = sorted[sorted.length - 1].position.y;
-  const step = (maxY - minY) / (sorted.length - 1);
-  return sorted.map((n, i) => ({ id: n.id, position: { x: n.position.x, y: minY + step * i } }));
-}
+export const alignHorizontal = (items: SizedPositionedItem[]) => align(items, 'y');
+export const alignVertical = (items: SizedPositionedItem[]) => align(items, 'x');
+export const distributeHorizontal = (items: PositionedItem[]) => distribute(items, 'x');
+export const distributeVertical = (items: PositionedItem[]) => distribute(items, 'y');
