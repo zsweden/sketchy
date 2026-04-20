@@ -19,19 +19,20 @@ function ecTemplateSkill(): TemplateSkill {
     name: 'Insert EC Template',
     startingFramework: 'evaporating-cloud',
     template: {
+      layoutDirection: 'RL',
       nodes: [
-        { id: 'a', label: 'A', tags: ['objective'] },
-        { id: 'b', label: 'B', tags: ['requirement'] },
-        { id: 'c', label: 'C', tags: ['requirement'] },
-        { id: 'd', label: 'D', tags: ['prerequisite'] },
-        { id: 'dp', label: "D'", tags: ['prerequisite'] },
+        { id: 'a',  label: 'A', tags: ['objective'],    x: 10,  y: 72 },
+        { id: 'c',  label: 'C', tags: ['requirement'],  x: 252, y: 12 },
+        { id: 'b',  label: 'B', tags: ['requirement'],  x: 252, y: 132 },
+        { id: 'dp', label: "D'", tags: ['prerequisite'], x: 492, y: 12 },
+        { id: 'd',  label: 'D', tags: ['prerequisite'], x: 492, y: 132 },
       ],
       edges: [
-        { source: 'd', target: 'b' },
-        { source: 'dp', target: 'c' },
-        { source: 'b', target: 'a' },
-        { source: 'c', target: 'a' },
-        { source: 'd', target: 'dp', edgeTag: 'conflict' },
+        { source: 'd',  target: 'b', sourceSide: 'left', targetSide: 'right' },
+        { source: 'dp', target: 'c', sourceSide: 'left', targetSide: 'right' },
+        { source: 'b',  target: 'a', sourceSide: 'left', targetSide: 'bottomright-right' },
+        { source: 'c',  target: 'a', sourceSide: 'left', targetSide: 'topright-right' },
+        { source: 'd',  target: 'dp', sourceSide: 'top', targetSide: 'bottom', edgeTag: 'conflict' },
       ],
     },
   };
@@ -43,25 +44,45 @@ describe('deterministic template skill', () => {
     useDiagramStore.getState().newDiagram();
   });
 
-  it('adds all template nodes with their tags', async () => {
-    await applyTemplateSkill(ecTemplateSkill());
+  it('places nodes at exact template positions', () => {
+    applyTemplateSkill(ecTemplateSkill());
     const nodes = useDiagramStore.getState().diagram.nodes;
     expect(nodes).toHaveLength(5);
-    const labelToTags = new Map(nodes.map((n) => [n.data.label, n.data.tags]));
-    expect(labelToTags.get('A')).toEqual(['objective']);
-    expect(labelToTags.get('B')).toEqual(['requirement']);
-    expect(labelToTags.get('D')).toEqual(['prerequisite']);
+    const byLabel = new Map(nodes.map((n) => [n.data.label, n]));
+    expect(byLabel.get('A')!.position).toEqual({ x: 10, y: 72 });
+    expect(byLabel.get('B')!.position).toEqual({ x: 252, y: 132 });
+    expect(byLabel.get('C')!.position).toEqual({ x: 252, y: 12 });
+    expect(byLabel.get('D')!.position).toEqual({ x: 492, y: 132 });
+    expect(byLabel.get("D'")!.position).toEqual({ x: 492, y: 12 });
   });
 
-  it('wires all 5 edges with the conflict edge tagged', async () => {
-    await applyTemplateSkill(ecTemplateSkill());
+  it('preserves edge handle sides', () => {
+    applyTemplateSkill(ecTemplateSkill());
     const state = useDiagramStore.getState().diagram;
-    expect(state.edges).toHaveLength(5);
-    const taggedEdges = state.edges.filter((e) => e.edgeTag === 'conflict');
-    expect(taggedEdges).toHaveLength(1);
-    const labelOf = (id: string) => state.nodes.find((n) => n.id === id)!.data.label;
-    expect(new Set([labelOf(taggedEdges[0].source), labelOf(taggedEdges[0].target)]))
-      .toEqual(new Set(['D', "D'"]));
+    const nodeId = (label: string) => state.nodes.find((n) => n.data.label === label)!.id;
+    const conflict = state.edges.find((e) => e.edgeTag === 'conflict')!;
+    expect(conflict.source).toBe(nodeId('D'));
+    expect(conflict.target).toBe(nodeId("D'"));
+    expect(conflict.sourceSide).toBe('top');
+    expect(conflict.targetSide).toBe('bottom');
+
+    const bToA = state.edges.find((e) => e.source === nodeId('B') && e.target === nodeId('A'))!;
+    expect(bToA.targetSide).toBe('bottomright-right');
+  });
+
+  it('applies the template layout direction', () => {
+    applyTemplateSkill(ecTemplateSkill());
+    expect(useDiagramStore.getState().diagram.settings.layoutDirection).toBe('RL');
+  });
+
+  it('replaces existing diagram content rather than appending', () => {
+    useDiagramStore.getState().addNode({ x: 0, y: 0 });
+    expect(useDiagramStore.getState().diagram.nodes.length).toBe(1);
+
+    applyTemplateSkill(ecTemplateSkill());
+
+    expect(useDiagramStore.getState().diagram.nodes).toHaveLength(5);
+    expect(useDiagramStore.getState().diagram.nodes.every((n) => n.data.label !== '')).toBe(true);
   });
 
   it('ships an EC template skill in the registry', () => {

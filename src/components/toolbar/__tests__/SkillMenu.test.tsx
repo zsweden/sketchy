@@ -88,7 +88,7 @@ describe('SkillMenu', () => {
     expect(useDiagramStore.getState().diagram.frameworkId).toBe('crt');
   });
 
-  it('runs template skill deterministically without calling chat', async () => {
+  it('runs template skill deterministically without calling chat', () => {
     useDiagramStore.getState().setFramework('evaporating-cloud');
     useDiagramStore.getState().newDiagram();
 
@@ -99,13 +99,12 @@ describe('SkillMenu', () => {
     fireEvent.click(screen.getByLabelText('Skills'));
     fireEvent.click(screen.getByText('Insert EC Template'));
 
-    // Wait for batchApply + runAutoLayout to complete
-    await new Promise((r) => setTimeout(r, 50));
-
     expect(sendSpy).not.toHaveBeenCalled();
-    expect(useDiagramStore.getState().diagram.nodes).toHaveLength(5);
-    expect(useDiagramStore.getState().diagram.edges).toHaveLength(5);
-    expect(useDiagramStore.getState().diagram.edges.some((e) => e.edgeTag === 'conflict')).toBe(true);
+    const diagram = useDiagramStore.getState().diagram;
+    expect(diagram.nodes).toHaveLength(5);
+    expect(diagram.edges).toHaveLength(5);
+    expect(diagram.edges.some((e) => e.edgeTag === 'conflict')).toBe(true);
+    expect(diagram.nodes.find((n) => n.data.tags.includes('objective'))!.position).toEqual({ x: 10, y: 72 });
   });
 
   it('tags menu items with kind-specific class for visual distinction', () => {

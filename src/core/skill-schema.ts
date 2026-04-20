@@ -10,9 +10,19 @@ const aiSkillSchema = z.object({
   instructions: z.string().min(1),
 });
 
+const edgeHandleSideSchema = z.enum([
+  'top', 'right', 'bottom', 'left',
+  'topleft-top', 'topleft-left',
+  'topright-top', 'topright-right',
+  'bottomleft-bottom', 'bottomleft-left',
+  'bottomright-bottom', 'bottomright-right',
+]);
+
 const templateNodeSchema = z.object({
   id: z.string().min(1),
   label: z.string(),
+  x: z.number(),
+  y: z.number(),
   tags: z.array(z.string()).optional(),
   notes: z.string().optional(),
   junctionType: z.enum(['and', 'or', 'add', 'multiply']).optional(),
@@ -21,6 +31,8 @@ const templateNodeSchema = z.object({
 const templateEdgeSchema = z.object({
   source: z.string().min(1),
   target: z.string().min(1),
+  sourceSide: edgeHandleSideSchema.optional(),
+  targetSide: edgeHandleSideSchema.optional(),
   edgeTag: z.string().optional(),
   notes: z.string().optional(),
   polarity: z.enum(['positive', 'negative']).optional(),
@@ -33,6 +45,7 @@ const templateSkillSchema = z.object({
   kind: z.literal('template'),
   startingFramework: z.string().min(1),
   template: z.object({
+    layoutDirection: z.enum(['TB', 'BT', 'LR', 'RL']).optional(),
     nodes: z.array(templateNodeSchema).min(1),
     edges: z.array(templateEdgeSchema),
   }),

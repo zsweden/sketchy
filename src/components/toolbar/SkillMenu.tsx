@@ -57,11 +57,11 @@ function runTemplateSkill(skill: TemplateSkill): void {
   const diagram = useDiagramStore.getState().diagram;
   const nonEmpty = diagram.nodes.length > 0 || diagram.edges.length > 0;
   if (nonEmpty) {
-    if (!window.confirm('This will add template nodes and edges to the current diagram. Continue?')) {
+    if (!window.confirm('This will replace the current diagram with the template. Continue?')) {
       return;
     }
   }
-  void applyTemplateSkill(skill);
+  applyTemplateSkill(skill);
 }
 
 export default function SkillMenu() {

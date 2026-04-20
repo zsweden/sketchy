@@ -4,19 +4,20 @@
   "name": "Insert EC Template",
   "startingFramework": "evaporating-cloud",
   "template": {
+    "layoutDirection": "RL",
     "nodes": [
-      { "id": "a", "label": "A — Common Objective", "tags": ["objective"] },
-      { "id": "b", "label": "B — Requirement", "tags": ["requirement"] },
-      { "id": "c", "label": "C — Requirement", "tags": ["requirement"] },
-      { "id": "d", "label": "D — Prerequisite", "tags": ["prerequisite"] },
-      { "id": "dp", "label": "D' — Prerequisite", "tags": ["prerequisite"] }
+      { "id": "a",  "label": "A — Common Objective",  "tags": ["objective"],    "x": 10,  "y": 72 },
+      { "id": "c",  "label": "C — Requirement",        "tags": ["requirement"],  "x": 252, "y": 12 },
+      { "id": "b",  "label": "B — Requirement",        "tags": ["requirement"],  "x": 252, "y": 132 },
+      { "id": "dp", "label": "D' — Prerequisite",      "tags": ["prerequisite"], "x": 492, "y": 12 },
+      { "id": "d",  "label": "D — Prerequisite",       "tags": ["prerequisite"], "x": 492, "y": 132 }
     ],
     "edges": [
-      { "source": "d", "target": "b" },
-      { "source": "dp", "target": "c" },
-      { "source": "b", "target": "a" },
-      { "source": "c", "target": "a" },
-      { "source": "d", "target": "dp", "edgeTag": "conflict" }
+      { "source": "d",  "target": "b", "sourceSide": "left", "targetSide": "right" },
+      { "source": "dp", "target": "c", "sourceSide": "left", "targetSide": "right" },
+      { "source": "b",  "target": "a", "sourceSide": "left", "targetSide": "bottomright-right" },
+      { "source": "c",  "target": "a", "sourceSide": "left", "targetSide": "topright-right" },
+      { "source": "d",  "target": "dp", "sourceSide": "top", "targetSide": "bottom", "edgeTag": "conflict" }
     ]
   }
 }
