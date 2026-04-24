@@ -8,8 +8,13 @@ import {
   MousePointer2,
   Hand,
   Settings,
+  Type,
+  Square,
+  Circle,
+  Minus,
 } from 'lucide-react';
 import { useCallback, useRef } from 'react';
+import { useReactFlow } from '@xyflow/react';
 import { toast } from 'sonner';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
@@ -18,6 +23,7 @@ import { useChatStore } from '../../store/chat-store';
 import { appVersion } from '../../core/app-version';
 import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
 import { useNodeAlignmentActions } from '../../hooks/useNodeAlignmentActions';
+import type { AnnotationKind } from '../../core/types';
 import FrameworkSelector from './FrameworkSelector';
 import SearchBar from './SearchBar';
 import SettingsPopover from './SettingsPopover';
@@ -67,6 +73,19 @@ export default function Toolbar() {
   }, [distributeNodesVertically, selectedNodeIds]);
 
   const toggleSettings = useSettingsStore((s) => s.toggleSettings);
+  const addAnnotation = useDiagramStore((s) => s.addAnnotation);
+  const { screenToFlowPosition } = useReactFlow();
+
+  const handleAddAnnotation = useCallback(
+    (kind: AnnotationKind) => {
+      const position = screenToFlowPosition({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+      });
+      addAnnotation(kind, position);
+    },
+    [addAnnotation, screenToFlowPosition],
+  );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -210,6 +229,41 @@ export default function Toolbar() {
           aria-label="Distribute vertically"
         >
           <DistributeVerticalIcon />
+        </button>
+
+        <div className="toolbar-divider" />
+
+        <button
+          className="btn btn-secondary btn-icon"
+          onClick={() => handleAddAnnotation('text')}
+          title="Add text annotation"
+          aria-label="Add text annotation"
+        >
+          <Type size={16} />
+        </button>
+        <button
+          className="btn btn-secondary btn-icon"
+          onClick={() => handleAddAnnotation('rect')}
+          title="Add rectangle annotation"
+          aria-label="Add rectangle annotation"
+        >
+          <Square size={16} />
+        </button>
+        <button
+          className="btn btn-secondary btn-icon"
+          onClick={() => handleAddAnnotation('ellipse')}
+          title="Add ellipse annotation"
+          aria-label="Add ellipse annotation"
+        >
+          <Circle size={16} />
+        </button>
+        <button
+          className="btn btn-secondary btn-icon"
+          onClick={() => handleAddAnnotation('line')}
+          title="Add line annotation"
+          aria-label="Add line annotation"
+        >
+          <Minus size={16} />
         </button>
 
         <div className="toolbar-divider" />

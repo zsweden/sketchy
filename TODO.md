@@ -2,7 +2,8 @@
 
 ## Features
 
-### [ ] Enable annotation layer on diagram
+### [x] Enable annotation layer on diagram
+Shipped. Decorative shapes (text, rectangle, ellipse, line) added via toolbar, stored as a separate `Diagram.annotations` array so graph reasoning (validation, layout, edge routing, AI context) is untouched. Render below entity nodes, share drag/undo with the node layer.
 
 ### [ ] Enable multiple node edit
 

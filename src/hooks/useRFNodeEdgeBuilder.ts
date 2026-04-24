@@ -26,6 +26,7 @@ export function useRFNodeEdgeBuilder(
 ): BuilderResult {
   const nodes = useDiagramStore((s) => s.diagram.nodes);
   const edges = useDiagramStore((s) => s.diagram.edges);
+  const annotations = useDiagramStore((s) => s.diagram.annotations);
   const settings = useDiagramStore((s) => s.diagram.settings);
   const framework = useFramework();
   const edgeRoutingMode = settings?.edgeRoutingMode ?? 'dynamic';
@@ -65,8 +66,17 @@ export function useRFNodeEdgeBuilder(
   }), [searchLower, highlightSets, selectedNodeIds, selectedEdgeIds, selectedLoop]);
 
   const rfNodes: Node[] = useMemo(
-    () =>
-      nodes.map((n) => ({
+    () => [
+      ...annotations.map((a) => ({
+        id: a.id,
+        type: `annotation-${a.kind}`,
+        position: a.position,
+        width: a.size.width,
+        height: a.size.height,
+        zIndex: -1,
+        data: { ...a.data, kind: a.kind, size: a.size },
+      })),
+      ...nodes.map((n) => ({
         id: n.id,
         type: n.type,
         position: n.position,
@@ -80,7 +90,8 @@ export function useRFNodeEdgeBuilder(
             : undefined,
         },
       })),
-    [nodes, degreesMap, highlightSets, selectedLoop, highlightCtx],
+    ],
+    [nodes, annotations, degreesMap, highlightSets, selectedLoop, highlightCtx],
   );
 
   const rfEdges: Edge[] = useMemo(

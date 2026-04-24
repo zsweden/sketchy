@@ -50,6 +50,7 @@ export function createDiagramActions(
       const idMap = new Map<string, string>();
       let nodes = [...state.diagram.nodes];
       let edges = [...state.diagram.edges];
+      let annotations = state.diagram.annotations;
 
       nodes = batchAddNodes(mutations, idMap, nodes, framework);
       nodes = batchUpdateNodes(mutations, idMap, nodes);
@@ -65,8 +66,13 @@ export function createDiagramActions(
       edges = batchUpdateEdges(mutations, edges, framework);
       edges = batchRemoveEdges(mutations, edges);
 
+      if (mutations.removeAnnotationIds?.length) {
+        const ids = new Set(mutations.removeAnnotationIds);
+        annotations = annotations.filter((a) => !ids.has(a.id));
+      }
+
       set({
-        diagram: { ...state.diagram, nodes, edges },
+        diagram: { ...state.diagram, nodes, edges, annotations },
         ...undoState,
       });
 

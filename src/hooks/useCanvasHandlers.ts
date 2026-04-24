@@ -54,18 +54,32 @@ export function useCanvasHandlers({
   const flushPendingRemovals = useCallback(() => {
     removalFlushScheduledRef.current = false;
 
-    const nodeIds = [...pendingRemovedNodeIdsRef.current];
+    const allRemovedNodeIds = [...pendingRemovedNodeIdsRef.current];
     const edgeIds = [...pendingRemovedEdgeIdsRef.current];
     pendingRemovedNodeIdsRef.current.clear();
     pendingRemovedEdgeIdsRef.current.clear();
 
-    if (nodeIds.length === 0 && edgeIds.length === 0) {
+    if (allRemovedNodeIds.length === 0 && edgeIds.length === 0) {
       return;
     }
 
+    // RF emits `remove` NodeChange events for both entity nodes and annotations
+    // (they share the RF node id space). Split by looking up the id in the
+    // annotations array so each goes through the right removal path.
+    const annotationIds = new Set(
+      useDiagramStore.getState().diagram.annotations.map((a) => a.id),
+    );
+    const removeNodeIds: string[] = [];
+    const removeAnnotationIds: string[] = [];
+    for (const id of allRemovedNodeIds) {
+      if (annotationIds.has(id)) removeAnnotationIds.push(id);
+      else removeNodeIds.push(id);
+    }
+
     batchApply({
-      ...(nodeIds.length > 0 ? { removeNodeIds: nodeIds } : {}),
+      ...(removeNodeIds.length > 0 ? { removeNodeIds } : {}),
       ...(edgeIds.length > 0 ? { removeEdgeIds: edgeIds } : {}),
+      ...(removeAnnotationIds.length > 0 ? { removeAnnotationIds } : {}),
     });
   }, [batchApply]);
 

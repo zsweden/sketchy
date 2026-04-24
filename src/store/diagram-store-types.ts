@@ -53,6 +53,7 @@ export interface BatchMutations {
     notes?: string;
   }[];
   removeEdgeIds?: string[];
+  removeAnnotationIds?: string[];
 }
 
 export interface DiagramSnapshot {

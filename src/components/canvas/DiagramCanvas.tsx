@@ -12,6 +12,10 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import EntityNode from './EntityNode';
+import AnnotationRect from './annotations/AnnotationRect';
+import AnnotationEllipse from './annotations/AnnotationEllipse';
+import AnnotationLine from './annotations/AnnotationLine';
+import AnnotationText from './annotations/AnnotationText';
 import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
 import { useUIEvent } from '../../store/ui-events';
@@ -24,7 +28,13 @@ import { useTouchGestures } from '../../hooks/useTouchGestures';
 import { useCanvasHandlers } from '../../hooks/useCanvasHandlers';
 import { mergeRFNodesWithLocalState } from './local-node-state';
 
-const nodeTypes = { entity: EntityNode };
+const nodeTypes = {
+  entity: EntityNode,
+  'annotation-rect': AnnotationRect,
+  'annotation-ellipse': AnnotationEllipse,
+  'annotation-line': AnnotationLine,
+  'annotation-text': AnnotationText,
+};
 
 export default function DiagramCanvas() {
   const { screenToFlowPosition } = useReactFlow();

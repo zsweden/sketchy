@@ -150,6 +150,30 @@ describe('annotation actions', () => {
     });
   });
 
+  describe('batchApply removeAnnotationIds', () => {
+    it('removes annotations via batchApply', () => {
+      const a = useDiagramStore.getState().addAnnotation('rect', { x: 0, y: 0 });
+      useDiagramStore.getState().batchApply({ removeAnnotationIds: [a] });
+      expect(useDiagramStore.getState().diagram.annotations).toHaveLength(0);
+    });
+
+    it('combines node + annotation removal into a single history entry', () => {
+      const nodeId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const annId = useDiagramStore.getState().addAnnotation('rect', { x: 0, y: 0 });
+      useDiagramStore.getState().batchApply({
+        removeNodeIds: [nodeId],
+        removeAnnotationIds: [annId],
+      });
+      expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
+      expect(useDiagramStore.getState().diagram.annotations).toHaveLength(0);
+
+      // One undo should restore both.
+      useDiagramStore.getState().undo();
+      expect(useDiagramStore.getState().diagram.nodes).toHaveLength(1);
+      expect(useDiagramStore.getState().diagram.annotations).toHaveLength(1);
+    });
+  });
+
   describe('drag integration (shared with node drag)', () => {
     it('moves an annotation via dragNodes and commits a single history entry', () => {
       const id = useDiagramStore.getState().addAnnotation('rect', { x: 0, y: 0 });

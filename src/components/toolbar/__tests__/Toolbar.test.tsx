@@ -35,6 +35,7 @@ vi.mock('@xyflow/react', async () => {
     ...actual,
     useReactFlow: () => ({
       getInternalNode: rfMocks.getInternalNode,
+      screenToFlowPosition: ({ x, y }: { x: number; y: number }) => ({ x, y }),
     }),
   };
 });
@@ -319,6 +320,21 @@ describe('Toolbar', () => {
 
     await user.click(screen.getByRole('button', { name: 'Toggle side panel' }));
     expect(useUIStore.getState().sidePanelOpen).toBe(false);
+  });
+
+  describe('annotation buttons', () => {
+    it('adds an annotation of each kind at the viewport center', async () => {
+      const user = userEvent.setup();
+      render(<Toolbar />);
+
+      await user.click(screen.getByRole('button', { name: 'Add text annotation' }));
+      await user.click(screen.getByRole('button', { name: 'Add rectangle annotation' }));
+      await user.click(screen.getByRole('button', { name: 'Add ellipse annotation' }));
+      await user.click(screen.getByRole('button', { name: 'Add line annotation' }));
+
+      const kinds = useDiagramStore.getState().diagram.annotations.map((a) => a.kind).sort();
+      expect(kinds).toEqual(['ellipse', 'line', 'rect', 'text']);
+    });
   });
 
 });
