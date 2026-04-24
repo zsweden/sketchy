@@ -12,7 +12,7 @@ import {
   distributeVertical,
   type SizedPositionedItem,
 } from '../utils/align-distribute';
-import { resolveFramework } from './diagram-helpers';
+import { resolveFramework } from './diagram-framework';
 import type { DiagramState, DiagramStoreContext } from './diagram-store-types';
 
 /**
@@ -105,6 +105,51 @@ export function createDiagramNodeActions(
     };
   }
 
+  function updateNodesByIds(
+    ids: string[],
+    mapper: (node: DiagramNode) => DiagramNode,
+    options: { trackHistory?: boolean } = {},
+  ) {
+    if (ids.length === 0) return;
+    const idSet = new Set(ids);
+    updateNodes(
+      (node) => (idSet.has(node.id) ? mapper(node) : node),
+      options.trackHistory ? { trackHistory: true } : undefined,
+    );
+  }
+
+  function updateNodeDataByIds(
+    ids: string[],
+    mapper: (node: DiagramNode) => Partial<DiagramNode['data']>,
+    options: { trackHistory?: boolean } = {},
+  ) {
+    updateNodesByIds(
+      ids,
+      (node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          ...mapper(node),
+        },
+      }),
+      options,
+    );
+  }
+
+  function setNodesDataField<V>(
+    ids: string[],
+    field: string,
+    value: V,
+    options: { trackHistory?: boolean; coerceEmpty?: boolean } = {},
+  ) {
+    const finalValue = options.coerceEmpty ? ((value as unknown) || undefined) : value;
+    updateNodeDataByIds(
+      ids,
+      () => ({ [field]: finalValue }),
+      options.trackHistory ? { trackHistory: true } : undefined,
+    );
+  }
+
   return {
     addNode: (position) => {
       const id = crypto.randomUUID();
@@ -137,10 +182,7 @@ export function createDiagramNodeActions(
       const node = state.diagram.nodes.find((n) => n.id === id);
       const resolved = applyExclusivity(framework, node?.data.tags ?? [], tags);
 
-      updateNodes(
-        (n) => (n.id === id ? { ...n, data: { ...n.data, tags: resolved } } : n),
-        { trackHistory: true },
-      );
+      updateNodeDataByIds([id], () => ({ tags: resolved }), { trackHistory: true });
     },
 
     updateNodeJunction: setNodeDataField<JunctionType>('junctionType', { trackHistory: true }),
@@ -155,70 +197,36 @@ export function createDiagramNodeActions(
     commitNodeUnit: setNodeDataField<string>('unit', { trackHistory: true, coerceEmpty: true }),
 
     toggleNodeLocked: (ids, locked) => {
-      const idSet = new Set(ids);
-      updateNodes(
-        (node) => (
-          idSet.has(node.id)
-            ? { ...node, data: { ...node.data, locked: locked || undefined } }
-            : node
-        ),
+      updateNodeDataByIds(
+        ids,
+        () => ({ locked: locked || undefined }),
         { trackHistory: true },
       );
     },
 
-    previewNodesColor: (ids, color) => {
-      if (ids.length === 0) return;
-      const idSet = new Set(ids);
-      updateNodes(
-        (node) => (idSet.has(node.id) ? { ...node, data: { ...node.data, color } } : node),
-      );
-    },
+    previewNodesColor: (ids, color) => setNodesDataField(ids, 'color', color),
 
-    previewNodesTextColor: (ids, color) => {
-      if (ids.length === 0) return;
-      const idSet = new Set(ids);
-      updateNodes(
-        (node) => (
-          idSet.has(node.id) ? { ...node, data: { ...node.data, textColor: color } } : node
-        ),
-      );
-    },
+    previewNodesTextColor: (ids, color) => setNodesDataField(ids, 'textColor', color),
 
-    updateNodesColor: (ids, color) => {
-      if (ids.length === 0) return;
-      const idSet = new Set(ids);
-      updateNodes(
-        (node) => (idSet.has(node.id) ? { ...node, data: { ...node.data, color } } : node),
-        { trackHistory: true },
-      );
-    },
+    updateNodesColor: (ids, color) =>
+      setNodesDataField(ids, 'color', color, { trackHistory: true }),
 
-    updateNodesTextColor: (ids, color) => {
-      if (ids.length === 0) return;
-      const idSet = new Set(ids);
-      updateNodes(
-        (node) => (
-          idSet.has(node.id) ? { ...node, data: { ...node.data, textColor: color } } : node
-        ),
-        { trackHistory: true },
-      );
-    },
+    updateNodesTextColor: (ids, color) =>
+      setNodesDataField(ids, 'textColor', color, { trackHistory: true }),
 
     updateNodesJunction: (ids, type) => {
       if (ids.length === 0) return;
       const state = context.get();
       const framework = resolveFramework(state.diagram.frameworkId);
       const degrees = computeNodeDegrees(state.diagram.edges);
-      const eligible = new Set(
-        ids.filter((id) => isJunctionEligible(framework, degrees.get(id)?.indegree ?? 0)),
+      const eligible = ids.filter(
+        (id) => isJunctionEligible(framework, degrees.get(id)?.indegree ?? 0),
       );
-      if (eligible.size === 0) return;
-      updateNodes(
-        (node) => (
-          eligible.has(node.id)
-            ? { ...node, data: { ...node.data, junctionType: type } }
-            : node
-        ),
+      if (eligible.length === 0) return;
+      setNodesDataField(
+        eligible,
+        'junctionType',
+        type,
         { trackHistory: true },
       );
     },
@@ -227,12 +235,11 @@ export function createDiagramNodeActions(
       if (ids.length === 0) return;
       const state = context.get();
       const framework = resolveFramework(state.diagram.frameworkId);
-      const idSet = new Set(ids);
       // Per-node exclusivity: each node may end up with a different "other exclusive
       // tag" displaced, depending on what it had before. That's intentional.
-      updateNodes(
+      updateNodesByIds(
+        ids,
         (node) => {
-          if (!idSet.has(node.id)) return node;
           if (node.data.tags.includes(tagId)) return node;
           const next = applyExclusivity(framework, node.data.tags, [...node.data.tags, tagId]);
           return { ...node, data: { ...node.data, tags: next } };
@@ -242,11 +249,9 @@ export function createDiagramNodeActions(
     },
 
     removeNodesTag: (ids, tagId) => {
-      if (ids.length === 0) return;
-      const idSet = new Set(ids);
-      updateNodes(
+      updateNodesByIds(
+        ids,
         (node) => {
-          if (!idSet.has(node.id)) return node;
           if (!node.data.tags.includes(tagId)) return node;
           return {
             ...node,

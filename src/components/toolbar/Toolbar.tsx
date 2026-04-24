@@ -13,157 +13,40 @@ import {
   Circle,
   Minus,
 } from 'lucide-react';
-import { useCallback, useRef } from 'react';
-import { useReactFlow } from '@xyflow/react';
-import { toast } from 'sonner';
-import { useDiagramStore } from '../../store/diagram-store';
-import { useUIStore } from '../../store/ui-store';
-import { useSettingsStore } from '../../store/settings-store';
-import { useChatStore } from '../../store/chat-store';
 import { appVersion } from '../../core/app-version';
-import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
-import { useNodeAlignmentActions } from '../../hooks/useNodeAlignmentActions';
-import type { AnnotationKind } from '../../core/types';
 import FrameworkSelector from './FrameworkSelector';
 import SearchBar from './SearchBar';
 import SettingsPopover from './SettingsPopover';
 import { AlignHorizontalIcon, AlignVerticalIcon, DistributeHorizontalIcon, DistributeVerticalIcon } from '../icons/AlignDistributeIcons';
+import { useToolbarController } from './useToolbarController';
 
 export default function Toolbar() {
-  const canUndo = useDiagramStore((s) => s.canUndo);
-  const canRedo = useDiagramStore((s) => s.canRedo);
-  const undo = useDiagramStore((s) => s.undo);
-  const redo = useDiagramStore((s) => s.redo);
-  const newDiagram = useDiagramStore((s) => s.newDiagram);
-  const distributeNodesHorizontally = useDiagramStore((s) => s.distributeNodesHorizontally);
-  const distributeNodesVertically = useDiagramStore((s) => s.distributeNodesVertically);
-  const loadDiagram = useDiagramStore((s) => s.loadDiagram);
-  const optimizeEdges = useDiagramStore((s) => s.optimizeEdges);
-  const runAutoLayout = useDiagramStore((s) => s.runAutoLayout);
-  const nodes = useDiagramStore((s) => s.diagram.nodes);
-  const edges = useDiagramStore((s) => s.diagram.edges);
-  const edgeRoutingMode = useDiagramStore((s) => s.diagram.settings.edgeRoutingMode);
-  const sidePanelOpen = useUIStore((s) => s.sidePanelOpen);
-  const toggleSidePanel = useUIStore((s) => s.toggleSidePanel);
-  const requestFitView = useUIStore((s) => s.requestFitView);
-  const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
-  const interactionMode = useUIStore((s) => s.interactionMode);
-  const setInteractionMode = useUIStore((s) => s.setInteractionMode);
-  const { alignSelectedNodesHorizontally, alignSelectedNodesVertically } = useNodeAlignmentActions();
-
-  const selectedNodes = nodes.filter((n) => selectedNodeIds.includes(n.id));
-  const canAlign = selectedNodes.length >= 2;
-  const canDistribute = selectedNodes.length >= 3;
-  const canOptimizeEdges = edgeRoutingMode === 'fixed';
-
-  const handleAlignH = useCallback(() => {
-    alignSelectedNodesHorizontally(selectedNodeIds);
-  }, [alignSelectedNodesHorizontally, selectedNodeIds]);
-
-  const handleAlignV = useCallback(() => {
-    alignSelectedNodesVertically(selectedNodeIds);
-  }, [alignSelectedNodesVertically, selectedNodeIds]);
-
-  const handleDistributeH = useCallback(() => {
-    distributeNodesHorizontally(selectedNodeIds);
-  }, [distributeNodesHorizontally, selectedNodeIds]);
-
-  const handleDistributeV = useCallback(() => {
-    distributeNodesVertically(selectedNodeIds);
-  }, [distributeNodesVertically, selectedNodeIds]);
-
-  const toggleSettings = useSettingsStore((s) => s.toggleSettings);
-  const addAnnotation = useDiagramStore((s) => s.addAnnotation);
-  const { screenToFlowPosition } = useReactFlow();
-
-  const handleAddAnnotation = useCallback(
-    (kind: AnnotationKind) => {
-      const position = screenToFlowPosition({
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2,
-      });
-      addAnnotation(kind, position);
-    },
-    [addAnnotation, screenToFlowPosition],
-  );
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const hasDiagramWork =
-    nodes.length > 1 ||
-    edges.length > 0 ||
-    nodes.some((n) => n.data.label !== '');
-
-  const handleNew = useCallback(() => {
-    if (
-      hasDiagramWork &&
-      !window.confirm('Create a new diagram? Unsaved changes will be lost.')
-    ) {
-      return;
-    }
-    newDiagram();
-    useChatStore.getState().clearMessages();
-    useChatStore.getState().clearAiModified();
-    requestFitView();
-  }, [hasDiagramWork, newDiagram, requestFitView]);
-
-  const handleAutoLayout = useCallback(async () => {
-    await runAutoLayout({ commitHistory: true, fitView: true });
-  }, [runAutoLayout]);
-
-  const handleAutoEdges = useCallback(() => {
-    optimizeEdges();
-  }, [optimizeEdges]);
-
-  const handleSave = useCallback(async () => {
-    try {
-      await saveSkyFile(useDiagramStore.getState().diagram);
-    } catch {
-      toast.error('Failed to save the project. Try again.');
-    }
-  }, []);
-
-  const handleLoad = useCallback(() => {
-    if (
-      hasDiagramWork &&
-      !window.confirm('Load a project? The current in-memory session will be replaced.')
-    ) {
-      return;
-    }
-    fileInputRef.current?.click();
-  }, [hasDiagramWork]);
-
-  const handleFileChange = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      try {
-        const result = await loadSkyFile(file);
-        loadDiagram(result.diagram);
-        useChatStore.getState().clearMessages();
-        useChatStore.getState().clearAiModified();
-
-        if (result.needsLayout) {
-          await useDiagramStore.getState().runAutoLayout({ fitView: false });
-        }
-
-        requestFitView();
-        for (const warning of result.warnings) {
-          toast.warning(warning);
-        }
-        if (result.warnings.length === 0) {
-          toast('Project loaded');
-        }
-      } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : 'Failed to load project. Try again.',
-        );
-      }
-      e.target.value = '';
-    },
-    [loadDiagram, requestFitView],
-  );
-
+  const {
+    canUndo,
+    canRedo,
+    undo,
+    redo,
+    sidePanelOpen,
+    interactionMode,
+    setInteractionMode,
+    toggleSettings,
+    toggleSidePanel,
+    fileInputRef,
+    canAlign,
+    canDistribute,
+    canOptimizeEdges,
+    handleAlignH,
+    handleAlignV,
+    handleDistributeH,
+    handleDistributeV,
+    handleAddAnnotation,
+    handleAutoLayout,
+    handleAutoEdges,
+    handleNew,
+    handleLoad,
+    handleSave,
+    handleFileChange,
+  } = useToolbarController();
 
   return (
     <header className="app-header">

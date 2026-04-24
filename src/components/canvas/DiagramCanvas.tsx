@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import {
   ReactFlow,
   Background,
@@ -7,8 +7,6 @@ import {
   BackgroundVariant,
   useReactFlow,
   useUpdateNodeInternals,
-  type Edge,
-  type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import EntityNode from './EntityNode';
@@ -18,7 +16,6 @@ import AnnotationLine from './annotations/AnnotationLine';
 import AnnotationText from './annotations/AnnotationText';
 import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
-import { useUIEvent } from '../../store/ui-events';
 import { FIT_VIEW_OPTIONS } from '../../core/layout/fit-view-options';
 import { getDerivedIndicators } from '../../core/graph/derived';
 import { useCanvasHighlighting } from '../../hooks/useCanvasHighlighting';
@@ -26,7 +23,8 @@ import { useRFNodeEdgeBuilder } from '../../hooks/useRFNodeEdgeBuilder';
 import { useViewportFocus } from '../../hooks/useViewportFocus';
 import { useTouchGestures } from '../../hooks/useTouchGestures';
 import { useCanvasHandlers } from '../../hooks/useCanvasHandlers';
-import { mergeRFNodesWithLocalState } from './local-node-state';
+import { useReactFlowLocalState } from './useReactFlowLocalState';
+import { useDiagramCanvasEvents } from './useDiagramCanvasEvents';
 
 const nodeTypes = {
   entity: EntityNode,
@@ -55,59 +53,23 @@ export default function DiagramCanvas() {
     highlightSets, selectedLoop, degreesMap,
   );
 
-  const [localNodes, setLocalNodes] = useState<Node[]>(rfNodes);
-  const [localEdges, setLocalEdges] = useState<Edge[]>(rfEdges);
   const canvasRef = useRef<HTMLDivElement>(null);
-  const latestRFNodeIdsRef = useRef<string[]>([]);
   const updateNodeInternals = useUpdateNodeInternals();
+  const {
+    localNodes,
+    setLocalNodes,
+    localEdges,
+    setLocalEdges,
+    latestRFNodeIdsRef,
+  } = useReactFlowLocalState({ rfNodes, rfEdges });
 
   // Viewport focus & fit-view (extracted hook)
   const { tryFitViewOnDimensions } = useViewportFocus(canvasRef);
-
-  // Sync store -> local when diagram DATA changes while preserving React Flow's
-  // runtime measurement fields. Replacing nodes from builder output must not
-  // wipe measured dimensions, or RF will drop cached handle bounds.
-  useEffect(() => {
-    latestRFNodeIdsRef.current = rfNodes.map((n) => n.id);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLocalNodes((prev) => mergeRFNodesWithLocalState(prev, rfNodes));
-  }, [rfNodes]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLocalEdges((prev) => {
-      const selectionMap = new Map(prev.map((e) => [e.id, e.selected]));
-      return rfEdges.map((e) => ({
-        ...e,
-        selected: selectionMap.get(e.id) ?? false,
-      }));
-    });
-  }, [rfEdges]);
-
-  // Fallback after bulk node repositioning (layout, load, framework switch):
-  // force RF to remeasure handle bounds. Read ids from a live ref so events
-  // emitted before the next render commit don't lock in stale node ids.
-  useUIEvent('edgeRefresh', () => {
-    let frame2 = 0;
-    const frame1 = requestAnimationFrame(() => {
-      frame2 = requestAnimationFrame(() => {
-        const nodeIds = latestRFNodeIdsRef.current;
-        if (nodeIds.length > 0) updateNodeInternals(nodeIds);
-      });
-    });
-    return () => {
-      cancelAnimationFrame(frame1);
-      cancelAnimationFrame(frame2);
-    };
-  });
-
-  // Sync programmatic selection from store -> RF (selectGraphObject)
-  useUIEvent('selectionSync', () => {
-    const { selectedNodeIds: nodeIds, selectedEdgeIds: edgeIds } = useUIStore.getState();
-    const nodeSet = new Set(nodeIds);
-    const edgeSet = new Set(edgeIds);
-    setLocalNodes((nds) => nds.map((n) => ({ ...n, selected: nodeSet.has(n.id) })));
-    setLocalEdges((eds) => eds.map((e) => ({ ...e, selected: edgeSet.has(e.id) })));
+  useDiagramCanvasEvents({
+    latestRFNodeIdsRef,
+    setLocalNodes,
+    setLocalEdges,
+    updateNodeInternals,
   });
 
   // Touch gestures — owns ignoreNextPaneClickRef and suppressSelectionUntilRef

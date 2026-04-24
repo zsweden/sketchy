@@ -3,7 +3,7 @@ import type { Diagram } from '../core/types';
 import type { DiagramModification } from '../core/ai/openai-client';
 import type { FrameworkSuggestions } from '../core/ai/ai-types';
 import type { ParsedChatSegment } from '../core/chat/mentions';
-import type { DisplayMessage } from './chat-store';
+import type { DisplayMessage } from './chat-store-types';
 import { buildChatMessageRenderData, remapCanonicalMentionIds } from '../core/chat/mentions';
 import { findCausalLoops, labelCausalLoops } from '../core/graph/derived';
 import { applyAiModifications } from './apply-ai-modifications';

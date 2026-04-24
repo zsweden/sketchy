@@ -1,36 +1,44 @@
 import { create } from 'zustand';
-import type { ChatDocument, ChatImage, ChatMessage, DiagramModification } from '../core/ai/openai-client';
-import type { FrameworkSuggestions } from '../core/ai/ai-types';
+import type { ChatDocument, ChatImage } from '../core/ai/openai-client';
 import { streamChatMessage } from '../core/ai/openai-client';
 import { getFramework } from '../frameworks/registry';
 import { useSettingsStore } from './settings-store';
 import { useDiagramStore } from './diagram-store';
-import { resolveFramework } from './diagram-helpers';
-import { createAssistantMessage, processStreamDone, reportStreamError } from './chat-stream-handlers';
+import { resolveFramework } from './diagram-framework';
+import {
+  createAssistantMessage,
+  processStreamDone,
+  reportStreamError,
+} from './chat-stream-handlers';
 import type { ErrorMetadataContext } from './chat-stream-handlers';
-import type { ParsedChatSegment } from '../core/chat/mentions';
+import { buildConversationHistory } from './chat-conversation';
+import {
+  attachChatRequestController,
+  beginChatRequest,
+  cancelActiveChatRequest,
+  isChatRequestActive,
+  releaseChatRequestController,
+} from './chat-request-controller';
+import {
+  getInitialChatState,
+  installChatStorePersistence,
+} from './chat-store-persistence';
+import type {
+  DisplayMessage,
+  PersistableChatState,
+} from './chat-store-types';
 
-export interface DisplayMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  displayText?: string;
-  segments?: ParsedChatSegment[];
-  images?: ChatImage[];
-  documents?: ChatDocument[];
-  modifications?: DiagramModification;
-  suggestions?: FrameworkSuggestions;
-  retryText?: string;
-}
+export type { DisplayMessage } from './chat-store-types';
 
-interface ChatState {
-  messages: DisplayMessage[];
+interface ChatState extends PersistableChatState {
   loading: boolean;
   streamingContent: string;
-  aiModifiedNodeIds: Set<string>;
-  pendingSuggestions: FrameworkSuggestions | null;
-
-  sendMessage: (text: string, image?: ChatImage, displayText?: string, document?: ChatDocument) => void;
+  sendMessage: (
+    text: string,
+    image?: ChatImage,
+    displayText?: string,
+    document?: ChatDocument,
+  ) => void;
   cancelStream: () => void;
   clearMessages: () => void;
   clearAiModified: () => void;
@@ -38,91 +46,33 @@ interface ChatState {
   acceptSuggestion: (frameworkId: string) => void;
 }
 
-let activeController: AbortController | null = null;
-let activeRequestId = 0;
-const CHAT_STORAGE_KEY = 'sketchy_chat';
-
-interface PersistedChatState {
-  messages: DisplayMessage[];
-  aiModifiedNodeIds: string[];
-  pendingSuggestions?: FrameworkSuggestions | null;
+function createMissingConfigMessages(text: string): DisplayMessage[] {
+  return [
+    { id: crypto.randomUUID(), role: 'user', content: text },
+    {
+      id: crypto.randomUUID(),
+      role: 'assistant',
+      content:
+        'Please configure your API endpoint and model in settings (cog icon in the toolbar).',
+    },
+  ];
 }
 
-function getInitialChatState(): Pick<ChatState, 'messages' | 'aiModifiedNodeIds' | 'pendingSuggestions'> {
-  if (typeof window === 'undefined') {
-    return { messages: [], aiModifiedNodeIds: new Set(), pendingSuggestions: null };
-  }
-
-  try {
-    const raw = window.sessionStorage.getItem(CHAT_STORAGE_KEY);
-    if (!raw) {
-      return { messages: [], aiModifiedNodeIds: new Set(), pendingSuggestions: null };
-    }
-
-    const parsed = JSON.parse(raw) as Partial<PersistedChatState>;
-    return {
-      messages: Array.isArray(parsed.messages) ? parsed.messages : [],
-      aiModifiedNodeIds: new Set(
-        Array.isArray(parsed.aiModifiedNodeIds)
-          ? parsed.aiModifiedNodeIds.filter((id): id is string => typeof id === 'string')
-          : [],
-      ),
-      pendingSuggestions: parsed.pendingSuggestions ?? null,
-    };
-  } catch {
-    try {
-      window.sessionStorage.removeItem(CHAT_STORAGE_KEY);
-    } catch {
-      // Ignore storage cleanup failures
-    }
-    return { messages: [], aiModifiedNodeIds: new Set(), pendingSuggestions: null };
-  }
+function createUserMessage(
+  text: string,
+  image?: ChatImage,
+  displayText?: string,
+  document?: ChatDocument,
+): DisplayMessage {
+  return {
+    id: crypto.randomUUID(),
+    role: 'user',
+    content: text,
+    ...(displayText ? { displayText } : {}),
+    ...(image ? { images: [image] } : {}),
+    ...(document ? { documents: [document] } : {}),
+  };
 }
-
-function serializeChatState(state: Pick<ChatState, 'messages' | 'aiModifiedNodeIds' | 'pendingSuggestions'>): string {
-  return JSON.stringify({
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    messages: state.messages.map(({ images, documents, ...rest }) => rest),
-    aiModifiedNodeIds: Array.from(state.aiModifiedNodeIds),
-    pendingSuggestions: state.pendingSuggestions,
-  } satisfies PersistedChatState);
-}
-
-function persistChatState(state: Pick<ChatState, 'messages' | 'aiModifiedNodeIds' | 'pendingSuggestions'>): void {
-  if (typeof window === 'undefined') return;
-
-  try {
-    window.sessionStorage.setItem(CHAT_STORAGE_KEY, serializeChatState(state));
-  } catch {
-    // Ignore storage quota / availability issues
-  }
-}
-
-function buildConversationHistory(messages: DisplayMessage[]): ChatMessage[] {
-  return messages
-    .filter((message) => !(message.role === 'assistant' && message.retryText))
-    .map((message) => ({
-      role: message.role,
-      content: message.content,
-      ...(message.images?.length ? { images: message.images } : {}),
-      ...(message.documents?.length ? { documents: message.documents } : {}),
-    }));
-}
-
-function invalidateActiveRequest(options: { abort?: boolean } = {}): void {
-  activeRequestId += 1;
-
-  if (options.abort && activeController) {
-    activeController.abort();
-  }
-
-  activeController = null;
-}
-
-function isActiveRequest(requestId: number, diagramId: string): boolean {
-  return activeRequestId === requestId && useDiagramStore.getState().diagram.id === diagramId;
-}
-
 
 export const useChatStore = create<ChatState>((set, get) => ({
   ...getInitialChatState(),
@@ -132,51 +82,28 @@ export const useChatStore = create<ChatState>((set, get) => ({
   sendMessage: (text, image, displayText, document) => {
     const { openaiApiKey, baseUrl, model, provider } = useSettingsStore.getState();
     if (!baseUrl || !model) {
-      set((s) => ({
-        messages: [
-          ...s.messages,
-          { id: crypto.randomUUID(), role: 'user', content: text },
-          {
-            id: crypto.randomUUID(),
-            role: 'assistant',
-            content: 'Please configure your API endpoint and model in settings (cog icon in the toolbar).',
-          },
-        ],
+      set((state) => ({
+        messages: [...state.messages, ...createMissingConfigMessages(text)],
       }));
       return;
     }
 
-    invalidateActiveRequest({ abort: true });
+    const { diagram } = useDiagramStore.getState();
+    const framework = resolveFramework(diagram.frameworkId);
+    const request = beginChatRequest(diagram.id, { abortPrevious: true });
 
-    // If user types while a suggestion is pending, they're responding conversationally
     if (get().pendingSuggestions) {
       set({ pendingSuggestions: null });
     }
 
-    const userMsg: DisplayMessage = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content: text,
-      ...(displayText ? { displayText } : {}),
-      ...(image ? { images: [image] } : {}),
-      ...(document ? { documents: [document] } : {}),
-    };
-
-    set((s) => ({
-      messages: [...s.messages, userMsg],
+    const userMessage = createUserMessage(text, image, displayText, document);
+    set((state) => ({
+      messages: [...state.messages, userMessage],
       loading: true,
       streamingContent: '',
     }));
 
-    const { diagram } = useDiagramStore.getState();
-    const framework = resolveFramework(diagram.frameworkId);
-    const requestId = activeRequestId + 1;
-    const requestDiagramId = diagram.id;
-    activeRequestId = requestId;
-
-    // Build conversation history
     const history = buildConversationHistory(get().messages);
-
     const errorCtx: ErrorMetadataContext = {
       provider,
       model,
@@ -195,31 +122,41 @@ export const useChatStore = create<ChatState>((set, get) => ({
       history,
       {
         onToken: (token) => {
-          if (!isActiveRequest(requestId, requestDiagramId)) return;
-          set((s) => ({ streamingContent: s.streamingContent + token }));
+          if (!isChatRequestActive(request, useDiagramStore.getState().diagram.id)) return;
+          set((state) => ({ streamingContent: state.streamingContent + token }));
         },
 
         onDone: (result) => {
-          if (!isActiveRequest(requestId, requestDiagramId)) return;
-          if (activeController === controller) {
-            activeController = null;
-          }
+          if (!isChatRequestActive(request, useDiagramStore.getState().diagram.id)) return;
+          releaseChatRequestController(request, controller);
 
           try {
-            const outcome = processStreamDone(result, diagram, framework, errorCtx, get().streamingContent.length);
-            set((s) => ({
-              messages: [...s.messages, outcome.assistantMsg],
+            const outcome = processStreamDone(
+              result,
+              diagram,
+              framework,
+              errorCtx,
+              get().streamingContent.length,
+            );
+            set((state) => ({
+              messages: [...state.messages, outcome.assistantMsg],
               loading: false,
               streamingContent: '',
-              ...(outcome.pendingSuggestions ? { pendingSuggestions: outcome.pendingSuggestions } : {}),
+              ...(outcome.pendingSuggestions
+                ? { pendingSuggestions: outcome.pendingSuggestions }
+                : {}),
             }));
           } catch (processingError) {
-            const err = processingError instanceof Error ? processingError : new Error(String(processingError));
-            reportStreamError(err, errorCtx);
+            const error = processingError instanceof Error
+              ? processingError
+              : new Error(String(processingError));
+            reportStreamError(error, errorCtx);
             try {
-              const fallback = createAssistantMessage(`Error: ${err.message}`, { retryText: text });
-              set((s) => ({
-                messages: [...s.messages, fallback],
+              const fallback = createAssistantMessage(`Error: ${error.message}`, {
+                retryText: text,
+              });
+              set((state) => ({
+                messages: [...state.messages, fallback],
                 loading: false,
                 streamingContent: '',
               }));
@@ -230,15 +167,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
         },
 
         onError: (error) => {
-          if (!isActiveRequest(requestId, requestDiagramId)) return;
-          if (activeController === controller) {
-            activeController = null;
-          }
+          if (!isChatRequestActive(request, useDiagramStore.getState().diagram.id)) return;
+          releaseChatRequestController(request, controller);
+
           reportStreamError(error, errorCtx);
           try {
-            const errorMsg = createAssistantMessage(`Error: ${error.message}`, { retryText: text });
-            set((s) => ({
-              messages: [...s.messages, errorMsg],
+            const errorMsg = createAssistantMessage(`Error: ${error.message}`, {
+              retryText: text,
+            });
+            set((state) => ({
+              messages: [...state.messages, errorMsg],
               loading: false,
               streamingContent: '',
             }));
@@ -250,39 +188,42 @@ export const useChatStore = create<ChatState>((set, get) => ({
       provider,
       true,
     );
-    activeController = controller;
+
+    attachChatRequestController(request, controller);
   },
 
   cancelStream: () => {
-    const requestId = activeRequestId;
-    if (activeController) {
-      activeController.abort();
-      activeController = null;
-    }
-    if (activeRequestId === requestId) {
-      activeRequestId += 1;
-    }
+    cancelActiveChatRequest();
+
     const streaming = get().streamingContent;
     if (streaming) {
       const partialMsg = createAssistantMessage(streaming);
-      set((s) => ({
-        messages: [...s.messages, partialMsg],
+      set((state) => ({
+        messages: [...state.messages, partialMsg],
         loading: false,
         streamingContent: '',
       }));
-    } else {
-      set({ loading: false, streamingContent: '' });
+      return;
     }
+
+    set({ loading: false, streamingContent: '' });
   },
 
   clearMessages: () => {
-    invalidateActiveRequest({ abort: true });
-    set({ messages: [], loading: false, streamingContent: '', pendingSuggestions: null });
+    cancelActiveChatRequest();
+    set({
+      messages: [],
+      loading: false,
+      streamingContent: '',
+      pendingSuggestions: null,
+    });
   },
+
   clearAiModified: () => set({ aiModifiedNodeIds: new Set() }),
+
   removeAiModified: (nodeId) =>
-    set((s) => {
-      const next = new Set(s.aiModifiedNodeIds);
+    set((state) => {
+      const next = new Set(state.aiModifiedNodeIds);
       next.delete(nodeId);
       return { aiModifiedNodeIds: next };
     }),
@@ -291,23 +232,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const { pendingSuggestions } = get();
     if (!pendingSuggestions) return;
 
-    const chosen = pendingSuggestions.find((s) => s.frameworkId === frameworkId);
+    const chosen = pendingSuggestions.find((suggestion) => suggestion.frameworkId === frameworkId);
     if (!chosen) return;
 
-    const fw = getFramework(frameworkId);
-    if (!fw) return;
+    const framework = getFramework(frameworkId);
+    if (!framework) return;
 
-    // Capture diagram content before setFramework resets it
     const { diagram: prevDiagram } = useDiagramStore.getState();
     let priorContext = '';
     if (prevDiagram.nodes.length > 0 || prevDiagram.edges.length > 0) {
       const nodeLabels = prevDiagram.nodes
-        .map((n) => n.data.label)
+        .map((node) => node.data.label)
         .filter(Boolean);
-      const edgeDescs = prevDiagram.edges.map((e) => {
-        const src = prevDiagram.nodes.find((n) => n.id === e.source)?.data.label ?? e.source;
-        const tgt = prevDiagram.nodes.find((n) => n.id === e.target)?.data.label ?? e.target;
-        return `${src} → ${tgt}`;
+      const edgeDescs = prevDiagram.edges.map((edge) => {
+        const sourceLabel = prevDiagram.nodes.find((node) => node.id === edge.source)?.data.label
+          ?? edge.source;
+        const targetLabel = prevDiagram.nodes.find((node) => node.id === edge.target)?.data.label
+          ?? edge.target;
+        return `${sourceLabel} → ${targetLabel}`;
       });
       priorContext = `\n\nThe previous diagram "${prevDiagram.name}" (${prevDiagram.frameworkId}) had these elements:\nNodes: ${nodeLabels.join(', ')}\nEdges: ${edgeDescs.join(', ')}\n\nUse this content as the basis for the new diagram.`;
     }
@@ -315,7 +257,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     useDiagramStore.getState().setFramework(frameworkId);
     set({ pendingSuggestions: null });
 
-    const cleanText = `Let's use ${fw.name}. Build the diagram based on what I've described, or ask me for more details if needed.`;
+    const cleanText = `Let's use ${framework.name}. Build the diagram based on what I've described, or ask me for more details if needed.`;
     get().sendMessage(
       cleanText + priorContext,
       undefined,
@@ -324,14 +266,4 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 }));
 
-let lastPersistedChatState = serializeChatState(useChatStore.getState());
-
-if (typeof window !== 'undefined') {
-  useChatStore.subscribe((state) => {
-    const nextSerialized = serializeChatState(state);
-    if (nextSerialized === lastPersistedChatState) return;
-    lastPersistedChatState = nextSerialized;
-    persistChatState(state);
-  });
-}
-
+installChatStorePersistence(useChatStore);

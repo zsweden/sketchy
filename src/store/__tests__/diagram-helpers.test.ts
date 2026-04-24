@@ -3,14 +3,16 @@ import {
   resolveFramework,
   getDefaultEdgeFields,
   createDiagramForFramework,
-  snapshot,
+} from '../diagram-framework';
+import { snapshot } from '../diagram-snapshot';
+import {
   batchAddNodes,
   batchUpdateNodes,
   batchRemoveNodes,
   batchAddEdges,
   batchUpdateEdges,
   batchRemoveEdges,
-} from '../diagram-helpers';
+} from '../diagram-batch-mutations';
 import { mockFrameworkCRT, mockFrameworkCLD } from '../../test/fixtures';
 import { createEmptyDiagram } from '../../core/types';
 import type { Annotation, DiagramNode, DiagramEdge, DiagramSettings } from '../../core/types';

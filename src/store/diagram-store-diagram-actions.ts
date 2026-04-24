@@ -5,17 +5,21 @@ import { runElkAutoLayout } from '../core/layout/run-elk-auto-layout';
 import { uiEvents } from './ui-events';
 import {
   createDiagramForFramework,
+  resolveFramework,
+} from './diagram-framework';
+import {
   ensureFixedEdgeSides,
+  captureOptimizedEdgeSides,
+} from './diagram-edge-routing';
+import { snapshot } from './diagram-snapshot';
+import {
   batchAddNodes,
   batchUpdateNodes,
   batchRemoveNodes,
   batchAddEdges,
   batchUpdateEdges,
   batchRemoveEdges,
-  snapshot,
-  captureOptimizedEdgeSides,
-  resolveFramework,
-} from './diagram-helpers';
+} from './diagram-batch-mutations';
 import type { DiagramSettings } from '../core/types';
 import type { DiagramState, DiagramStoreContext } from './diagram-store-types';
 

@@ -9,21 +9,62 @@ interface Props {
   availableTags: NodeTag[];
 }
 
-function MultiNodeTagsEditor({ selectedNodes, availableTags }: Props) {
-  const addNodesTag = useDiagramStore((s) => s.addNodesTag);
-  const removeNodesTag = useDiagramStore((s) => s.removeNodesTag);
-  const ids = selectedNodes.map((n) => n.id);
+function SelectionTagsEditor({ selectedNodes, availableTags }: Props) {
+  const updateNodeTags = useDiagramStore((state) => state.updateNodeTags);
+  const addNodesTag = useDiagramStore((state) => state.addNodesTag);
+  const removeNodesTag = useDiagramStore((state) => state.removeNodesTag);
+
+  if (selectedNodes.length === 0 || availableTags.length === 0) return null;
+
+  if (selectedNodes.length === 1) {
+    const node = selectedNodes[0];
+
+    return (
+      <FormField label="Tags">
+        <div className="control-row">
+          {availableTags.map((tag) => {
+            const active = node.data.tags.includes(tag.id);
+            return (
+              <button
+                key={tag.id}
+                className="tag-chip"
+                data-active={active}
+                onClick={() => {
+                  const next = node.data.tags.includes(tag.id)
+                    ? node.data.tags.filter((value) => value !== tag.id)
+                    : [...node.data.tags, tag.id];
+                  updateNodeTags(node.id, next);
+                }}
+                style={active ? { color: tag.color, borderColor: tag.color } : undefined}
+                title={tag.description}
+              >
+                <span className="tag-chip-dot" style={{ backgroundColor: tag.color }} />
+                {tag.name}
+              </button>
+            );
+          })}
+        </div>
+      </FormField>
+    );
+  }
+
+  const ids = selectedNodes.map((node) => node.id);
   const total = selectedNodes.length;
 
   return (
     <FormField label="Tags">
       <div className="section-stack gap-tight">
         {availableTags.map((tag) => {
-          const count = selectedNodes.filter((n) => n.data.tags.includes(tag.id)).length;
+          const count = selectedNodes.filter((node) => node.data.tags.includes(tag.id)).length;
           const allHave = count === total;
           const noneHave = count === 0;
+
           return (
-            <div key={tag.id} className="control-row gap-tight" style={{ alignItems: 'center' }}>
+            <div
+              key={tag.id}
+              className="control-row gap-tight"
+              style={{ alignItems: 'center' }}
+            >
               <span
                 className="tag-chip"
                 style={{
@@ -67,4 +108,4 @@ function MultiNodeTagsEditor({ selectedNodes, availableTags }: Props) {
   );
 }
 
-export default memo(MultiNodeTagsEditor);
+export default memo(SelectionTagsEditor);

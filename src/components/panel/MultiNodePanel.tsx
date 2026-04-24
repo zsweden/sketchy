@@ -1,7 +1,5 @@
-import { useMemo } from 'react';
 import { Lock, Unlock } from 'lucide-react';
-import { useDiagramStore, useFramework } from '../../store/diagram-store';
-import { useGraphDerivations } from '../../hooks/useGraphDerivations';
+import { useDiagramStore } from '../../store/diagram-store';
 import { useNodeAlignmentActions } from '../../hooks/useNodeAlignmentActions';
 import {
   AlignHorizontalIcon,
@@ -9,39 +7,34 @@ import {
   DistributeHorizontalIcon,
   DistributeVerticalIcon,
 } from '../icons/AlignDistributeIcons';
-import MultiNodeTagsEditor from './multi/MultiNodeTagsEditor';
-import MultiNodeJunctionEditor from './multi/MultiNodeJunctionEditor';
 import MultiNodeColorEditor from './multi/MultiNodeColorEditor';
 import type { DiagramNode } from '../../core/types';
+import SelectionTagsEditor from './selection/SelectionTagsEditor';
+import SelectionJunctionEditor from './selection/SelectionJunctionEditor';
+import { useNodeSelectionDetails } from './selection/useNodeSelectionDetails';
 
 interface Props {
   selectedNodes: DiagramNode[];
 }
 
 export default function MultiNodePanel({ selectedNodes }: Props) {
-  const framework = useFramework();
-  const edges = useDiagramStore((s) => s.diagram.edges);
   const deleteNodes = useDiagramStore((s) => s.deleteNodes);
   const toggleNodeLocked = useDiagramStore((s) => s.toggleNodeLocked);
   const distributeNodesHorizontally = useDiagramStore((s) => s.distributeNodesHorizontally);
   const distributeNodesVertically = useDiagramStore((s) => s.distributeNodesVertically);
   const { alignSelectedNodesHorizontally, alignSelectedNodesVertically } = useNodeAlignmentActions();
-  const { degreesMap } = useGraphDerivations(edges, framework.allowsCycles);
-
-  const ids = useMemo(() => selectedNodes.map((n) => n.id), [selectedNodes]);
+  const { framework, degreesMap, ids } = useNodeSelectionDetails(selectedNodes);
 
   return (
     <div className="section-stack">
       <p className="section-heading">{selectedNodes.length} nodes selected</p>
 
-      {framework.nodeTags.length > 0 && (
-        <MultiNodeTagsEditor
-          selectedNodes={selectedNodes}
-          availableTags={framework.nodeTags}
-        />
-      )}
+      <SelectionTagsEditor
+        selectedNodes={selectedNodes}
+        availableTags={framework.nodeTags}
+      />
 
-      <MultiNodeJunctionEditor
+      <SelectionJunctionEditor
         selectedNodes={selectedNodes}
         framework={framework}
         degreesMap={degreesMap}

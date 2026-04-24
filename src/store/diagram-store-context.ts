@@ -1,5 +1,5 @@
 import { UndoRedoManager } from '../core/history/undo-redo';
-import { snapshot } from './diagram-helpers';
+import { snapshot } from './diagram-snapshot';
 import type { Diagram, DiagramNode } from '../core/types';
 import type {
   DiagramSnapshot,

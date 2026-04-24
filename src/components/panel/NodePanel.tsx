@@ -1,25 +1,21 @@
 import { useEffect, useMemo } from 'react';
 import type { DiagramNode } from '../../core/types';
-import { useDiagramStore, useFramework } from '../../store/diagram-store';
 import { useChatStore } from '../../store/chat-store';
 import { getDerivedIndicators } from '../../core/graph/derived';
-import { useGraphDerivations } from '../../hooks/useGraphDerivations';
 import NodeHeader from './node/NodeHeader';
 import NodeTextFields from './node/NodeTextFields';
 import NodeValueUnit from './node/NodeValueUnit';
-import NodeTagsEditor from './node/NodeTagsEditor';
-import NodeJunctionEditor from './node/NodeJunctionEditor';
 import NodeDerivedIndicators from './node/NodeDerivedIndicators';
 import NodeLoopMembership from './node/NodeLoopMembership';
+import SelectionTagsEditor from './selection/SelectionTagsEditor';
+import SelectionJunctionEditor from './selection/SelectionJunctionEditor';
+import { useNodeSelectionDetails } from './selection/useNodeSelectionDetails';
 
 interface Props {
   node: DiagramNode;
 }
 
 export default function NodePanel({ node }: Props) {
-  const framework = useFramework();
-  const nodes = useDiagramStore((s) => s.diagram.nodes);
-  const edges = useDiagramStore((s) => s.diagram.edges);
   const removeAiModified = useChatStore((s) => s.removeAiModified);
 
   // Clear the AI-modified green dot when the user views this node
@@ -27,16 +23,11 @@ export default function NodePanel({ node }: Props) {
     removeAiModified(node.id);
   }, [node.id, removeAiModified]);
 
-  const { degreesMap, labeledLoops } = useGraphDerivations(edges, framework.allowsCycles);
-  const degrees = degreesMap.get(node.id) ?? { indegree: 0, outdegree: 0 };
+  const { framework, degreesMap, labeledLoops, nodeLabels } = useNodeSelectionDetails([node]);
   const derived = getDerivedIndicators(node.id, degreesMap, framework.derivedIndicators);
   const nodeLoops = useMemo(
     () => labeledLoops.filter((loop) => loop.nodeIds.includes(node.id)),
     [labeledLoops, node.id],
-  );
-  const nodeLabels = useMemo(
-    () => new Map(nodes.map((entry) => [entry.id, entry.data.label || entry.id])),
-    [nodes],
   );
 
   return (
@@ -54,18 +45,14 @@ export default function NodePanel({ node }: Props) {
           unit={node.data.unit ?? ''}
         />
       )}
-      {framework.nodeTags.length > 0 && (
-        <NodeTagsEditor
-          nodeId={node.id}
-          tags={node.data.tags}
-          availableTags={framework.nodeTags}
-        />
-      )}
-      <NodeJunctionEditor
-        nodeId={node.id}
+      <SelectionTagsEditor
+        selectedNodes={[node]}
+        availableTags={framework.nodeTags}
+      />
+      <SelectionJunctionEditor
+        selectedNodes={[node]}
         framework={framework}
-        indegree={degrees.indegree}
-        junctionType={node.data.junctionType}
+        degreesMap={degreesMap}
       />
       <NodeDerivedIndicators indicators={derived} />
       {framework.allowsCycles && (

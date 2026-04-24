@@ -5,7 +5,10 @@ import { useDiagramStore, useFramework } from '../store/diagram-store';
 import { useUIStore } from '../store/ui-store';
 import { useSettingsStore } from '../store/settings-store';
 import { getSourceHandleId, getTargetHandleId } from '../core/graph/ports';
-import { getAutomaticEdgeSides, getStoredOrAutomaticEdgeSides } from '../store/diagram-helpers';
+import {
+  getAutomaticEdgeSides,
+  getStoredOrAutomaticEdgeSides,
+} from '../store/diagram-edge-routing';
 import { computeNodeHighlightState, computeEdgeLabel } from '../core/graph/rendering';
 import { getTheme } from '../styles/themes';
 import { ARROW_MARKER_SIZE } from '../constants/layout';

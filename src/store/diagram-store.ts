@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { createDiagramForFramework, resolveFramework } from './diagram-helpers';
+import { createDiagramForFramework, resolveFramework } from './diagram-framework';
 import { createDiagramStoreContext } from './diagram-store-context';
 import { createDiagramActions, initialFramework } from './diagram-store-diagram-actions';
 import { createDiagramAnnotationActions } from './diagram-store-annotation-actions';

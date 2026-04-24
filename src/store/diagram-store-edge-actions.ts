@@ -2,10 +2,12 @@ import { DEFAULT_EDGE_ROUTING_CONFIG, DEFAULT_EDGE_ROUTING_POLICY } from '../cor
 import { findExistingEdge, validateEdge } from '../core/graph/validation';
 import {
   getDefaultEdgeFields,
+  resolveFramework,
+} from './diagram-framework';
+import {
   resolveEdgeSides,
   captureOptimizedEdgeSides,
-  resolveFramework,
-} from './diagram-helpers';
+} from './diagram-edge-routing';
 import { getDefaultJunctionType, type Framework } from '../core/framework-types';
 import type { DiagramEdge, JunctionType } from '../core/types';
 import type { DiagramState, DiagramStoreContext } from './diagram-store-types';

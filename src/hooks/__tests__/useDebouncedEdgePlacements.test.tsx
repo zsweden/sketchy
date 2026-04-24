@@ -4,7 +4,7 @@ import { useDebouncedEdgePlacements, EDGE_PLACEMENTS_DEBOUNCE_MS } from '../useD
 import { buildChain } from '../../test/layout-benchmark-fixtures';
 import { createEmptyDiagram } from '../../core/types';
 import { DEFAULT_EDGE_ROUTING_CONFIG, DEFAULT_EDGE_ROUTING_POLICY } from '../../core/edge-routing';
-import * as diagramHelpers from '../../store/diagram-helpers';
+import * as diagramEdgeRouting from '../../store/diagram-edge-routing';
 
 describe('useDebouncedEdgePlacements', () => {
   beforeEach(() => {
@@ -56,7 +56,7 @@ describe('useDebouncedEdgePlacements', () => {
     const { nodes, edges } = buildChain(10);
     const settings = createEmptyDiagram('crt').settings;
 
-    const spy = vi.spyOn(diagramHelpers, 'getOptimizedEdgePlacements');
+    const spy = vi.spyOn(diagramEdgeRouting, 'getOptimizedEdgePlacements');
 
     const { result, rerender } = renderHook(
       ({ n }) =>
@@ -97,7 +97,7 @@ describe('useDebouncedEdgePlacements', () => {
     const { nodes, edges } = buildChain(10);
     const settings = createEmptyDiagram('crt').settings;
 
-    const spy = vi.spyOn(diagramHelpers, 'getOptimizedEdgePlacements');
+    const spy = vi.spyOn(diagramEdgeRouting, 'getOptimizedEdgePlacements');
 
     const dragged = nodes.map((node) => ({
       ...node,
@@ -139,7 +139,7 @@ describe('useDebouncedEdgePlacements', () => {
     const { nodes, edges } = buildChain(10);
     const settings = createEmptyDiagram('crt').settings;
 
-    const spy = vi.spyOn(diagramHelpers, 'getOptimizedEdgePlacements');
+    const spy = vi.spyOn(diagramEdgeRouting, 'getOptimizedEdgePlacements');
 
     const { result, rerender } = renderHook(
       ({ e }) =>
@@ -174,7 +174,7 @@ describe('useDebouncedEdgePlacements', () => {
     const { nodes, edges } = buildChain(10);
     const settings = createEmptyDiagram('crt').settings;
 
-    const spy = vi.spyOn(diagramHelpers, 'getOptimizedEdgePlacements');
+    const spy = vi.spyOn(diagramEdgeRouting, 'getOptimizedEdgePlacements');
 
     const { rerender } = renderHook(
       ({ s }) =>
@@ -202,7 +202,7 @@ describe('useDebouncedEdgePlacements', () => {
     const { nodes, edges } = buildChain(10);
     const settings = createEmptyDiagram('crt').settings;
 
-    const spy = vi.spyOn(diagramHelpers, 'getOptimizedEdgePlacements');
+    const spy = vi.spyOn(diagramEdgeRouting, 'getOptimizedEdgePlacements');
 
     const { rerender } = renderHook(
       ({ n }) =>

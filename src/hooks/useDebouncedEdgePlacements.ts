@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DiagramEdge, DiagramNode, DiagramSettings } from '../core/types';
 import type { EdgeHandlePlacement } from '../core/graph/ports';
 import type { EdgeRoutingConfig, EdgeRoutingPolicy } from '../core/edge-routing';
-import { getOptimizedEdgePlacements } from '../store/diagram-helpers';
+import { getOptimizedEdgePlacements } from '../store/diagram-edge-routing';
 
 export const EDGE_PLACEMENTS_DEBOUNCE_MS = 120;
 
