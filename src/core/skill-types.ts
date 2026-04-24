@@ -1,7 +1,7 @@
 import type { EdgeConfidence, EdgeHandleSide, EdgePolarity, JunctionType } from './types';
 import type { LayoutDirection } from './framework-types';
 
-export type SkillKind = 'ai' | 'template';
+type SkillKind = 'ai' | 'template';
 
 interface BaseSkill {
   id: string;
@@ -16,7 +16,7 @@ export interface AISkill extends BaseSkill {
   instructions: string;
 }
 
-export interface TemplateSkillNode {
+interface TemplateSkillNode {
   id: string;
   label: string;
   x: number;
@@ -26,7 +26,7 @@ export interface TemplateSkillNode {
   junctionType?: JunctionType;
 }
 
-export interface TemplateSkillEdge {
+interface TemplateSkillEdge {
   source: string;
   target: string;
   sourceSide?: EdgeHandleSide;

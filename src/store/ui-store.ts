@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { uiEvents } from './ui-events';
 
 type InteractionMode = 'select' | 'pan';
-export type GraphObjectKind = 'node' | 'edge' | 'loop';
+type GraphObjectKind = 'node' | 'edge' | 'loop';
 type ChatPanelMode = 'min' | 'shared' | 'max';
 export interface GraphObjectTarget {
   kind: GraphObjectKind;

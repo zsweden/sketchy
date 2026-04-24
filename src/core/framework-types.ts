@@ -1,4 +1,4 @@
-export interface JunctionOption {
+interface JunctionOption {
   id: string;
   symbol: string;
   label: string;
@@ -84,7 +84,7 @@ export interface NodeTag {
   exclusive: boolean;
 }
 
-export interface EdgeTag {
+interface EdgeTag {
   id: string;
   name: string;
   shortName: string;

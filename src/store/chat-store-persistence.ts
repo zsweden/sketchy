@@ -52,7 +52,7 @@ export function serializeChatState(state: PersistableChatState): string {
   } satisfies PersistedChatState);
 }
 
-export function persistChatState(state: PersistableChatState): void {
+function persistChatState(state: PersistableChatState): void {
   if (typeof window === 'undefined') return;
 
   try {

@@ -1,4 +1,4 @@
-export interface ChatRequestHandle {
+interface ChatRequestHandle {
   requestId: number;
   diagramId: string;
 }

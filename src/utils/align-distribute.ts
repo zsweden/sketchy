@@ -1,4 +1,4 @@
-export interface PositionedItem {
+interface PositionedItem {
   id: string;
   position: { x: number; y: number };
 }

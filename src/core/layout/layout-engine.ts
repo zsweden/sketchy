@@ -27,7 +27,7 @@ export interface LayoutResult {
   y: number;
 }
 
-export interface LayoutEngineOptions {
+interface LayoutEngineOptions {
   direction: LayoutDirection;
   cyclic?: boolean;
   elk?: ElkExperimentSettings;

@@ -1,6 +1,6 @@
 export const SCHEMA_VERSION = 7;
 
-export type EdgeRoutingMode = 'dynamic' | 'fixed';
+type EdgeRoutingMode = 'dynamic' | 'fixed';
 export type CardinalHandleSide = 'top' | 'right' | 'bottom' | 'left';
 export type EdgeHandleSide =
   | CardinalHandleSide

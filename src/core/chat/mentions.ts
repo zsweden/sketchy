@@ -1,7 +1,7 @@
 import type { NamedCausalLoop } from '../graph/derived';
 import type { DiagramEdge, DiagramNode } from '../types';
 
-export type ChatMentionKind = 'node' | 'edge' | 'loop';
+type ChatMentionKind = 'node' | 'edge' | 'loop';
 
 export interface ChatMentionTarget {
   kind: ChatMentionKind;
@@ -10,14 +10,14 @@ export interface ChatMentionTarget {
   rawText: string;
 }
 
-export interface ChatMentionSegment {
+interface ChatMentionSegment {
   type: 'mention';
   displayText: string;
   rawText: string;
   mention: ChatMentionTarget;
 }
 
-export interface ChatTextSegment {
+interface ChatTextSegment {
   type: 'text';
   text: string;
 }
