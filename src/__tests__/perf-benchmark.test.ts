@@ -18,7 +18,7 @@ import { getFramework } from '../frameworks/registry';
 const crtFramework = getFramework('crt')!;
 import { migrate, validateDiagramShape } from '../core/persistence/schema';
 import { buildChain, buildCyclicGraph, buildDenseGraph, buildTree } from '../test/layout-benchmark-fixtures';
-import { getOptimizedEdgePlacements } from '../store/diagram-helpers';
+import { getOptimizedEdgePlacements } from '../store/diagram-edge-routing';
 import { DEFAULT_EDGE_ROUTING_CONFIG, DEFAULT_EDGE_ROUTING_POLICY } from '../core/edge-routing';
 
 const describePerf = process.env.RUN_PERF_TESTS === '1' ? describe : describe.skip;

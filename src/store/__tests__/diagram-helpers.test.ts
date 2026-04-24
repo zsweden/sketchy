@@ -37,7 +37,7 @@ const defaultSettings: DiagramSettings = {
   edgeRoutingMode: 'fixed',
 };
 
-describe('diagram-helpers', () => {
+describe('store helper modules', () => {
   describe('resolveFramework', () => {
     it('returns a known framework by ID', () => {
       const fw = resolveFramework('crt');

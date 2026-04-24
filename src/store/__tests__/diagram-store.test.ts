@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useDiagramStore } from '../diagram-store';
-import { getOptimizedEdgePlacements } from '../diagram-helpers';
+import { getOptimizedEdgePlacements } from '../diagram-edge-routing';
 import { useUIStore } from '../ui-store';
 import { uiEvents } from '../ui-events';
 

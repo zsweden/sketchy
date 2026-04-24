@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Toolbar from '../Toolbar';
 import { createEmptyDiagram } from '../../../core/types';
-import { getOptimizedEdgePlacements } from '../../../store/diagram-helpers';
+import { getOptimizedEdgePlacements } from '../../../store/diagram-edge-routing';
 import { useChatStore } from '../../../store/chat-store';
 import { useDiagramStore } from '../../../store/diagram-store';
 import { useSettingsStore, PROVIDERS } from '../../../store/settings-store';

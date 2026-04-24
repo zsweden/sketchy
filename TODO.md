@@ -42,7 +42,7 @@ Resolved. Edges now stay aligned with node handle anchor points after auto-layou
 - `src/store/diagram-store-diagram-actions.ts` — runAutoLayout, loadDiagram, setFramework, newDiagram
 - `src/store/ui-store.ts` — edgeRefreshTrigger
 - `src/hooks/useCanvasHandlers.ts` — clearCanvasSelection (the manual workaround)
-- `src/store/diagram-helpers.ts` — getNodeBoxes uses DEFAULT_NODE_WIDTH/HEIGHT (160x60) for edge routing
+- `src/store/diagram-edge-routing.ts` — getNodeBoxes uses DEFAULT_NODE_WIDTH/HEIGHT (160x60) for edge routing
 
 **Key observation:**
 The edge routing geometry (`getNodeBoxes`) uses constant `DEFAULT_NODE_WIDTH=160` / `DEFAULT_NODE_HEIGHT=60`, while React Flow measures actual DOM dimensions. If actual rendered node sizes differ from these constants, edge handle placements will be computed incorrectly. This discrepancy would explain why clicking the background (which forces RF to use its own measured positions) fixes the alignment.

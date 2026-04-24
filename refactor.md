@@ -9,7 +9,7 @@ Completed.
 This refactor covers six structural changes:
 
 1. Split the chat pipeline into smaller modules.
-2. Break `diagram-helpers.ts` into focused store modules.
+2. Break the old diagram helper layer into focused store modules.
 3. Finish extracting React Flow adapter logic from the canvas layer.
 4. Thin orchestration-heavy UI components.
 5. Consolidate single-node and multi-node editing around shared selection editors.

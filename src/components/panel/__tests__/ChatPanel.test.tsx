@@ -5,7 +5,7 @@ import ChatPanel from '../ChatPanel';
 import { findCausalLoops, labelCausalLoops } from '../../../core/graph/derived';
 import { useChatStore } from '../../../store/chat-store';
 import { useDiagramStore } from '../../../store/diagram-store';
-import { resolveFramework } from '../../../store/diagram-helpers';
+import { resolveFramework } from '../../../store/diagram-framework';
 import { useSettingsStore } from '../../../store/settings-store';
 import { useUIStore } from '../../../store/ui-store';
 import { uiEvents } from '../../../store/ui-events';
