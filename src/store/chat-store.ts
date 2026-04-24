@@ -170,7 +170,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     const { diagram } = useDiagramStore.getState();
     const framework = resolveFramework(diagram.frameworkId);
-    const { responseStyle } = useSettingsStore.getState();
     const requestId = activeRequestId + 1;
     const requestDiagramId = diagram.id;
     activeRequestId = requestId;
@@ -250,7 +249,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       },
       provider,
       true,
-      responseStyle,
     );
     activeController = controller;
   },

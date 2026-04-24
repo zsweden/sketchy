@@ -29,15 +29,12 @@ function detectProvider(baseUrl: string): string {
   return match?.id ?? 'custom';
 }
 
-export type ResponseStyle = 'concise' | 'detailed';
-
 interface StoredSettings {
   apiKey: string;
   baseUrl: string;
   model: string;
   provider?: string;
   theme?: string;
-  responseStyle?: ResponseStyle;
 }
 
 const DEFAULT_SETTINGS: StoredSettings = {
@@ -46,7 +43,6 @@ const DEFAULT_SETTINGS: StoredSettings = {
   model: '',
   provider: PROVIDERS[0].id,
   theme: DEFAULT_THEME,
-  responseStyle: 'concise',
 };
 
 interface SettingsState {
@@ -55,7 +51,6 @@ interface SettingsState {
   openaiApiKey: string;
   baseUrl: string;
   model: string;
-  responseStyle: ResponseStyle;
   settingsOpen: boolean;
   availableModels: ModelInfo[];
   modelsLoading: boolean;
@@ -66,7 +61,6 @@ interface SettingsState {
   setOpenaiApiKey: (key: string) => void;
   setBaseUrl: (url: string) => void;
   setModel: (model: string) => void;
-  setResponseStyle: (style: ResponseStyle) => void;
   toggleSettings: () => void;
   closeSettings: () => void;
   refreshModels: () => void;
@@ -87,7 +81,6 @@ function loadSettings(): StoredSettings {
         model: parsed.model ?? '',
         provider: parsed.provider ?? detectProvider(baseUrl),
         theme: parsed.theme ?? DEFAULT_THEME,
-        responseStyle: parsed.responseStyle ?? 'concise',
       };
     }
   } catch { /* ignore */ }
@@ -146,7 +139,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     openaiApiKey: initial.apiKey,
     baseUrl: initial.baseUrl,
     model: initial.model,
-    responseStyle: initial.responseStyle ?? 'concise',
     settingsOpen: false,
     availableModels: [],
     modelsLoading: false,
@@ -183,11 +175,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       set({ model });
     },
 
-    setResponseStyle: (style) => {
-      saveSettings({ responseStyle: style });
-      set({ responseStyle: style });
-    },
-
     toggleSettings: () => set((s) => ({ settingsOpen: !s.settingsOpen })),
     closeSettings: () => set({ settingsOpen: false }),
     refreshModels,
@@ -213,7 +200,6 @@ window.addEventListener('storage', (e) => {
       model: parsed.model ?? '',
       provider: newProvider,
       theme: (parsed.theme as ThemeId) ?? DEFAULT_THEME,
-      responseStyle: parsed.responseStyle ?? 'concise',
     });
     useSettingsStore.getState().refreshModels();
   } catch { /* ignore malformed data */ }

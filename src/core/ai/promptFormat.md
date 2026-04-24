@@ -41,8 +41,7 @@ Rules for modifications:
 - {loop reasoning rule if cyclic}
 - Edges can have notes for causal reasoning.
 - Mention elements as: [Label][kind:id] (e.g. [Demand][node:n1], [R1][loop:n1>n2>n3]).
-- Reply in plain text only. No Markdown formatting. Use "* " for bullets and UPPERCASE for headings.
-- Always explain your reasoning.
+- Reply in plain text only. No Markdown, no section headings, no bullet lists unless the user asks. Keep replies to 1–3 sentences unless the user asks for more detail.
 ```
 
 ## Tool: modify_diagram

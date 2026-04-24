@@ -41,28 +41,17 @@ describe('guide-mode system prompt', () => {
   });
 });
 
-describe('responseStyle', () => {
-  it('concise style omits "explain your reasoning" and adds brevity instruction', () => {
-    const prompt = buildSystemPrompt(emptyDiagram, crtFramework, 'concise');
-    expect(prompt).not.toContain('Always explain your reasoning');
-    expect(prompt).toContain('concise');
-  });
-
-  it('detailed style includes "explain your reasoning"', () => {
-    const prompt = buildSystemPrompt(emptyDiagram, crtFramework, 'detailed');
-    expect(prompt).toContain('Always explain your reasoning');
-  });
-
-  it('defaults to concise when no style provided', () => {
+describe('brevity instructions', () => {
+  it('instructs the model to keep replies short without section headings', () => {
     const prompt = buildSystemPrompt(emptyDiagram, crtFramework);
+    expect(prompt).toContain('1–3 sentences');
+    expect(prompt).toContain('No Markdown');
     expect(prompt).not.toContain('Always explain your reasoning');
   });
 
-  it('guide mode prompt respects responseStyle', () => {
-    const concise = buildGuideSystemPrompt(emptyDiagram, crtFramework, 'concise');
-    const detailed = buildGuideSystemPrompt(emptyDiagram, crtFramework, 'detailed');
-    expect(concise).not.toContain('Always explain your reasoning');
-    expect(detailed).toContain('Always explain your reasoning');
+  it('guide mode prompt inherits the brevity instructions', () => {
+    const prompt = buildGuideSystemPrompt(emptyDiagram, crtFramework);
+    expect(prompt).toContain('1–3 sentences');
   });
 });
 

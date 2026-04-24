@@ -40,7 +40,7 @@ function buildLoopAnalysis(diagram: Diagram): string {
   return `Detected feedback loops:\n${lines.join('\n')}`;
 }
 
-export function buildSystemPrompt(diagram: Diagram, framework: Framework, responseStyle: 'concise' | 'detailed' = 'concise'): string {
+export function buildSystemPrompt(diagram: Diagram, framework: Framework): string {
   const isMathJunctionsLocal = getJunctionOptions(framework).some((o) => o.id === 'add' || o.id === 'multiply');
   const defaultJunction = isMathJunctionsLocal ? 'add' : 'or';
   const nodesDesc = diagram.nodes
@@ -136,13 +136,12 @@ Rules for modifications:
 - ${loopReasoningRule}
 - Edges can have notes — use them to explain the causal reasoning behind the connection.
 - When mentioning diagram elements in prose, use this exact format: [Label][kind:id]. The two bracket groups must be adjacent with NO space between them. Examples: [Demand][node:n1], [Demand -> Growth][edge:e1], [R1][loop:n1>n2>n3]. WRONG: R1 [loop:n1>n2>n3]. CORRECT: [R1][loop:n1>n2>n3]. Never put punctuation inside the kind:id bracket. If you cannot form a valid mention, fall back to plain text rather than inventing IDs.
-- Reply in plain text only. Do not use Markdown formatting such as headings (#), bold (**), italic (*), tables, or code fences. Use "* " to start bullet points and UPPERCASE for section headings (e.g. "ANALYSIS").
-- ${responseStyle === 'detailed' ? 'Always explain your reasoning.' : 'Be concise. Lead with the key insight or action, then add brief reasoning only when it is not obvious.'}${framework.systemPromptHint ? `\n\nFramework-specific guidance:\n${framework.systemPromptHint}` : ''}`;
+- Reply in plain text only. No Markdown, no section headings, no bullet lists unless the user explicitly asks for a list. Keep replies to 1–3 sentences unless the user asks for more detail. No preamble, no restating the question, no trailing summary.${framework.systemPromptHint ? `\n\nFramework-specific guidance:\n${framework.systemPromptHint}` : ''}`;
 }
 
-export function buildGuideSystemPrompt(diagram: Diagram, framework: Framework, responseStyle: 'concise' | 'detailed' = 'concise'): string {
+export function buildGuideSystemPrompt(diagram: Diagram, framework: Framework): string {
   // Start with the full normal system prompt (diagram state, current framework rules, modify_diagram)
-  const basePrompt = buildSystemPrompt(diagram, framework, responseStyle);
+  const basePrompt = buildSystemPrompt(diagram, framework);
 
   // Build the alternatives list (all frameworks except the current one)
   const alternatives = listFrameworks()

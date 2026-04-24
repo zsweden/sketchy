@@ -653,7 +653,7 @@ describe('buildSystemPrompt framework-agnostic', () => {
     expect(systemContent).toContain('[Demand][node:n1]');
     expect(systemContent).toContain('[Demand -> Growth][edge:e1]');
     expect(systemContent).toContain('[R1][loop:n1>n2>n3]');
-    expect(systemContent).toContain('Reply in plain text only. Do not use Markdown formatting');
+    expect(systemContent).toContain('Reply in plain text only. No Markdown');
     vi.unstubAllGlobals();
   });
 
