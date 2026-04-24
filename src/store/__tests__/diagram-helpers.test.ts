@@ -13,7 +13,7 @@ import {
 } from '../diagram-helpers';
 import { mockFrameworkCRT, mockFrameworkCLD } from '../../test/fixtures';
 import { createEmptyDiagram } from '../../core/types';
-import type { DiagramNode, DiagramEdge, DiagramSettings } from '../../core/types';
+import type { Annotation, DiagramNode, DiagramEdge, DiagramSettings } from '../../core/types';
 
 function makeNode(id: string, label = ''): DiagramNode {
   return {
@@ -85,6 +85,28 @@ describe('diagram-helpers', () => {
       const result = snapshot({ diagram });
       expect(result.nodes).toBe(diagram.nodes);
       expect(result.edges).toBe(diagram.edges);
+    });
+
+    it('includes annotations', () => {
+      const diagram = createEmptyDiagram('crt');
+      const ann: Annotation = {
+        id: 'a1',
+        kind: 'rect',
+        position: { x: 10, y: 20 },
+        size: { width: 100, height: 60 },
+        data: {},
+      };
+      diagram.annotations = [ann];
+
+      const result = snapshot({ diagram });
+      expect(result.annotations).toBe(diagram.annotations);
+    });
+  });
+
+  describe('createEmptyDiagram', () => {
+    it('initializes an empty annotations array', () => {
+      const diagram = createEmptyDiagram('crt');
+      expect(diagram.annotations).toEqual([]);
     });
   });
 

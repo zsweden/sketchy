@@ -83,6 +83,10 @@ export function createDiagramStoreContext(
         const position = positions.get(node.id);
         return position ? { ...node, position } : node;
       }),
+      annotations: diagram.annotations.map((ann) => {
+        const position = positions.get(ann.id);
+        return position ? { ...ann, position } : ann;
+      }),
     }));
   };
 

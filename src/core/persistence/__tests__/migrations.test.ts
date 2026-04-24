@@ -86,6 +86,40 @@ describe('migrations', () => {
     });
   });
 
+  describe('v6 → v7', () => {
+    const v6Base = {
+      schemaVersion: 6,
+      id: 'test',
+      name: 'Test',
+      frameworkId: 'crt',
+      settings: { layoutDirection: 'BT', showGrid: true, snapToGrid: false, edgeRoutingMode: 'fixed' },
+      nodes: [],
+      edges: [],
+    };
+
+    it('adds empty annotations array to legacy diagrams', () => {
+      const result = migrations[6](v6Base);
+      expect(result.annotations).toEqual([]);
+    });
+
+    it('preserves existing annotations if present', () => {
+      const data = {
+        ...v6Base,
+        annotations: [
+          { id: 'a1', kind: 'rect', position: { x: 0, y: 0 }, size: { width: 100, height: 100 }, data: {} },
+        ],
+      };
+      const result = migrations[6](data);
+      expect(result.annotations).toHaveLength(1);
+      expect((result.annotations as Array<Record<string, unknown>>)[0].id).toBe('a1');
+    });
+
+    it('updates schemaVersion to 7', () => {
+      const result = migrations[6](v6Base);
+      expect(result.schemaVersion).toBe(7);
+    });
+  });
+
   describe('migrate() integration', () => {
     it('migrates v1 data through to current version', () => {
       const v1Data = {
@@ -102,6 +136,7 @@ describe('migrations', () => {
       expect(result.schemaVersion).toBe(SCHEMA_VERSION);
       expect(result.settings).toMatchObject({ edgeRoutingMode: 'dynamic' });
       expect(result.edges[0]).toMatchObject({ confidence: 'high' });
+      expect(result.annotations).toEqual([]);
     });
 
     it('fills missing settings with defaults when schemaVersion is current', () => {

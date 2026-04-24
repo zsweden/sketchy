@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 export type EdgeRoutingMode = 'dynamic' | 'fixed';
 export type CardinalHandleSide = 'top' | 'right' | 'bottom' | 'left';
@@ -21,6 +21,25 @@ export interface Diagram {
   settings: DiagramSettings;
   nodes: DiagramNode[];
   edges: DiagramEdge[];
+  annotations: Annotation[];
+}
+
+export type AnnotationKind = 'text' | 'rect' | 'ellipse' | 'line';
+
+export interface Annotation {
+  id: string;
+  kind: AnnotationKind;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  data: {
+    text?: string;
+    fill?: string;
+    stroke?: string;
+    strokeWidth?: number;
+    fontSize?: number;
+    textColor?: string;
+    flipped?: boolean;
+  };
 }
 
 export interface DiagramSettings {
@@ -79,5 +98,6 @@ export function createEmptyDiagram(frameworkId: string, id?: string): Diagram {
     },
     nodes: [],
     edges: [],
+    annotations: [],
   };
 }

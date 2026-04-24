@@ -87,4 +87,12 @@ export const migrations: Record<
     // Migration 5→6: node value/unit fields are optional, no data transform needed.
     return { ...data, schemaVersion: 6 };
   },
+  6: (data) => {
+    // Migration 6→7: introduces the annotation layer (decorative shapes).
+    return {
+      ...data,
+      schemaVersion: 7,
+      annotations: Array.isArray(data.annotations) ? data.annotations : [],
+    };
+  },
 };

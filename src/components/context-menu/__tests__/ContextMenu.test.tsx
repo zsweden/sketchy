@@ -228,6 +228,169 @@ describe('ContextMenu', () => {
     });
   });
 
+  // --- Multi-node context menu ---
+
+  describe('multi-node context menu', () => {
+    it('routes to multi menu when right-clicked node is part of multi-selection', () => {
+      const idA = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const idB = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      useUIStore.setState({
+        selectedNodeIds: [idA, idB],
+        contextMenu: { x: 100, y: 200, nodeId: idA, edgeId: undefined },
+      });
+      renderContextMenu();
+
+      expect(screen.getByText('2 nodes selected')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Lock All|Unlock All/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Delete All' })).toBeInTheDocument();
+    });
+
+    it('falls through to single-node menu when right-clicked node is not in selection', () => {
+      const idA = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const idB = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      const idC = useDiagramStore.getState().addNode({ x: 200, y: 0 });
+      useUIStore.setState({
+        selectedNodeIds: [idA, idB],
+        contextMenu: { x: 100, y: 200, nodeId: idC, edgeId: undefined },
+      });
+      renderContextMenu();
+
+      // Single-node menu — has 'Delete', not 'Delete All'
+      expect(screen.queryByText('2 nodes selected')).not.toBeInTheDocument();
+      expect(screen.getByText('Delete')).toBeInTheDocument();
+    });
+
+    it('falls through to single-node menu when only one node is selected', () => {
+      const idA = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      useUIStore.setState({
+        selectedNodeIds: [idA],
+        contextMenu: { x: 100, y: 200, nodeId: idA, edgeId: undefined },
+      });
+      renderContextMenu();
+
+      expect(screen.queryByText(/nodes selected/)).not.toBeInTheDocument();
+      expect(screen.getByText('Delete')).toBeInTheDocument();
+    });
+
+    it('adds tag to all selected when Add is clicked', async () => {
+      const user = userEvent.setup();
+      const idA = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const idB = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      useUIStore.setState({
+        selectedNodeIds: [idA, idB],
+        contextMenu: { x: 100, y: 200, nodeId: idA, edgeId: undefined },
+      });
+      renderContextMenu();
+
+      await user.click(
+        screen.getByRole('button', { name: /Add Undesirable Effect to all selected/ }),
+      );
+      const nodes = useDiagramStore.getState().diagram.nodes;
+      expect(nodes.find((n) => n.id === idA)!.data.tags).toContain('ude');
+      expect(nodes.find((n) => n.id === idB)!.data.tags).toContain('ude');
+      expect(useUIStore.getState().contextMenu).toBeNull();
+    });
+
+    it('commits background color to all selected on swatch click and outside close', () => {
+      const idA = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const idB = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      useUIStore.setState({
+        selectedNodeIds: [idA, idB],
+        contextMenu: { x: 100, y: 200, nodeId: idA, edgeId: undefined },
+      });
+      renderContextMenu();
+
+      const bgBlueSwatch = screen.getAllByTitle('Blue')[0];
+      fireEvent.click(bgBlueSwatch);
+
+      // Preview is live on all nodes
+      const afterPreview = useDiagramStore.getState().diagram.nodes;
+      expect(afterPreview.find((n) => n.id === idA)!.data.color).toBe('#3B82F6');
+      expect(afterPreview.find((n) => n.id === idB)!.data.color).toBe('#3B82F6');
+
+      // Close commits via outside click
+      fireEvent.pointerDown(document.body);
+      expect(useUIStore.getState().contextMenu).toBeNull();
+    });
+
+    it('one undo reverts the bulk color commit on all selected nodes', () => {
+      const idA = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const idB = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      useUIStore.setState({
+        selectedNodeIds: [idA, idB],
+        contextMenu: { x: 100, y: 200, nodeId: idA, edgeId: undefined },
+      });
+      renderContextMenu();
+
+      fireEvent.click(screen.getAllByTitle('Blue')[0]);
+      fireEvent.pointerDown(document.body);
+
+      let nodes = useDiagramStore.getState().diagram.nodes;
+      expect(nodes.find((n) => n.id === idA)!.data.color).toBe('#3B82F6');
+      expect(nodes.find((n) => n.id === idB)!.data.color).toBe('#3B82F6');
+
+      useDiagramStore.getState().undo();
+      nodes = useDiagramStore.getState().diagram.nodes;
+      expect(nodes.find((n) => n.id === idA)!.data.color).toBeUndefined();
+      expect(nodes.find((n) => n.id === idB)!.data.color).toBeUndefined();
+    });
+
+    it('reverts colors on Escape', () => {
+      const idA = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const idB = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      useUIStore.setState({
+        selectedNodeIds: [idA, idB],
+        contextMenu: { x: 100, y: 200, nodeId: idA, edgeId: undefined },
+      });
+      renderContextMenu();
+
+      fireEvent.click(screen.getAllByTitle('Green')[0]);
+      fireEvent.keyDown(document, { key: 'Escape' });
+
+      const nodes = useDiagramStore.getState().diagram.nodes;
+      expect(nodes.find((n) => n.id === idA)!.data.color).toBeUndefined();
+      expect(nodes.find((n) => n.id === idB)!.data.color).toBeUndefined();
+      expect(useUIStore.getState().contextMenu).toBeNull();
+    });
+
+    it('deletes all selected nodes on Delete All', async () => {
+      const user = userEvent.setup();
+      const idA = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const idB = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      useUIStore.setState({
+        selectedNodeIds: [idA, idB],
+        contextMenu: { x: 100, y: 200, nodeId: idA, edgeId: undefined },
+      });
+      renderContextMenu();
+
+      await user.click(screen.getByRole('button', { name: 'Delete All' }));
+      expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
+    });
+
+    it('applies junction to eligible nodes only when AND is clicked', async () => {
+      const user = userEvent.setup();
+      const sourceA = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const sourceB = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      const target = useDiagramStore.getState().addNode({ x: 50, y: 100 });
+      const lonely = useDiagramStore.getState().addNode({ x: 200, y: 100 });
+      useDiagramStore.getState().addEdge(sourceA, target);
+      useDiagramStore.getState().addEdge(sourceB, target);
+
+      useUIStore.setState({
+        selectedNodeIds: [target, lonely],
+        contextMenu: { x: 100, y: 200, nodeId: target, edgeId: undefined },
+      });
+      renderContextMenu();
+
+      expect(screen.getByText(/Applies to 1 of 2 selected/)).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'AND' }));
+
+      const nodes = useDiagramStore.getState().diagram.nodes;
+      expect(nodes.find((n) => n.id === target)!.data.junctionType).toBe('and');
+      expect(nodes.find((n) => n.id === lonely)!.data.junctionType).toBe('or');
+    });
+  });
+
   // --- Edge context menu ---
 
   describe('edge context menu', () => {

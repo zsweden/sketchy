@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Lock, Unlock } from 'lucide-react';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useUIStore } from '../../store/ui-store';
-import { useNodeAlignmentActions } from '../../hooks/useNodeAlignmentActions';
 import NodePanel from './NodePanel';
+import MultiNodePanel from './MultiNodePanel';
 import EdgePanel from './EdgePanel';
 import SettingsPanel from './SettingsPanel';
 import ChatPanel from './ChatPanel';
-import { AlignHorizontalIcon, AlignVerticalIcon, DistributeHorizontalIcon, DistributeVerticalIcon } from '../icons/AlignDistributeIcons';
 
 export default function SidePanel() {
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
@@ -16,11 +14,6 @@ export default function SidePanel() {
   const chatPanelMode = useUIStore((s) => s.chatPanelMode);
   const nodes = useDiagramStore((s) => s.diagram.nodes);
   const edges = useDiagramStore((s) => s.diagram.edges);
-  const deleteNodes = useDiagramStore((s) => s.deleteNodes);
-  const toggleNodeLocked = useDiagramStore((s) => s.toggleNodeLocked);
-  const distributeNodesHorizontally = useDiagramStore((s) => s.distributeNodesHorizontally);
-  const distributeNodesVertically = useDiagramStore((s) => s.distributeNodesVertically);
-  const { alignSelectedNodesHorizontally, alignSelectedNodesVertically } = useNodeAlignmentActions();
 
   const getPanelWidthBounds = useCallback(() => {
     const viewportWidth = typeof window === 'undefined' ? 1440 : window.innerWidth;
@@ -142,84 +135,7 @@ export default function SidePanel() {
         {selectedNodes.length === 1 ? (
           <NodePanel node={selectedNodes[0]} />
         ) : selectedNodes.length > 1 ? (
-          <div className="section-stack">
-            <p className="section-heading">
-              {selectedNodes.length} nodes selected
-            </p>
-
-            <div className="section-stack gap-field">
-              <p className="section-label">Align</p>
-              <div className="control-row gap-tight">
-                <button
-                  className="btn btn-secondary btn-xs"
-                  title="Align to same row"
-                  aria-label="Align horizontally"
-                  onClick={() => alignSelectedNodesHorizontally(selectedNodeIds)}
-                >
-                  <AlignHorizontalIcon />
-                </button>
-                <button
-                  className="btn btn-secondary btn-xs"
-                  title="Align to same column"
-                  aria-label="Align vertically"
-                  onClick={() => alignSelectedNodesVertically(selectedNodeIds)}
-                >
-                  <AlignVerticalIcon />
-                </button>
-              </div>
-            </div>
-
-            <div className="section-stack gap-field">
-              <p className="section-label">Distribute</p>
-              <div className="control-row gap-tight">
-                <button
-                  className="btn btn-secondary btn-xs"
-                  title="Space out horizontally"
-                  aria-label="Distribute horizontally"
-                  disabled={selectedNodes.length < 3}
-                  onClick={() => distributeNodesHorizontally(selectedNodeIds)}
-                >
-                  <DistributeHorizontalIcon />
-                </button>
-                <button
-                  className="btn btn-secondary btn-xs"
-                  title="Space out vertically"
-                  aria-label="Distribute vertically"
-                  disabled={selectedNodes.length < 3}
-                  onClick={() => distributeNodesVertically(selectedNodeIds)}
-                >
-                  <DistributeVerticalIcon />
-                </button>
-              </div>
-            </div>
-
-            <div className="section-stack gap-field">
-              <p className="section-label">Position</p>
-              <div className="control-row gap-tight">
-                <button
-                  className="btn btn-secondary btn-xs"
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                  onClick={() => toggleNodeLocked(selectedNodes.map((n) => n.id), true)}
-                >
-                  <Lock size={12} /> Lock All
-                </button>
-                <button
-                  className="btn btn-secondary btn-xs"
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                  onClick={() => toggleNodeLocked(selectedNodes.map((n) => n.id), false)}
-                >
-                  <Unlock size={12} /> Unlock All
-                </button>
-              </div>
-            </div>
-
-            <button
-              className="btn btn-secondary btn-xs"
-              onClick={() => deleteNodes(selectedNodes.map((n) => n.id))}
-            >
-              Delete All
-            </button>
-          </div>
+          <MultiNodePanel selectedNodes={selectedNodes} />
         ) : selectedEdges.length === 1 ? (
           <EdgePanel edge={selectedEdges[0]} />
         ) : (

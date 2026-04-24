@@ -68,6 +68,7 @@ export function applyTemplateSkill(skill: TemplateSkill): void {
     },
     nodes,
     edges,
+    annotations: [],
   };
 
   useDiagramStore.getState().loadDiagram(nextDiagram);

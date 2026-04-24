@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Plus } from 'lucide-react';
 import { useReactFlow } from '@xyflow/react';
 import { useDiagramStore } from '../../store/diagram-store';
@@ -6,11 +6,13 @@ import { useUIStore } from '../../store/ui-store';
 import { useGraphDerivations } from '../../hooks/useGraphDerivations';
 import { useFramework } from '../../store/diagram-store';
 import NodeContextMenu from './NodeContextMenu';
+import MultiNodeContextMenu from './MultiNodeContextMenu';
 import EdgeContextMenu from './EdgeContextMenu';
 
 export default function ContextMenu() {
   const contextMenu = useUIStore((s) => s.contextMenu);
   const closeContextMenu = useUIStore((s) => s.closeContextMenu);
+  const selectedNodeIds = useUIStore((s) => s.selectedNodeIds);
   const { screenToFlowPosition } = useReactFlow();
 
   const nodes = useDiagramStore((s) => s.diagram.nodes);
@@ -66,6 +68,20 @@ export default function ContextMenu() {
     ? degreesMap.get(node.id) ?? { indegree: 0, outdegree: 0 }
     : null;
 
+  const isMulti = !!node
+    && selectedNodeIds.length > 1
+    && selectedNodeIds.includes(node.id);
+
+  const selectedNodes = useMemo(
+    () => (isMulti ? nodes.filter((n) => selectedNodeIds.includes(n.id)) : []),
+    [isMulti, nodes, selectedNodeIds],
+  );
+
+  const multiKey = useMemo(
+    () => (isMulti ? [...selectedNodeIds].sort().join(',') : ''),
+    [isMulti, selectedNodeIds],
+  );
+
   if (!contextMenu) return null;
 
   const registerNodeCloseActions = (actions: { apply: () => void; cancel: () => void } | null) => {
@@ -78,7 +94,18 @@ export default function ContextMenu() {
       className="context-menu"
       style={{ left: contextMenu.x, top: contextMenu.y }}
     >
-      {node ? (
+      {isMulti ? (
+        <MultiNodeContextMenu
+          key={multiKey}
+          selectedNodes={selectedNodes}
+          framework={framework}
+          degreesMap={degreesMap}
+          closeContextMenu={closeContextMenu}
+          beginColorPickerInteraction={() => { suppressOutsideCloseRef.current = true; }}
+          endColorPickerInteraction={() => { suppressOutsideCloseRef.current = false; }}
+          registerCloseActions={registerNodeCloseActions}
+        />
+      ) : node ? (
         <NodeContextMenu
           key={node.id}
           node={node}

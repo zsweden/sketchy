@@ -145,6 +145,7 @@ export function convertSkyJson(data: SkyJson): { diagram: Diagram; needsLayout: 
     },
     nodes,
     edges,
+    annotations: [],
   };
 
   return { diagram, needsLayout: !allHavePositions };

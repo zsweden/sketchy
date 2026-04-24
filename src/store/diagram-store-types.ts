@@ -1,5 +1,7 @@
 import type { StoreApi } from 'zustand';
 import type {
+  Annotation,
+  AnnotationKind,
   Diagram,
   DiagramEdge,
   DiagramNode,
@@ -56,6 +58,7 @@ export interface BatchMutations {
 export interface DiagramSnapshot {
   nodes: DiagramNode[];
   edges: DiagramEdge[];
+  annotations: Annotation[];
 }
 
 export interface NodePositionChange {
@@ -80,6 +83,13 @@ export interface DiagramState {
   commitNodeValue: (id: string, value: number | undefined) => void;
   commitNodeUnit: (id: string, unit: string) => void;
   toggleNodeLocked: (ids: string[], locked: boolean) => void;
+  previewNodesColor: (ids: string[], color: string | undefined) => void;
+  previewNodesTextColor: (ids: string[], color: string | undefined) => void;
+  updateNodesColor: (ids: string[], color: string | undefined) => void;
+  updateNodesTextColor: (ids: string[], color: string | undefined) => void;
+  updateNodesJunction: (ids: string[], type: JunctionType) => void;
+  addNodesTag: (ids: string[], tagId: string) => void;
+  removeNodesTag: (ids: string[], tagId: string) => void;
   moveNodes: (changes: NodePositionChange[]) => void;
   dragNodes: (changes: NodePositionChange[]) => void;
   commitDraggedNodes: () => void;
@@ -108,6 +118,15 @@ export interface DiagramState {
   optimizeEdgesAfterLayout: () => void;
   runAutoLayout: (options?: { commitHistory?: boolean; fitView?: boolean }) => Promise<boolean>;
 
+  addAnnotation: (kind: AnnotationKind, position: { x: number; y: number }) => string;
+  updateAnnotationData: (id: string, data: Partial<Annotation['data']>) => void;
+  commitAnnotationData: (id: string, data: Partial<Annotation['data']>) => void;
+  resizeAnnotation: (
+    id: string,
+    patch: { size: Annotation['size']; position?: Annotation['position'] },
+  ) => void;
+  deleteAnnotations: (ids: string[]) => void;
+
   setFramework: (frameworkId: string) => void;
   updateSettings: (settings: Partial<DiagramSettings>) => void;
   loadDiagram: (diagram: Diagram) => void;
@@ -121,6 +140,12 @@ export interface DiagramState {
   canUndo: boolean;
   canRedo: boolean;
   commitToHistory: () => void;
+  /**
+   * Push a specific snapshot to the undo stack. Used by interactive flows
+   * (e.g., the multi-node color picker) that mutate state via preview actions
+   * before the user commits, so the snapshot must capture the pre-preview state.
+   */
+  pushHistoryEntry: (snapshot: DiagramSnapshot) => void;
 }
 
 export type DiagramStoreSet = StoreApi<DiagramState>['setState'];

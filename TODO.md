@@ -1,5 +1,11 @@
 # TODO
 
+## Features
+
+### [ ] Enable annotation layer on diagram
+
+### [ ] Enable multiple node edit
+
 ## Bugs
 
 ### [x] Edge misalignment after layout/load

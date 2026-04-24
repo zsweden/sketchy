@@ -33,6 +33,7 @@ export function createDiagramActions(
   | 'undo'
   | 'redo'
   | 'commitToHistory'
+  | 'pushHistoryEntry'
 > {
   const { get, history, moveNodes, pushHistorySnapshot, set, undoState, clearPendingNodeMove } = context;
   const focusInitialNode = (nodeId?: string) => {
@@ -201,7 +202,12 @@ export function createDiagramActions(
       const prev = history.undo(snapshot(state));
       if (prev) {
         set((storeState) => ({
-          diagram: { ...storeState.diagram, nodes: prev.nodes, edges: prev.edges },
+          diagram: {
+            ...storeState.diagram,
+            nodes: prev.nodes,
+            edges: prev.edges,
+            annotations: prev.annotations,
+          },
           canUndo: history.canUndo,
           canRedo: history.canRedo,
         }));
@@ -214,7 +220,12 @@ export function createDiagramActions(
       const next = history.redo(snapshot(state));
       if (next) {
         set((storeState) => ({
-          diagram: { ...storeState.diagram, nodes: next.nodes, edges: next.edges },
+          diagram: {
+            ...storeState.diagram,
+            nodes: next.nodes,
+            edges: next.edges,
+            annotations: next.annotations,
+          },
           canUndo: history.canUndo,
           canRedo: history.canRedo,
         }));
@@ -223,6 +234,11 @@ export function createDiagramActions(
 
     commitToHistory: () => {
       pushHistorySnapshot();
+      set(undoState);
+    },
+
+    pushHistoryEntry: (snap) => {
+      pushHistorySnapshot(snap);
       set(undoState);
     },
   };

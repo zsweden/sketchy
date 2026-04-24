@@ -228,6 +228,179 @@ describe('node actions', () => {
     });
   });
 
+  describe('updateNodesColor (bulk)', () => {
+    it('sets color on all given ids without affecting others', () => {
+      const id1 = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const id2 = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      const id3 = useDiagramStore.getState().addNode({ x: 200, y: 0 });
+      useDiagramStore.getState().updateNodesColor([id1, id2], '#abcdef');
+      const nodes = useDiagramStore.getState().diagram.nodes;
+      expect(nodes.find((n) => n.id === id1)!.data.color).toBe('#abcdef');
+      expect(nodes.find((n) => n.id === id2)!.data.color).toBe('#abcdef');
+      expect(nodes.find((n) => n.id === id3)!.data.color).toBeUndefined();
+    });
+
+    it('tracks history once for the bulk operation', () => {
+      const id1 = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const id2 = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      useDiagramStore.getState().updateNodesColor([id1, id2], '#abcdef');
+      useDiagramStore.getState().undo();
+      const nodes = useDiagramStore.getState().diagram.nodes;
+      expect(nodes.find((n) => n.id === id1)!.data.color).toBeUndefined();
+      expect(nodes.find((n) => n.id === id2)!.data.color).toBeUndefined();
+    });
+
+    it('previewNodesColor does not track history', () => {
+      const id1 = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const id2 = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      // Reset undo state by undoing then applying preview
+      useDiagramStore.getState().undo();
+      useDiagramStore.getState().undo();
+      const canUndoBefore = useDiagramStore.getState().canUndo;
+      useDiagramStore.getState().previewNodesColor([id1, id2], '#abcdef');
+      expect(useDiagramStore.getState().canUndo).toBe(canUndoBefore);
+    });
+
+    it('no-op when ids array is empty', () => {
+      const id = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      useDiagramStore.getState().updateNodesColor([], '#abcdef');
+      const node = useDiagramStore.getState().diagram.nodes.find((n) => n.id === id)!;
+      expect(node.data.color).toBeUndefined();
+    });
+
+    it('clears color when passed undefined', () => {
+      const id = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      useDiagramStore.getState().updateNodesColor([id], '#abcdef');
+      useDiagramStore.getState().updateNodesColor([id], undefined);
+      const node = useDiagramStore.getState().diagram.nodes.find((n) => n.id === id)!;
+      expect(node.data.color).toBeUndefined();
+    });
+  });
+
+  describe('updateNodesTextColor (bulk)', () => {
+    it('sets text color on all given ids', () => {
+      const id1 = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const id2 = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      useDiagramStore.getState().updateNodesTextColor([id1, id2], '#123456');
+      const nodes = useDiagramStore.getState().diagram.nodes;
+      expect(nodes.find((n) => n.id === id1)!.data.textColor).toBe('#123456');
+      expect(nodes.find((n) => n.id === id2)!.data.textColor).toBe('#123456');
+    });
+
+    it('previewNodesTextColor does not track history', () => {
+      const id = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      useDiagramStore.getState().undo();
+      const canUndoBefore = useDiagramStore.getState().canUndo;
+      useDiagramStore.getState().previewNodesTextColor([id], '#123456');
+      expect(useDiagramStore.getState().canUndo).toBe(canUndoBefore);
+    });
+  });
+
+  describe('updateNodesJunction (bulk)', () => {
+    it('applies junction type to nodes with indegree >= 2 only', () => {
+      const sourceA = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const sourceB = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      const target = useDiagramStore.getState().addNode({ x: 50, y: 100 });
+      const lonely = useDiagramStore.getState().addNode({ x: 200, y: 100 });
+      useDiagramStore.getState().addEdge(sourceA, target);
+      useDiagramStore.getState().addEdge(sourceB, target);
+      // lonely has no incoming edges; target has indegree 2
+      useDiagramStore.getState().updateNodesJunction([target, lonely], 'and');
+      const nodes = useDiagramStore.getState().diagram.nodes;
+      expect(nodes.find((n) => n.id === target)!.data.junctionType).toBe('and');
+      // lonely should keep its default ('or')
+      expect(nodes.find((n) => n.id === lonely)!.data.junctionType).toBe('or');
+    });
+
+    it('does not push history entry when no nodes are eligible', () => {
+      const id = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      // Drain history so canUndo reflects only this action
+      while (useDiagramStore.getState().canUndo) useDiagramStore.getState().undo();
+      const canUndoBefore = useDiagramStore.getState().canUndo;
+      useDiagramStore.getState().updateNodesJunction([id], 'and');
+      expect(useDiagramStore.getState().canUndo).toBe(canUndoBefore);
+    });
+
+    it('no-op when ids array is empty', () => {
+      while (useDiagramStore.getState().canUndo) useDiagramStore.getState().undo();
+      const canUndoBefore = useDiagramStore.getState().canUndo;
+      useDiagramStore.getState().updateNodesJunction([], 'and');
+      expect(useDiagramStore.getState().canUndo).toBe(canUndoBefore);
+    });
+
+    it('VDT (math framework) treats indegree >= 1 as eligible', () => {
+      useDiagramStore.getState().setFramework('vdt');
+      const source = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const target = useDiagramStore.getState().addNode({ x: 0, y: 100 });
+      useDiagramStore.getState().addEdge(source, target);
+      useDiagramStore.getState().updateNodesJunction([target], 'multiply');
+      const nodes = useDiagramStore.getState().diagram.nodes;
+      expect(nodes.find((n) => n.id === target)!.data.junctionType).toBe('multiply');
+    });
+  });
+
+  describe('addNodesTag (bulk)', () => {
+    it('adds tag to all selected nodes', () => {
+      const id1 = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const id2 = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      useDiagramStore.getState().addNodesTag([id1, id2], 'ude');
+      const nodes = useDiagramStore.getState().diagram.nodes;
+      expect(nodes.find((n) => n.id === id1)!.data.tags).toContain('ude');
+      expect(nodes.find((n) => n.id === id2)!.data.tags).toContain('ude');
+    });
+
+    it('is idempotent — does not duplicate when tag already present', () => {
+      const id = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      useDiagramStore.getState().addNodesTag([id], 'ude');
+      useDiagramStore.getState().addNodesTag([id], 'ude');
+      const node = useDiagramStore.getState().diagram.nodes.find((n) => n.id === id)!;
+      expect(node.data.tags.filter((t) => t === 'ude')).toHaveLength(1);
+    });
+
+    it('enforces per-node exclusivity in a framework with exclusive tags', () => {
+      useDiagramStore.getState().setFramework('issue-tree');
+      const id = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      useDiagramStore.getState().addNodesTag([id], 'question');
+      useDiagramStore.getState().addNodesTag([id], 'hypothesis');
+      const node = useDiagramStore.getState().diagram.nodes.find((n) => n.id === id)!;
+      // Both 'question' and 'hypothesis' are exclusive — last one wins
+      expect(node.data.tags).toContain('hypothesis');
+      expect(node.data.tags).not.toContain('question');
+    });
+
+    it('tracks history once for the bulk operation (single undo reverts all)', () => {
+      const id1 = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const id2 = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      useDiagramStore.getState().addNodesTag([id1, id2], 'ude');
+      useDiagramStore.getState().undo();
+      const nodes = useDiagramStore.getState().diagram.nodes;
+      expect(nodes.find((n) => n.id === id1)!.data.tags).not.toContain('ude');
+      expect(nodes.find((n) => n.id === id2)!.data.tags).not.toContain('ude');
+    });
+  });
+
+  describe('removeNodesTag (bulk)', () => {
+    it('removes tag from all given nodes', () => {
+      const id1 = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const id2 = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      useDiagramStore.getState().addNodesTag([id1, id2], 'ude');
+      useDiagramStore.getState().removeNodesTag([id1, id2], 'ude');
+      const nodes = useDiagramStore.getState().diagram.nodes;
+      expect(nodes.find((n) => n.id === id1)!.data.tags).not.toContain('ude');
+      expect(nodes.find((n) => n.id === id2)!.data.tags).not.toContain('ude');
+    });
+
+    it('does not affect nodes that did not have the tag', () => {
+      const id1 = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      const id2 = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      useDiagramStore.getState().addNodesTag([id1], 'ude');
+      useDiagramStore.getState().removeNodesTag([id1, id2], 'ude');
+      const nodes = useDiagramStore.getState().diagram.nodes;
+      expect(nodes.find((n) => n.id === id1)!.data.tags).not.toContain('ude');
+      expect(nodes.find((n) => n.id === id2)!.data.tags).toEqual([]);
+    });
+  });
+
   describe('alignNodesHorizontally', () => {
     it('does nothing for fewer than 2 items', () => {
       const id = useDiagramStore.getState().addNode({ x: 50, y: 100 });

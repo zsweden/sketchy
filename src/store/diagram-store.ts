@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { createDiagramForFramework, resolveFramework } from './diagram-helpers';
 import { createDiagramStoreContext } from './diagram-store-context';
 import { createDiagramActions, initialFramework } from './diagram-store-diagram-actions';
+import { createDiagramAnnotationActions } from './diagram-store-annotation-actions';
 import { createDiagramEdgeActions } from './diagram-store-edge-actions';
 import { createDiagramNodeActions } from './diagram-store-node-actions';
 import type { DiagramState } from './diagram-store-types';
@@ -15,6 +16,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => {
     diagram: createDiagramForFramework(initialFramework),
     ...createDiagramNodeActions(context),
     ...createDiagramEdgeActions(context),
+    ...createDiagramAnnotationActions(context),
     ...createDiagramActions(context),
     canUndo: false,
     canRedo: false,

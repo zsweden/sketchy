@@ -22,7 +22,7 @@ import {
   type EdgeRoutingPolicy,
   type EdgeRoutingNodeBox,
 } from '../core/edge-routing';
-import type { BatchMutations } from './diagram-store-types';
+import type { BatchMutations, DiagramSnapshot } from './diagram-store-types';
 import { DEFAULT_NODE_HEIGHT, DEFAULT_NODE_WIDTH } from '../constants/layout';
 
 // --- Framework helpers ---
@@ -158,8 +158,12 @@ export function ensureFixedEdgeSides(
 
 // --- Snapshot ---
 
-export function snapshot(state: { diagram: Diagram }): { nodes: DiagramNode[]; edges: DiagramEdge[] } {
-  return { nodes: state.diagram.nodes, edges: state.diagram.edges };
+export function snapshot(state: { diagram: Diagram }): DiagramSnapshot {
+  return {
+    nodes: state.diagram.nodes,
+    edges: state.diagram.edges,
+    annotations: state.diagram.annotations,
+  };
 }
 
 // --- Batch mutation helpers ---

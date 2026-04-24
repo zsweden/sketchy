@@ -215,6 +215,33 @@ describe('diagram actions', () => {
       useDiagramStore.getState().undo();
       expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
     });
+
+    it('restores annotations on undo/redo', () => {
+      // Seed an annotation via direct state manipulation + manual history push,
+      // since annotation actions don't exist yet in this phase.
+      useDiagramStore.getState().commitToHistory();
+      useDiagramStore.setState((s) => ({
+        diagram: {
+          ...s.diagram,
+          annotations: [
+            {
+              id: 'a1',
+              kind: 'rect',
+              position: { x: 0, y: 0 },
+              size: { width: 100, height: 60 },
+              data: {},
+            },
+          ],
+        },
+      }));
+      expect(useDiagramStore.getState().diagram.annotations).toHaveLength(1);
+
+      useDiagramStore.getState().undo();
+      expect(useDiagramStore.getState().diagram.annotations).toHaveLength(0);
+
+      useDiagramStore.getState().redo();
+      expect(useDiagramStore.getState().diagram.annotations).toHaveLength(1);
+    });
   });
 
   describe('commitToHistory', () => {
