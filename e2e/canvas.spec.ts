@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { PANE, createNode, getNodeIds, addEdge, getNodeCenter } from './helpers';
+import { PANE, createNode, getNodeIds, addEdge, getNodeCenter, selectNode } from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -22,7 +22,7 @@ test('creates a node, edits it from the inspector, and restores it after reload'
   const node = page.locator('.entity-node').first();
   await expect(node).toHaveCount(1);
 
-  await node.click();
+  await selectNode(page, node);
   await page.getByLabel('Node text').fill('Root cause');
   await page.getByLabel('Node text').blur();
 

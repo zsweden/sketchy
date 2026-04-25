@@ -22,6 +22,18 @@ export async function getNodeIds(page: import('@playwright/test').Page): Promise
   );
 }
 
+export async function selectNode(
+  page: import('@playwright/test').Page,
+  node: import('@playwright/test').Locator,
+) {
+  await node.click();
+  await page.waitForFunction(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ids = (window as any).__uiStore?.getState().selectedNodeIds;
+    return Array.isArray(ids) && ids.length === 1;
+  });
+}
+
 export async function addEdge(page: import('@playwright/test').Page, sourceId: string, targetId: string) {
   await page.evaluate(
     ([src, tgt]) => // eslint-disable-next-line @typescript-eslint/no-explicit-any

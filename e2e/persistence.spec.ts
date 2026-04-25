@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { PANE, createNode, getNodeIds, addEdge, updateNodeText } from './helpers';
+import { PANE, createNode, getNodeIds, addEdge, updateNodeText, selectNode } from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -22,7 +22,7 @@ test('undo restores a deleted node and redo removes it again', async ({ page }) 
   await expect(page.locator('.entity-node')).toHaveCount(2);
 
   const firstNode = page.locator('.entity-node').first();
-  await firstNode.click();
+  await selectNode(page, firstNode);
   await page.getByLabel('Node text').fill('Keep me');
   await page.getByLabel('Node text').blur();
 
@@ -41,7 +41,7 @@ test('undo restores a deleted node and redo removes it again', async ({ page }) 
 test('saves diagram to sessionStorage, clears, and restores via file load', async ({ page }) => {
   await createNode(page, 200, 250);
   const node = page.locator('.entity-node').first();
-  await node.click();
+  await selectNode(page, node);
   await page.getByLabel('Node text').fill('Saved node');
   await page.getByLabel('Node text').blur();
   await expect(node).toContainText('Saved node');
