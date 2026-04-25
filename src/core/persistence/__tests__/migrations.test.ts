@@ -120,6 +120,27 @@ describe('migrations', () => {
     });
   });
 
+  describe('v7 → v8', () => {
+    it('bumps schemaVersion to 8 without requiring measured node sizes', () => {
+      const data = {
+        schemaVersion: 7,
+        id: 'test',
+        name: 'Test',
+        frameworkId: 'crt',
+        settings: { layoutDirection: 'BT', showGrid: true, snapToGrid: false, edgeRoutingMode: 'fixed' },
+        nodes: [
+          { id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'A', tags: [], junctionType: 'or' } },
+        ],
+        edges: [],
+        annotations: [],
+      };
+
+      const result = migrations[7](data);
+      expect(result.schemaVersion).toBe(8);
+      expect(result.nodes).toHaveLength(1);
+    });
+  });
+
   describe('migrate() integration', () => {
     it('migrates v1 data through to current version', () => {
       const v1Data = {

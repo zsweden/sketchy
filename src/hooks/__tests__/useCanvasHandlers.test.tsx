@@ -307,14 +307,29 @@ describe('useCanvasHandlers', () => {
       expect(snapped.y).not.toBe(42);
     });
 
-    it('calls tryFitViewOnDimensions when dimension changes arrive', () => {
+    it('stores entity node dimensions and calls tryFitViewOnDimensions when dimension changes arrive', () => {
+      const nodeId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
       const { result, tryFitViewOnDimensions } = setup();
       act(() =>
         result.current.onNodesChange([
-          { type: 'dimensions', id: 'n1', dimensions: { width: 100, height: 40 } } as NodeChange,
+          { type: 'dimensions', id: nodeId, dimensions: { width: 100, height: 40 } } as NodeChange,
         ]),
       );
       expect(tryFitViewOnDimensions).toHaveBeenCalled();
+      expect(useDiagramStore.getState().diagram.nodes[0].size).toEqual({ width: 100, height: 40 });
+    });
+
+    it('does not store annotation dimensions as entity node sizes', () => {
+      const annotationId = useDiagramStore.getState().addAnnotation('rect', { x: 0, y: 0 });
+      const { result } = setup();
+
+      act(() =>
+        result.current.onNodesChange([
+          { type: 'dimensions', id: annotationId, dimensions: { width: 100, height: 40 } } as NodeChange,
+        ]),
+      );
+
+      expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
     });
   });
 

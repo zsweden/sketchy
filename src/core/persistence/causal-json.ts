@@ -22,6 +22,8 @@ interface SkyNode {
   locked?: boolean;
   x?: number;
   y?: number;
+  width?: number;
+  height?: number;
 }
 
 interface SkyEdge {
@@ -87,8 +89,11 @@ export function convertSkyJson(data: SkyJson): { diagram: Diagram; needsLayout: 
     // Preserve generic framework tags while keeping legacy isUDE compatibility.
     id: n.id,
     type: 'entity' as const,
-    position: { x: n.x ?? 0, y: n.y ?? 0 },
-    data: {
+      position: { x: n.x ?? 0, y: n.y ?? 0 },
+      ...(typeof n.width === 'number' && typeof n.height === 'number' && n.width > 0 && n.height > 0
+        ? { size: { width: n.width, height: n.height } }
+        : {}),
+      data: {
       label: n.label,
       tags: Array.from(
         new Set([
@@ -184,6 +189,7 @@ export function diagramToSkyJson(diagram: Diagram): SkyJson {
     ...(n.data.locked ? { locked: true } : {}),
     x: n.position.x,
     y: n.position.y,
+    ...(n.size ? { width: n.size.width, height: n.size.height } : {}),
   }));
 
   const edges: SkyEdge[] = diagram.edges.map((e) => ({

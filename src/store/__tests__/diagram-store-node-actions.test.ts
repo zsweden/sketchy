@@ -142,6 +142,29 @@ describe('node actions', () => {
     });
   });
 
+  describe('updateNodeDimensions', () => {
+    it('stores measured node dimensions without tracking history', () => {
+      const id = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      useDiagramStore.setState({ canUndo: false, canRedo: false });
+      const canUndoBefore = useDiagramStore.getState().canUndo;
+
+      useDiagramStore.getState().updateNodeDimensions(id, { width: 180, height: 92 });
+
+      const node = useDiagramStore.getState().diagram.nodes.find((n) => n.id === id)!;
+      expect(node.size).toEqual({ width: 180, height: 92 });
+      expect(useDiagramStore.getState().canUndo).toBe(canUndoBefore);
+    });
+
+    it('ignores invalid measured dimensions', () => {
+      const id = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+
+      useDiagramStore.getState().updateNodeDimensions(id, { width: 0, height: 92 });
+
+      const node = useDiagramStore.getState().diagram.nodes.find((n) => n.id === id)!;
+      expect(node.size).toBeUndefined();
+    });
+  });
+
   describe('commitNodeNotes', () => {
     it('commits notes with history', () => {
       const id = useDiagramStore.getState().addNode({ x: 0, y: 0 });

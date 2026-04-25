@@ -165,6 +165,14 @@ describe('convertSkyJson', () => {
     expect(diagram.nodes[0].data.notes).toBe('some note');
   });
 
+  it('preserves measured node size', () => {
+    const { diagram } = convertSkyJson({
+      nodes: [{ id: 'n1', label: 'A', width: 180, height: 90 }],
+      edges: [],
+    });
+    expect(diagram.nodes[0].size).toEqual({ width: 180, height: 90 });
+  });
+
   it('preserves edge polarity, delay, and notes', () => {
     const { diagram } = convertSkyJson({
       framework: 'cld',
@@ -239,6 +247,23 @@ describe('diagramToSkyJson', () => {
     expect(skyJson.nodes[0].notes).toBe('a note');
     expect(skyJson.edges).toHaveLength(1);
     expect(skyJson.edges[0].source).toBe('n1');
+  });
+
+  it('writes measured node size', () => {
+    const diagram = createEmptyDiagram('crt');
+    diagram.nodes = [
+      {
+        id: 'n1',
+        type: 'entity',
+        position: { x: 10, y: 20 },
+        size: { width: 190, height: 88 },
+        data: { label: 'Sized', tags: [], junctionType: 'or' },
+      },
+    ];
+
+    const skyJson = diagramToSkyJson(diagram);
+    expect(skyJson.nodes[0].width).toBe(190);
+    expect(skyJson.nodes[0].height).toBe(88);
   });
 
   it('persists non-CRT tags generically', () => {

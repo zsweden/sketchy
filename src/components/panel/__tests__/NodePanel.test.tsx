@@ -146,6 +146,40 @@ describe('NodePanel', () => {
     expect(useChatStore.getState().aiModifiedNodeIds.has(nodeId)).toBe(false);
   });
 
+  describe('loop membership (CLD)', () => {
+    beforeEach(() => {
+      useDiagramStore.getState().setFramework('cld');
+      nodeId = useDiagramStore.getState().addNode({ x: 0, y: 0 });
+      useDiagramStore.getState().updateNodeText(nodeId, 'Demand');
+    });
+
+    it('shows the empty loop membership state for CLD nodes outside loops', () => {
+      render(<NodePanel node={getNode(nodeId)} />);
+
+      expect(screen.getByText('Loop Membership')).toBeInTheDocument();
+      expect(screen.getByText('This variable is not part of a detected feedback loop.')).toBeInTheDocument();
+    });
+
+    it('shows detected loops and toggles selected loop', async () => {
+      const user = userEvent.setup();
+      const otherId = useDiagramStore.getState().addNode({ x: 100, y: 0 });
+      useDiagramStore.getState().updateNodeText(otherId, 'Growth');
+      useDiagramStore.getState().addEdge(nodeId, otherId);
+      useDiagramStore.getState().addEdge(otherId, nodeId);
+
+      render(<NodePanel node={getNode(nodeId)} />);
+
+      const loopButton = screen.getByRole('button', { name: /R1/i });
+      expect(screen.getByText((text) => text.includes('Demand') && text.includes('Growth'))).toBeInTheDocument();
+
+      await user.click(loopButton);
+      expect(useUIStore.getState().selectedLoopId).not.toBeNull();
+
+      await user.click(loopButton);
+      expect(useUIStore.getState().selectedLoopId).toBeNull();
+    });
+  });
+
   describe('value/unit fields (VDT)', () => {
     beforeEach(() => {
       useDiagramStore.getState().setFramework('vdt');

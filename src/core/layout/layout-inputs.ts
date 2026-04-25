@@ -17,8 +17,8 @@ export function prepareLayoutNodes(
 
     return {
       id: node.id,
-      width: NODE_WIDTH,
-      height: estimateHeight(node.data.label, hasBadges),
+      width: node.size?.width ?? NODE_WIDTH,
+      height: node.size?.height ?? estimateHeight(node.data.label, hasBadges),
       position: node.position,
       locked: node.data.locked,
     };
@@ -28,4 +28,3 @@ export function prepareLayoutNodes(
 export function prepareLayoutEdges(edges: DiagramEdge[]): LayoutEdgeInput[] {
   return edges.map((edge) => ({ source: edge.source, target: edge.target }));
 }
-

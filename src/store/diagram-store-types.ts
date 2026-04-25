@@ -79,6 +79,7 @@ export interface DiagramState {
   updateNodeColor: (id: string, color: string | undefined) => void;
   updateNodeTextColor: (id: string, textColor: string | undefined) => void;
   updateNodeNotes: (id: string, notes: string) => void;
+  updateNodeDimensions: (id: string, size: { width: number; height: number }) => void;
   commitNodeText: (id: string, label: string) => void;
   commitNodeNotes: (id: string, notes: string) => void;
   commitNodeValue: (id: string, value: number | undefined) => void;

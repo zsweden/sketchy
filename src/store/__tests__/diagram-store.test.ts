@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useDiagramStore } from '../diagram-store';
-import { getOptimizedEdgePlacements } from '../diagram-edge-routing';
+import { getNodeBoxes, getOptimizedEdgePlacements } from '../diagram-edge-routing';
 import { useUIStore } from '../ui-store';
 import { uiEvents } from '../ui-events';
 
@@ -70,6 +70,22 @@ describe('diagram store', () => {
     it('enables undo after adding a node', () => {
       useDiagramStore.getState().addNode({ x: 0, y: 0 });
       expect(useDiagramStore.getState().canUndo).toBe(true);
+    });
+  });
+
+  describe('edge routing geometry inputs', () => {
+    it('uses measured node size when building routing boxes', () => {
+      const id = useDiagramStore.getState().addNode({ x: 10, y: 20 });
+      useDiagramStore.getState().updateNodeDimensions(id, { width: 220, height: 95 });
+
+      const box = getNodeBoxes(useDiagramStore.getState().diagram.nodes).get(id);
+
+      expect(box).toEqual({
+        left: 10,
+        top: 20,
+        right: 230,
+        bottom: 115,
+      });
     });
   });
 

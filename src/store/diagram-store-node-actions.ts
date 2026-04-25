@@ -61,6 +61,7 @@ export function createDiagramNodeActions(
   | 'updateNodeColor'
   | 'updateNodeTextColor'
   | 'updateNodeNotes'
+  | 'updateNodeDimensions'
   | 'commitNodeText'
   | 'commitNodeNotes'
   | 'commitNodeValue'
@@ -191,6 +192,21 @@ export function createDiagramNodeActions(
     updateNodeColor: setNodeDataField<string | undefined>('color', { trackHistory: true }),
     updateNodeTextColor: setNodeDataField<string | undefined>('textColor', { trackHistory: true }),
     updateNodeNotes: setNodeDataField<string>('notes', { coerceEmpty: true }),
+    updateNodeDimensions: (id, size) => {
+      if (!Number.isFinite(size.width) || !Number.isFinite(size.height)) return;
+      if (size.width <= 0 || size.height <= 0) return;
+
+      applyDiagramChange((diagram) => {
+        let changed = false;
+        const nodes = diagram.nodes.map((node) => {
+          if (node.id !== id) return node;
+          if (node.size?.width === size.width && node.size.height === size.height) return node;
+          changed = true;
+          return { ...node, size };
+        });
+        return changed ? { ...diagram, nodes } : diagram;
+      });
+    },
     commitNodeText: setNodeDataField<string>('label', { trackHistory: true }),
     commitNodeNotes: setNodeDataField<string>('notes', { trackHistory: true, coerceEmpty: true }),
     commitNodeValue: setNodeDataField<number | undefined>('value', { trackHistory: true }),

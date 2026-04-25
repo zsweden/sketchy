@@ -12,14 +12,14 @@ import {
 import type { DiagramEdge, DiagramNode, DiagramSettings } from '../core/types';
 import { DEFAULT_NODE_HEIGHT, DEFAULT_NODE_WIDTH } from '../constants/layout';
 
-function getNodeBoxes(nodes: DiagramNode[]): Map<string, EdgeRoutingNodeBox> {
+export function getNodeBoxes(nodes: DiagramNode[]): Map<string, EdgeRoutingNodeBox> {
   return new Map(nodes.map((node) => [
     node.id,
     {
       left: node.position.x,
       top: node.position.y,
-      right: node.position.x + DEFAULT_NODE_WIDTH,
-      bottom: node.position.y + DEFAULT_NODE_HEIGHT,
+      right: node.position.x + (node.size?.width ?? DEFAULT_NODE_WIDTH),
+      bottom: node.position.y + (node.size?.height ?? DEFAULT_NODE_HEIGHT),
     },
   ]));
 }

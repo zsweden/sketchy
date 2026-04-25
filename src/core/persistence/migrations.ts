@@ -95,4 +95,12 @@ export const migrations: Record<
       annotations: Array.isArray(data.annotations) ? data.annotations : [],
     };
   },
+  7: (data) => {
+    // Migration 7→8: nodes may persist measured size. Existing diagrams can
+    // rely on runtime measurement and layout estimates, so no transform needed.
+    return {
+      ...data,
+      schemaVersion: 8,
+    };
+  },
 };

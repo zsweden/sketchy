@@ -26,6 +26,13 @@ describe('prepareLayoutNodes', () => {
     }
   });
 
+  it('uses measured node size when available', () => {
+    const nodes = [makeNode('a', { size: { width: 210, height: 96 } })];
+    const result = prepareLayoutNodes(nodes, []);
+    expect(result[0].width).toBe(210);
+    expect(result[0].height).toBe(96);
+  });
+
   it('estimates height from label length', () => {
     const longLabel = 'A'.repeat(90); // 3 lines worth
     const nodes = [makeNode('a', { data: { label: longLabel, tags: [], junctionType: 'or' } })];

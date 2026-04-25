@@ -38,6 +38,7 @@ export function useCanvasHandlers({
   const batchApply = useDiagramStore((s) => s.batchApply);
   const dragNodes = useDiagramStore((s) => s.dragNodes);
   const commitDraggedNodes = useDiagramStore((s) => s.commitDraggedNodes);
+  const updateNodeDimensions = useDiagramStore((s) => s.updateNodeDimensions);
   const snapToGrid = useDiagramStore((s) => s.diagram.settings.snapToGrid);
   const updateSettings = useDiagramStore((s) => s.updateSettings);
 
@@ -129,10 +130,17 @@ export function useCanvasHandlers({
       }
 
       if (changes.some((c) => c.type === 'dimensions')) {
+        const nodeIds = new Set(useDiagramStore.getState().diagram.nodes.map((node) => node.id));
+        for (const c of changes) {
+          if (c.type !== 'dimensions' || !nodeIds.has(c.id)) continue;
+          const dimensions = 'dimensions' in c ? c.dimensions : undefined;
+          if (!dimensions) continue;
+          updateNodeDimensions(c.id, dimensions);
+        }
         tryFitViewOnDimensions();
       }
     },
-    [dragNodes, snapToGrid, localNodes, scheduleRemovalFlush, tryFitViewOnDimensions, setLocalNodes],
+    [dragNodes, updateNodeDimensions, snapToGrid, localNodes, scheduleRemovalFlush, tryFitViewOnDimensions, setLocalNodes],
   );
 
   const onEdgesChange = useCallback(

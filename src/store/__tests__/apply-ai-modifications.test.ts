@@ -98,4 +98,33 @@ describe('applyAiModifications', () => {
     await new Promise((r) => setTimeout(r, 0));
     expect(runElkAutoLayout).not.toHaveBeenCalled();
   });
+
+  it('drops malformed AI mutations and sanitizes unsupported fields', () => {
+    useDiagramStore.getState().setFramework('crt');
+
+    applyAiModifications({
+      addNodes: [
+        { id: 'good', label: 'Good', tags: ['ude', 'not-a-tag'], color: '#ff00aa', textColor: 'url(bad)', junctionType: 'multiply' },
+        { id: '', label: 'Missing id' },
+        { id: 'bad-label', label: 7 },
+      ],
+      updateNodes: 'not-array',
+      removeNodeIds: ['missing', 7],
+      addEdges: [
+        { source: 'good', target: 'missing', confidence: 'certain', polarity: 'negative', delay: true },
+        { source: '', target: 'good' },
+      ],
+      updateEdges: [{ id: '', confidence: 'low' }],
+      removeEdgeIds: [false, 'edge-1'],
+    } as unknown as DiagramModification);
+
+    const node = useDiagramStore.getState().diagram.nodes[0];
+    expect(useDiagramStore.getState().diagram.nodes).toHaveLength(1);
+    expect(node.data.tags).toEqual(['ude']);
+    expect(node.data.junctionType).toBe('or');
+    expect(node.data.color).toBe('#ff00aa');
+    expect(node.data.textColor).toBeUndefined();
+    expect(node.data.value).toBeUndefined();
+    expect(useChatStore.getState().aiModifiedNodeIds.has(node.id)).toBe(true);
+  });
 });
