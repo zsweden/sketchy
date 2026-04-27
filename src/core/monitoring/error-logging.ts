@@ -200,6 +200,11 @@ export async function reportError(error: unknown, options: ReportErrorOptions): 
     description: buildErrorDescription(error, options),
   };
 
+  if (severity === 'noise') {
+    void logFirebaseException(payload).catch(() => {});
+    return;
+  }
+
   try {
     await Promise.all([
       logFirebaseException(payload),

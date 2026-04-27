@@ -67,40 +67,43 @@ describe('error logging', () => {
     );
   });
 
-  it('logs ResizeObserver noise with severity "noise"', async () => {
+  it('tags ResizeObserver noise to Analytics but skips Firestore', async () => {
     await reportError(
       new Error('ResizeObserver loop completed with undelivered notifications.'),
       { source: 'window.error', fatal: true },
     );
 
-    expect(logFirestoreError).toHaveBeenCalledWith(
+    expect(logFirebaseException).toHaveBeenCalledWith(
       expect.objectContaining({ severity: 'noise' }),
     );
+    expect(logFirestoreError).not.toHaveBeenCalled();
   });
 
-  it('logs HMR getSnapshot noise with severity "noise"', async () => {
+  it('tags HMR getSnapshot noise to Analytics but skips Firestore', async () => {
     await reportError(
       new TypeError("Cannot read properties of null (reading 'getSnapshot')"),
       { source: 'react.error_boundary', fatal: true },
     );
 
-    expect(logFirestoreError).toHaveBeenCalledWith(
+    expect(logFirebaseException).toHaveBeenCalledWith(
       expect.objectContaining({ severity: 'noise' }),
     );
+    expect(logFirestoreError).not.toHaveBeenCalled();
   });
 
-  it('logs HMR hooks-count noise with severity "noise"', async () => {
+  it('tags HMR hooks-count noise to Analytics but skips Firestore', async () => {
     await reportError(
       new Error('Rendered more hooks than during the previous render.'),
       { source: 'react.error_boundary', fatal: true },
     );
 
-    expect(logFirestoreError).toHaveBeenCalledWith(
+    expect(logFirebaseException).toHaveBeenCalledWith(
       expect.objectContaining({ severity: 'noise' }),
     );
+    expect(logFirestoreError).not.toHaveBeenCalled();
   });
 
-  it('logs HMR hooks-queue noise with severity "noise"', async () => {
+  it('tags HMR hooks-queue noise to Analytics but skips Firestore', async () => {
     await reportError(
       new Error(
         'Should have a queue. You are likely calling Hooks conditionally, which is not allowed. (https://react.dev/link/invalid-hook-call)',
@@ -108,9 +111,10 @@ describe('error logging', () => {
       { source: 'react.error_boundary', fatal: true },
     );
 
-    expect(logFirestoreError).toHaveBeenCalledWith(
+    expect(logFirebaseException).toHaveBeenCalledWith(
       expect.objectContaining({ severity: 'noise' }),
     );
+    expect(logFirestoreError).not.toHaveBeenCalled();
   });
 
   it('dedupes repeated errors in the same window', async () => {
