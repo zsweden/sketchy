@@ -111,6 +111,22 @@ describe('annotation actions', () => {
       expect(ann.position).toEqual({ x: 80, y: 80 });
       expect(ann.size).toEqual({ width: 50, height: 50 });
     });
+
+    it('can resize without adding another history entry', () => {
+      const id = useDiagramStore.getState().addAnnotation('rect', { x: 100, y: 100 });
+      useDiagramStore.getState().resizeAnnotation(
+        id,
+        {
+          size: { width: 50, height: 50 },
+          position: { x: 80, y: 80 },
+        },
+        { trackHistory: false },
+      );
+
+      useDiagramStore.getState().undo();
+
+      expect(useDiagramStore.getState().diagram.annotations).toHaveLength(0);
+    });
   });
 
   describe('deleteAnnotations', () => {

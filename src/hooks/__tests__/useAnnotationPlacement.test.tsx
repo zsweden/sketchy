@@ -106,19 +106,27 @@ describe('useAnnotationPlacement', () => {
   });
 
   describe('with a pending tool — drag', () => {
-    it('creates and live-resizes an annotation when dragging past the threshold', () => {
+    it('creates immediately and live-resizes an annotation while dragging', () => {
       useUIStore.getState().setPendingAnnotationTool('ellipse');
       const { result, ignoreNextPaneClickRef, makeEvent } = setup();
 
       act(() => result.current.onPointerDown(makeEvent({ clientX: 50, clientY: 50 })));
 
-      // Tiny move under threshold → still no annotation
-      act(() => result.current.onPointerMove(makeEvent({ clientX: 52, clientY: 52 })));
-      expect(useDiagramStore.getState().diagram.annotations).toHaveLength(0);
-
-      // Cross the drag threshold; annotation is created at start, sized to move
-      act(() => result.current.onPointerMove(makeEvent({ clientX: 200, clientY: 180 })));
+      // Mouse-down starts the draw gesture immediately.
       let annotations = useDiagramStore.getState().diagram.annotations;
+      expect(annotations).toHaveLength(1);
+      expect(annotations[0].kind).toBe('ellipse');
+      expect(annotations[0].position).toEqual({ x: 50, y: 50 });
+      expect(annotations[0].size).toEqual({ width: 20, height: 20 });
+
+      // Tiny moves still resize the live annotation rather than waiting for a threshold.
+      act(() => result.current.onPointerMove(makeEvent({ clientX: 52, clientY: 52 })));
+      annotations = useDiagramStore.getState().diagram.annotations;
+      expect(annotations).toHaveLength(1);
+      expect(annotations[0].size).toEqual({ width: 20, height: 20 });
+
+      act(() => result.current.onPointerMove(makeEvent({ clientX: 200, clientY: 180 })));
+      annotations = useDiagramStore.getState().diagram.annotations;
       expect(annotations).toHaveLength(1);
       expect(annotations[0].kind).toBe('ellipse');
       expect(annotations[0].position).toEqual({ x: 50, y: 50 });

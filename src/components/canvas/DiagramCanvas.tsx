@@ -119,6 +119,12 @@ export default function DiagramCanvas() {
     placement.onPointerCancel(event);
     onPointerCancelCapture(event);
   };
+  const onMousePlacementCapture = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!isPlacing) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.nativeEvent.stopImmediatePropagation();
+  };
 
   return (
     <div
@@ -129,6 +135,9 @@ export default function DiagramCanvas() {
       onPointerMoveCapture={onPointerMoveAll}
       onPointerUpCapture={onPointerUpAll}
       onPointerCancelCapture={onPointerCancelAll}
+      onMouseDownCapture={onMousePlacementCapture}
+      onMouseMoveCapture={onMousePlacementCapture}
+      onMouseUpCapture={onMousePlacementCapture}
       style={{ width: '100%', height: '100%' }}
     >
       <ReactFlow
@@ -150,12 +159,12 @@ export default function DiagramCanvas() {
         fitViewOptions={FIT_VIEW_OPTIONS}
         deleteKeyCode={['Backspace', 'Delete']}
         multiSelectionKeyCode="Shift"
-        selectionOnDrag={!isPanMode}
-        panOnDrag={isPanMode ? [0, 1, 2] : [1, 2]}
+        selectionOnDrag={!isPanMode && !isPlacing}
+        panOnDrag={isPlacing ? false : isPanMode ? [0, 1, 2] : [1, 2]}
         zoomOnDoubleClick={false}
-        nodesDraggable={!isPanMode}
-        nodesConnectable={!isPanMode}
-        elementsSelectable={!isPanMode}
+        nodesDraggable={!isPanMode && !isPlacing}
+        nodesConnectable={!isPanMode && !isPlacing}
+        elementsSelectable={!isPanMode && !isPlacing}
         snapToGrid={false}
         snapGrid={[20, 20]}
         proOptions={{ hideAttribution: true }}

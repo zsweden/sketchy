@@ -51,10 +51,20 @@ vi.mock('@xyflow/react', () => ({
     onNodesChange,
     onEdgesChange,
     onNodeDragStop,
+    selectionOnDrag,
+    panOnDrag,
+    nodesDraggable,
+    nodesConnectable,
+    elementsSelectable,
   }: {
     nodes: Array<{ id: string; selected?: boolean }>;
     edges: Array<{ id: string; selected?: boolean }>;
     zoomOnDoubleClick?: boolean;
+    selectionOnDrag?: boolean;
+    panOnDrag?: boolean | number[];
+    nodesDraggable?: boolean;
+    nodesConnectable?: boolean;
+    elementsSelectable?: boolean;
     onConnect: (connection: {
       source: string;
       target: string;
@@ -94,6 +104,11 @@ vi.mock('@xyflow/react', () => ({
   }) => (
     <div>
       <div data-testid="zoom-on-double-click">{String(zoomOnDoubleClick)}</div>
+      <div data-testid="selection-on-drag">{String(selectionOnDrag)}</div>
+      <div data-testid="pan-on-drag">{JSON.stringify(panOnDrag)}</div>
+      <div data-testid="nodes-draggable">{String(nodesDraggable)}</div>
+      <div data-testid="nodes-connectable">{String(nodesConnectable)}</div>
+      <div data-testid="elements-selectable">{String(elementsSelectable)}</div>
       <div data-testid="selected-nodes">{nodes.filter((node) => node.selected).map((node) => node.id).join(',')}</div>
       <div data-testid="selected-edges">{edges.filter((edge) => edge.selected).map((edge) => edge.id).join(',')}</div>
       <button
@@ -286,6 +301,7 @@ function resetStores() {
     sidePanelOpen: true,
     chatPanelMode: 'shared',
     interactionMode: 'select',
+    pendingAnnotationTool: null,
   });
 }
 
@@ -795,6 +811,18 @@ describe('DiagramCanvas', () => {
     render(<DiagramCanvas />);
 
     expect(screen.getByTestId('zoom-on-double-click')).toHaveTextContent('false');
+  });
+
+  it('disables React Flow node interactions while placing an annotation', () => {
+    useUIStore.getState().setPendingAnnotationTool('rect');
+
+    render(<DiagramCanvas />);
+
+    expect(screen.getByTestId('selection-on-drag')).toHaveTextContent('false');
+    expect(screen.getByTestId('pan-on-drag')).toHaveTextContent('false');
+    expect(screen.getByTestId('nodes-draggable')).toHaveTextContent('false');
+    expect(screen.getByTestId('nodes-connectable')).toHaveTextContent('false');
+    expect(screen.getByTestId('elements-selectable')).toHaveTextContent('false');
   });
 
   it('ignores accidental non-empty selection right after creating a node with pane double-click', async () => {

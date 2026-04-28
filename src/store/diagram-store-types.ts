@@ -126,6 +126,7 @@ export interface DiagramState {
   resizeAnnotation: (
     id: string,
     patch: { size: Annotation['size']; position?: Annotation['position'] },
+    options?: { trackHistory?: boolean },
   ) => void;
   deleteAnnotations: (ids: string[]) => void;
 

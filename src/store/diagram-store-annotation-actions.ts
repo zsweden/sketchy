@@ -59,7 +59,7 @@ export function createDiagramAnnotationActions(
       patchAnnotation(id, (a) => ({ ...a, data: { ...a.data, ...data } }), { trackHistory: true });
     },
 
-    resizeAnnotation: (id, patch) => {
+    resizeAnnotation: (id, patch, options) => {
       patchAnnotation(
         id,
         (a) => ({
@@ -67,7 +67,7 @@ export function createDiagramAnnotationActions(
           size: patch.size,
           ...(patch.position ? { position: patch.position } : {}),
         }),
-        { trackHistory: true },
+        { trackHistory: options?.trackHistory ?? true },
       );
     },
 
