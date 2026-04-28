@@ -44,6 +44,12 @@ test('click-and-drag draws an annotation sized to the drag rectangle', async ({ 
   await page.mouse.move(startX, startY);
   await page.mouse.down();
   await page.mouse.move(startX + 60, startY + 40, { steps: 4 });
+  await page.waitForFunction(() => {
+    const rect = document.querySelector('.annotation-rect');
+    if (!rect) return false;
+    const box = rect.getBoundingClientRect();
+    return box.width > 40 && box.height > 25;
+  });
   await page.mouse.move(endX, endY, { steps: 8 });
   await page.mouse.up();
 

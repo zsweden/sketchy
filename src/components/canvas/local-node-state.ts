@@ -8,13 +8,14 @@ export function mergeRFNodesWithLocalState(
 
   return rfNodes.map((node) => {
     const prevNode = prevById.get(node.id);
+    const shouldPreserveMeasuredSize = !node.type?.toString().startsWith('annotation-');
 
     return {
       ...node,
       selected: prevNode?.selected ?? false,
-      ...(prevNode?.measured ? { measured: prevNode.measured } : {}),
-      ...(prevNode?.width != null ? { width: prevNode.width } : {}),
-      ...(prevNode?.height != null ? { height: prevNode.height } : {}),
+      ...(shouldPreserveMeasuredSize && prevNode?.measured ? { measured: prevNode.measured } : {}),
+      ...(shouldPreserveMeasuredSize && prevNode?.width != null ? { width: prevNode.width } : {}),
+      ...(shouldPreserveMeasuredSize && prevNode?.height != null ? { height: prevNode.height } : {}),
     };
   });
 }

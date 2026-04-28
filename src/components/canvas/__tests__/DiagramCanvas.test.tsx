@@ -349,6 +349,36 @@ describe('mergeRFNodesWithLocalState', () => {
     });
   });
 
+  it('uses fresh dimensions for annotation nodes', () => {
+    const prevLocalNodes = [
+      makeNodeState('a1', {
+        type: 'annotation-rect',
+        width: 20,
+        height: 20,
+        measured: { width: 20, height: 20 },
+        selected: true,
+      }),
+    ];
+    const rfNodes = [
+      makeNodeState('a1', {
+        type: 'annotation-rect',
+        width: 120,
+        height: 80,
+      }),
+    ];
+
+    const result = mergeRFNodesWithLocalState(prevLocalNodes as never[], rfNodes as never[]);
+
+    expect(result[0]).toMatchObject({
+      id: 'a1',
+      type: 'annotation-rect',
+      width: 120,
+      height: 80,
+      selected: true,
+    });
+    expect(result[0].measured).toBeUndefined();
+  });
+
   it('does not inherit measurements for new ids', () => {
     const prevLocalNodes = [
       makeNodeState('n1', {
