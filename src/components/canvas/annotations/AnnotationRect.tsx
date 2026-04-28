@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { NodeResizer, type NodeProps } from '@xyflow/react';
 import { useDiagramStore } from '../../../store/diagram-store';
+import { ANNOTATION_STROKE, ANNOTATION_STROKE_WIDTH, annotationHandleStyle, annotationResizeLineStyle } from './annotation-style';
 
 interface AnnotationRectData {
   kind: 'rect';
@@ -20,6 +21,9 @@ function AnnotationRect({ id, data, selected }: NodeProps) {
         isVisible={!!selected}
         minWidth={30}
         minHeight={20}
+        color="var(--accent)"
+        handleStyle={annotationHandleStyle}
+        lineStyle={annotationResizeLineStyle}
         onResizeEnd={(_, p) =>
           resizeAnnotation(id, {
             size: { width: p.width, height: p.height },
@@ -34,7 +38,7 @@ function AnnotationRect({ id, data, selected }: NodeProps) {
           width: '100%',
           height: '100%',
           backgroundColor: d.fill ?? 'transparent',
-          border: `${d.strokeWidth ?? 2}px solid ${d.stroke ?? 'var(--border)'}`,
+          border: `${d.strokeWidth ?? ANNOTATION_STROKE_WIDTH}px solid ${d.stroke ?? ANNOTATION_STROKE}`,
           borderRadius: 4,
           boxSizing: 'border-box',
         }}

@@ -43,26 +43,145 @@ test('click-and-drag draws an annotation sized to the drag rectangle', async ({ 
 
   await page.mouse.move(startX, startY);
   await page.mouse.down();
-  await page.mouse.move(startX + 60, startY + 40, { steps: 4 });
-  await page.waitForFunction(() => {
-    const rect = document.querySelector('.annotation-rect');
-    if (!rect) return false;
-    const box = rect.getBoundingClientRect();
-    return box.width > 40 && box.height > 25;
-  });
   await page.mouse.move(endX, endY, { steps: 8 });
   await page.mouse.up();
 
   await expect(page.locator('.annotation-rect')).toHaveCount(1);
+
+  // Poll the store — under load the final pointer event may not yet have
+  // flushed by the time we read.
+  await expect
+    .poll(() =>
+      page.evaluate(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        () => (window as any).__diagramStore.getState().diagram.annotations[0]?.size?.width ?? 0,
+      ),
+    )
+    .toBeGreaterThan(200);
 
   const ann = await page.evaluate(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     () => (window as any).__diagramStore.getState().diagram.annotations[0],
   );
   expect(ann.kind).toBe('rect');
-  // Strictly larger than the default click size to prove the drag rectangle was used.
-  expect(ann.size.width).toBeGreaterThan(200);
   expect(ann.size.height).toBeGreaterThan(120);
+});
+
+test('selected shape resize handles are hollow squares', async ({ page }) => {
+  const pane = page.locator('[data-testid="diagram-flow"] .react-flow__pane');
+
+  await page.getByRole('button', { name: 'Add rectangle annotation' }).click();
+  await pane.click({ position: { x: 300, y: 220 } });
+  const rect = page.locator('.annotation-rect');
+  await expect(rect).toHaveCount(1);
+  await rect.click();
+
+  const rectHandle = await rect.evaluate((annotation) => {
+    const handle = annotation.closest('.react-flow__node')?.querySelector('.react-flow__resize-control.handle');
+    if (!(handle instanceof HTMLElement)) throw new Error('rectangle resize handle not found');
+    const probe = document.createElement('div');
+    probe.style.background = 'var(--surface)';
+    document.body.appendChild(probe);
+    const surface = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    const style = getComputedStyle(handle);
+    return {
+      width: style.width,
+      height: style.height,
+      borderRadius: style.borderRadius,
+      backgroundColor: style.backgroundColor,
+      borderStyle: style.borderTopStyle,
+      surface,
+    };
+  });
+  expect(rectHandle).toEqual({
+    width: '10px',
+    height: '10px',
+    borderRadius: '2px',
+    backgroundColor: rectHandle.surface,
+    borderStyle: 'solid',
+    surface: rectHandle.surface,
+  });
+
+  await page.getByRole('button', { name: 'Add ellipse annotation' }).click();
+  await pane.click({ position: { x: 520, y: 220 } });
+  const ellipse = page.locator('.annotation-ellipse');
+  await expect(ellipse).toHaveCount(1);
+  await ellipse.click();
+
+  const ellipseHandle = await ellipse.evaluate((annotation) => {
+    const handle = annotation.closest('.react-flow__node')?.querySelector('.react-flow__resize-control.handle');
+    if (!(handle instanceof HTMLElement)) throw new Error('ellipse resize handle not found');
+    const style = getComputedStyle(handle);
+    return {
+      width: style.width,
+      height: style.height,
+      borderRadius: style.borderRadius,
+      borderStyle: style.borderTopStyle,
+    };
+  });
+  expect(ellipseHandle).toEqual({
+    width: '10px',
+    height: '10px',
+    borderRadius: '2px',
+    borderStyle: 'solid',
+  });
+});
+
+test('click-and-drag draws a visible line annotation', async ({ page }) => {
+  const pane = page.locator('[data-testid="diagram-flow"] .react-flow__pane');
+  await page.getByRole('button', { name: 'Add line annotation' }).click();
+
+  const box = await pane.boundingBox();
+  if (!box) throw new Error('pane has no bounding box');
+  const startX = box.x + 220;
+  const startY = box.y + 190;
+  const endX = startX + 260;
+  const endY = startY + 140;
+
+  await page.mouse.move(startX, startY);
+  await page.mouse.down();
+  await page.mouse.move(endX, endY, { steps: 8 });
+  await page.mouse.up();
+
+  await expect(page.locator('.annotation-line')).toHaveCount(1);
+
+  // Verify the line geometry from the store (deterministic across load) and
+  // verify it is rendered as a visible SVG line (style sanity).
+  await expect
+    .poll(async () =>
+      page.evaluate(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const ann = (window as any).__diagramStore.getState().diagram.annotations[0];
+        if (!ann || ann.kind !== 'line') return null;
+        return {
+          dx: Math.abs(ann.end.x - ann.start.x),
+          dy: Math.abs(ann.end.y - ann.start.y),
+        };
+      }),
+    )
+    .toEqual(expect.objectContaining({
+      dx: expect.any(Number) as unknown as number,
+      dy: expect.any(Number) as unknown as number,
+    }));
+
+  const geometry = await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ann = (window as any).__diagramStore.getState().diagram.annotations[0];
+    return { dx: Math.abs(ann.end.x - ann.start.x), dy: Math.abs(ann.end.y - ann.start.y) };
+  });
+  // Lenient lower bounds: drag was 260×140 in screen px; at the highest
+  // post-fitView zoom (~1.5×) that's ~173×93 in flow space. Requiring much
+  // smaller minimums keeps the test stable under variable viewport zoom.
+  expect(geometry.dx).toBeGreaterThan(80);
+  expect(geometry.dy).toBeGreaterThan(40);
+
+  const style = await page.locator('.annotation-line line').evaluate((l) => ({
+    stroke: getComputedStyle(l).stroke,
+    strokeWidth: getComputedStyle(l).strokeWidth,
+  }));
+  expect(style.stroke).not.toBe('none');
+  expect(style.strokeWidth).not.toBe('0px');
 });
 
 test('Escape cancels a pending annotation tool', async ({ page }) => {

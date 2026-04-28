@@ -16,6 +16,7 @@ export function createDiagramAnnotationActions(
   | 'updateAnnotationData'
   | 'commitAnnotationData'
   | 'resizeAnnotation'
+  | 'updateLineAnnotationEndpoint'
   | 'deleteAnnotations'
 > {
   const { applyDiagramChange } = context;
@@ -37,13 +38,22 @@ export function createDiagramAnnotationActions(
   return {
     addAnnotation: (kind, position) => {
       const id = crypto.randomUUID();
-      const annotation: Annotation = {
-        id,
-        kind,
-        position,
-        size: { ...DEFAULT_ANNOTATION_SIZE[kind] },
-        data: {},
-      };
+      const size = DEFAULT_ANNOTATION_SIZE[kind];
+      const annotation: Annotation = kind === 'line'
+        ? {
+          id,
+          kind,
+          start: position,
+          end: { x: position.x + size.width, y: position.y + size.height },
+          data: {},
+        }
+        : {
+          id,
+          kind,
+          position,
+          size: { ...size },
+          data: {},
+        };
       applyDiagramChange(
         (diagram) => ({ ...diagram, annotations: [...diagram.annotations, annotation] }),
         { trackHistory: true },
@@ -62,11 +72,32 @@ export function createDiagramAnnotationActions(
     resizeAnnotation: (id, patch, options) => {
       patchAnnotation(
         id,
-        (a) => ({
-          ...a,
-          size: patch.size,
-          ...(patch.position ? { position: patch.position } : {}),
-        }),
+        (a) => {
+          if (a.kind === 'line') {
+            const start = patch.position ?? a.start;
+            return {
+              ...a,
+              start,
+              end: {
+                x: start.x + patch.size.width,
+                y: start.y + patch.size.height,
+              },
+            };
+          }
+          return {
+            ...a,
+            size: patch.size,
+            ...(patch.position ? { position: patch.position } : {}),
+          };
+        },
+        { trackHistory: options?.trackHistory ?? true },
+      );
+    },
+
+    updateLineAnnotationEndpoint: (id, endpoint, position, options) => {
+      patchAnnotation(
+        id,
+        (a) => (a.kind === 'line' ? { ...a, [endpoint]: position } : a),
         { trackHistory: options?.trackHistory ?? true },
       );
     },

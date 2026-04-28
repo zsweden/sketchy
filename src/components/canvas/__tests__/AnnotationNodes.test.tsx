@@ -16,10 +16,13 @@ vi.mock('@xyflow/react', () => ({
         data-testid="node-resizer"
         onClick={() => onResizeEnd?.({}, { width: 111, height: 55, x: 9, y: 8 })}
       >
-        resize
+      resize
       </button>
     ) : null
   ),
+  useReactFlow: () => ({
+    screenToFlowPosition: ({ x, y }: { x: number; y: number }) => ({ x, y }),
+  }),
 }));
 
 function resetStore() {
@@ -43,6 +46,18 @@ function nodeProps(id: string, data: Record<string, unknown>, selected = false) 
     deletable: true,
     selectable: true,
   } as never;
+}
+
+function lineData(overrides: Record<string, unknown> = {}) {
+  return {
+    kind: 'line',
+    size: { width: 224, height: 144 },
+    start: { x: 20, y: 30 },
+    end: { x: 220, y: 150 },
+    localStart: { x: 12, y: 12 },
+    localEnd: { x: 212, y: 132 },
+    ...overrides,
+  };
 }
 
 beforeEach(resetStore);
@@ -85,13 +100,47 @@ describe('annotation node renderers', () => {
 
     render(
       <AnnotationLine
-        {...nodeProps(id, { kind: 'line', size: { width: 200, height: 120 }, stroke: '#abcdef', strokeWidth: 3 })}
+        {...nodeProps(id, lineData({ stroke: '#abcdef', strokeWidth: 3 }))}
       />,
     );
 
     const line = screen.getByTestId(`annotation-line-${id}`).querySelector('line')!;
     expect(line).toHaveAttribute('stroke', '#abcdef');
     expect(line).toHaveAttribute('stroke-width', '3');
+  });
+
+  it('renders line annotations with the app text color by default', () => {
+    const id = useDiagramStore.getState().addAnnotation('line', { x: 0, y: 0 });
+
+    render(
+      <AnnotationLine
+        {...nodeProps(id, lineData())}
+      />,
+    );
+
+    const line = screen.getByTestId(`annotation-line-${id}`).querySelector('line')!;
+    expect(line).toHaveAttribute('stroke', 'var(--text)');
+    expect(line).toHaveAttribute('stroke-linecap', 'round');
+  });
+
+  it('renders draggable endpoint handles when a line is selected', () => {
+    const id = useDiagramStore.getState().addAnnotation('line', { x: 0, y: 0 });
+
+    render(
+      <AnnotationLine
+        {...nodeProps(id, lineData(), true)}
+      />,
+    );
+
+    expect(screen.queryByTestId('node-resizer')).not.toBeInTheDocument();
+    const startHandle = screen.getByTestId(`annotation-line-${id}-start-handle`);
+    const endHandle = screen.getByTestId(`annotation-line-${id}-end-handle`);
+    expect(startHandle.style.background).toBe('var(--surface)');
+    expect(startHandle.style.borderRadius).toBe('2px');
+    expect(startHandle.style.width).toBe('10px');
+    expect(endHandle.style.background).toBe('var(--surface)');
+    expect(endHandle.style.borderRadius).toBe('2px');
+    expect(endHandle.style.width).toBe('10px');
   });
 
   it('commits text annotation edits on blur', () => {

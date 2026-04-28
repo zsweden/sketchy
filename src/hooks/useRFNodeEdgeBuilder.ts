@@ -14,12 +14,53 @@ import { getTheme } from '../styles/themes';
 import { ARROW_MARKER_SIZE } from '../constants/layout';
 import type { ConnectedSubgraph, NamedCausalLoop, NodeDegrees } from '../core/graph/derived';
 import { useDebouncedEdgePlacements } from './useDebouncedEdgePlacements';
+import type { Annotation } from '../core/types';
+
+const LINE_NODE_PADDING = 12;
 
 interface BuilderResult {
   rfNodes: Node[];
   rfEdges: Edge[];
   defaultEdgeOptions: Record<string, unknown>;
   activeTheme: ReturnType<typeof getTheme>;
+}
+
+function annotationToRFNode(a: Annotation): Node {
+  if (a.kind !== 'line') {
+    return {
+      id: a.id,
+      type: `annotation-${a.kind}`,
+      position: a.position,
+      width: a.size.width,
+      height: a.size.height,
+      zIndex: -1,
+      data: { ...a.data, kind: a.kind, size: a.size },
+    };
+  }
+
+  const x = Math.min(a.start.x, a.end.x) - LINE_NODE_PADDING;
+  const y = Math.min(a.start.y, a.end.y) - LINE_NODE_PADDING;
+  const width = Math.abs(a.end.x - a.start.x) + LINE_NODE_PADDING * 2;
+  const height = Math.abs(a.end.y - a.start.y) + LINE_NODE_PADDING * 2;
+
+  return {
+    id: a.id,
+    type: 'annotation-line',
+    position: { x, y },
+    width,
+    height,
+    draggable: false,
+    zIndex: -1,
+    data: {
+      ...a.data,
+      kind: a.kind,
+      start: a.start,
+      end: a.end,
+      localStart: { x: a.start.x - x, y: a.start.y - y },
+      localEnd: { x: a.end.x - x, y: a.end.y - y },
+      size: { width, height },
+    },
+  };
 }
 
 export function useRFNodeEdgeBuilder(
@@ -70,15 +111,7 @@ export function useRFNodeEdgeBuilder(
 
   const rfNodes: Node[] = useMemo(
     () => [
-      ...annotations.map((a) => ({
-        id: a.id,
-        type: `annotation-${a.kind}`,
-        position: a.position,
-        width: a.size.width,
-        height: a.size.height,
-        zIndex: -1,
-        data: { ...a.data, kind: a.kind, size: a.size },
-      })),
+      ...annotations.map(annotationToRFNode),
       ...nodes.map((n) => ({
         id: n.id,
         type: n.type,

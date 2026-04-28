@@ -44,6 +44,19 @@ describe('annotation actions', () => {
       expect(kinds).toEqual(['ellipse', 'line', 'rect', 'text']);
     });
 
+    it('creates line annotations with explicit endpoints', () => {
+      const id = useDiagramStore.getState().addAnnotation('line', { x: 10, y: 20 });
+      const ann = useDiagramStore.getState().diagram.annotations.find((a) => a.id === id)!;
+
+      expect(ann).toMatchObject({
+        kind: 'line',
+        start: { x: 10, y: 20 },
+        end: { x: 210, y: 140 },
+      });
+      expect('position' in ann).toBe(false);
+      expect('size' in ann).toBe(false);
+    });
+
     it('tracks history', () => {
       useDiagramStore.getState().addAnnotation('rect', { x: 0, y: 0 });
       expect(useDiagramStore.getState().canUndo).toBe(true);
@@ -126,6 +139,26 @@ describe('annotation actions', () => {
       useDiagramStore.getState().undo();
 
       expect(useDiagramStore.getState().diagram.annotations).toHaveLength(0);
+    });
+  });
+
+  describe('updateLineAnnotationEndpoint', () => {
+    it('updates one endpoint and tracks history', () => {
+      const id = useDiagramStore.getState().addAnnotation('line', { x: 10, y: 20 });
+      useDiagramStore.getState().updateLineAnnotationEndpoint(id, 'end', { x: 90, y: 100 });
+
+      const ann = useDiagramStore.getState().diagram.annotations.find((a) => a.id === id)!;
+      expect(ann).toMatchObject({
+        kind: 'line',
+        start: { x: 10, y: 20 },
+        end: { x: 90, y: 100 },
+      });
+
+      useDiagramStore.getState().undo();
+      expect(useDiagramStore.getState().diagram.annotations[0]).toMatchObject({
+        kind: 'line',
+        end: { x: 210, y: 140 },
+      });
     });
   });
 

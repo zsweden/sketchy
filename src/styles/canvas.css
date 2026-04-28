@@ -220,6 +220,21 @@
   transform: translate(-50%, -50%);
 }
 
+/* Annotation resize handles should match line endpoint handles. */
+.react-flow__node:has(.annotation) .react-flow__resize-control.handle {
+  width: 10px !important;
+  height: 10px !important;
+  border: 1.5px solid var(--accent) !important;
+  border-radius: 2px !important;
+  background: var(--surface) !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+}
+
+.react-flow__node:has(.annotation) .react-flow__resize-control.line {
+  border-color: var(--accent) !important;
+}
+
 /* Base edge styling */
 .react-flow__edge-path {
   stroke: var(--text-soft) !important;

@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { NodeResizer, type NodeProps } from '@xyflow/react';
 import { useDiagramStore } from '../../../store/diagram-store';
+import { ANNOTATION_STROKE, annotationHandleStyle, annotationResizeLineStyle } from './annotation-style';
 
 interface AnnotationTextData {
   kind: 'text';
@@ -50,6 +51,9 @@ function AnnotationText({ id, data, selected }: NodeProps) {
         isVisible={!!selected && !editing}
         minWidth={60}
         minHeight={20}
+        color="var(--accent)"
+        handleStyle={annotationHandleStyle}
+        lineStyle={annotationResizeLineStyle}
         onResizeEnd={(_, p) =>
           resizeAnnotation(id, {
             size: { width: p.width, height: p.height },
@@ -65,7 +69,7 @@ function AnnotationText({ id, data, selected }: NodeProps) {
           width: '100%',
           height: '100%',
           fontSize: d.fontSize ?? 14,
-          color: d.textColor ?? 'var(--text-primary)',
+          color: d.textColor ?? ANNOTATION_STROKE,
           padding: 4,
           boxSizing: 'border-box',
         }}

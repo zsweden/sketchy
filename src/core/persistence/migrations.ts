@@ -103,4 +103,39 @@ export const migrations: Record<
       schemaVersion: 8,
     };
   },
+  8: (data) => {
+    // Migration 8→9: line annotations are represented by endpoints instead of
+    // rectangle geometry with an implied diagonal.
+    const annotations = Array.isArray(data.annotations)
+      ? data.annotations as Array<Record<string, unknown>>
+      : [];
+    return {
+      ...data,
+      schemaVersion: 9,
+      annotations: annotations.map((annotation) => {
+        if (annotation.kind !== 'line' || annotation.start || annotation.end) {
+          return annotation;
+        }
+        const position = typeof annotation.position === 'object' && annotation.position !== null
+          ? annotation.position as Record<string, unknown>
+          : {};
+        const size = typeof annotation.size === 'object' && annotation.size !== null
+          ? annotation.size as Record<string, unknown>
+          : {};
+        const dataShape = typeof annotation.data === 'object' && annotation.data !== null
+          ? annotation.data as Record<string, unknown>
+          : {};
+        const x = typeof position.x === 'number' ? position.x : 0;
+        const y = typeof position.y === 'number' ? position.y : 0;
+        const width = typeof size.width === 'number' ? size.width : 200;
+        const height = typeof size.height === 'number' ? size.height : 120;
+        const flipped = dataShape.flipped === true;
+        return {
+          ...annotation,
+          start: { x, y: flipped ? y + height : y },
+          end: { x: x + width, y: flipped ? y : y + height },
+        };
+      }),
+    };
+  },
 };

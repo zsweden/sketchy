@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 
 type EdgeRoutingMode = 'dynamic' | 'fixed';
 export type CardinalHandleSide = 'top' | 'right' | 'bottom' | 'left';
@@ -26,21 +26,38 @@ export interface Diagram {
 
 export type AnnotationKind = 'text' | 'rect' | 'ellipse' | 'line';
 
-export interface Annotation {
-  id: string;
-  kind: AnnotationKind;
-  position: { x: number; y: number };
-  size: { width: number; height: number };
-  data: {
-    text?: string;
-    fill?: string;
-    stroke?: string;
-    strokeWidth?: number;
-    fontSize?: number;
-    textColor?: string;
-    flipped?: boolean;
-  };
+export interface Point {
+  x: number;
+  y: number;
 }
+
+export interface AnnotationData {
+  text?: string;
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  fontSize?: number;
+  textColor?: string;
+  flipped?: boolean;
+}
+
+export interface ShapeAnnotation {
+  id: string;
+  kind: Exclude<AnnotationKind, 'line'>;
+  position: Point;
+  size: { width: number; height: number };
+  data: AnnotationData;
+}
+
+export interface LineAnnotation {
+  id: string;
+  kind: 'line';
+  start: Point;
+  end: Point;
+  data: AnnotationData;
+}
+
+export type Annotation = ShapeAnnotation | LineAnnotation;
 
 export interface DiagramSettings {
   layoutDirection: 'TB' | 'BT' | 'LR' | 'RL';

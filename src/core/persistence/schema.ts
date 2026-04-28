@@ -160,14 +160,38 @@ function normalizeAnnotations(raw: unknown): Annotation[] {
   return raw.flatMap((entry, index): Annotation[] => {
     if (!isRecord(entry)) return [];
     const kind = enumValue(entry.kind, ANNOTATION_KINDS, 'rect') as AnnotationKind;
+    const data = normalizeAnnotationData(entry.data);
+    const id = typeof entry.id === 'string' && entry.id.length > 0 ? entry.id : `annotation-${index + 1}`;
+
+    if (kind === 'line') {
+      const legacyPosition = normalizePosition(entry.position);
+      const legacySize = normalizeSize(entry.size) ?? { width: 200, height: 120 };
+      const start = isRecord(entry.start)
+        ? normalizePosition(entry.start)
+        : legacyPosition;
+      const end = isRecord(entry.end)
+        ? normalizePosition(entry.end)
+        : data.flipped
+          ? { x: legacyPosition.x + legacySize.width, y: legacyPosition.y }
+          : { x: legacyPosition.x + legacySize.width, y: legacyPosition.y + legacySize.height };
+
+      return [{
+        id,
+        kind,
+        start,
+        end,
+        data,
+      }];
+    }
+
     const size = normalizeSize(entry.size);
     if (!size) return [];
     return [{
-      id: typeof entry.id === 'string' && entry.id.length > 0 ? entry.id : `annotation-${index + 1}`,
+      id,
       kind,
       position: normalizePosition(entry.position),
       size,
-      data: normalizeAnnotationData(entry.data),
+      data,
     }];
   });
 }

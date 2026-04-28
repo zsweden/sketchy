@@ -26,6 +26,7 @@ export function useAnnotationPlacement({
   const setSelectedNodes = useUIStore((s) => s.setSelectedNodes);
   const addAnnotation = useDiagramStore((s) => s.addAnnotation);
   const resizeAnnotation = useDiagramStore((s) => s.resizeAnnotation);
+  const updateLineAnnotationEndpoint = useDiagramStore((s) => s.updateLineAnnotationEndpoint);
 
   const dragRef = useRef<PlacementDrag | null>(null);
   const pendingToolRef = useRef(pendingTool);
@@ -76,7 +77,11 @@ export function useAnnotationPlacement({
 
       const startFlow = screenToFlowPosition({ x: event.clientX, y: event.clientY });
       const annotationId = addAnnotation(tool, startFlow);
-      resizePlacedAnnotation(annotationId, startFlow, startFlow);
+      if (tool === 'line') {
+        updateLineAnnotationEndpoint(annotationId, 'end', startFlow, { trackHistory: false });
+      } else {
+        resizePlacedAnnotation(annotationId, startFlow, startFlow);
+      }
       dragRef.current = {
         pointerId: event.pointerId,
         startFlow,
@@ -85,7 +90,7 @@ export function useAnnotationPlacement({
       };
       (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
     },
-    [addAnnotation, resizePlacedAnnotation, screenToFlowPosition],
+    [addAnnotation, resizePlacedAnnotation, screenToFlowPosition, updateLineAnnotationEndpoint],
   );
 
   const onPointerMove = useCallback(
@@ -100,9 +105,13 @@ export function useAnnotationPlacement({
 
       drag.isDragging = true;
       const currFlow = screenToFlowPosition({ x: event.clientX, y: event.clientY });
-      resizePlacedAnnotation(drag.annotationId, drag.startFlow, currFlow);
+      if (tool === 'line') {
+        updateLineAnnotationEndpoint(drag.annotationId, 'end', currFlow, { trackHistory: false });
+      } else {
+        resizePlacedAnnotation(drag.annotationId, drag.startFlow, currFlow);
+      }
     },
-    [resizePlacedAnnotation, screenToFlowPosition],
+    [resizePlacedAnnotation, screenToFlowPosition, updateLineAnnotationEndpoint],
   );
 
   const onPointerUp = useCallback(
@@ -126,15 +135,24 @@ export function useAnnotationPlacement({
       if (tool) {
         if (!drag.isDragging) {
           const size = DEFAULT_ANNOTATION_SIZE[tool];
-          const position = {
-            x: drag.startFlow.x - size.width / 2,
-            y: drag.startFlow.y - size.height / 2,
-          };
-          resizeAnnotation(
-            drag.annotationId,
-            { size, position },
-            { trackHistory: false },
-          );
+          if (tool === 'line') {
+            updateLineAnnotationEndpoint(
+              drag.annotationId,
+              'end',
+              { x: drag.startFlow.x + size.width, y: drag.startFlow.y + size.height },
+              { trackHistory: false },
+            );
+          } else {
+            const position = {
+              x: drag.startFlow.x - size.width / 2,
+              y: drag.startFlow.y - size.height / 2,
+            };
+            resizeAnnotation(
+              drag.annotationId,
+              { size, position },
+              { trackHistory: false },
+            );
+          }
         }
         ignoreNextPaneClickRef.current = true;
         setSelectedNodes([drag.annotationId]);
@@ -143,7 +161,7 @@ export function useAnnotationPlacement({
       setPendingAnnotationTool(null);
       dragRef.current = null;
     },
-    [ignoreNextPaneClickRef, resizeAnnotation, setPendingAnnotationTool, setSelectedNodes],
+    [ignoreNextPaneClickRef, resizeAnnotation, setPendingAnnotationTool, setSelectedNodes, updateLineAnnotationEndpoint],
   );
 
   const onPointerCancel = useCallback((event: React.PointerEvent<HTMLDivElement>) => {

@@ -1,6 +1,6 @@
 import { UndoRedoManager } from '../core/history/undo-redo';
 import { snapshot } from './diagram-snapshot';
-import type { Diagram, DiagramNode } from '../core/types';
+import type { Annotation, Diagram, DiagramNode } from '../core/types';
 import type {
   DiagramSnapshot,
   DiagramStoreContext,
@@ -75,6 +75,21 @@ export function createDiagramStoreContext(
     return get().diagram.nodes.filter((node) => idSet.has(node.id));
   };
 
+  const moveLineAnnotation = (
+    annotation: Extract<Annotation, { kind: 'line' }>,
+    position: { x: number; y: number },
+  ): Annotation => {
+    const currentX = Math.min(annotation.start.x, annotation.end.x) - 12;
+    const currentY = Math.min(annotation.start.y, annotation.end.y) - 12;
+    const dx = position.x - currentX;
+    const dy = position.y - currentY;
+    return {
+      ...annotation,
+      start: { x: annotation.start.x + dx, y: annotation.start.y + dy },
+      end: { x: annotation.end.x + dx, y: annotation.end.y + dy },
+    };
+  };
+
   const moveNodes = (changes: NodePositionChange[]) => {
     const positions = new Map(changes.map((change) => [change.id, change.position]));
     setDiagram((diagram) => ({
@@ -85,7 +100,10 @@ export function createDiagramStoreContext(
       }),
       annotations: diagram.annotations.map((ann) => {
         const position = positions.get(ann.id);
-        return position ? { ...ann, position } : ann;
+        if (!position) return ann;
+        return ann.kind === 'line'
+          ? moveLineAnnotation(ann, position)
+          : { ...ann, position };
       }),
     }));
   };

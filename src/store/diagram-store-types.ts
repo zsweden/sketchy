@@ -9,6 +9,7 @@ import type {
   EdgeConfidence,
   EdgePolarity,
   JunctionType,
+  Point,
 } from '../core/types';
 import type { UndoRedoManager } from '../core/history/undo-redo';
 import type { SizedPositionedItem } from '../utils/align-distribute';
@@ -125,7 +126,13 @@ export interface DiagramState {
   commitAnnotationData: (id: string, data: Partial<Annotation['data']>) => void;
   resizeAnnotation: (
     id: string,
-    patch: { size: Annotation['size']; position?: Annotation['position'] },
+    patch: { size: { width: number; height: number }; position?: Point },
+    options?: { trackHistory?: boolean },
+  ) => void;
+  updateLineAnnotationEndpoint: (
+    id: string,
+    endpoint: 'start' | 'end',
+    position: Point,
     options?: { trackHistory?: boolean },
   ) => void;
   deleteAnnotations: (ids: string[]) => void;
