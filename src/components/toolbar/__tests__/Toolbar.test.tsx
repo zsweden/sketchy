@@ -67,6 +67,7 @@ function resetStores() {
     sidePanelOpen: true,
     chatPanelMode: 'shared',
     interactionMode: 'select',
+    pendingAnnotationTool: null,
   });
   useSettingsStore.setState({
     provider: PROVIDERS[0].id,
@@ -323,17 +324,38 @@ describe('Toolbar', () => {
   });
 
   describe('annotation buttons', () => {
-    it('adds an annotation of each kind at the viewport center', async () => {
+    it('does not insert immediately; sets the pending placement tool instead', async () => {
       const user = userEvent.setup();
       render(<Toolbar />);
 
-      await user.click(screen.getByRole('button', { name: 'Add text annotation' }));
+      await user.click(screen.getByRole('button', { name: 'Add rectangle annotation' }));
+
+      expect(useUIStore.getState().pendingAnnotationTool).toBe('rect');
+      expect(useDiagramStore.getState().diagram.annotations).toHaveLength(0);
+    });
+
+    it('marks the pending tool as pressed and clears the press when toggled off', async () => {
+      const user = userEvent.setup();
+      render(<Toolbar />);
+
+      const rectBtn = screen.getByRole('button', { name: 'Add rectangle annotation' });
+      await user.click(rectBtn);
+      expect(rectBtn).toHaveAttribute('aria-pressed', 'true');
+
+      await user.click(rectBtn);
+      expect(rectBtn).toHaveAttribute('aria-pressed', 'false');
+      expect(useUIStore.getState().pendingAnnotationTool).toBeNull();
+    });
+
+    it('switches the pending tool when a different annotation icon is pressed', async () => {
+      const user = userEvent.setup();
+      render(<Toolbar />);
+
       await user.click(screen.getByRole('button', { name: 'Add rectangle annotation' }));
       await user.click(screen.getByRole('button', { name: 'Add ellipse annotation' }));
-      await user.click(screen.getByRole('button', { name: 'Add line annotation' }));
 
-      const kinds = useDiagramStore.getState().diagram.annotations.map((a) => a.kind).sort();
-      expect(kinds).toEqual(['ellipse', 'line', 'rect', 'text']);
+      expect(useUIStore.getState().pendingAnnotationTool).toBe('ellipse');
+      expect(useDiagramStore.getState().diagram.annotations).toHaveLength(0);
     });
   });
 

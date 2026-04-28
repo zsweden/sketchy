@@ -1,5 +1,4 @@
 import { useCallback, useRef } from 'react';
-import { useReactFlow } from '@xyflow/react';
 import { toast } from 'sonner';
 import { useChatStore } from '../../store/chat-store';
 import { useDiagramStore } from '../../store/diagram-store';
@@ -29,7 +28,6 @@ export function useToolbarController() {
   const loadDiagram = useDiagramStore((state) => state.loadDiagram);
   const optimizeEdges = useDiagramStore((state) => state.optimizeEdges);
   const runAutoLayout = useDiagramStore((state) => state.runAutoLayout);
-  const addAnnotation = useDiagramStore((state) => state.addAnnotation);
   const nodes = useDiagramStore((state) => state.diagram.nodes);
   const edges = useDiagramStore((state) => state.diagram.edges);
   const edgeRoutingMode = useDiagramStore(
@@ -42,11 +40,12 @@ export function useToolbarController() {
   const selectedNodeIds = useUIStore((state) => state.selectedNodeIds);
   const interactionMode = useUIStore((state) => state.interactionMode);
   const setInteractionMode = useUIStore((state) => state.setInteractionMode);
+  const pendingAnnotationTool = useUIStore((state) => state.pendingAnnotationTool);
+  const togglePendingAnnotationTool = useUIStore((state) => state.togglePendingAnnotationTool);
 
   const toggleSettings = useSettingsStore((state) => state.toggleSettings);
   const { alignSelectedNodesHorizontally, alignSelectedNodesVertically } =
     useNodeAlignmentActions();
-  const { screenToFlowPosition } = useReactFlow();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const selectedNodes = nodes.filter((node) => selectedNodeIds.includes(node.id));
@@ -74,15 +73,11 @@ export function useToolbarController() {
     distributeNodesVertically(selectedNodeIds);
   }, [distributeNodesVertically, selectedNodeIds]);
 
-  const handleAddAnnotation = useCallback(
+  const handleToggleAnnotationTool = useCallback(
     (kind: AnnotationKind) => {
-      const position = screenToFlowPosition({
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2,
-      });
-      addAnnotation(kind, position);
+      togglePendingAnnotationTool(kind);
     },
-    [addAnnotation, screenToFlowPosition],
+    [togglePendingAnnotationTool],
   );
 
   const handleNew = useCallback(() => {
@@ -180,7 +175,8 @@ export function useToolbarController() {
     handleAlignV,
     handleDistributeH,
     handleDistributeV,
-    handleAddAnnotation,
+    pendingAnnotationTool,
+    handleToggleAnnotationTool,
     handleAutoLayout,
     handleAutoEdges,
     handleNew,

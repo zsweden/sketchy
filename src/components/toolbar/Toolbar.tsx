@@ -39,7 +39,8 @@ export default function Toolbar() {
     handleAlignV,
     handleDistributeH,
     handleDistributeV,
-    handleAddAnnotation,
+    pendingAnnotationTool,
+    handleToggleAnnotationTool,
     handleAutoLayout,
     handleAutoEdges,
     handleNew,
@@ -117,34 +118,38 @@ export default function Toolbar() {
         <div className="toolbar-divider" />
 
         <button
-          className="btn btn-secondary btn-icon"
-          onClick={() => handleAddAnnotation('text')}
+          className={`btn btn-secondary btn-icon ${pendingAnnotationTool === 'text' ? 'btn-toggle-active' : ''}`}
+          onClick={() => handleToggleAnnotationTool('text')}
           title="Add text annotation"
           aria-label="Add text annotation"
+          aria-pressed={pendingAnnotationTool === 'text'}
         >
           <Type size={16} />
         </button>
         <button
-          className="btn btn-secondary btn-icon"
-          onClick={() => handleAddAnnotation('rect')}
+          className={`btn btn-secondary btn-icon ${pendingAnnotationTool === 'rect' ? 'btn-toggle-active' : ''}`}
+          onClick={() => handleToggleAnnotationTool('rect')}
           title="Add rectangle annotation"
           aria-label="Add rectangle annotation"
+          aria-pressed={pendingAnnotationTool === 'rect'}
         >
           <Square size={16} />
         </button>
         <button
-          className="btn btn-secondary btn-icon"
-          onClick={() => handleAddAnnotation('ellipse')}
+          className={`btn btn-secondary btn-icon ${pendingAnnotationTool === 'ellipse' ? 'btn-toggle-active' : ''}`}
+          onClick={() => handleToggleAnnotationTool('ellipse')}
           title="Add ellipse annotation"
           aria-label="Add ellipse annotation"
+          aria-pressed={pendingAnnotationTool === 'ellipse'}
         >
           <Circle size={16} />
         </button>
         <button
-          className="btn btn-secondary btn-icon"
-          onClick={() => handleAddAnnotation('line')}
+          className={`btn btn-secondary btn-icon ${pendingAnnotationTool === 'line' ? 'btn-toggle-active' : ''}`}
+          onClick={() => handleToggleAnnotationTool('line')}
           title="Add line annotation"
           aria-label="Add line annotation"
+          aria-pressed={pendingAnnotationTool === 'line'}
         >
           <Minus size={16} />
         </button>

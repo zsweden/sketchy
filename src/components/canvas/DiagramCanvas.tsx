@@ -23,6 +23,7 @@ import { useRFNodeEdgeBuilder } from '../../hooks/useRFNodeEdgeBuilder';
 import { useViewportFocus } from '../../hooks/useViewportFocus';
 import { useTouchGestures } from '../../hooks/useTouchGestures';
 import { useCanvasHandlers } from '../../hooks/useCanvasHandlers';
+import { useAnnotationPlacement } from '../../hooks/useAnnotationPlacement';
 import { useReactFlowLocalState } from './useReactFlowLocalState';
 import { useDiagramCanvasEvents } from './useDiagramCanvasEvents';
 
@@ -99,15 +100,35 @@ export default function DiagramCanvas() {
     tryFitViewOnDimensions,
   });
 
+  const placement = useAnnotationPlacement({ ignoreNextPaneClickRef });
+  const isPlacing = placement.pendingTool != null;
+
+  const onPointerDownAll = (event: React.PointerEvent<HTMLDivElement>) => {
+    placement.onPointerDown(event);
+    onPointerDownCapture(event);
+  };
+  const onPointerMoveAll = (event: React.PointerEvent<HTMLDivElement>) => {
+    placement.onPointerMove(event);
+    onPointerMoveCapture(event);
+  };
+  const onPointerUpAll = (event: React.PointerEvent<HTMLDivElement>) => {
+    placement.onPointerUp(event);
+    onPointerUpCapture(event);
+  };
+  const onPointerCancelAll = (event: React.PointerEvent<HTMLDivElement>) => {
+    placement.onPointerCancel(event);
+    onPointerCancelCapture(event);
+  };
+
   return (
     <div
       ref={canvasRef}
       data-testid="diagram-flow"
       onDoubleClickCapture={handlers.onDoubleClick}
-      onPointerDownCapture={onPointerDownCapture}
-      onPointerMoveCapture={onPointerMoveCapture}
-      onPointerUpCapture={onPointerUpCapture}
-      onPointerCancelCapture={onPointerCancelCapture}
+      onPointerDownCapture={onPointerDownAll}
+      onPointerMoveCapture={onPointerMoveAll}
+      onPointerUpCapture={onPointerUpAll}
+      onPointerCancelCapture={onPointerCancelAll}
       style={{ width: '100%', height: '100%' }}
     >
       <ReactFlow
@@ -138,7 +159,7 @@ export default function DiagramCanvas() {
         snapToGrid={false}
         snapGrid={[20, 20]}
         proOptions={{ hideAttribution: true }}
-        className={isPanMode ? 'pan-mode' : ''}
+        className={`${isPanMode ? 'pan-mode' : ''} ${isPlacing ? 'placement-mode' : ''}`.trim()}
       >
         {showGrid && (
           <Background variant={BackgroundVariant.Dots} gap={20} size={1} />

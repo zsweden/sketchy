@@ -11,6 +11,7 @@ function resetStore() {
     sidePanelOpen: true,
     chatPanelMode: 'shared',
     interactionMode: 'select',
+    pendingAnnotationTool: null,
   });
 }
 
@@ -162,6 +163,40 @@ describe('ui store', () => {
       useUIStore.getState().setInteractionMode('pan');
       useUIStore.getState().setInteractionMode('select');
       expect(useUIStore.getState().interactionMode).toBe('select');
+    });
+  });
+
+  describe('pending annotation tool', () => {
+    it('defaults to null', () => {
+      expect(useUIStore.getState().pendingAnnotationTool).toBeNull();
+    });
+
+    it('sets a pending tool', () => {
+      useUIStore.getState().setPendingAnnotationTool('rect');
+      expect(useUIStore.getState().pendingAnnotationTool).toBe('rect');
+    });
+
+    it('clears the pending tool with null', () => {
+      useUIStore.getState().setPendingAnnotationTool('rect');
+      useUIStore.getState().setPendingAnnotationTool(null);
+      expect(useUIStore.getState().pendingAnnotationTool).toBeNull();
+    });
+
+    it('toggle activates a tool when none is pending', () => {
+      useUIStore.getState().togglePendingAnnotationTool('text');
+      expect(useUIStore.getState().pendingAnnotationTool).toBe('text');
+    });
+
+    it('toggle clears the same tool when re-pressed', () => {
+      useUIStore.getState().togglePendingAnnotationTool('text');
+      useUIStore.getState().togglePendingAnnotationTool('text');
+      expect(useUIStore.getState().pendingAnnotationTool).toBeNull();
+    });
+
+    it('toggle switches between tools', () => {
+      useUIStore.getState().togglePendingAnnotationTool('text');
+      useUIStore.getState().togglePendingAnnotationTool('ellipse');
+      expect(useUIStore.getState().pendingAnnotationTool).toBe('ellipse');
     });
   });
 

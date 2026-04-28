@@ -301,6 +301,17 @@
   pointer-events: none !important;
 }
 
+/* Annotation placement mode */
+.placement-mode .react-flow__pane,
+.placement-mode .react-flow__node,
+.placement-mode .react-flow__edge {
+  cursor: crosshair !important;
+}
+
+.placement-mode .react-flow__handle {
+  pointer-events: none !important;
+}
+
 /* Toolbar active toggle */
 .btn-toggle-active {
   background: var(--accent) !important;

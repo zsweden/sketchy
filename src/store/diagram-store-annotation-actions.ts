@@ -1,7 +1,7 @@
 import type { Annotation, AnnotationKind } from '../core/types';
 import type { DiagramState, DiagramStoreContext } from './diagram-store-types';
 
-const DEFAULT_SIZE: Record<AnnotationKind, { width: number; height: number }> = {
+export const DEFAULT_ANNOTATION_SIZE: Record<AnnotationKind, { width: number; height: number }> = {
   text: { width: 180, height: 40 },
   rect: { width: 160, height: 100 },
   ellipse: { width: 160, height: 100 },
@@ -41,7 +41,7 @@ export function createDiagramAnnotationActions(
         id,
         kind,
         position,
-        size: { ...DEFAULT_SIZE[kind] },
+        size: { ...DEFAULT_ANNOTATION_SIZE[kind] },
         data: {},
       };
       applyDiagramChange(

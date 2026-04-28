@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { AnnotationKind } from '../core/types';
 import { uiEvents } from './ui-events';
 
 type InteractionMode = 'select' | 'pan';
@@ -17,6 +18,7 @@ interface UIState {
   sidePanelOpen: boolean;
   chatPanelMode: ChatPanelMode;
   interactionMode: InteractionMode;
+  pendingAnnotationTool: AnnotationKind | null;
   searchQuery: string;
 
   setSelectedNodes: (ids: string[]) => void;
@@ -27,6 +29,8 @@ interface UIState {
   toggleSidePanel: () => void;
   setChatPanelMode: (mode: ChatPanelMode) => void;
   setInteractionMode: (mode: InteractionMode) => void;
+  setPendingAnnotationTool: (kind: AnnotationKind | null) => void;
+  togglePendingAnnotationTool: (kind: AnnotationKind) => void;
   requestFitView: () => void;
   requestEdgeRefresh: () => void;
   requestClearSelection: () => void;
@@ -43,6 +47,7 @@ export const useUIStore = create<UIState>((set) => ({
   sidePanelOpen: true,
   chatPanelMode: 'shared',
   interactionMode: 'select',
+  pendingAnnotationTool: null,
   searchQuery: '',
 
   setSelectedNodes: (ids) => set({ selectedNodeIds: ids }),
@@ -62,6 +67,11 @@ export const useUIStore = create<UIState>((set) => ({
   setChatPanelMode: (mode) => set({ chatPanelMode: mode }),
 
   setInteractionMode: (mode) => set({ interactionMode: mode }),
+
+  setPendingAnnotationTool: (kind) => set({ pendingAnnotationTool: kind }),
+
+  togglePendingAnnotationTool: (kind) =>
+    set((s) => ({ pendingAnnotationTool: s.pendingAnnotationTool === kind ? null : kind })),
 
   requestFitView: () => { uiEvents.emit('fitView'); },
 
