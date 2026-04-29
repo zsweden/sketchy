@@ -26,6 +26,10 @@ import { useCanvasHandlers } from '../../hooks/useCanvasHandlers';
 import { useAnnotationPlacement } from '../../hooks/useAnnotationPlacement';
 import { useReactFlowLocalState } from './useReactFlowLocalState';
 import { useDiagramCanvasEvents } from './useDiagramCanvasEvents';
+import {
+  getReactFlowInteractionConfig,
+  shouldSuppressMouseForPlacement,
+} from '../../core/canvas/interaction-mode';
 
 const nodeTypes = {
   entity: EntityNode,
@@ -44,7 +48,6 @@ export default function DiagramCanvas() {
   const openContextMenu = useUIStore((s) => s.openContextMenu);
   const closeContextMenu = useUIStore((s) => s.closeContextMenu);
   const interactionMode = useUIStore((s) => s.interactionMode);
-  const isPanMode = interactionMode === 'pan';
 
   // Highlighting logic (extracted hook)
   const { selectedLoop, highlightSets, degreesMap } = useCanvasHighlighting();
@@ -102,6 +105,10 @@ export default function DiagramCanvas() {
 
   const placement = useAnnotationPlacement({ ignoreNextPaneClickRef });
   const isPlacing = placement.pendingTool != null;
+  const interactionConfig = getReactFlowInteractionConfig({
+    interactionMode,
+    isPlacingAnnotation: isPlacing,
+  });
 
   const onPointerDownAll = (event: React.PointerEvent<HTMLDivElement>) => {
     placement.onPointerDown(event);
@@ -120,7 +127,7 @@ export default function DiagramCanvas() {
     onPointerCancelCapture(event);
   };
   const onMousePlacementCapture = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!isPlacing) return;
+    if (!shouldSuppressMouseForPlacement(isPlacing)) return;
     event.preventDefault();
     event.stopPropagation();
     event.nativeEvent.stopImmediatePropagation();
@@ -159,16 +166,16 @@ export default function DiagramCanvas() {
         fitViewOptions={FIT_VIEW_OPTIONS}
         deleteKeyCode={['Backspace', 'Delete']}
         multiSelectionKeyCode="Shift"
-        selectionOnDrag={!isPanMode && !isPlacing}
-        panOnDrag={isPlacing ? false : isPanMode ? [0, 1, 2] : [1, 2]}
+        selectionOnDrag={interactionConfig.selectionOnDrag}
+        panOnDrag={interactionConfig.panOnDrag}
         zoomOnDoubleClick={false}
-        nodesDraggable={!isPanMode && !isPlacing}
-        nodesConnectable={!isPanMode && !isPlacing}
-        elementsSelectable={!isPanMode && !isPlacing}
+        nodesDraggable={interactionConfig.nodesDraggable}
+        nodesConnectable={interactionConfig.nodesConnectable}
+        elementsSelectable={interactionConfig.elementsSelectable}
         snapToGrid={false}
         snapGrid={[20, 20]}
         proOptions={{ hideAttribution: true }}
-        className={`${isPanMode ? 'pan-mode' : ''} ${isPlacing ? 'placement-mode' : ''}`.trim()}
+        className={interactionConfig.className}
       >
         {showGrid && (
           <Background variant={BackgroundVariant.Dots} gap={20} size={1} />

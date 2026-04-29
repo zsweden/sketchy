@@ -1,22 +1,20 @@
 import { expect, test } from '@playwright/test';
+import {
+  deleteFirstAnnotation,
+  getAnnotationCount,
+  getAnnotations,
+  getFirstAnnotationWidth,
+  getFirstLineDelta,
+  PANE,
+  resetApp,
+} from './helpers';
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/');
-  await page.waitForSelector('[data-testid="diagram-flow"]');
-  await page.evaluate(() => {
-    sessionStorage.clear();
-    localStorage.clear();
-  });
-  await page.reload();
-  await page.waitForSelector('[data-testid="diagram-flow"]');
-  await page.evaluate(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).__diagramStore.getState().setFramework('crt');
-  });
+  await resetApp(page);
 });
 
 test('toolbar icon arms placement and a pane click drops the annotation', async ({ page }) => {
-  const pane = page.locator('[data-testid="diagram-flow"] .react-flow__pane');
+  const pane = page.locator(PANE);
   const rectBtn = page.getByRole('button', { name: 'Add rectangle annotation' });
 
   // Empty canvas, no prior annotations to interfere with the pane click target.
@@ -29,7 +27,7 @@ test('toolbar icon arms placement and a pane click drops the annotation', async 
 });
 
 test('click-and-drag draws an annotation sized to the drag rectangle', async ({ page }) => {
-  const pane = page.locator('[data-testid="diagram-flow"] .react-flow__pane');
+  const pane = page.locator(PANE);
   await page.getByRole('button', { name: 'Add rectangle annotation' }).click();
 
   const box = await pane.boundingBox();
@@ -51,24 +49,16 @@ test('click-and-drag draws an annotation sized to the drag rectangle', async ({ 
   // Poll the store — under load the final pointer event may not yet have
   // flushed by the time we read.
   await expect
-    .poll(() =>
-      page.evaluate(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        () => (window as any).__diagramStore.getState().diagram.annotations[0]?.size?.width ?? 0,
-      ),
-    )
+    .poll(() => getFirstAnnotationWidth(page))
     .toBeGreaterThan(200);
 
-  const ann = await page.evaluate(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    () => (window as any).__diagramStore.getState().diagram.annotations[0],
-  );
+  const ann = (await getAnnotations(page))[0];
   expect(ann.kind).toBe('rect');
   expect(ann.size.height).toBeGreaterThan(120);
 });
 
 test('selected shape resize handles are hollow squares', async ({ page }) => {
-  const pane = page.locator('[data-testid="diagram-flow"] .react-flow__pane');
+  const pane = page.locator(PANE);
 
   await page.getByRole('button', { name: 'Add rectangle annotation' }).click();
   await pane.click({ position: { x: 300, y: 220 } });
@@ -129,7 +119,7 @@ test('selected shape resize handles are hollow squares', async ({ page }) => {
 });
 
 test('click-and-drag draws a visible line annotation', async ({ page }) => {
-  const pane = page.locator('[data-testid="diagram-flow"] .react-flow__pane');
+  const pane = page.locator(PANE);
   await page.getByRole('button', { name: 'Add line annotation' }).click();
 
   const box = await pane.boundingBox();
@@ -149,32 +139,19 @@ test('click-and-drag draws a visible line annotation', async ({ page }) => {
   // Verify the line geometry from the store (deterministic across load) and
   // verify it is rendered as a visible SVG line (style sanity).
   await expect
-    .poll(async () =>
-      page.evaluate(() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const ann = (window as any).__diagramStore.getState().diagram.annotations[0];
-        if (!ann || ann.kind !== 'line') return null;
-        return {
-          dx: Math.abs(ann.end.x - ann.start.x),
-          dy: Math.abs(ann.end.y - ann.start.y),
-        };
-      }),
-    )
+    .poll(() => getFirstLineDelta(page))
     .toEqual(expect.objectContaining({
       dx: expect.any(Number) as unknown as number,
       dy: expect.any(Number) as unknown as number,
     }));
 
-  const geometry = await page.evaluate(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ann = (window as any).__diagramStore.getState().diagram.annotations[0];
-    return { dx: Math.abs(ann.end.x - ann.start.x), dy: Math.abs(ann.end.y - ann.start.y) };
-  });
+  const geometry = await getFirstLineDelta(page);
+  expect(geometry).not.toBeNull();
   // Lenient lower bounds: drag was 260×140 in screen px; at the highest
   // post-fitView zoom (~1.5×) that's ~173×93 in flow space. Requiring much
   // smaller minimums keeps the test stable under variable viewport zoom.
-  expect(geometry.dx).toBeGreaterThan(80);
-  expect(geometry.dy).toBeGreaterThan(40);
+  expect(geometry!.dx).toBeGreaterThan(80);
+  expect(geometry!.dy).toBeGreaterThan(40);
 
   const style = await page.locator('.annotation-line line').evaluate((l) => ({
     stroke: getComputedStyle(l).stroke,
@@ -191,15 +168,11 @@ test('Escape cancels a pending annotation tool', async ({ page }) => {
   await page.keyboard.press('Escape');
   await expect(rectBtn).toHaveAttribute('aria-pressed', 'false');
 
-  const count = await page.evaluate(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    () => (window as any).__diagramStore.getState().diagram.annotations.length,
-  );
-  expect(count).toBe(0);
+  expect(await getAnnotationCount(page)).toBe(0);
 });
 
 test('edits a text annotation and persists across reload', async ({ page }) => {
-  const pane = page.locator('[data-testid="diagram-flow"] .react-flow__pane');
+  const pane = page.locator(PANE);
   await page.getByRole('button', { name: 'Add text annotation' }).click();
   await pane.click({ position: { x: 300, y: 220 } });
 
@@ -227,37 +200,26 @@ test('edits a text annotation and persists across reload', async ({ page }) => {
 });
 
 test('undo restores a deleted annotation', async ({ page }) => {
-  const pane = page.locator('[data-testid="diagram-flow"] .react-flow__pane');
+  const pane = page.locator(PANE);
   await page.getByRole('button', { name: 'Add rectangle annotation' }).click();
   await pane.click({ position: { x: 300, y: 220 } });
   await expect(page.locator('.annotation-rect')).toHaveCount(1);
 
-  const getCount = () =>
-    page.evaluate(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      () => (window as any).__diagramStore.getState().diagram.annotations.length,
-    );
-
   // Delete the annotation directly via the store action (covers the
   // store-level history integration without depending on RF key-routing).
-  await page.evaluate(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const store = (window as any).__diagramStore.getState();
-    const id = store.diagram.annotations[0].id;
-    store.deleteAnnotations([id]);
-  });
-  expect(await getCount()).toBe(0);
+  await deleteFirstAnnotation(page);
+  expect(await getAnnotationCount(page)).toBe(0);
 
   await page.getByRole('button', { name: 'Undo' }).click();
-  expect(await getCount()).toBe(1);
+  expect(await getAnnotationCount(page)).toBe(1);
 
   await page.getByRole('button', { name: 'Redo' }).click();
-  expect(await getCount()).toBe(0);
+  expect(await getAnnotationCount(page)).toBe(0);
 });
 
 test('does not affect entity nodes when annotations are added', async ({ page }) => {
   // Double-click the pane to add a real entity node
-  const pane = page.locator('[data-testid="diagram-flow"] .react-flow__pane');
+  const pane = page.locator(PANE);
   await pane.dblclick({ position: { x: 300, y: 300 } });
   await expect(page.locator('.entity-node')).toHaveCount(1);
 

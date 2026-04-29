@@ -2,9 +2,11 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import { useDiagramStore } from '../store/diagram-store';
 import { useUIStore } from '../store/ui-store';
-import { DEFAULT_ANNOTATION_SIZE } from '../store/diagram-store-annotation-actions';
-
-const MIN_DRAW_SIZE = 20;
+import {
+  DEFAULT_ANNOTATION_SIZE,
+  getClickPlacementPatch,
+  getDragResizePatch,
+} from '../core/annotations/geometry';
 
 interface PlacementDrag {
   pointerId: number;
@@ -45,16 +47,9 @@ export function useAnnotationPlacement({
 
   const resizePlacedAnnotation = useCallback(
     (annotationId: string, startFlow: { x: number; y: number }, currFlow: { x: number; y: number }) => {
-      const width = Math.max(MIN_DRAW_SIZE, Math.abs(currFlow.x - startFlow.x));
-      const height = Math.max(MIN_DRAW_SIZE, Math.abs(currFlow.y - startFlow.y));
-      const x = currFlow.x < startFlow.x ? startFlow.x - width : startFlow.x;
-      const y = currFlow.y < startFlow.y ? startFlow.y - height : startFlow.y;
       resizeAnnotation(
         annotationId,
-        {
-          size: { width, height },
-          position: { x, y },
-        },
+        getDragResizePatch(startFlow, currFlow),
         { trackHistory: false },
       );
     },
@@ -143,13 +138,9 @@ export function useAnnotationPlacement({
               { trackHistory: false },
             );
           } else {
-            const position = {
-              x: drag.startFlow.x - size.width / 2,
-              y: drag.startFlow.y - size.height / 2,
-            };
             resizeAnnotation(
               drag.annotationId,
-              { size, position },
+              getClickPlacementPatch(tool, drag.startFlow),
               { trackHistory: false },
             );
           }

@@ -120,6 +120,65 @@ describe('diagram-store-context', () => {
     });
   });
 
+  describe('interaction transactions', () => {
+    it('commits multiple transient annotation updates as one undo entry', () => {
+      useDiagramStore.setState((s) => ({
+        diagram: {
+          ...s.diagram,
+          annotations: [{
+            id: 'line-1',
+            kind: 'line',
+            start: { x: 0, y: 0 },
+            end: { x: 100, y: 100 },
+            data: {},
+          }],
+        },
+      }));
+
+      useDiagramStore.getState().beginInteraction();
+      useDiagramStore.getState().updateLineAnnotationEndpoint(
+        'line-1',
+        'end',
+        { x: 150, y: 150 },
+        { trackHistory: false },
+      );
+      useDiagramStore.getState().updateLineAnnotationEndpoint(
+        'line-1',
+        'end',
+        { x: 200, y: 200 },
+        { trackHistory: false },
+      );
+      useDiagramStore.getState().commitInteraction();
+
+      expect(useDiagramStore.getState().diagram.annotations[0]).toMatchObject({
+        end: { x: 200, y: 200 },
+      });
+
+      useDiagramStore.getState().undo();
+      expect(useDiagramStore.getState().diagram.annotations[0]).toMatchObject({
+        end: { x: 100, y: 100 },
+      });
+    });
+
+    it('can cancel a transient interaction without pushing history', () => {
+      useDiagramStore.setState((s) => ({
+        diagram: {
+          ...s.diagram,
+          nodes: [seedNode('n1', 0, 0)],
+        },
+        canUndo: false,
+      }));
+
+      useDiagramStore.getState().beginInteraction();
+      useDiagramStore.getState().moveNodes([{ id: 'n1', position: { x: 20, y: 30 } }]);
+      useDiagramStore.getState().cancelInteraction();
+      useDiagramStore.getState().commitInteraction();
+
+      expect(useDiagramStore.getState().diagram.nodes[0].position).toEqual({ x: 20, y: 30 });
+      expect(useDiagramStore.getState().canUndo).toBe(false);
+    });
+  });
+
   describe('alignNodesHorizontally / alignNodesVertically', () => {
     it('aligns nodes horizontally by center and tracks history', () => {
       useDiagramStore.getState().addNode({ x: 0, y: 0 });

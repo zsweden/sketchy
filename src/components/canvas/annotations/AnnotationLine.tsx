@@ -1,9 +1,7 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import { type NodeProps, useReactFlow } from '@xyflow/react';
-import { snapshot } from '../../../store/diagram-snapshot';
 import { useDiagramStore } from '../../../store/diagram-store';
 import { useUIStore } from '../../../store/ui-store';
-import type { DiagramSnapshot } from '../../../store/diagram-store-types';
 import type { Point } from '../../../core/types';
 import { ANNOTATION_STROKE, ANNOTATION_STROKE_WIDTH, annotationHandleStyle } from './annotation-style';
 
@@ -21,7 +19,6 @@ interface AnnotationLineData {
 interface EndpointDrag {
   endpoint: 'start' | 'end';
   pointerId: number | null;
-  before: DiagramSnapshot;
   moved: boolean;
 }
 
@@ -29,7 +26,9 @@ function AnnotationLine({ id, data, selected }: NodeProps) {
   const d = data as unknown as AnnotationLineData;
   const { screenToFlowPosition } = useReactFlow();
   const updateLineAnnotationEndpoint = useDiagramStore((s) => s.updateLineAnnotationEndpoint);
-  const pushHistoryEntry = useDiagramStore((s) => s.pushHistoryEntry);
+  const beginInteraction = useDiagramStore((s) => s.beginInteraction);
+  const commitInteraction = useDiagramStore((s) => s.commitInteraction);
+  const cancelInteraction = useDiagramStore((s) => s.cancelInteraction);
   const isStoreSelected = useUIStore((s) => s.selectedNodeIds.includes(id));
   const dragRef = useRef<EndpointDrag | null>(null);
 
@@ -37,14 +36,14 @@ function AnnotationLine({ id, data, selected }: NodeProps) {
   const stroke = d.stroke ?? ANNOTATION_STROKE;
   const strokeWidth = d.strokeWidth ?? ANNOTATION_STROKE_WIDTH;
 
-  const startEndpointDrag = (endpoint: 'start' | 'end', pointerId: number | null) => {
+  const startEndpointDrag = useCallback((endpoint: 'start' | 'end', pointerId: number | null) => {
+    beginInteraction();
     dragRef.current = {
       endpoint,
       pointerId,
-      before: snapshot(useDiagramStore.getState()),
       moved: false,
     };
-  };
+  }, [beginInteraction]);
 
   useEffect(() => {
     const getEndpoint = (target: EventTarget | null): 'start' | 'end' | null => {
@@ -79,21 +78,38 @@ function AnnotationLine({ id, data, selected }: NodeProps) {
       const drag = dragRef.current;
       if (!drag || drag.pointerId !== event.pointerId) return;
       event.preventDefault();
-      if (drag.moved) pushHistoryEntry(drag.before);
+      if (drag.moved) commitInteraction();
+      else cancelInteraction();
+      dragRef.current = null;
+    };
+
+    const handlePointerCancel = (event: PointerEvent) => {
+      const drag = dragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      event.preventDefault();
+      cancelInteraction();
       dragRef.current = null;
     };
 
     window.addEventListener('pointerdown', handlePointerDown, true);
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', handlePointerUp);
-    window.addEventListener('pointercancel', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerCancel);
     return () => {
       window.removeEventListener('pointerdown', handlePointerDown, true);
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
-      window.removeEventListener('pointercancel', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerCancel);
     };
-  }, [id, pushHistoryEntry, screenToFlowPosition, updateLineAnnotationEndpoint]);
+  }, [
+    beginInteraction,
+    cancelInteraction,
+    commitInteraction,
+    id,
+    screenToFlowPosition,
+    startEndpointDrag,
+    updateLineAnnotationEndpoint,
+  ]);
 
   useEffect(() => {
     const getEndpoint = (target: EventTarget | null): 'start' | 'end' | null => {
@@ -130,7 +146,9 @@ function AnnotationLine({ id, data, selected }: NodeProps) {
       if (!drag || drag.pointerId !== null) return;
       event.preventDefault();
       if (drag.moved) {
-        pushHistoryEntry(drag.before);
+        commitInteraction();
+      } else {
+        cancelInteraction();
       }
       dragRef.current = null;
     };
@@ -143,7 +161,15 @@ function AnnotationLine({ id, data, selected }: NodeProps) {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [id, pushHistoryEntry, screenToFlowPosition, updateLineAnnotationEndpoint]);
+  }, [
+    beginInteraction,
+    cancelInteraction,
+    commitInteraction,
+    id,
+    screenToFlowPosition,
+    startEndpointDrag,
+    updateLineAnnotationEndpoint,
+  ]);
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'visible' }}>

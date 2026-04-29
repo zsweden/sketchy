@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { SCHEMA_VERSION } from '../types';
 import type {
   Annotation,
@@ -20,16 +21,34 @@ const EDGE_CONFIDENCE = ['high', 'medium', 'low'] as const;
 const EDGE_POLARITY = ['positive', 'negative'] as const;
 const ANNOTATION_KINDS = ['text', 'rect', 'ellipse', 'line'] as const;
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
+const recordSchema = z.record(z.string(), z.unknown());
+const pointSchema = z.object({
+  x: z.unknown().optional(),
+  y: z.unknown().optional(),
+}).passthrough();
+const sizeSchema = z.object({
+  width: z.number().finite(),
+  height: z.number().finite(),
+}).passthrough();
+const layoutDirectionSchema = z.enum(LAYOUT_DIRECTIONS);
+const edgeRoutingModeSchema = z.enum(EDGE_ROUTING_MODES);
+const junctionTypeSchema = z.enum(JUNCTION_TYPES);
+const edgeConfidenceSchema = z.enum(EDGE_CONFIDENCE);
+const edgePolaritySchema = z.enum(EDGE_POLARITY);
+const annotationKindSchema = z.enum(ANNOTATION_KINDS);
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  const result = recordSchema.safeParse(value);
+  return result.success ? result.data : null;
+}
+
 function normalizePosition(raw: unknown): { x: number; y: number } {
-  const position = isRecord(raw) ? raw : {};
+  const result = pointSchema.safeParse(raw);
+  const position = result.success ? result.data : {};
   return {
     x: isFiniteNumber(position.x) ? position.x : 0,
     y: isFiniteNumber(position.y) ? position.y : 0,
@@ -37,20 +56,20 @@ function normalizePosition(raw: unknown): { x: number; y: number } {
 }
 
 function normalizeSize(raw: unknown): { width: number; height: number } | undefined {
-  if (!isRecord(raw)) return undefined;
-  if (!isFiniteNumber(raw.width) || !isFiniteNumber(raw.height)) return undefined;
-  if (raw.width <= 0 || raw.height <= 0) return undefined;
-  return { width: raw.width, height: raw.height };
+  const result = sizeSchema.safeParse(raw);
+  if (!result.success) return undefined;
+  const { width, height } = result.data;
+  if (width <= 0 || height <= 0) return undefined;
+  return { width, height };
 }
 
-function enumValue<T extends readonly string[]>(
+function enumValue<T extends z.ZodEnum>(
   value: unknown,
-  allowed: T,
-  fallback: T[number],
-): T[number] {
-  return typeof value === 'string' && (allowed as readonly string[]).includes(value)
-    ? value
-    : fallback;
+  schema: T,
+  fallback: z.infer<T>,
+): z.infer<T> {
+  const result = schema.safeParse(value);
+  return result.success ? result.data : fallback;
 }
 
 function optionalString(value: unknown): string | undefined {
@@ -63,13 +82,9 @@ function normalizeStringArray(value: unknown): string[] {
 }
 
 function normalizeSettings(raw: unknown): DiagramSettings {
-  const s = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
-  const layoutDirection = (LAYOUT_DIRECTIONS as readonly string[]).includes(s.layoutDirection as string)
-    ? (s.layoutDirection as DiagramSettings['layoutDirection'])
-    : 'BT';
-  const edgeRoutingMode = (EDGE_ROUTING_MODES as readonly string[]).includes(s.edgeRoutingMode as string)
-    ? (s.edgeRoutingMode as DiagramSettings['edgeRoutingMode'])
-    : 'dynamic';
+  const s = asRecord(raw) ?? {};
+  const layoutDirection = enumValue(s.layoutDirection, layoutDirectionSchema, 'BT');
+  const edgeRoutingMode = enumValue(s.edgeRoutingMode, edgeRoutingModeSchema, 'dynamic');
   return {
     layoutDirection,
     showGrid: typeof s.showGrid === 'boolean' ? s.showGrid : true,
@@ -82,20 +97,21 @@ function normalizeNodes(raw: unknown): DiagramNode[] {
   if (!Array.isArray(raw)) return [];
 
   return raw.flatMap((entry): DiagramNode[] => {
-    if (!isRecord(entry) || typeof entry.id !== 'string' || entry.id.length === 0) {
+    const record = asRecord(entry);
+    if (!record || typeof record.id !== 'string' || record.id.length === 0) {
       return [];
     }
-    const data = isRecord(entry.data) ? entry.data : {};
-    const size = normalizeSize(entry.size);
+    const data = asRecord(record.data) ?? {};
+    const size = normalizeSize(record.size);
     const node: DiagramNode = {
-      id: entry.id,
+      id: record.id,
       type: 'entity',
-      position: normalizePosition(entry.position),
+      position: normalizePosition(record.position),
       ...(size ? { size } : {}),
       data: {
         label: typeof data.label === 'string' ? data.label : '',
         tags: normalizeStringArray(data.tags),
-        junctionType: enumValue(data.junctionType, JUNCTION_TYPES, 'or') as JunctionType,
+        junctionType: enumValue(data.junctionType, junctionTypeSchema, 'or') as JunctionType,
         ...(optionalString(data.notes) ? { notes: optionalString(data.notes) } : {}),
         ...(isFiniteNumber(data.value) ? { value: data.value } : {}),
         ...(optionalString(data.unit) ? { unit: optionalString(data.unit) } : {}),
@@ -112,37 +128,38 @@ function normalizeEdges(raw: unknown): DiagramEdge[] {
   if (!Array.isArray(raw)) return [];
 
   return raw.flatMap((entry, index): DiagramEdge[] => {
-    if (!isRecord(entry) || typeof entry.source !== 'string' || typeof entry.target !== 'string') {
+    const record = asRecord(entry);
+    if (!record || typeof record.source !== 'string' || typeof record.target !== 'string') {
       return [];
     }
-    const sourceSide = typeof entry.sourceSide === 'string' && isHandleSide(entry.sourceSide)
-      ? entry.sourceSide
+    const sourceSide = typeof record.sourceSide === 'string' && isHandleSide(record.sourceSide)
+      ? record.sourceSide
       : undefined;
-    const targetSide = typeof entry.targetSide === 'string' && isHandleSide(entry.targetSide)
-      ? entry.targetSide
+    const targetSide = typeof record.targetSide === 'string' && isHandleSide(record.targetSide)
+      ? record.targetSide
       : undefined;
     const edge: DiagramEdge = {
-      id: typeof entry.id === 'string' && entry.id.length > 0 ? entry.id : `edge-${index + 1}`,
-      source: entry.source,
-      target: entry.target,
+      id: typeof record.id === 'string' && record.id.length > 0 ? record.id : `edge-${index + 1}`,
+      source: record.source,
+      target: record.target,
       ...(sourceSide ? { sourceSide } : {}),
       ...(targetSide ? { targetSide } : {}),
-      ...(typeof entry.confidence === 'string' && (EDGE_CONFIDENCE as readonly string[]).includes(entry.confidence)
-        ? { confidence: entry.confidence as EdgeConfidence }
+      ...(edgeConfidenceSchema.safeParse(record.confidence).success
+        ? { confidence: record.confidence as EdgeConfidence }
         : {}),
-      ...(typeof entry.polarity === 'string' && (EDGE_POLARITY as readonly string[]).includes(entry.polarity)
-        ? { polarity: entry.polarity as EdgePolarity }
+      ...(edgePolaritySchema.safeParse(record.polarity).success
+        ? { polarity: record.polarity as EdgePolarity }
         : {}),
-      ...(entry.delay === true ? { delay: true } : {}),
-      ...(optionalString(entry.edgeTag) ? { edgeTag: optionalString(entry.edgeTag) } : {}),
-      ...(optionalString(entry.notes) ? { notes: optionalString(entry.notes) } : {}),
+      ...(record.delay === true ? { delay: true } : {}),
+      ...(optionalString(record.edgeTag) ? { edgeTag: optionalString(record.edgeTag) } : {}),
+      ...(optionalString(record.notes) ? { notes: optionalString(record.notes) } : {}),
     };
     return [edge];
   });
 }
 
 function normalizeAnnotationData(raw: unknown): Annotation['data'] {
-  const data = isRecord(raw) ? raw : {};
+  const data = asRecord(raw) ?? {};
   return {
     ...(optionalString(data.text) ? { text: optionalString(data.text) } : {}),
     ...(optionalString(data.fill) ? { fill: optionalString(data.fill) } : {}),
@@ -158,19 +175,20 @@ function normalizeAnnotations(raw: unknown): Annotation[] {
   if (!Array.isArray(raw)) return [];
 
   return raw.flatMap((entry, index): Annotation[] => {
-    if (!isRecord(entry)) return [];
-    const kind = enumValue(entry.kind, ANNOTATION_KINDS, 'rect') as AnnotationKind;
-    const data = normalizeAnnotationData(entry.data);
-    const id = typeof entry.id === 'string' && entry.id.length > 0 ? entry.id : `annotation-${index + 1}`;
+    const record = asRecord(entry);
+    if (!record) return [];
+    const kind = enumValue(record.kind, annotationKindSchema, 'rect') as AnnotationKind;
+    const data = normalizeAnnotationData(record.data);
+    const id = typeof record.id === 'string' && record.id.length > 0 ? record.id : `annotation-${index + 1}`;
 
     if (kind === 'line') {
-      const legacyPosition = normalizePosition(entry.position);
-      const legacySize = normalizeSize(entry.size) ?? { width: 200, height: 120 };
-      const start = isRecord(entry.start)
-        ? normalizePosition(entry.start)
+      const legacyPosition = normalizePosition(record.position);
+      const legacySize = normalizeSize(record.size) ?? { width: 200, height: 120 };
+      const start = asRecord(record.start)
+        ? normalizePosition(record.start)
         : legacyPosition;
-      const end = isRecord(entry.end)
-        ? normalizePosition(entry.end)
+      const end = asRecord(record.end)
+        ? normalizePosition(record.end)
         : data.flipped
           ? { x: legacyPosition.x + legacySize.width, y: legacyPosition.y }
           : { x: legacyPosition.x + legacySize.width, y: legacyPosition.y + legacySize.height };
@@ -184,12 +202,12 @@ function normalizeAnnotations(raw: unknown): Annotation[] {
       }];
     }
 
-    const size = normalizeSize(entry.size);
+    const size = normalizeSize(record.size);
     if (!size) return [];
     return [{
       id,
       kind,
-      position: normalizePosition(entry.position),
+      position: normalizePosition(record.position),
       size,
       data,
     }];

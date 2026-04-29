@@ -36,10 +36,24 @@ export function createDiagramActions(
   | 'setDiagramName'
   | 'undo'
   | 'redo'
+  | 'beginInteraction'
+  | 'commitInteraction'
+  | 'cancelInteraction'
   | 'commitToHistory'
   | 'pushHistoryEntry'
 > {
-  const { get, history, moveNodes, pushHistorySnapshot, set, undoState, clearPendingNodeMove } = context;
+  const {
+    get,
+    history,
+    moveNodes,
+    pushHistorySnapshot,
+    set,
+    undoState,
+    clearPendingNodeMove,
+    beginInteraction,
+    commitInteraction,
+    cancelInteraction,
+  } = context;
   const focusInitialNode = (nodeId?: string) => {
     if (!nodeId) return;
     uiEvents.emit('viewportFocus', { kind: 'node', id: nodeId });
@@ -241,6 +255,12 @@ export function createDiagramActions(
         }));
       }
     },
+
+    beginInteraction,
+
+    commitInteraction,
+
+    cancelInteraction,
 
     commitToHistory: () => {
       pushHistorySnapshot();

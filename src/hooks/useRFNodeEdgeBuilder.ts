@@ -15,8 +15,7 @@ import { ARROW_MARKER_SIZE } from '../constants/layout';
 import type { ConnectedSubgraph, NamedCausalLoop, NodeDegrees } from '../core/graph/derived';
 import { useDebouncedEdgePlacements } from './useDebouncedEdgePlacements';
 import type { Annotation } from '../core/types';
-
-const LINE_NODE_PADDING = 12;
+import { getLineNodeGeometry } from '../core/annotations/geometry';
 
 interface BuilderResult {
   rfNodes: Node[];
@@ -38,17 +37,14 @@ function annotationToRFNode(a: Annotation): Node {
     };
   }
 
-  const x = Math.min(a.start.x, a.end.x) - LINE_NODE_PADDING;
-  const y = Math.min(a.start.y, a.end.y) - LINE_NODE_PADDING;
-  const width = Math.abs(a.end.x - a.start.x) + LINE_NODE_PADDING * 2;
-  const height = Math.abs(a.end.y - a.start.y) + LINE_NODE_PADDING * 2;
+  const geometry = getLineNodeGeometry(a);
 
   return {
     id: a.id,
     type: 'annotation-line',
-    position: { x, y },
-    width,
-    height,
+    position: geometry.position,
+    width: geometry.size.width,
+    height: geometry.size.height,
     draggable: false,
     zIndex: -1,
     data: {
@@ -56,9 +52,9 @@ function annotationToRFNode(a: Annotation): Node {
       kind: a.kind,
       start: a.start,
       end: a.end,
-      localStart: { x: a.start.x - x, y: a.start.y - y },
-      localEnd: { x: a.end.x - x, y: a.end.y - y },
-      size: { width, height },
+      localStart: geometry.localStart,
+      localEnd: geometry.localEnd,
+      size: geometry.size,
     },
   };
 }

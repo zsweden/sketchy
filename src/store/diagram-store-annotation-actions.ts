@@ -1,12 +1,8 @@
-import type { Annotation, AnnotationKind } from '../core/types';
+import type { Annotation } from '../core/types';
 import type { DiagramState, DiagramStoreContext } from './diagram-store-types';
+import { createAnnotation, DEFAULT_ANNOTATION_SIZE } from '../core/annotations/geometry';
 
-export const DEFAULT_ANNOTATION_SIZE: Record<AnnotationKind, { width: number; height: number }> = {
-  text: { width: 180, height: 40 },
-  rect: { width: 160, height: 100 },
-  ellipse: { width: 160, height: 100 },
-  line: { width: 200, height: 120 },
-};
+export { DEFAULT_ANNOTATION_SIZE };
 
 export function createDiagramAnnotationActions(
   context: DiagramStoreContext,
@@ -38,22 +34,7 @@ export function createDiagramAnnotationActions(
   return {
     addAnnotation: (kind, position) => {
       const id = crypto.randomUUID();
-      const size = DEFAULT_ANNOTATION_SIZE[kind];
-      const annotation: Annotation = kind === 'line'
-        ? {
-          id,
-          kind,
-          start: position,
-          end: { x: position.x + size.width, y: position.y + size.height },
-          data: {},
-        }
-        : {
-          id,
-          kind,
-          position,
-          size: { ...size },
-          data: {},
-        };
+      const annotation = createAnnotation(kind, position, id);
       applyDiagramChange(
         (diagram) => ({ ...diagram, annotations: [...diagram.annotations, annotation] }),
         { trackHistory: true },

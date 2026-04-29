@@ -1,6 +1,7 @@
 import { UndoRedoManager } from '../core/history/undo-redo';
 import { snapshot } from './diagram-snapshot';
-import type { Annotation, Diagram, DiagramNode } from '../core/types';
+import type { Diagram, DiagramNode } from '../core/types';
+import { moveLineToNodePosition } from '../core/annotations/geometry';
 import type {
   DiagramSnapshot,
   DiagramStoreContext,
@@ -15,14 +16,29 @@ export function createDiagramStoreContext(
 ): DiagramStoreContext {
   const history = new UndoRedoManager<DiagramSnapshot>();
   const undoState = { canUndo: true, canRedo: false } as const;
-  let pendingNodeMoveSnapshot: DiagramSnapshot | null = null;
+  let pendingInteractionSnapshot: DiagramSnapshot | null = null;
+
+  const cancelInteraction = () => {
+    pendingInteractionSnapshot = null;
+  };
 
   const clearPendingNodeMove = () => {
-    pendingNodeMoveSnapshot = null;
+    cancelInteraction();
+  };
+
+  const beginInteraction = () => {
+    pendingInteractionSnapshot ??= snapshot(get());
+  };
+
+  const commitInteraction = () => {
+    if (!pendingInteractionSnapshot) return;
+    history.push(pendingInteractionSnapshot);
+    pendingInteractionSnapshot = null;
+    set(undoState);
   };
 
   const pushHistorySnapshot = (snapshotOverride?: DiagramSnapshot) => {
-    clearPendingNodeMove();
+    cancelInteraction();
     history.push(snapshotOverride ?? snapshot(get()));
   };
 
@@ -75,21 +91,6 @@ export function createDiagramStoreContext(
     return get().diagram.nodes.filter((node) => idSet.has(node.id));
   };
 
-  const moveLineAnnotation = (
-    annotation: Extract<Annotation, { kind: 'line' }>,
-    position: { x: number; y: number },
-  ): Annotation => {
-    const currentX = Math.min(annotation.start.x, annotation.end.x) - 12;
-    const currentY = Math.min(annotation.start.y, annotation.end.y) - 12;
-    const dx = position.x - currentX;
-    const dy = position.y - currentY;
-    return {
-      ...annotation,
-      start: { x: annotation.start.x + dx, y: annotation.start.y + dy },
-      end: { x: annotation.end.x + dx, y: annotation.end.y + dy },
-    };
-  };
-
   const moveNodes = (changes: NodePositionChange[]) => {
     const positions = new Map(changes.map((change) => [change.id, change.position]));
     setDiagram((diagram) => ({
@@ -102,7 +103,7 @@ export function createDiagramStoreContext(
         const position = positions.get(ann.id);
         if (!position) return ann;
         return ann.kind === 'line'
-          ? moveLineAnnotation(ann, position)
+          ? moveLineToNodePosition(ann, position)
           : { ...ann, position };
       }),
     }));
@@ -110,17 +111,12 @@ export function createDiagramStoreContext(
 
   const dragNodes = (changes: NodePositionChange[]) => {
     if (changes.length === 0) return;
-    if (!pendingNodeMoveSnapshot) {
-      pendingNodeMoveSnapshot = snapshot(get());
-    }
+    beginInteraction();
     moveNodes(changes);
   };
 
   const commitDraggedNodes = () => {
-    if (!pendingNodeMoveSnapshot) return;
-    history.push(pendingNodeMoveSnapshot);
-    pendingNodeMoveSnapshot = null;
-    set(undoState);
+    commitInteraction();
   };
 
   const applyNodePositionChanges: DiagramStoreContext['applyNodePositionChanges'] = (
@@ -156,6 +152,9 @@ export function createDiagramStoreContext(
     history,
     undoState,
     clearPendingNodeMove,
+    beginInteraction,
+    commitInteraction,
+    cancelInteraction,
     pushHistorySnapshot,
     setDiagram,
     applyDiagramChange,

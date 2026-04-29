@@ -1,56 +1,119 @@
 import { expect } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
+import type { Annotation } from '../src/core/types';
 
 export const PANE = '[data-testid="diagram-flow"] .react-flow__pane';
 
-export async function createNode(page: import('@playwright/test').Page, x: number, y: number) {
+type SketchyWindow = Window & {
+  __diagramStore: {
+    getState: () => {
+      setFramework: (frameworkId: string) => void;
+      addNode: (position: { x: number; y: number }) => string;
+      updateNodeText: (id: string, text: string) => void;
+      deleteAnnotations: (ids: string[]) => void;
+      diagram: { annotations: Annotation[] };
+    };
+  };
+  __uiStore?: {
+    getState: () => { selectedNodeIds: string[] };
+  };
+  __sketchy_addEdge: (sourceId: string, targetId: string) => unknown;
+};
+
+export async function resetApp(page: Page, frameworkId = 'crt') {
+  await page.goto('/');
+  await page.waitForSelector('[data-testid="diagram-flow"]');
+  await page.evaluate(() => {
+    sessionStorage.clear();
+    localStorage.clear();
+  });
+  await page.reload();
+  await page.waitForSelector('[data-testid="diagram-flow"]');
+  await page.evaluate(
+    (id) => (window as unknown as SketchyWindow).__diagramStore.getState().setFramework(id),
+    frameworkId,
+  );
+}
+
+export async function getAnnotations(page: Page): Promise<Annotation[]> {
+  return page.evaluate(() => (window as unknown as SketchyWindow).__diagramStore.getState().diagram.annotations);
+}
+
+export async function getAnnotationCount(page: Page): Promise<number> {
+  return page.evaluate(() => (window as unknown as SketchyWindow).__diagramStore.getState().diagram.annotations.length);
+}
+
+export async function getFirstAnnotationWidth(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const first = (window as unknown as SketchyWindow).__diagramStore.getState().diagram.annotations[0];
+    return first && first.kind !== 'line' ? first.size.width : 0;
+  });
+}
+
+export async function getFirstLineDelta(page: Page): Promise<{ dx: number; dy: number } | null> {
+  return page.evaluate(() => {
+    const first = (window as unknown as SketchyWindow).__diagramStore.getState().diagram.annotations[0];
+    if (!first || first.kind !== 'line') return null;
+    return {
+      dx: Math.abs(first.end.x - first.start.x),
+      dy: Math.abs(first.end.y - first.start.y),
+    };
+  });
+}
+
+export async function deleteFirstAnnotation(page: Page) {
+  await page.evaluate(() => {
+    const store = (window as unknown as SketchyWindow).__diagramStore.getState();
+    const id = store.diagram.annotations[0]?.id;
+    if (id) store.deleteAnnotations([id]);
+  });
+}
+
+export async function createNode(page: Page, x: number, y: number) {
   const countBefore = await page.locator('.entity-node').count();
   await page.evaluate(
     ([nodeX, nodeY]) => {
       // Use store-level creation for deterministic flow-space coordinates.
       // Pane double-click coordinates become viewport-dependent once fitView zooms.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (window as any).__diagramStore.getState().addNode({ x: nodeX, y: nodeY });
+      return (window as unknown as SketchyWindow).__diagramStore.getState().addNode({ x: nodeX, y: nodeY });
     },
     [x, y],
   );
   await expect(page.locator('.entity-node')).toHaveCount(countBefore + 1);
 }
 
-export async function getNodeIds(page: import('@playwright/test').Page): Promise<string[]> {
+export async function getNodeIds(page: Page): Promise<string[]> {
   return page.locator('[data-node-id]').evaluateAll(
     (els) => els.map((el) => el.getAttribute('data-node-id')!),
   );
 }
 
 export async function selectNode(
-  page: import('@playwright/test').Page,
-  node: import('@playwright/test').Locator,
+  page: Page,
+  node: Locator,
 ) {
   await node.click();
   await page.waitForFunction(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ids = (window as any).__uiStore?.getState().selectedNodeIds;
+    const ids = (window as unknown as SketchyWindow).__uiStore?.getState().selectedNodeIds;
     return Array.isArray(ids) && ids.length === 1;
   });
 }
 
-export async function addEdge(page: import('@playwright/test').Page, sourceId: string, targetId: string) {
+export async function addEdge(page: Page, sourceId: string, targetId: string) {
   await page.evaluate(
-    ([src, tgt]) => // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).__sketchy_addEdge(src, tgt),
+    ([src, tgt]) => (window as unknown as SketchyWindow).__sketchy_addEdge(src, tgt),
     [sourceId, targetId],
   );
 }
 
-export async function updateNodeText(page: import('@playwright/test').Page, nodeId: string, label: string) {
+export async function updateNodeText(page: Page, nodeId: string, label: string) {
   await page.evaluate(
-    ([id, text]) => // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).__diagramStore.getState().updateNodeText(id, text),
+    ([id, text]) => (window as unknown as SketchyWindow).__diagramStore.getState().updateNodeText(id, text),
     [nodeId, label],
   );
 }
 
-export async function getNodeCenter(page: import('@playwright/test').Page, nodeId: string) {
+export async function getNodeCenter(page: Page, nodeId: string) {
   const box = await page.locator(`[data-node-id="${nodeId}"]`).boundingBox();
   expect(box).not.toBeNull();
   return {
@@ -65,7 +128,7 @@ export async function getNodeCenter(page: import('@playwright/test').Page, nodeI
  * when the bounding box is first captured — the click can land on the pane.
  */
 export async function rightClickEdge(
-  page: import('@playwright/test').Page,
+  page: Page,
   menuItemText: string,
 ) {
   const edgePath = page.locator('.react-flow__edge-interaction').first();

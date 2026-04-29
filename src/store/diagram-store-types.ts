@@ -149,6 +149,9 @@ export interface DiagramState {
   redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  beginInteraction: () => void;
+  commitInteraction: () => void;
+  cancelInteraction: () => void;
   commitToHistory: () => void;
   /**
    * Push a specific snapshot to the undo stack. Used by interactive flows
@@ -170,6 +173,9 @@ export interface DiagramStoreContext {
     readonly canRedo: false;
   };
   clearPendingNodeMove: () => void;
+  beginInteraction: () => void;
+  commitInteraction: () => void;
+  cancelInteraction: () => void;
   pushHistorySnapshot: (snapshotOverride?: DiagramSnapshot) => void;
   setDiagram: (updater: (diagram: Diagram) => Diagram) => void;
   applyDiagramChange: (
