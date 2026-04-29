@@ -61,6 +61,37 @@ export async function getFirstLineDelta(page: Page): Promise<{ dx: number; dy: n
   });
 }
 
+/**
+ * Read the current React Flow viewport zoom from the DOM transform matrix.
+ * Annotation deltas live in flow space, so callers that drag in screen pixels
+ * must divide by zoom to know what to expect. Avoids hardcoded "lenient"
+ * thresholds that drift when fitView lands on a different zoom.
+ */
+export async function getViewportZoom(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const viewport = document.querySelector('.react-flow__viewport') as HTMLElement | null;
+    if (!viewport) throw new Error('react-flow viewport not found');
+    const matrix = new DOMMatrixReadOnly(getComputedStyle(viewport).transform);
+    return matrix.a;
+  });
+}
+
+/**
+ * Wait for the React Flow viewport to stop animating (fitView uses a 300 ms
+ * tween) before reading zoom. Without this, drag-based geometry tests race the
+ * tween and see a moving target.
+ */
+export async function waitForViewportStable(page: Page): Promise<number> {
+  let prev = await getViewportZoom(page);
+  for (let i = 0; i < 20; i++) {
+    await page.waitForTimeout(50);
+    const next = await getViewportZoom(page);
+    if (Math.abs(next - prev) < 1e-4) return next;
+    prev = next;
+  }
+  return prev;
+}
+
 export async function deleteFirstAnnotation(page: Page) {
   await page.evaluate(() => {
     const store = (window as unknown as SketchyWindow).__diagramStore.getState();

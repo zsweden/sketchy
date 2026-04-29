@@ -7,6 +7,7 @@ import {
   getFirstLineDelta,
   PANE,
   resetApp,
+  waitForViewportStable,
 } from './helpers';
 
 test.beforeEach(async ({ page }) => {
@@ -32,29 +33,38 @@ test('click-and-drag draws an annotation sized to the drag rectangle', async ({ 
 
   const box = await pane.boundingBox();
   if (!box) throw new Error('pane has no bounding box');
-  // Use a large drag so even with viewport zoom (fitView clamps to 1.5×) the
-  // resulting flow-space size is unambiguously bigger than the default click size (160×100).
+  const screenDx = 600;
+  const screenDy = 360;
   const startX = box.x + 200;
   const startY = box.y + 180;
-  const endX = startX + 600;
-  const endY = startY + 360;
+  const endX = startX + screenDx;
+  const endY = startY + screenDy;
+
+  const zoom = await waitForViewportStable(page);
+  const expectedWidth = screenDx / zoom;
+  const expectedHeight = screenDy / zoom;
 
   await page.mouse.move(startX, startY);
   await page.mouse.down();
-  await page.mouse.move(endX, endY, { steps: 8 });
+  // Single-step move: stepped moves coalesce in Chromium and drop the final
+  // position. One direct move fires a single deterministic pointermove event.
+  await page.mouse.move(endX, endY);
   await page.mouse.up();
 
   await expect(page.locator('.annotation-rect')).toHaveCount(1);
 
-  // Poll the store — under load the final pointer event may not yet have
-  // flushed by the time we read.
   await expect
     .poll(() => getFirstAnnotationWidth(page))
-    .toBeGreaterThan(200);
+    .toBeGreaterThan(expectedWidth * 0.95);
 
   const ann = (await getAnnotations(page))[0];
   expect(ann.kind).toBe('rect');
-  expect(ann.size.height).toBeGreaterThan(120);
+  if (ann.kind !== 'line') {
+    expect(ann.size.width).toBeGreaterThan(expectedWidth * 0.95);
+    expect(ann.size.width).toBeLessThan(expectedWidth * 1.05);
+    expect(ann.size.height).toBeGreaterThan(expectedHeight * 0.95);
+    expect(ann.size.height).toBeLessThan(expectedHeight * 1.05);
+  }
 });
 
 test('selected shape resize handles are hollow squares', async ({ page }) => {
@@ -124,20 +134,26 @@ test('click-and-drag draws a visible line annotation', async ({ page }) => {
 
   const box = await pane.boundingBox();
   if (!box) throw new Error('pane has no bounding box');
+  const screenDx = 260;
+  const screenDy = 140;
   const startX = box.x + 220;
   const startY = box.y + 190;
-  const endX = startX + 260;
-  const endY = startY + 140;
+  const endX = startX + screenDx;
+  const endY = startY + screenDy;
+
+  const zoom = await waitForViewportStable(page);
+  const expectedDx = screenDx / zoom;
+  const expectedDy = screenDy / zoom;
 
   await page.mouse.move(startX, startY);
   await page.mouse.down();
-  await page.mouse.move(endX, endY, { steps: 8 });
+  // Single-step move: stepped moves coalesce in Chromium and drop the final
+  // position. One direct move fires a single deterministic pointermove event.
+  await page.mouse.move(endX, endY);
   await page.mouse.up();
 
   await expect(page.locator('.annotation-line')).toHaveCount(1);
 
-  // Verify the line geometry from the store (deterministic across load) and
-  // verify it is rendered as a visible SVG line (style sanity).
   await expect
     .poll(() => getFirstLineDelta(page))
     .toEqual(expect.objectContaining({
@@ -147,11 +163,12 @@ test('click-and-drag draws a visible line annotation', async ({ page }) => {
 
   const geometry = await getFirstLineDelta(page);
   expect(geometry).not.toBeNull();
-  // Lenient lower bounds: drag was 260×140 in screen px; at the highest
-  // post-fitView zoom (~1.5×) that's ~173×93 in flow space. Requiring much
-  // smaller minimums keeps the test stable under variable viewport zoom.
-  expect(geometry!.dx).toBeGreaterThan(80);
-  expect(geometry!.dy).toBeGreaterThan(40);
+  // Geometry lives in flow space; assert within 5% of the zoom-derived
+  // expected delta to absorb any tail-end animation drift.
+  expect(geometry!.dx).toBeGreaterThan(expectedDx * 0.95);
+  expect(geometry!.dx).toBeLessThan(expectedDx * 1.05);
+  expect(geometry!.dy).toBeGreaterThan(expectedDy * 0.95);
+  expect(geometry!.dy).toBeLessThan(expectedDy * 1.05);
 
   const style = await page.locator('.annotation-line line').evaluate((l) => ({
     stroke: getComputedStyle(l).stroke,
