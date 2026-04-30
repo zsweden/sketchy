@@ -1,8 +1,9 @@
-import { render, waitFor } from '@testing-library/react';
+import { act, render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createEmptyDiagram } from '../core/types';
 import { useDiagramStore } from '../store/diagram-store';
 import { useUIStore } from '../store/ui-store';
+import { uiEvents } from '../store/ui-events';
 import { getWebStorage } from '../utils/web-storage';
 
 const mocks = vi.hoisted(() => ({
@@ -117,5 +118,49 @@ describe('App', () => {
     expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
     expect(mocks.toast.error).not.toHaveBeenCalled();
     expect(mocks.toast.warning).not.toHaveBeenCalled();
+  });
+
+  it('reports load errors without replacing the active diagram', () => {
+    mocks.loadDiagram.mockReturnValue({
+      diagram: null,
+      error: 'Could not parse saved diagram',
+    });
+
+    render(<App />);
+
+    expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
+    expect(mocks.toast.error).toHaveBeenCalledWith('Could not parse saved diagram');
+    expect(mocks.toast.warning).not.toHaveBeenCalled();
+  });
+
+  it('emits one toast.warning per warning entry', () => {
+    mocks.loadDiagram.mockReturnValue({
+      diagram: null,
+      warnings: ['Edge dropped: missing target', 'Edge dropped: missing source'],
+    });
+
+    render(<App />);
+
+    expect(mocks.toast.warning).toHaveBeenCalledTimes(2);
+    expect(mocks.toast.warning).toHaveBeenNthCalledWith(1, 'Edge dropped: missing target');
+    expect(mocks.toast.warning).toHaveBeenNthCalledWith(2, 'Edge dropped: missing source');
+  });
+
+  it('subscribes to toastError UI events and forwards them to sonner', async () => {
+    render(<App />);
+
+    act(() => {
+      uiEvents.emit('toastError', 'Auto-layout failed: timeout');
+    });
+
+    await waitFor(() => {
+      expect(mocks.toast.error).toHaveBeenCalledWith('Auto-layout failed: timeout');
+    });
+  });
+
+  it('installs all four global hooks exactly once per mount', () => {
+    render(<App />);
+    expect(mocks.useAutoSave).toHaveBeenCalledTimes(1);
+    expect(mocks.useKeyboardShortcuts).toHaveBeenCalledTimes(1);
   });
 });

@@ -65,3 +65,56 @@ test('skill button shows disabled state when no skills available', async ({ page
   // Skills button should exist and have aria-expanded attribute
   await expect(skillBtn).toHaveAttribute('aria-expanded', 'false');
 });
+
+test('clicking the EC template skill writes nodes and edges into the diagram', async ({ page }) => {
+  await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__diagramStore.getState().setFramework('evaporating-cloud');
+  });
+
+  // The starter framework comes with seed nodes; capture and clear them so we measure
+  // only what the template skill adds.
+  await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const store = (window as any).__diagramStore.getState();
+    store.batchApply({
+      removeNodeIds: store.diagram.nodes.map((n: { id: string }) => n.id),
+    });
+  });
+  await expect(page.locator('.entity-node')).toHaveCount(0);
+
+  const skillBtn = page.locator('button[aria-label="Skills"]');
+  await skillBtn.click();
+  const templateItem = page.locator('.skill-menu-item--template').first();
+  await expect(templateItem).toBeVisible();
+  await templateItem.click();
+
+  // EC template inserts 5 nodes and 5 edges.
+  await expect(page.locator('.entity-node')).toHaveCount(5);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(5);
+  await expect(page.locator('.entity-node', { hasText: /Common Objective/ })).toBeVisible();
+  await expect(page.locator('.entity-node', { hasText: /Prerequisite/ }).first()).toBeVisible();
+});
+
+test('template skill prompts for confirmation when the diagram is non-empty', async ({ page }) => {
+  await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const store = (window as any).__diagramStore.getState();
+    store.setFramework('evaporating-cloud');
+  });
+
+  // Add a stray node so the skill triggers the confirm() guard.
+  await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__diagramStore.getState().addNode({ x: 100, y: 100 });
+  });
+  const initialCount = await page.locator('.entity-node').count();
+  expect(initialCount).toBeGreaterThan(0);
+
+  // Decline the confirmation — diagram should remain unchanged.
+  page.once('dialog', (dialog) => dialog.dismiss());
+  await page.locator('button[aria-label="Skills"]').click();
+  await page.locator('.skill-menu-item--template').first().click();
+
+  await expect(page.locator('.entity-node')).toHaveCount(initialCount);
+});
