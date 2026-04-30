@@ -1,11 +1,11 @@
-export type CanvasInteractionMode = 'select' | 'pan';
+type CanvasInteractionMode = 'select' | 'pan';
 
-export interface CanvasInteractionInput {
+interface CanvasInteractionInput {
   interactionMode: CanvasInteractionMode;
   isPlacingAnnotation: boolean;
 }
 
-export interface ReactFlowInteractionConfig {
+interface ReactFlowInteractionConfig {
   className: string;
   selectionOnDrag: boolean;
   panOnDrag: boolean | number[];

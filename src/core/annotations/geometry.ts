@@ -7,10 +7,10 @@ export const DEFAULT_ANNOTATION_SIZE: Record<AnnotationKind, { width: number; he
   line: { width: 200, height: 120 },
 };
 
-export const LINE_NODE_PADDING = 12;
-export const MIN_DRAW_SIZE = 20;
+const LINE_NODE_PADDING = 12;
+const MIN_DRAW_SIZE = 20;
 
-export interface LineNodeGeometry {
+interface LineNodeGeometry {
   position: Point;
   size: { width: number; height: number };
   localStart: Point;

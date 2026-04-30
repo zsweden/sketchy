@@ -67,7 +67,7 @@ export async function getFirstLineDelta(page: Page): Promise<{ dx: number; dy: n
  * must divide by zoom to know what to expect. Avoids hardcoded "lenient"
  * thresholds that drift when fitView lands on a different zoom.
  */
-export async function getViewportZoom(page: Page): Promise<number> {
+async function getViewportZoom(page: Page): Promise<number> {
   return page.evaluate(() => {
     const viewport = document.querySelector('.react-flow__viewport') as HTMLElement | null;
     if (!viewport) throw new Error('react-flow viewport not found');

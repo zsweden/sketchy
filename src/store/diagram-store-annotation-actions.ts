@@ -1,8 +1,6 @@
 import type { Annotation } from '../core/types';
 import type { DiagramState, DiagramStoreContext } from './diagram-store-types';
-import { createAnnotation, DEFAULT_ANNOTATION_SIZE } from '../core/annotations/geometry';
-
-export { DEFAULT_ANNOTATION_SIZE };
+import { createAnnotation } from '../core/annotations/geometry';
 
 export function createDiagramAnnotationActions(
   context: DiagramStoreContext,

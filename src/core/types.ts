@@ -31,7 +31,7 @@ export interface Point {
   y: number;
 }
 
-export interface AnnotationData {
+interface AnnotationData {
   text?: string;
   fill?: string;
   stroke?: string;
@@ -41,7 +41,7 @@ export interface AnnotationData {
   flipped?: boolean;
 }
 
-export interface ShapeAnnotation {
+interface ShapeAnnotation {
   id: string;
   kind: Exclude<AnnotationKind, 'line'>;
   position: Point;
