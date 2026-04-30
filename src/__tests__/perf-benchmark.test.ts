@@ -260,7 +260,7 @@ describePerf('perf: autosave serialization', () => {
 // 5. JSON file load + validation + migration
 // ---------------------------------------------------------------------------
 
-describePerf('perf: sky file load pipeline', () => {
+describePerf('perf: project file load pipeline', () => {
   it('validates 200-node diagram shape under 5ms', () => {
     const { nodes, edges } = buildChain(200);
     const diagram = makeDiagram(nodes, edges);

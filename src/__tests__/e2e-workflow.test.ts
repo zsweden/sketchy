@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useDiagramStore } from '../store/diagram-store';
-import { diagramToSkyJson, convertSkyJson } from '../core/persistence/causal-json';
+import { diagramToProjectJson, convertProjectJson } from '../core/persistence/causal-json';
 import { getFramework, listFrameworks } from '../frameworks/registry';
 
 function resetStore() {
@@ -43,13 +43,13 @@ describe('end-to-end: CRT workflow', () => {
     expect(store().diagram.nodes.find((n) => n.id === n2)?.data.tags).toEqual(['ude']);
 
     // Save to .json format
-    const sky = diagramToSkyJson(store().diagram);
-    expect(sky.nodes).toHaveLength(3);
-    expect(sky.nodes.find((n) => n.label === 'Low morale')?.isUDE).toBe(true);
-    expect(sky.edges).toHaveLength(2);
+    const project = diagramToProjectJson(store().diagram);
+    expect(project.nodes).toHaveLength(3);
+    expect(project.nodes.find((n) => n.label === 'Low morale')?.isUDE).toBe(true);
+    expect(project.edges).toHaveLength(2);
 
     // Load back
-    const { diagram: loaded } = convertSkyJson(sky);
+    const { diagram: loaded } = convertProjectJson(project);
     expect(loaded.nodes).toHaveLength(3);
     expect(loaded.edges).toHaveLength(2);
     expect(loaded.nodes.find((n) => n.data.label === 'High turnover')?.data.tags).toEqual(['ude']);
@@ -112,10 +112,10 @@ describe('end-to-end: CRT workflow', () => {
     });
 
     // Save and load
-    const sky = diagramToSkyJson(store().diagram);
-    expect(sky.edges[0].confidence).toBe('low');
+    const project = diagramToProjectJson(store().diagram);
+    expect(project.edges[0].confidence).toBe('low');
 
-    const { diagram: loaded } = convertSkyJson(sky);
+    const { diagram: loaded } = convertProjectJson(project);
     expect(loaded.edges[0].confidence).toBe('low');
   });
 });
@@ -156,9 +156,9 @@ describe('end-to-end: FRT workflow', () => {
     expect(store().diagram.nodes.find((n) => n.id === n3)?.data.tags).toEqual(['de']);
 
     // Save and verify .json format
-    const sky = diagramToSkyJson(store().diagram);
-    expect(sky.framework).toBe('frt');
-    expect(sky.nodes.find((n) => n.id === n1)?.tags).toEqual(['injection']);
+    const project = diagramToProjectJson(store().diagram);
+    expect(project.framework).toBe('frt');
+    expect(project.nodes.find((n) => n.id === n1)?.tags).toEqual(['injection']);
   });
 });
 
@@ -192,11 +192,11 @@ describe('end-to-end: PRT workflow', () => {
     store().addEdge(n1, n2);
     store().addEdge(n2, n3);
 
-    const sky = diagramToSkyJson(store().diagram);
-    expect(sky.framework).toBe('prt');
-    expect(sky.nodes.find((n) => n.id === n1)?.tags).toEqual(['obstacle']);
+    const project = diagramToProjectJson(store().diagram);
+    expect(project.framework).toBe('prt');
+    expect(project.nodes.find((n) => n.id === n1)?.tags).toEqual(['obstacle']);
 
-    const { diagram: loaded } = convertSkyJson(sky);
+    const { diagram: loaded } = convertProjectJson(project);
     expect(loaded.frameworkId).toBe('prt');
     expect(loaded.nodes.find((n) => n.id === n2)?.data.tags).toEqual(['io']);
     expect(loaded.nodes.find((n) => n.id === n3)?.data.tags).toEqual(['goal']);
@@ -234,11 +234,11 @@ describe('end-to-end: STT workflow', () => {
     store().addEdge(n1, n2);
     store().addEdge(n2, n3);
 
-    const sky = diagramToSkyJson(store().diagram);
-    expect(sky.framework).toBe('stt');
-    expect(sky.nodes.find((n) => n.id === n2)?.tags).toEqual(['strategy']);
+    const project = diagramToProjectJson(store().diagram);
+    expect(project.framework).toBe('stt');
+    expect(project.nodes.find((n) => n.id === n2)?.tags).toEqual(['strategy']);
 
-    const { diagram: loaded } = convertSkyJson(sky);
+    const { diagram: loaded } = convertProjectJson(project);
     expect(loaded.frameworkId).toBe('stt');
     expect(loaded.nodes.find((n) => n.id === n1)?.data.tags).toEqual(['objective']);
     expect(loaded.nodes.find((n) => n.id === n3)?.data.tags).toEqual(['tactic']);
@@ -276,11 +276,11 @@ describe('end-to-end: Goal Tree workflow', () => {
     store().addEdge(n1, n2);
     store().addEdge(n2, n3);
 
-    const sky = diagramToSkyJson(store().diagram);
-    expect(sky.framework).toBe('goal-tree');
-    expect(sky.nodes.find((n) => n.id === n2)?.tags).toEqual(['condition']);
+    const project = diagramToProjectJson(store().diagram);
+    expect(project.framework).toBe('goal-tree');
+    expect(project.nodes.find((n) => n.id === n2)?.tags).toEqual(['condition']);
 
-    const { diagram: loaded } = convertSkyJson(sky);
+    const { diagram: loaded } = convertProjectJson(project);
     expect(loaded.frameworkId).toBe('goal-tree');
     expect(loaded.nodes.find((n) => n.id === n1)?.data.tags).toEqual(['action']);
     expect(loaded.nodes.find((n) => n.id === n3)?.data.tags).toEqual(['goal']);

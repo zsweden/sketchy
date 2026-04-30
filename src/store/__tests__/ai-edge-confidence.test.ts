@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useDiagramStore } from '../diagram-store';
-import { diagramToSkyJson, convertSkyJson } from '../../core/persistence/causal-json';
+import { diagramToProjectJson, convertProjectJson } from '../../core/persistence/causal-json';
 
 // Fixture: small CRT with 4 nodes, 3 edges — all high confidence (default)
 function setupFixture() {
@@ -65,15 +65,15 @@ describe('AI edge confidence end-to-end', () => {
 
     // Save to .json format
     const diagram = useDiagramStore.getState().diagram;
-    const skyJson = diagramToSkyJson(diagram);
+    const projectJson = diagramToProjectJson(diagram);
 
     // All edges in .json should have confidence: 'medium'
-    for (const e of skyJson.edges) {
+    for (const e of projectJson.edges) {
       expect(e.confidence).toBe('medium');
     }
 
     // Load back from .json
-    const { diagram: loaded } = convertSkyJson(skyJson);
+    const { diagram: loaded } = convertProjectJson(projectJson);
 
     expect(loaded.edges).toHaveLength(3);
     for (const e of loaded.edges) {

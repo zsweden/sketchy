@@ -46,7 +46,7 @@ src/
 │   ├── graph/             # Validation, derived indicators, ports
 │   ├── history/           # Undo/redo snapshot stack
 │   ├── layout/            # Auto-layout (tree + cyclic engines via ELK)
-│   └── persistence/       # Autosave, .sky/.json file I/O, migrations
+│   └── persistence/       # Autosave, .json file I/O, migrations
 ├── frameworks/            # JSON manifests + registry (see boundary rules below)
 ├── store/                 # Zustand stores (diagram, ui, settings, chat, color-history)
 ├── components/            # React UI (canvas, toolbar, panel, context-menu)
@@ -80,7 +80,7 @@ Adding a framework = drop a `.json` file in `src/frameworks/`. No other file sho
 - **Tags vs derived indicators**: Tags (e.g. UDE) are user-authored and stored. Derived indicators (e.g. Root Cause) are computed from graph topology at render time — never persisted.
 - **React Flow sync**: Store is source of truth. Local state (`localNodes`/`localEdges`) is needed for RF selection. `useEffect` merges store data into local state, preserving selection. Bugs here are subtle — always verify both layers.
 - **Undo/redo boundaries**: Drag commits on pointer-up, text on blur/Enter, import/delete/layout are atomic.
-- **File format**: `.json` is the canonical save format. Loader also accepts legacy `.sky` wrapped format and raw diagram JSON.
+- **File format**: `.json` is the canonical save format. Loader accepts the unified flat project JSON (causal graph format) and raw diagram JSON.
 - **Autosave**: Diagram uses `sessionStorage`; settings use `localStorage`.
 - **AI workflow**: Chat store streams text, can batch-apply node/edge mutations, then auto-layouts. Guide mode (default on) lets AI recommend framework switches.
 - **Design reference**: Shares fonts/colors/button patterns with Bricky (`../Bricky/BrickyReact`). See `src/styles/theme.css` for current values.

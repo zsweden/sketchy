@@ -17,8 +17,8 @@ const rfMocks = vi.hoisted(() => ({
 
 const mocks = vi.hoisted(() => ({
   runElkAutoLayout: vi.fn(),
-  saveSkyFile: vi.fn(),
-  loadSkyFile: vi.fn(),
+  saveProjectFile: vi.fn(),
+  loadProjectFile: vi.fn(),
   toast: Object.assign(vi.fn(), {
     error: vi.fn(),
     warning: vi.fn(),
@@ -44,9 +44,9 @@ vi.mock('../../../core/layout/run-elk-auto-layout', () => ({
   runElkAutoLayout: mocks.runElkAutoLayout,
 }));
 
-vi.mock('../../../core/persistence/sky-io', () => ({
-  saveSkyFile: mocks.saveSkyFile,
-  loadSkyFile: mocks.loadSkyFile,
+vi.mock('../../../core/persistence/project-io', () => ({
+  saveProjectFile: mocks.saveProjectFile,
+  loadProjectFile: mocks.loadProjectFile,
 }));
 
 function resetStores() {
@@ -88,7 +88,7 @@ describe('Toolbar', () => {
     rfMocks.getInternalNode.mockReset();
     rfMocks.getInternalNode.mockReturnValue(undefined);
     mocks.runElkAutoLayout.mockResolvedValue([]);
-    mocks.saveSkyFile.mockResolvedValue(undefined);
+    mocks.saveProjectFile.mockResolvedValue(undefined);
   });
 
   it('creates a new diagram, clears chat state, and requests fit view', async () => {
@@ -240,7 +240,7 @@ describe('Toolbar', () => {
       messages: [{ id: 'm1', role: 'assistant', content: 'Stale chat' }],
       aiModifiedNodeIds: new Set(['n-imported']),
     });
-    mocks.loadSkyFile.mockResolvedValue({
+    mocks.loadProjectFile.mockResolvedValue({
       diagram: loadedDiagram,
       warnings: ['Imported file had one invalid connection removed.'],
       needsLayout: false,
@@ -305,7 +305,7 @@ describe('Toolbar', () => {
 
   it('shows save errors and toggles settings and the side panel', async () => {
     const user = userEvent.setup();
-    mocks.saveSkyFile.mockRejectedValue(new Error('save failed'));
+    mocks.saveProjectFile.mockRejectedValue(new Error('save failed'));
 
     render(<Toolbar />);
 

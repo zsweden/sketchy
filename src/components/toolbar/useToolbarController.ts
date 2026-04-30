@@ -4,7 +4,7 @@ import { useChatStore } from '../../store/chat-store';
 import { useDiagramStore } from '../../store/diagram-store';
 import { useSettingsStore } from '../../store/settings-store';
 import { useUIStore } from '../../store/ui-store';
-import { saveSkyFile, loadSkyFile } from '../../core/persistence/sky-io';
+import { saveProjectFile, loadProjectFile } from '../../core/persistence/project-io';
 import { useNodeAlignmentActions } from '../../hooks/useNodeAlignmentActions';
 import type { AnnotationKind } from '../../core/types';
 
@@ -103,7 +103,7 @@ export function useToolbarController() {
 
   const handleSave = useCallback(async () => {
     try {
-      await saveSkyFile(useDiagramStore.getState().diagram);
+      await saveProjectFile(useDiagramStore.getState().diagram);
     } catch {
       toast.error('Failed to save the project. Try again.');
     }
@@ -128,7 +128,7 @@ export function useToolbarController() {
       if (!file) return;
 
       try {
-        const result = await loadSkyFile(file);
+        const result = await loadProjectFile(file);
         loadDiagram(result.diagram);
         clearChatUiState();
 

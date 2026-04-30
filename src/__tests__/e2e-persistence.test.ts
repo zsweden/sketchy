@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useDiagramStore } from '../store/diagram-store';
 import { saveDiagram, loadDiagram, clearDiagram } from '../core/persistence/local-storage';
-import { diagramToSkyJson, convertSkyJson } from '../core/persistence/causal-json';
+import { diagramToProjectJson, convertProjectJson } from '../core/persistence/causal-json';
 import { createEmptyDiagram, SCHEMA_VERSION } from '../core/types';
 import { migrate } from '../core/persistence/schema';
 
@@ -98,8 +98,8 @@ describe('e2e: .json format round-trips', () => {
     expect(store().diagram.edges).toHaveLength(49);
 
     // Round-trip through .json
-    const sky = diagramToSkyJson(store().diagram);
-    const { diagram: loaded } = convertSkyJson(sky);
+    const project = diagramToProjectJson(store().diagram);
+    const { diagram: loaded } = convertProjectJson(project);
 
     expect(loaded.nodes).toHaveLength(50);
     expect(loaded.edges).toHaveLength(49);
@@ -123,12 +123,12 @@ describe('e2e: .json format round-trips', () => {
     store().addEdge(n1, n2);
     store().addEdge(n2, n3);
 
-    const sky = diagramToSkyJson(store().diagram);
-    expect(sky.framework).toBe('frt');
-    expect(sky.nodes).toHaveLength(3);
-    expect(sky.edges).toHaveLength(2);
+    const project = diagramToProjectJson(store().diagram);
+    expect(project.framework).toBe('frt');
+    expect(project.nodes).toHaveLength(3);
+    expect(project.edges).toHaveLength(2);
 
-    const { diagram: loaded } = convertSkyJson(sky);
+    const { diagram: loaded } = convertProjectJson(project);
     expect(loaded.frameworkId).toBe('frt');
     expect(loaded.nodes).toHaveLength(3);
     expect(loaded.edges).toHaveLength(2);
@@ -148,12 +148,12 @@ describe('e2e: .json format round-trips', () => {
 
     store().addEdge(n1, n2);
 
-    const sky = diagramToSkyJson(store().diagram);
-    expect(sky.framework).toBe('prt');
-    expect(sky.nodes.find((n) => n.id === n1)?.tags).toEqual(['obstacle']);
-    expect(sky.nodes.find((n) => n.id === n2)?.tags).toEqual(['io']);
+    const project = diagramToProjectJson(store().diagram);
+    expect(project.framework).toBe('prt');
+    expect(project.nodes.find((n) => n.id === n1)?.tags).toEqual(['obstacle']);
+    expect(project.nodes.find((n) => n.id === n2)?.tags).toEqual(['io']);
 
-    const { diagram: loaded } = convertSkyJson(sky);
+    const { diagram: loaded } = convertProjectJson(project);
     expect(loaded.frameworkId).toBe('prt');
     expect(loaded.nodes.find((n) => n.id === n1)?.data.tags).toEqual(['obstacle']);
     expect(loaded.nodes.find((n) => n.id === n2)?.data.tags).toEqual(['io']);
@@ -165,10 +165,10 @@ describe('e2e: .json format round-trips', () => {
     store().updateNodeText(n1, 'Bad thing');
     store().updateNodeTags(n1, ['ude']);
 
-    const sky = diagramToSkyJson(store().diagram);
-    expect(sky.nodes[0].isUDE).toBe(true);
+    const project = diagramToProjectJson(store().diagram);
+    expect(project.nodes[0].isUDE).toBe(true);
 
-    const { diagram: loaded } = convertSkyJson(sky);
+    const { diagram: loaded } = convertProjectJson(project);
     expect(loaded.nodes[0].data.tags).toEqual(['ude']);
   });
 
@@ -185,11 +185,11 @@ describe('e2e: .json format round-trips', () => {
     store().setEdgeConfidence(edges[0].id, 'medium');
     store().setEdgeConfidence(edges[1].id, 'low');
 
-    const sky = diagramToSkyJson(store().diagram);
-    expect(sky.edges[0].confidence).toBe('medium');
-    expect(sky.edges[1].confidence).toBe('low');
+    const project = diagramToProjectJson(store().diagram);
+    expect(project.edges[0].confidence).toBe('medium');
+    expect(project.edges[1].confidence).toBe('low');
 
-    const { diagram: loaded } = convertSkyJson(sky);
+    const { diagram: loaded } = convertProjectJson(project);
     expect(loaded.edges[0].confidence).toBe('medium');
     expect(loaded.edges[1].confidence).toBe('low');
   });
@@ -200,11 +200,11 @@ describe('e2e: .json format round-trips', () => {
     const n1 = store().addNode({ x: 123.45, y: 678.9 });
     store().updateNodeText(n1, 'Positioned');
 
-    const sky = diagramToSkyJson(store().diagram);
-    expect(sky.nodes[0].x).toBe(123.45);
-    expect(sky.nodes[0].y).toBe(678.9);
+    const project = diagramToProjectJson(store().diagram);
+    expect(project.nodes[0].x).toBe(123.45);
+    expect(project.nodes[0].y).toBe(678.9);
 
-    const { diagram: loaded, needsLayout } = convertSkyJson(sky);
+    const { diagram: loaded, needsLayout } = convertProjectJson(project);
     expect(needsLayout).toBe(false);
     expect(loaded.nodes[0].position.x).toBe(123.45);
     expect(loaded.nodes[0].position.y).toBe(678.9);

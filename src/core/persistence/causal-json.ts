@@ -11,7 +11,7 @@ import { normalizeLegacyHandleSide } from '../graph/ports';
 
 // --- Unified project JSON format types ---
 
-interface SkyNode {
+interface ProjectNode {
   id: string;
   label: string;
   tags?: string[];
@@ -26,7 +26,7 @@ interface SkyNode {
   height?: number;
 }
 
-interface SkyEdge {
+interface ProjectEdge {
   source: string;
   target: string;
   sourceSide?: DiagramEdge['sourceSide'] | LegacyCornerHandleSide;
@@ -37,13 +37,13 @@ interface SkyEdge {
   notes?: string;
 }
 
-interface SkyJunction {
+interface ProjectJunction {
   target: string;
   type: 'and';
   sources: string[];
 }
 
-interface SkyJson {
+export interface ProjectJson {
   name?: string;
   framework?: string;
   direction?: Diagram['settings']['layoutDirection'];
@@ -52,19 +52,19 @@ interface SkyJson {
   edgeRoutingMode?: Diagram['settings']['edgeRoutingMode'];
   version?: number;
   createdAt?: string;
-  nodes: SkyNode[];
-  edges: SkyEdge[];
-  junctions?: SkyJunction[];
+  nodes: ProjectNode[];
+  edges: ProjectEdge[];
+  junctions?: ProjectJunction[];
 }
 
 // --- Detection ---
 
-export function isSkyJson(data: unknown): data is SkyJson {
+export function isProjectJson(data: unknown): data is ProjectJson {
   if (typeof data !== 'object' || data === null) return false;
   const d = data as Record<string, unknown>;
 
-  // Reject old wrapper format and raw diagram format
-  if ('format' in d || 'schemaVersion' in d) return false;
+  // Reject raw diagram format (handled separately by the loader)
+  if ('schemaVersion' in d) return false;
 
   if (!Array.isArray(d.nodes) || !Array.isArray(d.edges)) return false;
 
@@ -74,9 +74,9 @@ export function isSkyJson(data: unknown): data is SkyJson {
   return typeof first.label === 'string';
 }
 
-// --- Convert from SkyJson → internal Diagram ---
+// --- Convert from ProjectJson → internal Diagram ---
 
-export function convertSkyJson(data: SkyJson): { diagram: Diagram; needsLayout: boolean } {
+export function convertProjectJson(data: ProjectJson): { diagram: Diagram; needsLayout: boolean } {
   const andTargets = new Set(
     (data.junctions ?? []).map((j) => j.target),
   );
@@ -156,9 +156,9 @@ export function convertSkyJson(data: SkyJson): { diagram: Diagram; needsLayout: 
   return { diagram, needsLayout: !allHavePositions };
 }
 
-// --- Convert from internal Diagram → SkyJson for saving ---
+// --- Convert from internal Diagram → ProjectJson for saving ---
 
-export function diagramToSkyJson(diagram: Diagram): SkyJson {
+export function diagramToProjectJson(diagram: Diagram): ProjectJson {
   const andNodeIds = new Set<string>();
   const junctionSources = new Map<string, string[]>();
 
@@ -178,7 +178,7 @@ export function diagramToSkyJson(diagram: Diagram): SkyJson {
     }
   }
 
-  const nodes: SkyNode[] = diagram.nodes.map((n) => ({
+  const nodes: ProjectNode[] = diagram.nodes.map((n) => ({
     id: n.id,
     label: n.data.label,
     ...(n.data.tags.length > 0 ? { tags: n.data.tags } : {}),
@@ -192,7 +192,7 @@ export function diagramToSkyJson(diagram: Diagram): SkyJson {
     ...(n.size ? { width: n.size.width, height: n.size.height } : {}),
   }));
 
-  const edges: SkyEdge[] = diagram.edges.map((e) => ({
+  const edges: ProjectEdge[] = diagram.edges.map((e) => ({
     source: e.source,
     target: e.target,
     ...(e.sourceSide ? { sourceSide: e.sourceSide } : {}),
@@ -203,7 +203,7 @@ export function diagramToSkyJson(diagram: Diagram): SkyJson {
     ...(e.notes ? { notes: e.notes } : {}),
   }));
 
-  const junctions: SkyJunction[] = [];
+  const junctions: ProjectJunction[] = [];
   for (const [target, sources] of junctionSources) {
     junctions.push({ target, type: 'and', sources });
   }

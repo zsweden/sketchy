@@ -84,13 +84,10 @@ test('save → new → load round-trip preserves nodes, edges, and tags', async 
   await page.locator('.context-menu-item', { hasText: 'Undesirable Effect' }).click();
   await expect(page.locator('.entity-node .badge', { hasText: 'UDE' })).toBeVisible();
 
-  const skyJson = await page.evaluate(() => {
+  const projectJson = await page.evaluate(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const store = (window as any).__diagramStore;
     const diagram = store.getState().diagram;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { diagramToSkyJson } = (window as any).__skyIoHelpers ?? {};
-    if (diagramToSkyJson) return JSON.stringify(diagramToSkyJson(diagram), null, 2);
     return JSON.stringify(diagram);
   });
 
@@ -102,7 +99,7 @@ test('save → new → load round-trip preserves nodes, edges, and tags', async 
   await fileInput.setInputFiles({
     name: 'round-trip.json',
     mimeType: 'application/json',
-    buffer: Buffer.from(skyJson, 'utf-8'),
+    buffer: Buffer.from(projectJson, 'utf-8'),
   });
 
   await expect(page.locator('.entity-node')).toHaveCount(2);
@@ -168,9 +165,6 @@ test('Save button serializes diagram and Load restores it via file input', async
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const store = (window as any).__diagramStore;
     const diagram = store.getState().diagram;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { diagramToSkyJson } = (window as any).__skyIoHelpers ?? {};
-    if (diagramToSkyJson) return JSON.stringify(diagramToSkyJson(diagram), null, 2);
     return JSON.stringify(diagram);
   });
 

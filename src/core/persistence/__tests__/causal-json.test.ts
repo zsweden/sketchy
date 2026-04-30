@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isSkyJson, convertSkyJson, diagramToSkyJson } from '../causal-json';
+import { isProjectJson, convertProjectJson, diagramToProjectJson } from '../causal-json';
 import { createEmptyDiagram, SCHEMA_VERSION } from '../../types';
 
 const minimal = {
@@ -10,28 +10,28 @@ const minimal = {
   edges: [{ source: 'n1', target: 'n2' }],
 };
 
-describe('isSkyJson', () => {
-  it('detects valid sky JSON', () => {
-    expect(isSkyJson(minimal)).toBe(true);
+describe('isProjectJson', () => {
+  it('detects valid project JSON', () => {
+    expect(isProjectJson(minimal)).toBe(true);
   });
 
   it('rejects null / non-objects', () => {
-    expect(isSkyJson(null)).toBe(false);
-    expect(isSkyJson('string')).toBe(false);
-    expect(isSkyJson(42)).toBe(false);
+    expect(isProjectJson(null)).toBe(false);
+    expect(isProjectJson('string')).toBe(false);
+    expect(isProjectJson(42)).toBe(false);
   });
 
   it('rejects objects without nodes array', () => {
-    expect(isSkyJson({ edges: [] })).toBe(false);
+    expect(isProjectJson({ edges: [] })).toBe(false);
   });
 
   it('rejects objects without edges array', () => {
-    expect(isSkyJson({ nodes: [{ id: 'n1', label: 'A' }] })).toBe(false);
+    expect(isProjectJson({ nodes: [{ id: 'n1', label: 'A' }] })).toBe(false);
   });
 
   it('rejects nodes missing label (looks like a regular diagram)', () => {
     expect(
-      isSkyJson({
+      isProjectJson({
         nodes: [{ id: 'n1', data: { label: 'A' } }],
         edges: [],
       }),
@@ -40,18 +40,18 @@ describe('isSkyJson', () => {
 
   it('rejects data that has schemaVersion (full diagram format)', () => {
     expect(
-      isSkyJson({ ...minimal, schemaVersion: 1, id: 'x', frameworkId: 'crt' }),
+      isProjectJson({ ...minimal, schemaVersion: 1, id: 'x', frameworkId: 'crt' }),
     ).toBe(false);
   });
 
   it('accepts format with optional top-level fields', () => {
-    expect(isSkyJson({ ...minimal, name: 'My Diagram', direction: 'LR' })).toBe(true);
+    expect(isProjectJson({ ...minimal, name: 'My Diagram', direction: 'LR' })).toBe(true);
   });
 });
 
-describe('convertSkyJson', () => {
+describe('convertProjectJson', () => {
   it('converts nodes with correct structure', () => {
-    const { diagram } = convertSkyJson(minimal);
+    const { diagram } = convertProjectJson(minimal);
 
     expect(diagram.nodes).toHaveLength(2);
     const n1 = diagram.nodes.find((n) => n.id === 'n1')!;
@@ -61,13 +61,13 @@ describe('convertSkyJson', () => {
   });
 
   it('maps isUDE to ude tag', () => {
-    const { diagram } = convertSkyJson(minimal);
+    const { diagram } = convertProjectJson(minimal);
     const n2 = diagram.nodes.find((n) => n.id === 'n2')!;
     expect(n2.data.tags).toEqual(['ude']);
   });
 
-  it('preserves generic tags from sky JSON', () => {
-    const { diagram } = convertSkyJson({
+  it('preserves generic tags from project JSON', () => {
+    const { diagram } = convertProjectJson({
       nodes: [{ id: 'n1', label: 'Injection', tags: ['injection', 'de'] }],
       edges: [],
       framework: 'frt',
@@ -77,7 +77,7 @@ describe('convertSkyJson', () => {
   });
 
   it('generates edge IDs', () => {
-    const { diagram } = convertSkyJson(minimal);
+    const { diagram } = convertProjectJson(minimal);
     expect(diagram.edges).toHaveLength(1);
     expect(diagram.edges[0].source).toBe('n1');
     expect(diagram.edges[0].target).toBe('n2');
@@ -85,12 +85,12 @@ describe('convertSkyJson', () => {
   });
 
   it('defaults to CRT framework', () => {
-    const { diagram } = convertSkyJson(minimal);
+    const { diagram } = convertProjectJson(minimal);
     expect(diagram.frameworkId).toBe('crt');
   });
 
   it('uses optional top-level fields', () => {
-    const { diagram } = convertSkyJson({
+    const { diagram } = convertProjectJson({
       ...minimal,
       name: 'My Tree',
       framework: 'crt',
@@ -105,7 +105,7 @@ describe('convertSkyJson', () => {
   });
 
   it('defaults junctionType to or', () => {
-    const { diagram } = convertSkyJson(minimal);
+    const { diagram } = convertProjectJson(minimal);
     for (const node of diagram.nodes) {
       expect(node.data.junctionType).toBe('or');
     }
@@ -125,18 +125,18 @@ describe('convertSkyJson', () => {
       junctions: [{ target: 'n3', type: 'and' as const, sources: ['n1', 'n2'] }],
     };
 
-    const { diagram } = convertSkyJson(data);
+    const { diagram } = convertProjectJson(data);
     const n3 = diagram.nodes.find((n) => n.id === 'n3')!;
     expect(n3.data.junctionType).toBe('and');
   });
 
   it('needs layout when no positions', () => {
-    const { needsLayout } = convertSkyJson(minimal);
+    const { needsLayout } = convertProjectJson(minimal);
     expect(needsLayout).toBe(true);
   });
 
   it('skips layout when all nodes have positions', () => {
-    const { needsLayout } = convertSkyJson({
+    const { needsLayout } = convertProjectJson({
       nodes: [
         { id: 'n1', label: 'A', x: 0, y: 0 },
         { id: 'n2', label: 'B', x: 100, y: 100 },
@@ -147,7 +147,7 @@ describe('convertSkyJson', () => {
   });
 
   it('needs layout when some nodes missing positions', () => {
-    const { needsLayout } = convertSkyJson({
+    const { needsLayout } = convertProjectJson({
       nodes: [
         { id: 'n1', label: 'A', x: 0, y: 0 },
         { id: 'n2', label: 'B' },
@@ -158,7 +158,7 @@ describe('convertSkyJson', () => {
   });
 
   it('preserves notes', () => {
-    const { diagram } = convertSkyJson({
+    const { diagram } = convertProjectJson({
       nodes: [{ id: 'n1', label: 'A', notes: 'some note' }],
       edges: [],
     });
@@ -166,7 +166,7 @@ describe('convertSkyJson', () => {
   });
 
   it('preserves measured node size', () => {
-    const { diagram } = convertSkyJson({
+    const { diagram } = convertProjectJson({
       nodes: [{ id: 'n1', label: 'A', width: 180, height: 90 }],
       edges: [],
     });
@@ -174,7 +174,7 @@ describe('convertSkyJson', () => {
   });
 
   it('preserves edge polarity, delay, and notes', () => {
-    const { diagram } = convertSkyJson({
+    const { diagram } = convertProjectJson({
       framework: 'cld',
       nodes: [
         { id: 'n1', label: 'Demand' },
@@ -191,7 +191,7 @@ describe('convertSkyJson', () => {
   });
 
   it('preserves fixed edge sides', () => {
-    const { diagram } = convertSkyJson({
+    const { diagram } = convertProjectJson({
       framework: 'cld',
       edgeRoutingMode: 'fixed',
       nodes: [
@@ -208,8 +208,8 @@ describe('convertSkyJson', () => {
     expect(diagram.edges[0].targetSide).toBe('left');
   });
 
-  it('normalizes legacy corner sides in imported sky files', () => {
-    const { diagram } = convertSkyJson({
+  it('normalizes legacy corner sides in imported project files', () => {
+    const { diagram } = convertProjectJson({
       framework: 'cld',
       edgeRoutingMode: 'fixed',
       version: 3,
@@ -228,7 +228,7 @@ describe('convertSkyJson', () => {
   });
 });
 
-describe('diagramToSkyJson', () => {
+describe('diagramToProjectJson', () => {
   it('round-trips a diagram', () => {
     const diagram = createEmptyDiagram('crt');
     diagram.nodes = [
@@ -237,16 +237,16 @@ describe('diagramToSkyJson', () => {
     ];
     diagram.edges = [{ id: 'e1', source: 'n1', target: 'n2' }];
 
-    const skyJson = diagramToSkyJson(diagram);
+    const projectJson = diagramToProjectJson(diagram);
 
-    expect(skyJson.nodes).toHaveLength(2);
-    expect(skyJson.nodes[0].label).toBe('Root');
-    expect(skyJson.nodes[0].isUDE).toBe(true);
-    expect(skyJson.nodes[0].x).toBe(10);
-    expect(skyJson.nodes[0].y).toBe(20);
-    expect(skyJson.nodes[0].notes).toBe('a note');
-    expect(skyJson.edges).toHaveLength(1);
-    expect(skyJson.edges[0].source).toBe('n1');
+    expect(projectJson.nodes).toHaveLength(2);
+    expect(projectJson.nodes[0].label).toBe('Root');
+    expect(projectJson.nodes[0].isUDE).toBe(true);
+    expect(projectJson.nodes[0].x).toBe(10);
+    expect(projectJson.nodes[0].y).toBe(20);
+    expect(projectJson.nodes[0].notes).toBe('a note');
+    expect(projectJson.edges).toHaveLength(1);
+    expect(projectJson.edges[0].source).toBe('n1');
   });
 
   it('writes measured node size', () => {
@@ -261,9 +261,9 @@ describe('diagramToSkyJson', () => {
       },
     ];
 
-    const skyJson = diagramToSkyJson(diagram);
-    expect(skyJson.nodes[0].width).toBe(190);
-    expect(skyJson.nodes[0].height).toBe(88);
+    const projectJson = diagramToProjectJson(diagram);
+    expect(projectJson.nodes[0].width).toBe(190);
+    expect(projectJson.nodes[0].height).toBe(88);
   });
 
   it('persists non-CRT tags generically', () => {
@@ -278,11 +278,11 @@ describe('diagramToSkyJson', () => {
     ];
     diagram.edges = [];
 
-    const skyJson = diagramToSkyJson(diagram);
-    expect(skyJson.nodes[0].tags).toEqual(['injection']);
-    expect(skyJson.nodes[0].isUDE).toBeUndefined();
+    const projectJson = diagramToProjectJson(diagram);
+    expect(projectJson.nodes[0].tags).toEqual(['injection']);
+    expect(projectJson.nodes[0].isUDE).toBeUndefined();
 
-    const { diagram: loaded } = convertSkyJson(skyJson);
+    const { diagram: loaded } = convertProjectJson(projectJson);
     expect(loaded.nodes[0].data.tags).toEqual(['injection']);
   });
 
@@ -298,11 +298,11 @@ describe('diagramToSkyJson', () => {
       { id: 'e2', source: 'n2', target: 'n3' },
     ];
 
-    const skyJson = diagramToSkyJson(diagram);
-    expect(skyJson.junctions).toHaveLength(1);
-    expect(skyJson.junctions![0].target).toBe('n3');
-    expect(skyJson.junctions![0].sources).toContain('n1');
-    expect(skyJson.junctions![0].sources).toContain('n2');
+    const projectJson = diagramToProjectJson(diagram);
+    expect(projectJson.junctions).toHaveLength(1);
+    expect(projectJson.junctions![0].target).toBe('n3');
+    expect(projectJson.junctions![0].sources).toContain('n1');
+    expect(projectJson.junctions![0].sources).toContain('n2');
   });
 
   it('omits junctions when none exist', () => {
@@ -312,8 +312,8 @@ describe('diagramToSkyJson', () => {
     ];
     diagram.edges = [];
 
-    const skyJson = diagramToSkyJson(diagram);
-    expect(skyJson.junctions).toBeUndefined();
+    const projectJson = diagramToProjectJson(diagram);
+    expect(projectJson.junctions).toBeUndefined();
   });
 
   it('round-trips CLD edge metadata', () => {
@@ -336,15 +336,15 @@ describe('diagramToSkyJson', () => {
       },
     ];
 
-    const skyJson = diagramToSkyJson(diagram);
-    expect(skyJson.edgeRoutingMode).toBe('fixed');
-    expect(skyJson.edges[0].sourceSide).toBe('right');
-    expect(skyJson.edges[0].targetSide).toBe('left');
-    expect(skyJson.edges[0].polarity).toBe('negative');
-    expect(skyJson.edges[0].delay).toBe(true);
-    expect(skyJson.edges[0].notes).toBe('counteracts later');
+    const projectJson = diagramToProjectJson(diagram);
+    expect(projectJson.edgeRoutingMode).toBe('fixed');
+    expect(projectJson.edges[0].sourceSide).toBe('right');
+    expect(projectJson.edges[0].targetSide).toBe('left');
+    expect(projectJson.edges[0].polarity).toBe('negative');
+    expect(projectJson.edges[0].delay).toBe(true);
+    expect(projectJson.edges[0].notes).toBe('counteracts later');
 
-    const { diagram: loaded } = convertSkyJson(skyJson);
+    const { diagram: loaded } = convertProjectJson(projectJson);
     expect(loaded.settings.edgeRoutingMode).toBe('fixed');
     expect(loaded.edges[0].sourceSide).toBe('right');
     expect(loaded.edges[0].targetSide).toBe('left');

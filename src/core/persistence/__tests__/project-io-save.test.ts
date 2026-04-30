@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { saveSkyFile } from '../sky-io';
+import { saveProjectFile } from '../project-io';
 import { createEmptyDiagram } from '../../types';
 import type { Diagram } from '../../types';
 
@@ -17,7 +17,7 @@ function makeDiagram(overrides?: Partial<Diagram>): Diagram {
   return { ...d, ...overrides };
 }
 
-describe('saveSkyFile', () => {
+describe('saveProjectFile', () => {
   let clickedLink: { href: string; download: string } | null = null;
   let revokedUrl: string | null = null;
 
@@ -54,7 +54,7 @@ describe('saveSkyFile', () => {
   });
 
   it('falls back to blob download when showSaveFilePicker is unavailable', async () => {
-    await saveSkyFile(makeDiagram());
+    await saveProjectFile(makeDiagram());
 
     expect(URL.createObjectURL).toHaveBeenCalledOnce();
     expect(clickedLink).not.toBeNull();
@@ -64,19 +64,19 @@ describe('saveSkyFile', () => {
   });
 
   it('uses diagram name for the download filename', async () => {
-    await saveSkyFile(makeDiagram({ name: 'My Cool Diagram' }));
+    await saveProjectFile(makeDiagram({ name: 'My Cool Diagram' }));
 
     expect(clickedLink!.download).toBe('My-Cool-Diagram_CRT.json');
   });
 
   it('sanitizes special characters in filename', async () => {
-    await saveSkyFile(makeDiagram({ name: 'test/file<>name' }));
+    await saveProjectFile(makeDiagram({ name: 'test/file<>name' }));
 
     expect(clickedLink!.download).toBe('testfilename_CRT.json');
   });
 
   it('defaults to "diagram" when name is empty or whitespace', async () => {
-    await saveSkyFile(makeDiagram({ name: '   ' }));
+    await saveProjectFile(makeDiagram({ name: '   ' }));
 
     expect(clickedLink!.download).toBe('diagram_CRT.json');
   });
@@ -93,7 +93,7 @@ describe('saveSkyFile', () => {
     const mockPicker = vi.fn().mockResolvedValue(mockHandle);
     (window as Record<string, unknown>).showSaveFilePicker = mockPicker;
 
-    await saveSkyFile(makeDiagram());
+    await saveProjectFile(makeDiagram());
 
     expect(mockPicker).toHaveBeenCalledOnce();
     expect(mockWrite).toHaveBeenCalledOnce();
@@ -107,7 +107,7 @@ describe('saveSkyFile', () => {
     const mockPicker = vi.fn().mockRejectedValue(abortError);
     (window as Record<string, unknown>).showSaveFilePicker = mockPicker;
 
-    await saveSkyFile(makeDiagram());
+    await saveProjectFile(makeDiagram());
 
     // Should not fall through to legacy download
     expect(URL.createObjectURL).not.toHaveBeenCalled();
@@ -117,7 +117,7 @@ describe('saveSkyFile', () => {
     const mockPicker = vi.fn().mockRejectedValue(new Error('Something broke'));
     (window as Record<string, unknown>).showSaveFilePicker = mockPicker;
 
-    await saveSkyFile(makeDiagram());
+    await saveProjectFile(makeDiagram());
 
     // Should fall through to legacy path
     expect(URL.createObjectURL).toHaveBeenCalledOnce();

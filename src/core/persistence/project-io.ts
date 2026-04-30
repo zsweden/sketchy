@@ -1,5 +1,5 @@
 import type { Diagram } from '../types';
-import { isSkyJson, convertSkyJson, diagramToSkyJson } from './causal-json';
+import { isProjectJson, convertProjectJson, diagramToProjectJson } from './causal-json';
 import { migrateDiagramShape, normalizeLoadedDiagram } from './load-helpers';
 import { getFramework } from '../../frameworks/registry';
 
@@ -26,9 +26,9 @@ interface FileSystemFileHandle {
   createWritable(): Promise<FileSystemWritableFileStream>;
 }
 
-export async function saveSkyFile(diagram: Diagram): Promise<void> {
-  const skyJson = diagramToSkyJson(diagram);
-  const json = JSON.stringify(skyJson, null, 2);
+export async function saveProjectFile(diagram: Diagram): Promise<void> {
+  const projectJson = diagramToProjectJson(diagram);
+  const json = JSON.stringify(projectJson, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
 
   // Try modern File System Access API first
@@ -72,7 +72,7 @@ interface LoadResult {
   needsLayout: boolean;
 }
 
-export async function loadSkyFile(file: File): Promise<LoadResult> {
+export async function loadProjectFile(file: File): Promise<LoadResult> {
   const text = await file.text();
   const warnings: string[] = [];
 
@@ -86,27 +86,11 @@ export async function loadSkyFile(file: File): Promise<LoadResult> {
   let diagram: Diagram;
   let needsLayout = false;
 
-  // New unified format (flat JSON with nodes[].label)
-  if (isSkyJson(parsed)) {
-    const result = convertSkyJson(parsed);
+  if (isProjectJson(parsed)) {
+    const result = convertProjectJson(parsed);
     diagram = result.diagram;
     needsLayout = result.needsLayout;
-  }
-  // Legacy .sky wrapper format (has format: 'sky')
-  else if (
-    typeof parsed === 'object' &&
-    parsed !== null &&
-    (parsed as Record<string, unknown>).format === 'sky'
-  ) {
-    const skyFile = parsed as Record<string, unknown>;
-    const legacyDiagram = migrateDiagramShape(skyFile.diagram);
-    if (!legacyDiagram) {
-      throw new Error('Invalid project file. The diagram data is missing or malformed.');
-    }
-    diagram = legacyDiagram;
-  }
-  // Legacy raw diagram JSON (has schemaVersion)
-  else {
+  } else {
     const legacyDiagram = migrateDiagramShape(parsed);
     if (!legacyDiagram) {
       throw new Error('Unrecognized file format. Expected a Sketchy .json project file.');

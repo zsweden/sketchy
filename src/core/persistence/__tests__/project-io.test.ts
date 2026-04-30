@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { loadSkyFile } from '../sky-io';
-import { createEmptyDiagram, SCHEMA_VERSION } from '../../types';
+import { loadProjectFile } from '../project-io';
+import { createEmptyDiagram } from '../../types';
 import type { Diagram } from '../../types';
 
 function makeFile(content: string, name = 'test.json'): File {
@@ -29,17 +29,10 @@ function makeDiagram(): Diagram {
   return d;
 }
 
-describe('loadSkyFile', () => {
-  it('loads a project JSON file', async () => {
+describe('loadProjectFile', () => {
+  it('loads a raw diagram JSON', async () => {
     const diagram = makeDiagram();
-    const skyFile = {
-      format: 'sky',
-      version: SCHEMA_VERSION,
-      createdAt: new Date().toISOString(),
-      diagram,
-    };
-
-    const result = await loadSkyFile(makeFile(JSON.stringify(skyFile)));
+    const result = await loadProjectFile(makeFile(JSON.stringify(diagram)));
 
     expect(result.diagram.id).toBe('test-id');
     expect(result.diagram.nodes).toHaveLength(2);
@@ -47,37 +40,22 @@ describe('loadSkyFile', () => {
     expect(result.warnings).toHaveLength(0);
   });
 
-  it('loads a raw diagram JSON (backwards compat)', async () => {
-    const diagram = makeDiagram();
-    const result = await loadSkyFile(makeFile(JSON.stringify(diagram)));
-
-    expect(result.diagram.id).toBe('test-id');
-    expect(result.diagram.nodes).toHaveLength(2);
-    expect(result.warnings).toHaveLength(0);
-  });
-
   it('rejects invalid JSON', async () => {
-    await expect(loadSkyFile(makeFile('not json'))).rejects.toThrow(
+    await expect(loadProjectFile(makeFile('not json'))).rejects.toThrow(
       'not valid JSON',
     );
   });
 
   it('rejects unrecognized format', async () => {
     await expect(
-      loadSkyFile(makeFile(JSON.stringify({ foo: 'bar' }))),
+      loadProjectFile(makeFile(JSON.stringify({ foo: 'bar' }))),
     ).rejects.toThrow('Unrecognized file format');
   });
 
   it('rejects file with malformed diagram', async () => {
-    const skyFile = {
-      format: 'sky',
-      version: 1,
-      diagram: { broken: true },
-    };
-
     await expect(
-      loadSkyFile(makeFile(JSON.stringify(skyFile))),
-    ).rejects.toThrow('missing or malformed');
+      loadProjectFile(makeFile(JSON.stringify({ schemaVersion: 1, broken: true }))),
+    ).rejects.toThrow('Unrecognized file format');
   });
 
   it('drops invalid edges and warns', async () => {
@@ -87,14 +65,7 @@ describe('loadSkyFile', () => {
     // And add another edge that creates a duplicate
     diagram.edges.push({ id: 'e3', source: 'n1', target: 'n2' });
 
-    const skyFile = {
-      format: 'sky',
-      version: SCHEMA_VERSION,
-      createdAt: new Date().toISOString(),
-      diagram,
-    };
-
-    const result = await loadSkyFile(makeFile(JSON.stringify(skyFile)));
+    const result = await loadProjectFile(makeFile(JSON.stringify(diagram)));
 
     expect(result.diagram.edges).toHaveLength(1);
     expect(result.warnings).toHaveLength(1);
@@ -114,7 +85,7 @@ describe('loadSkyFile', () => {
       ],
     };
 
-    const result = await loadSkyFile(makeFile(JSON.stringify(causal)));
+    const result = await loadProjectFile(makeFile(JSON.stringify(causal)));
 
     expect(result.diagram.edges).toHaveLength(1);
     expect(result.diagram.edges[0].source).toBe('n1');
@@ -133,7 +104,7 @@ describe('loadSkyFile', () => {
       edges: [{ source: 'n1', target: 'n2' }],
     };
 
-    const result = await loadSkyFile(makeFile(JSON.stringify(causal), 'test.json'));
+    const result = await loadProjectFile(makeFile(JSON.stringify(causal), 'test.json'));
 
     expect(result.diagram.nodes).toHaveLength(2);
     expect(result.diagram.edges).toHaveLength(1);
@@ -154,7 +125,7 @@ describe('loadSkyFile', () => {
       edges: [{ source: 'n1', target: 'n2' }],
     };
 
-    const result = await loadSkyFile(makeFile(JSON.stringify(causal), 'test.json'));
+    const result = await loadProjectFile(makeFile(JSON.stringify(causal), 'test.json'));
 
     expect(result.diagram.frameworkId).toBe('prt');
     expect(result.diagram.nodes.find((n) => n.id === 'n1')?.data.tags).toEqual([
@@ -179,7 +150,7 @@ describe('loadSkyFile', () => {
       junctions: [{ target: 'n3', type: 'and', sources: ['n1', 'n2'] }],
     };
 
-    const result = await loadSkyFile(makeFile(JSON.stringify(causal), 'test.json'));
+    const result = await loadProjectFile(makeFile(JSON.stringify(causal), 'test.json'));
 
     expect(result.diagram.nodes.find((n) => n.id === 'n3')?.data.junctionType).toBe(
       'and',
@@ -190,43 +161,17 @@ describe('loadSkyFile', () => {
     const diagram = makeDiagram();
     diagram.frameworkId = 'unknown-framework';
 
-    const result = await loadSkyFile(makeFile(JSON.stringify(diagram)));
+    const result = await loadProjectFile(makeFile(JSON.stringify(diagram)));
 
     expect(result.warnings.some((w) => w.includes('Unknown framework'))).toBe(
       true,
     );
   });
 
-  it('ignores meta field when loading', async () => {
+  it('preserves tags and node data through load', async () => {
     const diagram = makeDiagram();
-    const skyFile = {
-      format: 'sky',
-      meta: {
-        app: 'Sketchy',
-        framework: { name: 'Current Reality Tree' },
-      },
-      version: SCHEMA_VERSION,
-      createdAt: new Date().toISOString(),
-      diagram,
-    };
 
-    const result = await loadSkyFile(makeFile(JSON.stringify(skyFile)));
-
-    expect(result.diagram.id).toBe('test-id');
-    expect(result.diagram.nodes).toHaveLength(2);
-    expect(result.warnings).toHaveLength(0);
-  });
-
-  it('preserves tags and node data through save/load', async () => {
-    const diagram = makeDiagram();
-    const skyFile = {
-      format: 'sky',
-      version: SCHEMA_VERSION,
-      createdAt: new Date().toISOString(),
-      diagram,
-    };
-
-    const result = await loadSkyFile(makeFile(JSON.stringify(skyFile)));
+    const result = await loadProjectFile(makeFile(JSON.stringify(diagram)));
 
     const node1 = result.diagram.nodes.find((n) => n.id === 'n1');
     expect(node1?.data.tags).toEqual(['ude']);
@@ -244,7 +189,7 @@ describe('loadSkyFile', () => {
       { id: 'e2', source: 'n2', target: 'n1', polarity: 'negative', delay: true },
     ];
 
-    const result = await loadSkyFile(makeFile(JSON.stringify(diagram)));
+    const result = await loadProjectFile(makeFile(JSON.stringify(diagram)));
 
     expect(result.diagram.edges).toHaveLength(2);
     expect(result.warnings).toHaveLength(0);

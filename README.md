@@ -13,7 +13,7 @@ Today the app supports:
 - Value Stream Map
 - Causal Loop Diagram (CLD)
 - AI-assisted diagram analysis and modification through a configurable OpenAI-compatible endpoint
-- `.sky` project save/load, plus in-session autosave
+- `.json` project save/load, plus in-session autosave
 - Auto-layout, undo/redo, edge confidence, notes, and framework-specific tags
 
 ## Why Sketchy
@@ -129,7 +129,7 @@ If the Firebase config is missing, the logger stays disabled and the app behaves
 
 - Session autosave uses `sessionStorage`
 - App settings such as API key, model, and base URL use `localStorage`
-- Explicit project save/load uses `.sky` files
+- Explicit project save/load uses `.json` files
 
 ## AI Integration
 
