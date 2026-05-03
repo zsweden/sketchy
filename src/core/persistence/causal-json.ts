@@ -8,6 +8,7 @@ import type {
 import { SCHEMA_VERSION } from '../types';
 import type { LegacyCornerHandleSide } from '../graph/ports';
 import { normalizeLegacyHandleSide } from '../graph/ports';
+import { getDefaultFramework } from '../../frameworks/registry';
 
 // --- Unified project JSON format types ---
 
@@ -141,7 +142,7 @@ export function convertProjectJson(data: ProjectJson): { diagram: Diagram; needs
     schemaVersion: SCHEMA_VERSION,
     id: crypto.randomUUID(),
     name: data.name ?? 'Untitled Diagram',
-    frameworkId: data.framework ?? 'crt',
+    frameworkId: data.framework ?? getDefaultFramework().id,
     settings: {
       layoutDirection: data.direction ?? 'BT',
       showGrid: data.showGrid ?? true,

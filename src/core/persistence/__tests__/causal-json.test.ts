@@ -84,9 +84,10 @@ describe('convertProjectJson', () => {
     expect(diagram.edges[0].id).toBeTruthy();
   });
 
-  it('defaults to CRT framework', () => {
+  it('defaults to the registry default framework when none is specified', async () => {
+    const { getDefaultFramework } = await import('../../../frameworks/registry');
     const { diagram } = convertProjectJson(minimal);
-    expect(diagram.frameworkId).toBe('crt');
+    expect(diagram.frameworkId).toBe(getDefaultFramework().id);
   });
 
   it('uses optional top-level fields', () => {

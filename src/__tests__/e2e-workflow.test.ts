@@ -8,12 +8,9 @@ import { diagramToProjectJson, convertProjectJson } from '../core/persistence/ca
 import { getFramework, listFrameworks } from '../frameworks/registry';
 
 function resetStore() {
-  const store = useDiagramStore.getState();
-  if (store.diagram.frameworkId !== 'crt') {
-    store.setFramework('crt');
-  } else {
-    store.newDiagram();
-  }
+  // setFramework creates a fresh diagram for the target framework, so it doubles
+  // as a "newDiagram for CRT" reset whether or not we were already on CRT.
+  useDiagramStore.getState().setFramework('crt');
   useDiagramStore.setState((s) => ({ diagram: { ...s.diagram, nodes: [] } }));
 }
 

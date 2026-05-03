@@ -96,6 +96,7 @@ describe('loadProjectFile', () => {
   });
 
   it('loads causal JSON format', async () => {
+    const { getDefaultFramework } = await import('../../../frameworks/registry');
     const causal = {
       nodes: [
         { id: 'n1', label: 'Root cause' },
@@ -108,7 +109,7 @@ describe('loadProjectFile', () => {
 
     expect(result.diagram.nodes).toHaveLength(2);
     expect(result.diagram.edges).toHaveLength(1);
-    expect(result.diagram.frameworkId).toBe('crt');
+    expect(result.diagram.frameworkId).toBe(getDefaultFramework().id);
     expect(result.diagram.nodes.find((n) => n.id === 'n2')?.data.tags).toEqual([
       'ude',
     ]);
