@@ -115,10 +115,10 @@ test('Ctrl+Z undoes and Ctrl+Shift+Z redoes a node creation', async ({ page }) =
 
   await page.locator(PANE).click({ position: { x: 50, y: 50 } });
 
-  await page.keyboard.press('ControlOrMeta+z');
+  await page.keyboard.press('Control+z');
   await expect(page.locator('.entity-node')).toHaveCount(0);
 
-  await page.keyboard.press('ControlOrMeta+Shift+z');
+  await page.keyboard.press('Control+Shift+z');
   await expect(page.locator('.entity-node')).toHaveCount(1);
 });
 
@@ -219,17 +219,17 @@ test('undo/redo across node create, edge add, tag change, and delete', async ({ 
 
   await page.locator(PANE).click({ position: { x: 50, y: 50 } });
 
-  await page.keyboard.press('ControlOrMeta+z');
+  await page.keyboard.press('Control+z');
   await expect(page.locator('.entity-node')).toHaveCount(2);
   await expect(page.locator('.react-flow__edge')).toHaveCount(1);
 
-  await page.keyboard.press('ControlOrMeta+z');
+  await page.keyboard.press('Control+z');
   await expect(page.locator('.entity-node .badge', { hasText: 'UDE' })).toHaveCount(0);
 
-  await page.keyboard.press('ControlOrMeta+Shift+z');
+  await page.keyboard.press('Control+Shift+z');
   await expect(page.locator('.entity-node .badge', { hasText: 'UDE' })).toBeVisible();
 
-  await page.keyboard.press('ControlOrMeta+Shift+z');
+  await page.keyboard.press('Control+Shift+z');
   await expect(page.locator('.entity-node')).toHaveCount(1);
   await expect(page.locator('.react-flow__edge')).toHaveCount(0);
 });

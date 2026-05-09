@@ -377,7 +377,7 @@ test('dragging multiple selected nodes moves them together', async ({ page }) =>
   }
 
   await page.locator(PANE).click({ position: { x: 50, y: 50 } });
-  await page.keyboard.press('ControlOrMeta+z');
+  await page.keyboard.press('Control+z');
 
   const restored = await page.evaluate(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -74,7 +74,7 @@ test('batchApply adds to undo stack so the operation can be reverted in one step
   await expect(page.locator('.react-flow__edge')).toHaveCount(2);
 
   await page.locator('body').focus();
-  await page.keyboard.press('ControlOrMeta+z');
+  await page.keyboard.press('Control+z');
 
   await expect(page.locator('.entity-node')).toHaveCount(0);
   await expect(page.locator('.react-flow__edge')).toHaveCount(0);

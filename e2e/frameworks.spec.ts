@@ -214,7 +214,7 @@ test('batchApply creates nodes and edges as AI would', async ({ page }) => {
   await expect(page.locator('.react-flow__edge')).toHaveCount(2);
 
   await page.locator(PANE).click({ position: { x: 50, y: 50 } });
-  await page.keyboard.press('ControlOrMeta+z');
+  await page.keyboard.press('Control+z');
   await expect(page.locator('.entity-node')).toHaveCount(0);
   await expect(page.locator('.react-flow__edge')).toHaveCount(0);
 });

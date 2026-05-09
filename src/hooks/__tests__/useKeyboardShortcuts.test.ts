@@ -31,6 +31,19 @@ function fireKeyUp(key: string, target: EventTarget = document) {
   target.dispatchEvent(event);
 }
 
+// react-hotkeys-hook 5.3+ resolves `mod` per-platform (metaKey on Mac, ctrlKey elsewhere).
+// jsdom's default userAgent isn't Mac, so meta-key tests must stub it.
+function stubMacUserAgent() {
+  const original = navigator.userAgent;
+  Object.defineProperty(navigator, 'userAgent', {
+    configurable: true,
+    value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+  });
+  return () => {
+    Object.defineProperty(navigator, 'userAgent', { configurable: true, value: original });
+  };
+}
+
 describe('keyboard shortcuts', () => {
   let cleanup: () => void;
 
@@ -47,11 +60,16 @@ describe('keyboard shortcuts', () => {
 
   describe('undo/redo', () => {
     it('Cmd+Z triggers undo', () => {
-      useDiagramStore.getState().addNode({ x: 0, y: 0 });
-      expect(useDiagramStore.getState().diagram.nodes).toHaveLength(1);
+      const restore = stubMacUserAgent();
+      try {
+        useDiagramStore.getState().addNode({ x: 0, y: 0 });
+        expect(useDiagramStore.getState().diagram.nodes).toHaveLength(1);
 
-      fireKey('z', { metaKey: true });
-      expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
+        fireKey('z', { metaKey: true });
+        expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
+      } finally {
+        restore();
+      }
     });
 
     it('Ctrl+Z triggers undo', () => {
@@ -61,19 +79,30 @@ describe('keyboard shortcuts', () => {
     });
 
     it('Cmd+Shift+Z triggers redo', () => {
-      useDiagramStore.getState().addNode({ x: 0, y: 0 });
-      fireKey('z', { metaKey: true }); // undo
-      expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
+      const restore = stubMacUserAgent();
+      try {
+        useDiagramStore.getState().addNode({ x: 0, y: 0 });
+        fireKey('z', { metaKey: true }); // undo
+        expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
 
-      fireKey('z', { metaKey: true, shiftKey: true }); // redo
-      expect(useDiagramStore.getState().diagram.nodes).toHaveLength(1);
+        fireKey('z', { metaKey: true, shiftKey: true }); // redo
+        expect(useDiagramStore.getState().diagram.nodes).toHaveLength(1);
+      } finally {
+        restore();
+      }
     });
 
     it('Cmd+Y triggers redo', () => {
-      useDiagramStore.getState().addNode({ x: 0, y: 0 });
-      fireKey('z', { metaKey: true }); // undo
-      fireKey('y', { metaKey: true }); // redo
-      expect(useDiagramStore.getState().diagram.nodes).toHaveLength(1);
+      const restore = stubMacUserAgent();
+      try {
+        useDiagramStore.getState().addNode({ x: 0, y: 0 });
+        fireKey('z', { metaKey: true }); // undo
+        expect(useDiagramStore.getState().diagram.nodes).toHaveLength(0);
+        fireKey('y', { metaKey: true }); // redo
+        expect(useDiagramStore.getState().diagram.nodes).toHaveLength(1);
+      } finally {
+        restore();
+      }
     });
   });
 
