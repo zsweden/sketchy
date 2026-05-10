@@ -103,6 +103,10 @@ export async function logFirebaseException(payload: FirebaseExceptionPayload): P
 }
 
 export async function logFirestoreError(payload: FirebaseExceptionPayload): Promise<void> {
+  if (!import.meta.env.PROD) {
+    return;
+  }
+
   const db = await getFirebaseFirestore();
 
   if (!db) {
